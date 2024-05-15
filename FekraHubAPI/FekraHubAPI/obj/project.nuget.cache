@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "XXocyqJmTq0NLkdyy10cPUcrqvUpEbE4ewZAR5aSadi2zE/vx4oUwRgWoQoYQq3neVVvBhwh2vJ2BWN5H4u6ww==",
+  "dgSpecHash": "CA3XGxmb/nWwtU09JqarkvEhkjzAR8aXeqvARgvOUCvafPiHltXezgrb5IrV7xkM1Qq99XaYsB9Ahc/YQnphOA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\asadek\\source\\repos\\Netwitcher\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj",
+  "projectFilePath": "C:\\Users\\asadek\\source\\repos\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\asadek\\.nuget\\packages\\microsoft.extensions.apidescription.server\\6.0.5\\microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
     "C:\\Users\\asadek\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",

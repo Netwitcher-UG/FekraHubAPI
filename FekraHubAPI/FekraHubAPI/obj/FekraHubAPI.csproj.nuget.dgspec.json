@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\asadek\\source\\repos\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj": {}
+    "C:\\Users\\asadek\\source\\repos\\Netwitcher\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\asadek\\source\\repos\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj": {
+    "C:\\Users\\asadek\\source\\repos\\Netwitcher\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\asadek\\source\\repos\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj",
+        "projectUniqueName": "C:\\Users\\asadek\\source\\repos\\Netwitcher\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj",
         "projectName": "FekraHubAPI",
-        "projectPath": "C:\\Users\\asadek\\source\\repos\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj",
+        "projectPath": "C:\\Users\\asadek\\source\\repos\\Netwitcher\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI.csproj",
         "packagesPath": "C:\\Users\\asadek\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\asadek\\source\\repos\\FekraHubAPI\\FekraHubAPI\\obj\\",
+        "outputPath": "C:\\Users\\asadek\\source\\repos\\Netwitcher\\FekraHubAPI\\FekraHubAPI\\FekraHubAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\DevExpress 22.1\\Components\\Offline Packages",

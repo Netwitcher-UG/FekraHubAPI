@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FekraHubAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2ef3e4b19843559988174b5b870afb147843db44")]
 [assembly: System.Reflection.AssemblyProductAttribute("FekraHubAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FekraHubAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

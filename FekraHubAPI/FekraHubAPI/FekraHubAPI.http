@@ -1,6 +1,0 @@
-@FekraHubAPI_HostAddress = http://localhost:5008
-
-GET {{FekraHubAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

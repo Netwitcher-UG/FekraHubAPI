@@ -8,7 +8,9 @@ using Microsoft.Extensions.Hosting;
 
 namespace FekraHubAPI.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<IdentityUser>
+    //DbContext
+    //IdentityDbContext<IdentityUser>
     {
 
 

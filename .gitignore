@@ -400,3 +400,4 @@ FodyWeavers.xsd
 *.exe
 *.dll
 *.cache
+/FekraHubAPI/FekraHubAPI/obj/Debug/net8.0/FekraHubAPI.AssemblyInfoInputs.cache

@@ -46,8 +46,18 @@ namespace FekraHubAPI.EmailSender
             {
                 string FekraHupUrl = config["EmailSenderSettings:Url"] ?? "https://localhost:7288"; //change this later
                 var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                var confirmationLink = $"{FekraHupUrl}/NewUser/confirm?UserName={user.UserName}&Token={token}";
-                await EmaiNotification(user.Email, "Please Confirm Your Email", $"<h3>Please confirm your account by click</h3> <a href='{confirmationLink}' style='text-decoration: none;padding: 8px 15px;border-radius: 5px;cursor: pointer;background-color: #3b73fe;color: white;'>Confirm Now</a>", true);
+                var confirmationLink = $"{FekraHupUrl}/NewUser/confirm?ID={user.Id}&Token={token}";
+                var message = $@"<div style='width:100%;text-align:center;'>
+                            <h1>Hi {user.UserName}</h1>
+                             <p>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
+                            <p>To complete the confirmation, please click the confirm button</p><br><br/>
+                            <a href='{confirmationLink}' style='text-decoration: none;padding: 10px 20px;border-radius: 5px;cursor: pointer;background-color: #3b73fe;color: white;font-size:24px;'>
+                            Confirm Now</a> </div>
+                            <br><br/><br><br/><br><br/>
+                            <h3>Thanks<br>
+                            FekraHub Team</h3>";
+
+                await EmaiNotification(user.Email, "Please Confirm Your Email", message, true);
 
             }
 

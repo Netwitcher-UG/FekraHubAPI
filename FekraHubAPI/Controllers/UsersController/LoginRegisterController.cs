@@ -110,8 +110,15 @@ namespace FekraHubAPI.Controllers.UsersController
                         {
                             userManager.AddToRoleAsync(appUser, RoleParent).Wait();
                             transaction.Commit();
-
-                            await emailSender.SendConfirmationEmail(appUser);
+                            ApplicationUser? ThisNewUser = await userManager.FindByEmailAsync(user.email);
+                            if (ThisNewUser != null) {
+                                await emailSender.SendConfirmationEmail(ThisNewUser);
+                            }
+                            else
+                            {
+                                return Ok("Resend Link");
+                            }
+                            
 
                             return Ok("Success");
                         }
@@ -137,13 +144,13 @@ namespace FekraHubAPI.Controllers.UsersController
         }
         [Route("/NewUser/Confirm")]
         [HttpGet]
-        public async Task<string> ConfirmEmail(string token, string UserName)
+        public async Task<string> ConfirmEmail(string token, string ID)
         {
-            if (UserName == null || token == null)
+            if (ID == null || token == null)
             {
                 return "Link expired";
             }
-            var user = await userManager.FindByNameAsync(UserName);
+            var user = await userManager.FindByIdAsync(ID);
             if (user == null)
             {
                 return "User not Found";

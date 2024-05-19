@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FekraHubAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240515213248_seeder")]
+    [Migration("20240519174931_seeder")]
     partial class seeder
     {
         /// <inheritdoc />
@@ -105,6 +105,120 @@ namespace FekraHubAPI.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ClaimType = "Permissions.Manage.View",
+                            ClaimValue = "Permissions.Manage.View",
+                            RoleId = "1"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ClaimType = "Permissions.Manage.Create",
+                            ClaimValue = "Permissions.Manage.Create",
+                            RoleId = "1"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ClaimType = "Permissions.Manage.Edit",
+                            ClaimValue = "Permissions.Manage.Edit",
+                            RoleId = "1"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ClaimType = "Permissions.Manage.Delete",
+                            ClaimValue = "Permissions.Manage.Delete",
+                            RoleId = "1"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            ClaimType = "ManageS",
+                            ClaimValue = "ManageS",
+                            RoleId = "2"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            ClaimType = "ManageS",
+                            ClaimValue = "ManageS",
+                            RoleId = "2"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            ClaimType = "ManageS",
+                            ClaimValue = "ManageS",
+                            RoleId = "2"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            ClaimType = "ManageS",
+                            ClaimValue = "ManageS",
+                            RoleId = "2"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            ClaimType = "ManageP",
+                            ClaimValue = "ManageP",
+                            RoleId = "3"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            ClaimType = "ManageP",
+                            ClaimValue = "ManageP",
+                            RoleId = "3"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            ClaimType = "ManageP",
+                            ClaimValue = "ManageP",
+                            RoleId = "3"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            ClaimType = "ManageP",
+                            ClaimValue = "ManageP",
+                            RoleId = "3"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            ClaimType = "ManageT",
+                            ClaimValue = "ManageT",
+                            RoleId = "4"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            ClaimType = "ManageT",
+                            ClaimValue = "ManageT",
+                            RoleId = "4"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            ClaimType = "ManageT",
+                            ClaimValue = "ManageT",
+                            RoleId = "4"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            ClaimType = "ManageT",
+                            ClaimValue = "ManageT",
+                            RoleId = "4"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
@@ -245,7 +359,7 @@ namespace FekraHubAPI.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "e2a42d67-ecd9-4478-ad04-fef868984d91",
+                            UserId = "1af56fc5-88ec-41d0-8627-20c0a7ce7bff",
                             RoleId = "1"
                         });
                 });
@@ -287,18 +401,18 @@ namespace FekraHubAPI.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "e2a42d67-ecd9-4478-ad04-fef868984d91",
+                            Id = "1af56fc5-88ec-41d0-8627-20c0a7ce7bff",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "22dfccc7-d89f-442b-b6b6-64e585d67832",
+                            ConcurrencyStamp = "ffe4f732-0774-4eaf-950c-834c760b64e7",
                             Email = "admin@admin.com",
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             NormalizedEmail = "admin@admin.com",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEG3n7EDlsJ3EjsXtzwLgyn2ksmk6jqBwotmbnUnJxI2VlF+XkDxBqE998WAn+NDQ3Q==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEEu986aJgh2ABzWN9wGwifVRvRoYkavKGF3u74yxpLIvmgY0MXwOnmY2M3W8iSxg7w==",
                             PhoneNumber = "+1234567890",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "5a0bf016-099f-4f92-bca9-c914624a5aa4",
+                            SecurityStamp = "eab8babd-af65-47ec-901c-4f703ced640e",
                             TwoFactorEnabled = false,
                             UserName = "Admin",
                             Name = "admin"

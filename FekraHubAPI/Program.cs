@@ -3,6 +3,7 @@ using FekraHubAPI.Data.Models;
 using FekraHubAPI.Extentions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -14,8 +15,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(op =>
       op.UseSqlServer(builder.Configuration.GetConnectionString("myConn")));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
-
-
 
 //Adding Authentication 
 builder.Services.AddAuthentication(options =>

@@ -25,7 +25,6 @@ namespace FekraHubAPI.Models.Users
 
     }
 
-   // public enum RoleName { Admin , pp};
 
 }
 

@@ -83,7 +83,7 @@ namespace FekraHubAPI.Controllers.UsersController
             return BadRequest(ModelState);
         }
 
-        [HttpPost("Register")]
+        [HttpPost("RegisterParent")]
         public async Task<IActionResult> RegisterParent(Register user)
         {
             using (IDbContextTransaction transaction = this.context.Database.BeginTransaction())

@@ -9,23 +9,56 @@ using System.Text;
 using FekraHubAPI.Models.Users;
 using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Authorization;
+using FekraHubAPI.Data;
+using  FekraHubAPI.Controllers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers
 {
 
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
 
     public class ManageController : ControllerBase
     {
-        [HttpPost("[action]")]
-        [Authorize(Roles =  ""+DefaultRole.Admin+","+DefaultRole.Secretariat )]
-        public async Task<IActionResult> GetUser(int Id)
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IConfiguration configuration;
+        private readonly ApplicationDbContext context;
+        protected ILookupNormalizer normalizer;
+        public  IServiceProvider serviceProvider;
+
+        public ManageController(ApplicationDbContext _context, UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            IConfiguration configuration,
+            IServiceProvider serviceProvider)
         {
-            return Ok("a");
+            this.userManager = userManager;
+            _roleManager = roleManager;
+            this.configuration = configuration;
+            this.context = _context;
+            this.serviceProvider = serviceProvider;
         }
 
+
+        [HttpGet("[action]")]
+        //[Authorize(Roles =  ""+DefaultRole.Admin+","+DefaultRole.Secretariat )]
+        public async Task<IActionResult> GetUser()
+        {
+            var Roles = await _roleManager.FindByNameAsync("Admin");
+            return Ok(Roles);
+        }
+
+        [HttpGet("[action]")]
+
+        public List<IdentityRole> AllRoles()
+        {
+            var Roles =  _roleManager.FindByNameAsync("Admin");
+
+            return _roleManager.Roles.ToList();
+        }
     }
 
 

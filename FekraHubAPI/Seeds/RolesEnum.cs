@@ -2,6 +2,7 @@
 {
     public enum RolesEnum
     {
+        Admin,
         Secretariat,
         Parent,
         Teacher

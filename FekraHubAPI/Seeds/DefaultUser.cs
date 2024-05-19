@@ -7,11 +7,18 @@ using System.Numerics;
 using System.Reflection.Emit;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using FekraHubAPI.Models;
+using FekraHubAPI.Constract;
+using FekraHubAPI.Controllers;
+using System.Data;
+using System.Security.Claims;
+using FekraHubAPI.Data;
 
 namespace FekraHubAPI.Seeds
 {
     public static class DefaultUser
     {
+        public static  RoleManager<IdentityRole> roleManager;
+
         public static ILookupNormalizer normalizer;
         public static async Task SeedAdminAsync(ModelBuilder builder)
         {
@@ -33,7 +40,6 @@ namespace FekraHubAPI.Seeds
             user.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(user, password);
 
             builder.Entity<ApplicationUser>().HasData(user);
-            //builder.Entity<IdentityRole>().
 
             builder.Entity<IdentityUserRole<string>>()
                 .HasData(new IdentityUserRole<string>
@@ -42,10 +48,13 @@ namespace FekraHubAPI.Seeds
                     UserId = user.Id
                 });
 
+            
+            
+
         }
 
         // test
-        public static async Task SeedAdminAsync1(UserManager<IdentityUser> userManager)
+        /*public static async Task SeedAdminAsync1(UserManager<IdentityUser> userManager)
         {
             var DefaultUser = new ApplicationUser()
             {
@@ -63,7 +72,24 @@ namespace FekraHubAPI.Seeds
                 await userManager.CreateAsync(DefaultUser , "123456789");
                 //await userManager.AddToRolesAsync(DefaultUser , new List<string> { DefaultRole.Admin });
             }
-        }
+        }*/
+
+        //
+
+        /*public static async Task AddPermissionsClaims(this RoleManager<IdentityRole> roleManager , IdentityRole role  , String module)
+        {
+            var AllClaims = await roleManager.GetClaimsAsync(role);
+            var AllPermissions = Permissions.GeneratePermissionsFromModule(module);
+
+            foreach(var Permission in AllPermissions)
+            {
+                if (!AllClaims.Any(x=>x.Type == Permission &&  x.Value == Permission)) { 
+                    await roleManager.AddClaimAsync(role , new Claim(Permission, Permission));
+                }
+            }
+
+        }*/
+
 
     }
 }

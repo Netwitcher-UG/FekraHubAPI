@@ -20,6 +20,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(op =>
 #else
 builder.Services.AddDbContext<ApplicationDbContext>(op =>
       op.UseSqlServer(builder.Configuration.GetConnectionString("myConn")));
+#endif
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddDefaultTokenProviders().AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();

@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Authorization;
 using FekraHubAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using FekraHubAPI.EmailSender;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace FekraHubAPI.Controllers.UsersController
 {
@@ -24,15 +26,17 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly IConfiguration configuration;
         private readonly ApplicationDbContext context;
         protected ILookupNormalizer normalizer;
+        private readonly EmailSender.IEmailSender emailSender;
 
-        public LoginRegisterController(ApplicationDbContext _context , UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        public LoginRegisterController(ApplicationDbContext context , UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, EmailSender.IEmailSender emailSender)
         {
             this.userManager = userManager;
             this.roleManager = roleManager;
             this.configuration = configuration;
-            this.context = _context;
+            this.context = context;
+            this.emailSender = emailSender;
         }
-
+        
         [HttpPost("[action]")]
         public async Task<IActionResult> LogIn(Login login)
         {
@@ -99,10 +103,23 @@ namespace FekraHubAPI.Controllers.UsersController
                             Email = user.email,
                         };
                         IdentityResult result = await userManager.CreateAsync(appUser, user.password);
+
+                        
+
                         if (result.Succeeded)
                         {
                             userManager.AddToRoleAsync(appUser, RoleParent).Wait();
                             transaction.Commit();
+                            ApplicationUser? ThisNewUser = await userManager.FindByEmailAsync(user.email);
+                            if (ThisNewUser != null) {
+                                await emailSender.SendConfirmationEmail(ThisNewUser);
+                            }
+                            else
+                            {
+                                return Ok("Resend Link");
+                            }
+                            
+
                             return Ok("Success");
                         }
                         else
@@ -123,6 +140,33 @@ namespace FekraHubAPI.Controllers.UsersController
 
                 }
 
+            }
+        }
+        [Route("/NewUser/Confirm")]
+        [HttpGet]
+        public async Task<string> ConfirmEmail(string token, string ID)
+        {
+            if (ID == null || token == null)
+            {
+                return "Link expired";
+            }
+            var user = await userManager.FindByIdAsync(ID);
+            if (user == null)
+            {
+                return "User not Found";
+            }
+            else
+            {
+                token = token.Replace(" ", "+");
+                var result = await userManager.ConfirmEmailAsync(user, token);
+                if (result.Succeeded)
+                {
+                    return "Thank you for confirming your email";
+                }
+                else
+                {
+                    return "Email not confirmed";
+                }
             }
         }
     }

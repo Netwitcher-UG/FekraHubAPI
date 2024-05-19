@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.Seeds;
 using System.Threading.Tasks;
@@ -34,7 +34,19 @@ namespace FekraHubAPI.Seeds
                 Email = email,
                 NormalizedEmail = normalizedEmail,
                 SecurityStamp = Guid.NewGuid().ToString("D"),
-                PhoneNumber = "+1234567890"
+                PhoneNumber = "+1234567890",
+                Gender = "Male",
+                FirstName = "John",
+                Birthplace = "city",
+                LastName = "Doe",
+                Birthday = DateTime.Parse("1985-01-01"),
+                Nationality = "American",
+                Street = "123 Main St",
+                StreetNr = "1A",
+                ZipCode = "10001",
+                City = "New York",
+                Job = "Software Developer",
+                Graduation = "Bachelor of Science in Computer Science"
             };
 
             user.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(user, password);
@@ -64,6 +76,19 @@ namespace FekraHubAPI.Seeds
                 ImageUser = "",
                 ActiveUser = true,
                 EmailConfirmed = true,
+                Gender = "Female",
+                FirstName = "Jane",
+                LastName = "Smith",
+                Birthday = DateTime.Parse("1990-02-02"),
+                Nationality = "American",
+                Street = "456 Elm St",
+                Birthplace ="city",
+                StreetNr = "2B",
+                ZipCode = "90001",
+                City = "Los Angeles",
+                Job = "Graphic Designer",
+                Graduation = "Bachelor of Arts in Graphic Design"
+
             };
 
             var user = await userManager.FindByEmailAsync(DefaultUser.Email);

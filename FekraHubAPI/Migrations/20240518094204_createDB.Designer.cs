@@ -4,6 +4,7 @@ using FekraHubAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FekraHubAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240518094204_createDB")]
+    partial class createDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -624,120 +627,6 @@ namespace FekraHubAPI.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ClaimType = "Permissions.Manage.View",
-                            ClaimValue = "Permissions.Manage.View",
-                            RoleId = "1"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ClaimType = "Permissions.Manage.Create",
-                            ClaimValue = "Permissions.Manage.Create",
-                            RoleId = "1"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ClaimType = "Permissions.Manage.Edit",
-                            ClaimValue = "Permissions.Manage.Edit",
-                            RoleId = "1"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ClaimType = "Permissions.Manage.Delete",
-                            ClaimValue = "Permissions.Manage.Delete",
-                            RoleId = "1"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            ClaimType = "ManageS",
-                            ClaimValue = "ManageS",
-                            RoleId = "2"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            ClaimType = "ManageS",
-                            ClaimValue = "ManageS",
-                            RoleId = "2"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            ClaimType = "ManageS",
-                            ClaimValue = "ManageS",
-                            RoleId = "2"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            ClaimType = "ManageS",
-                            ClaimValue = "ManageS",
-                            RoleId = "2"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            ClaimType = "ManageP",
-                            ClaimValue = "ManageP",
-                            RoleId = "3"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            ClaimType = "ManageP",
-                            ClaimValue = "ManageP",
-                            RoleId = "3"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            ClaimType = "ManageP",
-                            ClaimValue = "ManageP",
-                            RoleId = "3"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            ClaimType = "ManageP",
-                            ClaimValue = "ManageP",
-                            RoleId = "3"
-                        },
-                        new
-                        {
-                            Id = 16,
-                            ClaimType = "ManageT",
-                            ClaimValue = "ManageT",
-                            RoleId = "4"
-                        },
-                        new
-                        {
-                            Id = 17,
-                            ClaimType = "ManageT",
-                            ClaimValue = "ManageT",
-                            RoleId = "4"
-                        },
-                        new
-                        {
-                            Id = 18,
-                            ClaimType = "ManageT",
-                            ClaimValue = "ManageT",
-                            RoleId = "4"
-                        },
-                        new
-                        {
-                            Id = 19,
-                            ClaimType = "ManageT",
-                            ClaimValue = "ManageT",
-                            RoleId = "4"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>

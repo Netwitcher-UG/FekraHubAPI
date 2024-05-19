@@ -10,5 +10,7 @@ namespace FekraHubAPI.Data.Models
         public string Title { get; set; }
 
         public ICollection<TeacherAttendance> TeacherAttendance { get; set; }
+       
+        public ICollection<StudentAttendance> StudentAttendance { get; set; }
     }
 }

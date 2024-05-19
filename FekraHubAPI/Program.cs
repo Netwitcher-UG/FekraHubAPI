@@ -10,9 +10,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 // Add Connection DataBase.
+#if DEBUG
+builder.Services.AddDbContext<ApplicationDbContext>(op =>
+      op.UseSqlServer(builder.Configuration.GetConnectionString("develpConn")));
+#else
 builder.Services.AddDbContext<ApplicationDbContext>(op =>
       op.UseSqlServer(builder.Configuration.GetConnectionString("myConn")));
-
+#endif
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
 
 

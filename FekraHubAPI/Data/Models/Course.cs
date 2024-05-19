@@ -26,8 +26,9 @@ namespace FekraHubAPI.Data.Models
         public virtual Room Room { get; set; }
         public int? RoomId { get; set; }
 
-      
 
+        public ICollection<TeacherAttendance> TeacherAttendance { get; set; }
+        public ICollection<StudentAttendance> StudentAttendance { get; set; }
         public ICollection<CourseSchedule> CourseSchedule { get; set; }
 
         public ICollection<Upload> Uploads { get; set; }

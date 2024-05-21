@@ -21,7 +21,7 @@ namespace FekraHubAPI.Data.Models
         public virtual ApplicationUser User { get; set; }
         public string? ParentID { get; set; }
 
-
+        public ICollection<StudentAttendance> StudentAttendance { get; set; }
         public ICollection<Report> Report { get; set; }
         public ICollection<ParentInvoice> parentInvoices { get; set; }
 

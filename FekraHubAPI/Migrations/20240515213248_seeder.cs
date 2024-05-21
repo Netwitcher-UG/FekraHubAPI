@@ -176,35 +176,12 @@ namespace FekraHubAPI.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ActiveUser", "ConcurrencyStamp", "Discriminator", "Email", "EmailConfirmed", "ImageUser", "LockoutEnabled", "LockoutEnd", "Name", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "1af56fc5-88ec-41d0-8627-20c0a7ce7bff", 0, null, "ffe4f732-0774-4eaf-950c-834c760b64e7", "ApplicationUser", "admin@admin.com", false, null, false, null, "admin", "admin@admin.com", "ADMIN", "AQAAAAIAAYagAAAAEEu986aJgh2ABzWN9wGwifVRvRoYkavKGF3u74yxpLIvmgY0MXwOnmY2M3W8iSxg7w==", "+1234567890", false, "eab8babd-af65-47ec-901c-4f703ced640e", false, "Admin" });
-
-            migrationBuilder.InsertData(
-                table: "AspNetRoleClaims",
-                columns: new[] { "Id", "ClaimType", "ClaimValue", "RoleId" },
-                values: new object[,]
-                {
-                    { 1, "Permissions.Manage.View", "Permissions.Manage.View", "1" },
-                    { 2, "Permissions.Manage.Create", "Permissions.Manage.Create", "1" },
-                    { 3, "Permissions.Manage.Edit", "Permissions.Manage.Edit", "1" },
-                    { 4, "Permissions.Manage.Delete", "Permissions.Manage.Delete", "1" },
-                    { 6, "ManageS", "ManageS", "2" },
-                    { 7, "ManageS", "ManageS", "2" },
-                    { 8, "ManageS", "ManageS", "2" },
-                    { 9, "ManageS", "ManageS", "2" },
-                    { 11, "ManageP", "ManageP", "3" },
-                    { 12, "ManageP", "ManageP", "3" },
-                    { 13, "ManageP", "ManageP", "3" },
-                    { 14, "ManageP", "ManageP", "3" },
-                    { 16, "ManageT", "ManageT", "4" },
-                    { 17, "ManageT", "ManageT", "4" },
-                    { 18, "ManageT", "ManageT", "4" },
-                    { 19, "ManageT", "ManageT", "4" }
-                });
+                values: new object[] { "e2a42d67-ecd9-4478-ad04-fef868984d91", 0, null, "22dfccc7-d89f-442b-b6b6-64e585d67832", "ApplicationUser", "admin@admin.com", false, null, false, null, "admin", "admin@admin.com", "ADMIN", "AQAAAAIAAYagAAAAEG3n7EDlsJ3EjsXtzwLgyn2ksmk6jqBwotmbnUnJxI2VlF+XkDxBqE998WAn+NDQ3Q==", "+1234567890", false, "5a0bf016-099f-4f92-bca9-c914624a5aa4", false, "Admin" });
 
             migrationBuilder.InsertData(
                 table: "AspNetUserRoles",
                 columns: new[] { "RoleId", "UserId" },
-                values: new object[] { "1", "1af56fc5-88ec-41d0-8627-20c0a7ce7bff" });
+                values: new object[] { "1", "e2a42d67-ecd9-4478-ad04-fef868984d91" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",

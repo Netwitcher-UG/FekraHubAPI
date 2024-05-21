@@ -23,1299 +23,1185 @@ namespace FekraHubAPI.Migrations
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("CourseUpload", b =>
-                {
-                    b.Property<int>("CoursesId")
-                        .HasColumnType("int");
+            {
+                b.Property<int>("CoursesId")
+                    .HasColumnType("int");
 
-                    b.Property<int>("UploadsId")
-                        .HasColumnType("int");
+                b.Property<int>("UploadsId")
+                    .HasColumnType("int");
 
-                    b.HasKey("CoursesId", "UploadsId");
+                b.HasKey("CoursesId", "UploadsId");
 
-                    b.HasIndex("UploadsId");
+                b.HasIndex("UploadsId");
 
-                    b.ToTable("CourseUpload");
-                });
+                b.ToTable("CourseUpload");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.AttendanceStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("AttendanceStatuses");
-                });
+                b.ToTable("AttendanceStatuses");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Course", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Capacity")
-                        .HasColumnType("int");
+                b.Property<int>("Capacity")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EndDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<int>("Lessons")
-                        .HasColumnType("int");
+                b.Property<int>("Lessons")
+                    .HasColumnType("int");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("Price")
-                        .HasColumnType("int");
+                b.Property<int>("Price")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("RoomId")
-                        .HasColumnType("int");
+                b.Property<int?>("RoomId")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("UserId")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("RoomId");
+                b.HasIndex("RoomId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("Courses");
-                });
+                b.ToTable("Courses");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.CourseEvent", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("EventID")
-                        .HasColumnType("int");
+                b.Property<int?>("EventID")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("ScheduleID")
-                        .HasColumnType("int");
+                b.Property<int?>("ScheduleID")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("EventID");
+                b.HasIndex("EventID");
 
-                    b.HasIndex("ScheduleID");
+                b.HasIndex("ScheduleID");
 
-                    b.ToTable("CourseEvents");
-                });
+                b.ToTable("CourseEvents");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.CourseSchedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CourseID")
-                        .HasColumnType("int");
+                b.Property<int?>("CourseID")
+                    .HasColumnType("int");
 
-                    b.Property<string>("DayOfWeek")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("DayOfWeek")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EndDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("datetime2");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("CourseID");
+                b.HasIndex("CourseID");
 
-                    b.ToTable("CourseSchedules");
-                });
+                b.ToTable("CourseSchedules");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Event", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("Date")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("EventName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("EventName")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("TypeID")
-                        .HasColumnType("int");
+                b.Property<int?>("TypeID")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("TypeID");
+                b.HasIndex("TypeID");
 
-                    b.ToTable("Events");
-                });
+                b.ToTable("Events");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.EventType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("TypeTitle")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("TypeTitle")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("EventsTypes");
-                });
+                b.ToTable("EventsTypes");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Location", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("City")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Street")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Street")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("StreetNr")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("StreetNr")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ZipCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ZipCode")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("Location");
-                });
+                b.ToTable("Location");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.ParentContract", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreationDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreationDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<byte>("File")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("File")
+                    .HasColumnType("tinyint");
 
-                    b.Property<string>("ParentID")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("ParentID")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("ParentID");
+                b.HasIndex("ParentID");
 
-                    b.ToTable("ParentContracts");
-                });
+                b.ToTable("ParentContracts");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.ParentInvoice", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<byte>("File")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("File")
+                    .HasColumnType("tinyint");
 
-                    b.Property<int?>("StudentID")
-                        .HasColumnType("int");
+                b.Property<int?>("StudentID")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("Timestamp")
+                    .HasColumnType("datetime2");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("StudentID");
+                b.HasIndex("StudentID");
 
-                    b.ToTable("ParentInvoices");
-                });
+                b.ToTable("ParentInvoices");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.PayRoll", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<byte>("File")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("File")
+                    .HasColumnType("tinyint");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("Timestamp")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("UserID")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("UserID")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserID");
+                b.HasIndex("UserID");
 
-                    b.ToTable("PayRoll");
-                });
+                b.ToTable("PayRoll");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Report", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreationDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreationDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<bool>("Improved")
-                        .HasColumnType("bit");
+                b.Property<bool>("Improved")
+                    .HasColumnType("bit");
 
-                    b.Property<int?>("StudentId")
-                        .HasColumnType("int");
+                b.Property<int?>("StudentId")
+                    .HasColumnType("int");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("UserId")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("data")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("data")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("StudentId");
+                b.HasIndex("StudentId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("Reports");
-                });
+                b.ToTable("Reports");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Room", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("LocationID")
-                        .HasColumnType("int");
+                b.Property<int?>("LocationID")
+                    .HasColumnType("int");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("LocationID");
+                b.HasIndex("LocationID");
 
-                    b.ToTable("Rooms");
-                });
+                b.ToTable("Rooms");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Student", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("Birthday")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("Birthday")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("FirstName")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("LastName")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Nationality")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Nationality")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Note")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Note")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ParentID")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("ParentID")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("ParentID");
+                b.HasIndex("ParentID");
 
-                    b.ToTable("Students");
-                });
+                b.ToTable("Students");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.StudentAttendance", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CourseID")
-                        .HasColumnType("int");
+                b.Property<int?>("CourseID")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("StatusID")
-                        .HasColumnType("int");
+                b.Property<int?>("StatusID")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("StudentID")
-                        .HasColumnType("int");
+                b.Property<int?>("StudentID")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("date")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("date")
+                    .HasColumnType("datetime2");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("CourseID");
+                b.HasIndex("CourseID");
 
-                    b.HasIndex("StatusID");
+                b.HasIndex("StatusID");
 
-                    b.HasIndex("StudentID");
+                b.HasIndex("StudentID");
 
-                    b.ToTable("StudentAttendances");
-                });
+                b.ToTable("StudentAttendances");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.TeacherAttendance", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CourseID")
-                        .HasColumnType("int");
+                b.Property<int?>("CourseID")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("StatusID")
-                        .HasColumnType("int");
+                b.Property<int?>("StatusID")
+                    .HasColumnType("int");
 
-                    b.Property<string>("TeacherID")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("TeacherID")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("date")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("date")
+                    .HasColumnType("datetime2");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("CourseID");
+                b.HasIndex("CourseID");
 
-                    b.HasIndex("StatusID");
+                b.HasIndex("StatusID");
 
-                    b.HasIndex("TeacherID");
+                b.HasIndex("TeacherID");
 
-                    b.ToTable("TeacherAttendances");
-                });
+                b.ToTable("TeacherAttendances");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Upload", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("UploadTypeIDId")
-                        .HasColumnType("int");
+                b.Property<int>("UploadTypeIDId")
+                    .HasColumnType("int");
 
-                    b.Property<byte>("file")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("file")
+                    .HasColumnType("tinyint");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UploadTypeIDId");
+                b.HasIndex("UploadTypeIDId");
 
-                    b.ToTable("Uploads");
-                });
+                b.ToTable("Uploads");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.UploadCourse", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CourseID")
-                        .HasColumnType("int");
+                b.Property<int?>("CourseID")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("UploadID")
-                        .HasColumnType("int");
+                b.Property<int?>("UploadID")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("CourseID");
+                b.HasIndex("CourseID");
 
-                    b.HasIndex("UploadID");
+                b.HasIndex("UploadID");
 
-                    b.ToTable("UploadsCourse");
-                });
+                b.ToTable("UploadsCourse");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.UploadType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("TypeTitle")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("TypeTitle")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("UploadsType");
-                });
+                b.ToTable("UploadsType");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.WorkContract", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<byte>("File")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("File")
+                    .HasColumnType("tinyint");
 
-                    b.Property<string>("TeacherID")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("TeacherID")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("Timestamp")
+                    .HasColumnType("datetime2");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("TeacherID");
+                b.HasIndex("TeacherID");
 
-                    b.ToTable("WorkContracts");
-                });
+                b.ToTable("WorkContracts");
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+            {
+                b.Property<string>("Id")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ConcurrencyStamp")
+                    .IsConcurrencyToken()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("Name")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("NormalizedName")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
+                b.HasIndex("NormalizedName")
+                    .IsUnique()
+                    .HasDatabaseName("RoleNameIndex")
+                    .HasFilter("[NormalizedName] IS NOT NULL");
 
-                    b.ToTable("AspNetRoles", (string)null);
+                b.ToTable("AspNetRoles", (string)null);
 
-                    b.HasData(
-                        new
-                        {
-                            Id = "1",
-                            ConcurrencyStamp = "1",
-                            Name = "Admin",
-                            NormalizedName = "Admin"
-                        },
-                        new
-                        {
-                            Id = "2",
-                            ConcurrencyStamp = "2",
-                            Name = "Secretariat",
-                            NormalizedName = "Secretariat"
-                        },
-                        new
-                        {
-                            Id = "3",
-                            ConcurrencyStamp = "3",
-                            Name = "Parent",
-                            NormalizedName = "Parent"
-                        },
-                        new
-                        {
-                            Id = "4",
-                            ConcurrencyStamp = "4",
-                            Name = "Teacher",
-                            NormalizedName = "Teacher"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = "1",
+                        ConcurrencyStamp = "1",
+                        Name = "Admin",
+                        NormalizedName = "Admin"
+                    },
+                    new
+                    {
+                        Id = "2",
+                        ConcurrencyStamp = "2",
+                        Name = "Secretariat",
+                        NormalizedName = "Secretariat"
+                    },
+                    new
+                    {
+                        Id = "3",
+                        ConcurrencyStamp = "3",
+                        Name = "Parent",
+                        NormalizedName = "Parent"
+                    },
+                    new
+                    {
+                        Id = "4",
+                        ConcurrencyStamp = "4",
+                        Name = "Teacher",
+                        NormalizedName = "Teacher"
+                    });
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ClaimType")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ClaimValue")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("RoleId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("RoleId");
+                b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ClaimType = "Permissions.Manage.View",
-                            ClaimValue = "Permissions.Manage.View",
-                            RoleId = "1"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ClaimType = "Permissions.Manage.Create",
-                            ClaimValue = "Permissions.Manage.Create",
-                            RoleId = "1"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ClaimType = "Permissions.Manage.Edit",
-                            ClaimValue = "Permissions.Manage.Edit",
-                            RoleId = "1"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ClaimType = "Permissions.Manage.Delete",
-                            ClaimValue = "Permissions.Manage.Delete",
-                            RoleId = "1"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            ClaimType = "ManageS",
-                            ClaimValue = "ManageS",
-                            RoleId = "2"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            ClaimType = "ManageS",
-                            ClaimValue = "ManageS",
-                            RoleId = "2"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            ClaimType = "ManageS",
-                            ClaimValue = "ManageS",
-                            RoleId = "2"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            ClaimType = "ManageS",
-                            ClaimValue = "ManageS",
-                            RoleId = "2"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            ClaimType = "ManageP",
-                            ClaimValue = "ManageP",
-                            RoleId = "3"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            ClaimType = "ManageP",
-                            ClaimValue = "ManageP",
-                            RoleId = "3"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            ClaimType = "ManageP",
-                            ClaimValue = "ManageP",
-                            RoleId = "3"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            ClaimType = "ManageP",
-                            ClaimValue = "ManageP",
-                            RoleId = "3"
-                        },
-                        new
-                        {
-                            Id = 16,
-                            ClaimType = "ManageT",
-                            ClaimValue = "ManageT",
-                            RoleId = "4"
-                        },
-                        new
-                        {
-                            Id = 17,
-                            ClaimType = "ManageT",
-                            ClaimValue = "ManageT",
-                            RoleId = "4"
-                        },
-                        new
-                        {
-                            Id = 18,
-                            ClaimType = "ManageT",
-                            ClaimValue = "ManageT",
-                            RoleId = "4"
-                        },
-                        new
-                        {
-                            Id = 19,
-                            ClaimType = "ManageT",
-                            ClaimValue = "ManageT",
-                            RoleId = "4"
-                        });
-                });
+                b.ToTable("AspNetRoleClaims", (string)null);
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+            {
+                b.Property<string>("Id")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
+                b.Property<int>("AccessFailedCount")
+                    .HasColumnType("int");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ConcurrencyStamp")
+                    .IsConcurrencyToken()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("nvarchar(21)");
+                b.Property<string>("Discriminator")
+                    .IsRequired()
+                    .HasMaxLength(21)
+                    .HasColumnType("nvarchar(21)");
 
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("Email")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
+                b.Property<bool>("EmailConfirmed")
+                    .HasColumnType("bit");
 
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
+                b.Property<bool>("LockoutEnabled")
+                    .HasColumnType("bit");
 
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
+                b.Property<DateTimeOffset?>("LockoutEnd")
+                    .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("NormalizedEmail")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("NormalizedUserName")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("PasswordHash")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("PhoneNumber")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
+                b.Property<bool>("PhoneNumberConfirmed")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("SecurityStamp")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
+                b.Property<bool>("TwoFactorEnabled")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("UserName")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
+                b.HasIndex("NormalizedEmail")
+                    .HasDatabaseName("EmailIndex");
 
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+                b.HasIndex("NormalizedUserName")
+                    .IsUnique()
+                    .HasDatabaseName("UserNameIndex")
+                    .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                b.ToTable("AspNetUsers", (string)null);
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("IdentityUser");
+                b.HasDiscriminator<string>("Discriminator").HasValue("IdentityUser");
 
-                    b.UseTphMappingStrategy();
-                });
+                b.UseTphMappingStrategy();
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ClaimType")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ClaimValue")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
-                });
+                b.ToTable("AspNetUserClaims", (string)null);
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+            {
+                b.Property<string>("LoginProvider")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("ProviderKey")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ProviderDisplayName")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("LoginProvider", "ProviderKey");
+                b.HasKey("LoginProvider", "ProviderKey");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
-                });
+                b.ToTable("AspNetUserLogins", (string)null);
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+            {
+                b.Property<string>("UserId")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("RoleId")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("UserId", "RoleId");
+                b.HasKey("UserId", "RoleId");
 
-                    b.HasIndex("RoleId");
+                b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
+                b.ToTable("AspNetUserRoles", (string)null);
 
-                    b.HasData(
-                        new
-                        {
-                            UserId = "8408394f-8eab-4825-bfac-fab6fc9b145a",
-                            RoleId = "1"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        UserId = "8408394f-8eab-4825-bfac-fab6fc9b145a",
+                        RoleId = "1"
+                    });
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+            {
+                b.Property<string>("UserId")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("LoginProvider")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("Name")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Value")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("UserId", "LoginProvider", "Name");
+                b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
-                });
+                b.ToTable("AspNetUserTokens", (string)null);
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.ApplicationUser", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
+            {
+                b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
 
-                    b.Property<bool?>("ActiveUser")
-                        .HasColumnType("bit");
+                b.Property<bool?>("ActiveUser")
+                    .HasColumnType("bit");
 
-                    b.Property<DateTime>("Birthday")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("Birthday")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("Birthplace")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Birthplace")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("City")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("EmergencyPhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("EmergencyPhoneNumber")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("FirstName")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Gender")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("Gender")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Graduation")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Graduation")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImageUser")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ImageUser")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Job")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Job")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("LastName")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Name")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Nationality")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Nationality")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Street")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Street")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("StreetNr")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("StreetNr")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ZipCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ZipCode")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.HasDiscriminator().HasValue("ApplicationUser");
+                b.HasDiscriminator().HasValue("ApplicationUser");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = "8408394f-8eab-4825-bfac-fab6fc9b145a",
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "df11ac27-4372-4ee2-a3eb-44aaec05305d",
-                            Email = "admin@admin.com",
-                            EmailConfirmed = false,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "admin@admin.com",
-                            NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHrsblilNdIyg/FnWy+oRsZiJ92DHYvVNv5mEHyGbpeYI8iCBK7zipjaP9Zg/Dg22Q==",
-                            PhoneNumber = "+1234567890",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "93b608b0-4bb6-4b75-826f-0f57481b1c6a",
-                            TwoFactorEnabled = false,
-                            UserName = "Admin",
-                            Birthday = new DateTime(1985, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Birthplace = "city",
-                            City = "New York",
-                            FirstName = "John",
-                            Gender = "Male",
-                            Graduation = "Bachelor of Science in Computer Science",
-                            Job = "Software Developer",
-                            LastName = "Doe",
-                            Name = "admin",
-                            Nationality = "American",
-                            Street = "123 Main St",
-                            StreetNr = "1A",
-                            ZipCode = "10001"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = "8408394f-8eab-4825-bfac-fab6fc9b145a",
+                        AccessFailedCount = 0,
+                        ConcurrencyStamp = "df11ac27-4372-4ee2-a3eb-44aaec05305d",
+                        Email = "admin@admin.com",
+                        EmailConfirmed = false,
+                        LockoutEnabled = false,
+                        NormalizedEmail = "admin@admin.com",
+                        NormalizedUserName = "ADMIN",
+                        PasswordHash = "AQAAAAIAAYagAAAAEHrsblilNdIyg/FnWy+oRsZiJ92DHYvVNv5mEHyGbpeYI8iCBK7zipjaP9Zg/Dg22Q==",
+                        PhoneNumber = "+1234567890",
+                        PhoneNumberConfirmed = false,
+                        SecurityStamp = "93b608b0-4bb6-4b75-826f-0f57481b1c6a",
+                        TwoFactorEnabled = false,
+                        UserName = "Admin",
+                        Birthday = new DateTime(1985, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                        Birthplace = "city",
+                        City = "New York",
+                        FirstName = "John",
+                        Gender = "Male",
+                        Graduation = "Bachelor of Science in Computer Science",
+                        Job = "Software Developer",
+                        LastName = "Doe",
+                        Name = "admin",
+                        Nationality = "American",
+                        Street = "123 Main St",
+                        StreetNr = "1A",
+                        ZipCode = "10001"
+                    });
+            });
 
             modelBuilder.Entity("CourseUpload", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Course", null)
-                        .WithMany()
-                        .HasForeignKey("CoursesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Course", null)
+                    .WithMany()
+                    .HasForeignKey("CoursesId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("FekraHubAPI.Data.Models.Upload", null)
-                        .WithMany()
-                        .HasForeignKey("UploadsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+                b.HasOne("FekraHubAPI.Data.Models.Upload", null)
+                    .WithMany()
+                    .HasForeignKey("UploadsId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Course", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Room", "Room")
-                        .WithMany("Course")
-                        .HasForeignKey("RoomId");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Room", "Room")
+                    .WithMany("Course")
+                    .HasForeignKey("RoomId");
 
-                    b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
-                        .WithMany("Course")
-                        .HasForeignKey("UserId");
+                b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
+                    .WithMany("Course")
+                    .HasForeignKey("UserId");
 
-                    b.Navigation("Room");
+                b.Navigation("Room");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.CourseEvent", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Event", "Event")
-                        .WithMany("CourseEvent")
-                        .HasForeignKey("EventID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Event", "Event")
+                    .WithMany("CourseEvent")
+                    .HasForeignKey("EventID");
 
-                    b.HasOne("FekraHubAPI.Data.Models.CourseSchedule", "CourseSchedule")
-                        .WithMany("courseEvent")
-                        .HasForeignKey("ScheduleID");
+                b.HasOne("FekraHubAPI.Data.Models.CourseSchedule", "CourseSchedule")
+                    .WithMany("courseEvent")
+                    .HasForeignKey("ScheduleID");
 
-                    b.Navigation("CourseSchedule");
+                b.Navigation("CourseSchedule");
 
-                    b.Navigation("Event");
-                });
+                b.Navigation("Event");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.CourseSchedule", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Course", "Course")
-                        .WithMany("CourseSchedule")
-                        .HasForeignKey("CourseID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Course", "Course")
+                    .WithMany("CourseSchedule")
+                    .HasForeignKey("CourseID");
 
-                    b.Navigation("Course");
-                });
+                b.Navigation("Course");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Event", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.EventType", "EventType")
-                        .WithMany("Event")
-                        .HasForeignKey("TypeID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.EventType", "EventType")
+                    .WithMany("Event")
+                    .HasForeignKey("TypeID");
 
-                    b.Navigation("EventType");
-                });
+                b.Navigation("EventType");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.ParentContract", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
-                        .WithMany("ParentContract")
-                        .HasForeignKey("ParentID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
+                    .WithMany("ParentContract")
+                    .HasForeignKey("ParentID");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.ParentInvoice", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Student", "Student")
-                        .WithMany("parentInvoices")
-                        .HasForeignKey("StudentID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Student", "Student")
+                    .WithMany("parentInvoices")
+                    .HasForeignKey("StudentID");
 
-                    b.Navigation("Student");
-                });
+                b.Navigation("Student");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.PayRoll", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
-                        .WithMany("PayRoll")
-                        .HasForeignKey("UserID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
+                    .WithMany("PayRoll")
+                    .HasForeignKey("UserID");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Report", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Student", "Student")
-                        .WithMany("Report")
-                        .HasForeignKey("StudentId");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Student", "Student")
+                    .WithMany("Report")
+                    .HasForeignKey("StudentId");
 
-                    b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
-                        .WithMany("Report")
-                        .HasForeignKey("UserId");
+                b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
+                    .WithMany("Report")
+                    .HasForeignKey("UserId");
 
-                    b.Navigation("Student");
+                b.Navigation("Student");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Room", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Location", "Location")
-                        .WithMany("room")
-                        .HasForeignKey("LocationID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Location", "Location")
+                    .WithMany("room")
+                    .HasForeignKey("LocationID");
 
-                    b.Navigation("Location");
-                });
+                b.Navigation("Location");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Student", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
-                        .WithMany("Student")
-                        .HasForeignKey("ParentID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
+                    .WithMany("Student")
+                    .HasForeignKey("ParentID");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.StudentAttendance", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Course", "Course")
-                        .WithMany("StudentAttendance")
-                        .HasForeignKey("CourseID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Course", "Course")
+                    .WithMany("StudentAttendance")
+                    .HasForeignKey("CourseID");
 
-                    b.HasOne("FekraHubAPI.Data.Models.AttendanceStatus", "AttendanceStatus")
-                        .WithMany("StudentAttendance")
-                        .HasForeignKey("StatusID");
+                b.HasOne("FekraHubAPI.Data.Models.AttendanceStatus", "AttendanceStatus")
+                    .WithMany("StudentAttendance")
+                    .HasForeignKey("StatusID");
 
-                    b.HasOne("FekraHubAPI.Data.Models.Student", "Student")
-                        .WithMany("StudentAttendance")
-                        .HasForeignKey("StudentID");
+                b.HasOne("FekraHubAPI.Data.Models.Student", "Student")
+                    .WithMany("StudentAttendance")
+                    .HasForeignKey("StudentID");
 
-                    b.Navigation("AttendanceStatus");
+                b.Navigation("AttendanceStatus");
 
-                    b.Navigation("Course");
+                b.Navigation("Course");
 
-                    b.Navigation("Student");
-                });
+                b.Navigation("Student");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.TeacherAttendance", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Course", "Course")
-                        .WithMany("TeacherAttendance")
-                        .HasForeignKey("CourseID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Course", "Course")
+                    .WithMany("TeacherAttendance")
+                    .HasForeignKey("CourseID");
 
-                    b.HasOne("FekraHubAPI.Data.Models.AttendanceStatus", "AttendanceStatus")
-                        .WithMany("TeacherAttendance")
-                        .HasForeignKey("StatusID");
+                b.HasOne("FekraHubAPI.Data.Models.AttendanceStatus", "AttendanceStatus")
+                    .WithMany("TeacherAttendance")
+                    .HasForeignKey("StatusID");
 
-                    b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "Teacher")
-                        .WithMany("TeacherAttendance")
-                        .HasForeignKey("TeacherID");
+                b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "Teacher")
+                    .WithMany("TeacherAttendance")
+                    .HasForeignKey("TeacherID");
 
-                    b.Navigation("AttendanceStatus");
+                b.Navigation("AttendanceStatus");
 
-                    b.Navigation("Course");
+                b.Navigation("Course");
 
-                    b.Navigation("Teacher");
-                });
+                b.Navigation("Teacher");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Upload", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.UploadType", "UploadTypeID")
-                        .WithMany("Upload")
-                        .HasForeignKey("UploadTypeIDId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("FekraHubAPI.Data.Models.UploadType", "UploadTypeID")
+                    .WithMany("Upload")
+                    .HasForeignKey("UploadTypeIDId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("UploadTypeID");
-                });
+                b.Navigation("UploadTypeID");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.UploadCourse", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.Course", "Course")
+                    .WithMany()
+                    .HasForeignKey("CourseID");
 
-                    b.HasOne("FekraHubAPI.Data.Models.Upload", "Upload")
-                        .WithMany()
-                        .HasForeignKey("UploadID");
+                b.HasOne("FekraHubAPI.Data.Models.Upload", "Upload")
+                    .WithMany()
+                    .HasForeignKey("UploadID");
 
-                    b.Navigation("Course");
+                b.Navigation("Course");
 
-                    b.Navigation("Upload");
-                });
+                b.Navigation("Upload");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.WorkContract", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
-                        .WithMany("WorkContract")
-                        .HasForeignKey("TeacherID");
+            {
+                b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
+                    .WithMany("WorkContract")
+                    .HasForeignKey("TeacherID");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    .WithMany()
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    .WithMany()
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.AttendanceStatus", b =>
-                {
-                    b.Navigation("StudentAttendance");
+            {
+                b.Navigation("StudentAttendance");
 
-                    b.Navigation("TeacherAttendance");
-                });
+                b.Navigation("TeacherAttendance");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Course", b =>
-                {
-                    b.Navigation("CourseSchedule");
+            {
+                b.Navigation("CourseSchedule");
 
-                    b.Navigation("StudentAttendance");
+                b.Navigation("StudentAttendance");
 
-                    b.Navigation("TeacherAttendance");
-                });
+                b.Navigation("TeacherAttendance");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.CourseSchedule", b =>
-                {
-                    b.Navigation("courseEvent");
-                });
+            {
+                b.Navigation("courseEvent");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Event", b =>
-                {
-                    b.Navigation("CourseEvent");
-                });
+            {
+                b.Navigation("CourseEvent");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.EventType", b =>
-                {
-                    b.Navigation("Event");
-                });
+            {
+                b.Navigation("Event");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Location", b =>
-                {
-                    b.Navigation("room");
-                });
+            {
+                b.Navigation("room");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Room", b =>
-                {
-                    b.Navigation("Course");
-                });
+            {
+                b.Navigation("Course");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Student", b =>
-                {
-                    b.Navigation("Report");
+            {
+                b.Navigation("Report");
 
-                    b.Navigation("StudentAttendance");
+                b.Navigation("StudentAttendance");
 
-                    b.Navigation("parentInvoices");
-                });
+                b.Navigation("parentInvoices");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.UploadType", b =>
-                {
-                    b.Navigation("Upload");
-                });
+            {
+                b.Navigation("Upload");
+            });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.ApplicationUser", b =>
-                {
-                    b.Navigation("Course");
+            {
+                b.Navigation("Course");
 
-                    b.Navigation("ParentContract");
+                b.Navigation("ParentContract");
 
-                    b.Navigation("PayRoll");
+                b.Navigation("PayRoll");
 
-                    b.Navigation("Report");
+                b.Navigation("Report");
 
-                    b.Navigation("Student");
+                b.Navigation("Student");
 
-                    b.Navigation("TeacherAttendance");
+                b.Navigation("TeacherAttendance");
 
-                    b.Navigation("WorkContract");
-                });
+                b.Navigation("WorkContract");
+            });
 #pragma warning restore 612, 618
         }
     }

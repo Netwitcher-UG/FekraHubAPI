@@ -2,6 +2,8 @@ using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.Extentions;
+using FekraHubAPI.Repositories.Implementations;
+using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -33,6 +35,9 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 });
+
+// Add services to the container.
+builder.Services.AddTransient(typeof(IRepository<>), typeof(GenericRepository<>));
 // Add services to the container.
 
 builder.Services.AddControllers();

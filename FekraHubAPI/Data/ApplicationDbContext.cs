@@ -44,7 +44,7 @@ namespace FekraHubAPI.Data
         public DbSet<Event> Events { get; set; }
         public DbSet<CourseSchedule> CourseSchedules { get; set; }
         public DbSet<EventType> EventsTypes { get; set; }
-        public DbSet<ParentContract> ParentContracts { get; set; }
+        public DbSet<StudentContract> StudentContract { get; set; }
         public DbSet<ParentInvoice> ParentInvoices { get; set; }
         public DbSet<PayRoll> PayRoll { get; set; }
         public DbSet<Report> Reports { get; set; }
@@ -56,6 +56,7 @@ namespace FekraHubAPI.Data
         public DbSet<UploadCourse> UploadsCourse { get; set; }
         public DbSet<UploadType> UploadsType { get; set; }
         public DbSet<WorkContract> WorkContracts { get; set; }
+        public DbSet<TeacherCourse> TeacherCourse { get; set; }
 
         public DbSet<Location> Location { get; set; }
 

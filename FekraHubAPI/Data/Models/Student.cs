@@ -12,7 +12,7 @@ namespace FekraHubAPI.Data.Models
         public string FirstName { get; set; }
         [StringLength(50)]
         public string LastName { get; set; }
-        [EmailAddress]
+      
         public DateTime Birthday { get; set; }
         public string Nationality { get; set; }
         public string Note { get; set; }
@@ -20,6 +20,12 @@ namespace FekraHubAPI.Data.Models
         [ForeignKey("ParentID")]
         public virtual ApplicationUser User { get; set; }
         public string? ParentID { get; set; }
+
+          [ForeignKey("CourseID")]
+        public virtual Course Course { get; set; }
+        public int? CourseID { get; set; }
+
+        public ICollection<StudentContract> StudentContract { get; set; }
 
         public ICollection<StudentAttendance> StudentAttendance { get; set; }
         public ICollection<Report> Report { get; set; }

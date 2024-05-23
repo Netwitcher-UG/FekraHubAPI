@@ -27,6 +27,34 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
+            var allUsers = await _db.ApplicationUser.ToListAsync();
+            return Ok(allUsers);
+        }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUser(id)
+        {
+            var user = await _db.ApplicationUser.SingleOrDefaultAsync(x => x.Id == id);
+            if (user == null)
+            {
+                return NotFound($"user {id} not exists!");
+            }
+            return Ok(user);
+        }
+        [HttpPost]
+        public async Task<IActionResult> AddUser()
+        {
+            var cats = await _db.ApplicationUser.ToListAsync();
+            return Ok(cats);
+        }
+        [HttpPut]
+        public async Task<IActionResult> UpdateUser()
+        {
+            var cats = await _db.ApplicationUser.ToListAsync();
+            return Ok(cats);
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser()
+        {
             var cats = await _db.ApplicationUser.ToListAsync();
             return Ok(cats);
         }

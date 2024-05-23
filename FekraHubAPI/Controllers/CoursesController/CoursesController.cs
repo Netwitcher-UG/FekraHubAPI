@@ -1,6 +1,7 @@
 using AutoMapper;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.Models.Courses;
+using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -13,88 +14,80 @@ namespace FekraHubAPI.Controllers.CoursesController
     {
         private readonly IRepository<Course> _courseRepository;
         private readonly IMapper _mapper;
+
         public CoursesController(IRepository<Course> courseRepository, IMapper mapper)
         {
             _courseRepository = courseRepository;
             _mapper = mapper;
         }
 
-        // GET: api/Locations
+        // GET: api/Course
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Course>>> GetCourse()
+        public async Task<ActionResult<IEnumerable<mdl_Course>>> GetCourses()
         {
-            var locations = await _locationRepository.GetAll();
-            return Ok(locations);
+            var courses = await _courseRepository.GetAll();
+       
+            return Ok(courses);
         }
 
-        // GET: api/Locations/5
+        // GET: api/Course/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Course>> GetCourse(int id)
+        public async Task<ActionResult<mdl_Course>> GetCourse(int id)
         {
-            var location = await _locationRepository.GetById(id);
-            if (location == null)
+            var course = await _courseRepository.GetById(id);
+            if (course == null)
             {
                 return NotFound();
             }
-            return Ok(location);
+                  return Ok(course);
         }
 
-        // PUT: api/Locations/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse(int id, Course course)
-        {
-            if (id != location.Id)
-            {
-                return BadRequest();
-            }
-
-            try
-            {
-                await _locationRepository.Update(location);
-            }
-            catch
-            {
-                if (await _locationRepository.GetById(id) == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Locations
+        // POST: api/Course
         [HttpPost]
-        public async Task<ActionResult<Course>> PostCourse([FromForm] mdl_Course location)
+        public async Task<ActionResult<mdl_Course>> PostCourse([FromForm] mdl_Course courseDto)
         {
-
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var locationEntity = _mapper.Map<Location>(location);
-            await _locationRepository.Add(locationEntity);
-            return CreatedAtAction("GetLocation", new { id = locationEntity.Id }, locationEntity);
+            var courseEntity = _mapper.Map<Course>(courseDto);
+            await _courseRepository.Add(courseEntity);
 
+            return CreatedAtAction("GetCourses", new { id = courseEntity.Id }, courseEntity);
         }
 
-
-        // DELETE: api/Locations/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteLocation(int id)
+        // PUT: api/Course/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCourse(int id, [FromForm] mdl_Course courseDto)
         {
-            var location = await _locationRepository.GetById(id);
-            if (location == null)
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var courseEntity = await _courseRepository.GetById(id);
+            if (courseEntity == null)
             {
                 return NotFound();
             }
 
-            await _locationRepository.Delete(id);
+            _mapper.Map(courseDto, courseEntity);
+            await _courseRepository.Update(courseEntity);
 
+            return NoContent();
+        }
+
+        // DELETE: api/Course/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCourse(int id)
+        {
+            var courseEntity = await _courseRepository.GetById(id);
+            if (courseEntity == null)
+            {
+                return NotFound();
+            }
+
+            await _courseRepository.Delete(id);
             return NoContent();
         }
 

@@ -21,15 +21,18 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // GET: api/Locations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Location>>> GetLocations()
+        public async Task<ActionResult<IEnumerable<mdl_location>>> GetLocations()
         {
             var locations = await _locationRepository.GetAll();
+          
             return Ok(locations);
         }
 
+
         // GET: api/Locations/5
+   
         [HttpGet("{id}")]
-        public async Task<ActionResult<Location>> GetLocation(int id)
+        public async Task<ActionResult<mdl_location>> GetLocation(int id)
         {
             var location = await _locationRepository.GetById(id);
             if (location == null)
@@ -39,34 +42,28 @@ namespace FekraHubAPI.Controllers.CoursesController
             return Ok(location);
         }
 
+
         // PUT: api/Locations/5
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, Location location)
+        public async Task<IActionResult> PutLocation(int id, [FromForm] mdl_location locationDto)
         {
-            if (id != location.Id)
+            if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest(ModelState);
             }
 
-            try
+            var locationEntity = await _locationRepository.GetById(id);
+            if (locationEntity == null)
             {
-                await _locationRepository.Update(location);
+                return NotFound();
             }
-            catch
-            {
-                if (await _locationRepository.GetById(id) == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+
+            _mapper.Map(locationDto, locationEntity);
+            await _locationRepository.Update(locationEntity);
 
             return NoContent();
         }
-
         // POST: api/Locations
         [HttpPost]
         public async Task<ActionResult<Location>> PostLocation([FromForm] mdl_location location)
@@ -97,5 +94,6 @@ namespace FekraHubAPI.Controllers.CoursesController
 
             return NoContent();
         }
+
     }
 }

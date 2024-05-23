@@ -22,7 +22,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // GET: api/Rooms
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Room>>> GetRooms()
+        public async Task<ActionResult<IEnumerable<mdl_Room>>> GetRooms()
         {
             var rooms = await _roomRepository.GetAll();
             return Ok(rooms);
@@ -30,7 +30,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // GET: api/Rooms/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Room>> GetRoom(int id)
+        public async Task<ActionResult<mdl_Room>> GetRoom(int id)
         {
             var room = await _roomRepository.GetById(id);
             if (room == null)
@@ -42,34 +42,28 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // PUT: api/Rooms/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutRoom(int id, Room room)
+   
+        public async Task<IActionResult> PutRoom(int id, [FromForm] mdl_Room room)
         {
-            if (id != room.Id)
+            if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest(ModelState);
             }
 
-            try
+            var roomEntity = await _roomRepository.GetById(id);
+            if (roomEntity == null)
             {
-                await _roomRepository.Update(room);
+                return NotFound();
             }
-            catch
-            {
-                if (await _roomRepository.GetById(id) == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+
+            _mapper.Map(room, roomEntity);
+            await _roomRepository.Update(roomEntity);
 
             return NoContent();
         }
 
         // POST: api/Rooms
-      
+
 
         [HttpPost]
         public async Task<ActionResult<Room>> PostRoom([FromForm] mdl_Room room)

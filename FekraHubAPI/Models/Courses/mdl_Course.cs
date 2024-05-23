@@ -14,7 +14,6 @@ namespace FekraHubAPI.Models.Courses
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
-
         public string? UserId { get; set; }
         public int? RoomId { get; set; }
 

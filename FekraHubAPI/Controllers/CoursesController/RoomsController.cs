@@ -1,4 +1,6 @@
+using AutoMapper;
 using FekraHubAPI.Data.Models;
+using FekraHubAPI.Models.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,10 +12,12 @@ namespace FekraHubAPI.Controllers.CoursesController
     public class RoomsController : ControllerBase
     {
         private readonly IRepository<Room> _roomRepository;
+        private readonly IMapper _mapper;
 
-        public RoomsController(IRepository<Room> roomRepository)
+        public RoomsController(IRepository<Room> roomRepository, IMapper mapper)
         {
             _roomRepository = roomRepository;
+            _mapper = mapper;
         }
 
         // GET: api/Rooms
@@ -65,11 +69,14 @@ namespace FekraHubAPI.Controllers.CoursesController
         }
 
         // POST: api/Rooms
+      
+
         [HttpPost]
-        public async Task<ActionResult<Room>> PostRoom([FromForm]  Room room)
+        public async Task<ActionResult<Room>> PostRoom([FromForm] mdl_Room room)
         {
-            await _roomRepository.Add(room);
-            return CreatedAtAction("GetRoom", new { id = room.Id }, room);
+            var roomEntity = _mapper.Map<Room>(room);
+            await _roomRepository.Add(roomEntity);
+            return CreatedAtAction("GetRoom", new { id = roomEntity.Id }, roomEntity);
         }
 
         // DELETE: api/Rooms/5

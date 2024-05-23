@@ -1,3 +1,4 @@
+using AutoMapper;
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
@@ -5,10 +6,12 @@ using FekraHubAPI.Extentions;
 using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Reflection;
 using IEmailSender = FekraHubAPI.EmailSender.IEmailSender;
 
 
@@ -28,6 +31,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddDefaultTokenPro
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 
+
 //Adding Authentication 
 builder.Services.AddAuthentication(options =>
 {
@@ -41,6 +45,9 @@ builder.Services.AddTransient(typeof(IRepository<>), typeof(GenericRepository<>)
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

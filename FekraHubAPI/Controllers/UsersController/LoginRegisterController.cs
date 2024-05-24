@@ -108,19 +108,26 @@ namespace FekraHubAPI.Controllers.UsersController
 
                         if (result.Succeeded)
                         {
-                            userManager.AddToRoleAsync(appUser, RoleParent).Wait();
-                            transaction.Commit();
                             ApplicationUser? ThisNewUser = await userManager.FindByEmailAsync(user.email);
-                            if (ThisNewUser != null) {
-                                await emailSender.SendConfirmationEmail(ThisNewUser);
+                            if (ThisNewUser != null)
+                            {
+                                var res = await emailSender.SendConfirmationEmail(ThisNewUser);
+                                if (res is OkResult)
+                                {
+                                    userManager.AddToRoleAsync(appUser, RoleParent).Wait();
+                                    transaction.Commit();
+                                    return Ok("Success!! . Please go to your email message box and confirm your email");
+                                }
+                                else
+                                {
+                                    await userManager.DeleteAsync(ThisNewUser);
+                                    return BadRequest("Change your email please!");
+                                }
                             }
                             else
                             {
                                 return Ok("Resend Link");
                             }
-                            
-
-                            return Ok("Success");
                         }
                         else
                         {

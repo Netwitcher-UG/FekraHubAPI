@@ -7,6 +7,7 @@ using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +55,12 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSwaggerGenJwtAuth();
 
 builder.Services.AddCustomJwtAuth(builder.Configuration);
+
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 209715200; // Limit upload size to 200 MB
+});
 
 
 var app = builder.Build();

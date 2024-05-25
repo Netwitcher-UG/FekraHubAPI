@@ -46,7 +46,7 @@ namespace FekraHubAPI.Controllers.CoursesController
         // PUT: api/Locations/5
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, [FromForm] mdl_location locationDto)
+        public async Task<IActionResult> PutLocation(int id, [FromForm] mdl_location locationMdl)
         {
             if (!ModelState.IsValid)
             {
@@ -59,7 +59,7 @@ namespace FekraHubAPI.Controllers.CoursesController
                 return NotFound();
             }
 
-            _mapper.Map(locationDto, locationEntity);
+            _mapper.Map(locationMdl, locationEntity);
             await _locationRepository.Update(locationEntity);
 
             return NoContent();

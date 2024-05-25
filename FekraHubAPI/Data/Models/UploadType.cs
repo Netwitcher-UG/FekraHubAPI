@@ -9,5 +9,10 @@ namespace FekraHubAPI.Data.Models
         public string TypeTitle { get; set; }
 
         public ICollection<Upload> Upload { get; set; }
+
+        internal static Task<string> GetSingleOrDefaultAsync(Func<object, bool> value)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -44,13 +44,13 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // POST: api/Course
         [HttpPost]
-        public async Task<ActionResult<mdl_Course>> PostCourse([FromForm] mdl_Course courseDto)
+        public async Task<ActionResult<mdl_Course>> PostCourse([FromForm] mdl_Course courseMdl)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var courseEntity = _mapper.Map<Course>(courseDto);
+            var courseEntity = _mapper.Map<Course>(courseMdl);
             await _courseRepository.Add(courseEntity);
 
             return CreatedAtAction("GetCourses", new { id = courseEntity.Id }, courseEntity);
@@ -58,7 +58,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // PUT: api/Course/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse(int id, [FromForm] mdl_Course courseDto)
+        public async Task<IActionResult> PutCourse(int id, [FromForm] mdl_Course courseMdl)
         {
             if (!ModelState.IsValid)
             {
@@ -71,7 +71,7 @@ namespace FekraHubAPI.Controllers.CoursesController
                 return NotFound();
             }
 
-            _mapper.Map(courseDto, courseEntity);
+            _mapper.Map(courseMdl, courseEntity);
             await _courseRepository.Update(courseEntity);
 
             return NoContent();

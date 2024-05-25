@@ -30,8 +30,9 @@ namespace FekraHubAPI.Data.Models
         public ICollection<TeacherAttendance> TeacherAttendance { get; set; }
         public ICollection<StudentAttendance> StudentAttendance { get; set; }
         public ICollection<CourseSchedule> CourseSchedule { get; set; }
-
-        public ICollection<UploadCourse> UploadCourses { get; set; }
+        public ICollection<Student> Student { get; set; }
+        public ICollection<UploadCourse> UploadCourse { get; set; }
+        public ICollection<TeacherCourse> Teacher { get; set; }
 
 
 

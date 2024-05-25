@@ -4,6 +4,7 @@ using FekraHubAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FekraHubAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240522162206_updateDB2")]
+    partial class updateDB2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -890,7 +893,7 @@ namespace FekraHubAPI.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "ca05936e-1948-49cc-9231-4a5b4fb79e44",
+                            UserId = "86687f5a-ab0e-4dc7-a830-367329c91e8a",
                             RoleId = "1"
                         });
                 });
@@ -985,18 +988,18 @@ namespace FekraHubAPI.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ca05936e-1948-49cc-9231-4a5b4fb79e44",
+                            Id = "86687f5a-ab0e-4dc7-a830-367329c91e8a",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "314f81e0-ff66-476e-ab12-ff913967d6fa",
+                            ConcurrencyStamp = "11f5e41f-d935-4e19-bfed-4dbc74846ede",
                             Email = "admin@admin.com",
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             NormalizedEmail = "admin@admin.com",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEJmdeY/S62UiaM9Os03VLNLJ7Xy3YM4l+hvGlarAkME0VnUtTRWkInvHhdjA/54Tow==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEM48cY4DR49KCgE26mtOXkAJmkypPeSLnkJiLwe1U/S0GPdLYgSAWORtiSahbb+iag==",
                             PhoneNumber = "+1234567890",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "793b3fcc-9abf-47d0-ac48-4630287df3f2",
+                            SecurityStamp = "f0e10e67-5043-4ce0-8727-795e319f0253",
                             TwoFactorEnabled = false,
                             UserName = "Admin",
                             Birthday = new DateTime(1985, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -1206,7 +1209,7 @@ namespace FekraHubAPI.Migrations
             modelBuilder.Entity("FekraHubAPI.Data.Models.UploadCourse", b =>
                 {
                     b.HasOne("FekraHubAPI.Data.Models.Course", "Course")
-                        .WithMany("UploadCourse")
+                        .WithMany("Uploads")
                         .HasForeignKey("CourseID");
 
                     b.HasOne("FekraHubAPI.Data.Models.Upload", "Upload")
@@ -1297,7 +1300,7 @@ namespace FekraHubAPI.Migrations
 
                     b.Navigation("TeacherAttendance");
 
-                    b.Navigation("UploadCourse");
+                    b.Navigation("Uploads");
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.CourseSchedule", b =>

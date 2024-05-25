@@ -43,7 +43,6 @@ namespace FekraHubAPI.Data.Models
         public ICollection<Student> Student { get; set; }
         public ICollection<TeacherAttendance> TeacherAttendance { get; set; }
         public ICollection<Course> Course { get; set; }
-        public ICollection<ParentContract> ParentContract { get; set; }
         public ICollection<Report> Report { get; set; }
         public ICollection<WorkContract> WorkContract { get; set; }
         public ICollection<PayRoll> PayRoll { get; set; }

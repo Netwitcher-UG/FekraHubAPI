@@ -4,7 +4,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FekraHubAPI.Data.Models
 {
-    public class ParentContract
+    public class StudentContract
     {
         [Key]
         public int Id { get; set; }
@@ -16,9 +16,9 @@ namespace FekraHubAPI.Data.Models
        
 
 
-        [ForeignKey("ParentID")]
-        public virtual ApplicationUser User { get; set; }
-        public string? ParentID { get; set; }
+        [ForeignKey("StudentID")]
+        public virtual Student Student { get; set; }
+        public int? StudentID { get; set; }
 
 
     }

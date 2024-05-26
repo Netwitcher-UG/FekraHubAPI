@@ -34,12 +34,12 @@ namespace FekraHubAPI.Controllers.CoursesController.UploadController
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_UploadType>> GetUploadType(int id)
         {
-            var location = await _uploadTypeRepository.GetById(id);
-            if (location == null)
+            var uploadType = await _uploadTypeRepository.GetById(id);
+            if (uploadType == null)
             {
                 return NotFound();
             }
-            return Ok(location);
+            return Ok(uploadType);
         }
 
 
@@ -84,8 +84,8 @@ namespace FekraHubAPI.Controllers.CoursesController.UploadController
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUploadType(int id)
         {
-            var location = await _uploadTypeRepository.GetById(id);
-            if (location == null)
+            var uploadType = await _uploadTypeRepository.GetById(id);
+            if (uploadType == null)
             {
                 return NotFound();
             }

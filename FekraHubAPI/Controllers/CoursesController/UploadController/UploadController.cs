@@ -39,7 +39,17 @@ namespace FekraHubAPI.Controllers.CoursesController.UploadController
             _context = context;
         }
 
-      
+
+
+        // GET: api/UploadTypes
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Upload>>> GetUploadTypes()
+        {
+            var upload = await _uploadRepository.GetAll();
+
+            return Ok(upload);
+        }
+
 
         [HttpPost("{courseId}/{UploadTypeId}/upload")]
         public async Task<IActionResult> UploadFiles(int courseId,int UploadTypeId, List<IFormFile> files)

@@ -5,7 +5,7 @@ namespace FekraHubAPI.Models.Courses
 {
     public class mdl_location : IMapFrom<Location>
     {
-
+        public string Name { get; set; }
         public string Street { get; set; }
         public string StreetNr { get; set; }
         public string ZipCode { get; set; }

@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using FekraHubAPI.Models.Users;
+using FekraHubAPI.HttpRequests.Users;
 using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Authorization;
 using FekraHubAPI.Data;
@@ -88,7 +88,7 @@ namespace FekraHubAPI.Controllers.UsersController
         }
 
         [HttpPost("RegisterParent")]
-        public async Task<IActionResult> RegisterParent(Register user)
+        public async Task<IActionResult> RegisterParent(RegisterParent user)
         {
             using (IDbContextTransaction transaction = this.context.Database.BeginTransaction())
             {
@@ -104,7 +104,7 @@ namespace FekraHubAPI.Controllers.UsersController
                         };
                         IdentityResult result = await userManager.CreateAsync(appUser, user.password);
 
-                        
+    
 
                         if (result.Succeeded)
                         {
@@ -128,6 +128,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             {
                                 return Ok("Resend Link");
                             }
+                            return Ok("Success");
                         }
                         else
                         {

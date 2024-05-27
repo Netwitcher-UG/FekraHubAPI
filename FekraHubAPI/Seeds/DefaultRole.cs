@@ -7,8 +7,8 @@ namespace FekraHubAPI.Seeds
 {
     public static class DefaultRole
     {
-        public  const String Admin = "Admin";
-        public  const String Secretariat = "Secretariat";
+        public const String Admin = "Admin";
+        public const String Secretariat = "Secretariat";
         public const String Parent = "Parent";
         public const String Teacher = "Teacher";
 
@@ -25,5 +25,22 @@ namespace FekraHubAPI.Seeds
 
 
         }
+        public static List<string> AllRoles()
+        {
+            return new List<string>
+            {
+                Admin,
+                Secretariat,
+                Parent,
+                Teacher,
+            };
+        }
+
+        public static bool checkRole(string role)
+        {
+            var allrole = AllRoles();
+            return allrole.Contains(role);
+        }
+
     }
 }

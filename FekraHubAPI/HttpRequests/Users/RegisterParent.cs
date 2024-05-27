@@ -1,14 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
-using FekraHubAPI.Seeds;
-using Microsoft.AspNetCore.Http;
 
-namespace FekraHubAPI.Models.Users
+
+namespace FekraHubAPI.HttpRequests.Users
 {
-    public class Register
+    public class RegisterParent
     {
-        private string RoleParent = DefaultRole.Parent;
-        private string RoleTeacher = DefaultRole.Teacher;
 
         [Required]
         public string userName { get; set; }

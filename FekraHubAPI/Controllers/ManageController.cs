@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using FekraHubAPI.Models.Users;
+using FekraHubAPI.HttpRequests.Users;
 using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Authorization;
 using FekraHubAPI.Data;

@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Numerics;
 using System.Reflection.Emit;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using FekraHubAPI.Models;
 using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers;
 using System.Data;

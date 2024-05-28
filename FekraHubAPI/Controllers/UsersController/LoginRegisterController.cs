@@ -56,6 +56,7 @@ namespace FekraHubAPI.Controllers.UsersController
                         foreach (var role in roles)
                         {
                             claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+                            claims.Add(new Claim("type", "value"));
                         }
                         //signingCredentials
                         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"]));

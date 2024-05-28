@@ -55,6 +55,10 @@ namespace FekraHubAPI.Controllers
 
         public List<IdentityRole> AllRoles()
         {
+            /*
+            IList<string> userRoles = UserManager.GetRoles(userId);
+            IList<string> userRoles = await UserManager.GetRolesAsync(userId);
+            */
             var Roles =  _roleManager.FindByNameAsync("Admin");
 
             return _roleManager.Roles.ToList();

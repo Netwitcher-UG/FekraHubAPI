@@ -35,7 +35,11 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 });
-
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("value", policy =>
+        policy.RequireClaim("type", "value"));
+});
 // Add services to the container.
 builder.Services.AddTransient(typeof(IRepository<>), typeof(GenericRepository<>));
 // Add services to the container.

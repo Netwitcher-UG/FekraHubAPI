@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using FekraHubAPI.HttpRequests.Users;
+using FekraHubAPI.HttpRequests.Response;
 using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Authorization;
 using FekraHubAPI.Data;
@@ -20,10 +21,12 @@ using static Azure.Core.HttpHeader;
 using System.Security.Cryptography;
 using System.IO;
 using System.Reflection.Emit;
+using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.Controllers.UsersController
 {
     [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
     public class AccountController : ControllerBase
     {
@@ -60,7 +63,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
         
         [HttpPut]
-        public async Task<IActionResult> UpdateAccount( [FromForm] Account accountUpdate)
+        public async Task<IActionResult> UpdateAccount( [FromForm] AccountUpdate accountUpdate)
         {
             var getCurrentAccount = await GetCurrentUserAsync();
             var account = await _db.ApplicationUser.FindAsync(getCurrentAccount.Id);
@@ -73,6 +76,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 account.ImageUser = stream.ToString();
 
             }
+            
             var normalizedEmail = accountUpdate.email.Normalize().ToLower();
             var normalizedUserName = accountUpdate.userName.Normalize().ToLower();
 
@@ -100,19 +104,88 @@ namespace FekraHubAPI.Controllers.UsersController
             _db.SaveChanges();
             return Ok(account);
         }
-        [HttpPost("[action]")]
-        public async Task<IActionResult> RestPassword( Account accountUpdate)
+
+
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("[action]")]
+
+        public async Task<IActionResult> ForgotPassword([Required] string email)
         {
-            var getCurrentAccount = await GetCurrentUserAsync();
-            var account = await _db.ApplicationUser.FindAsync(getCurrentAccount.Id);
 
-            if (account == null)
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user != null)
             {
-                return NotFound($"user id not exists !");
-            }
-            await _userManager.CreateAsync(account, accountUpdate.password);
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var forgotPasswordLink = Url.Action(nameof(ResetPassword), "Authentication", new { token, email = user.Email }, Request.Scheme);
+                /*var message = new Message(new string[] { user.Email! }, "Forgot Password Link", forgotPasswordLink!);
+                _emailService.SendEmail(message);
+                
+                return StatusCode(StatusCodes.Status2000K,
+                new Response { Status = "Success", Message = $"User created & Email Sent to {user.Email} SuccessFully" });
+                */
+                return Ok(token);
 
-            return Ok("Password User Reset");
+            }
+            return StatusCode(StatusCodes.Status400BadRequest,
+                   new Response { Status = "Error", Message = $"Could not send link to email , please try again." });
+        }
+
+
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("reset-password")]
+        public async Task<IActionResult> ResetPasswordr(ResetPassword resetPassword)
+        {
+            var user = await _userManager.FindByEmailAsync(resetPassword.Email);
+            if (user != null)
+            {
+
+                var resetPassResult = await _userManager.ResetPasswordAsync(user, resetPassword.Token, resetPassword.Password);
+                if (!resetPassResult.Succeeded)
+                {
+                    foreach (var error in resetPassResult.Errors)
+                    {
+
+                        ModelState.AddModelError(error.Code, error.Description);
+                    }
+                    return Ok(ModelState);
+                }
+                return StatusCode(StatusCodes.Status200OK,
+                    new Response { Status = "Success", Message = $"Password has been changed" });
+            }
+            return StatusCode(StatusCodes.Status400BadRequest,
+                    new Response { Status = "Error", Message = $"Could not change password , please try again." });
+
+        }
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> ChangePassword(ChangePassword changePassword)
+        {
+            var currentUser = await GetCurrentUserAsync();
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(currentUser);
+
+
+            if (currentUser != null)
+            {
+
+                var resetPassResult = await _userManager.ResetPasswordAsync(currentUser, token, changePassword.Password);
+                if (!resetPassResult.Succeeded)
+                {
+                    foreach (var error in resetPassResult.Errors)
+                    {
+
+                        ModelState.AddModelError(error.Code, error.Description);
+                    }
+                    return Ok(ModelState);
+                }
+                return StatusCode(StatusCodes.Status200OK,
+                    new Response { Status = "Success", Message = $"Password has been changed" });
+            }
+            return StatusCode(StatusCodes.Status400BadRequest,
+                    new Response { Status = "Error", Message = $"Could not change password , please try again." });
+
         }
     }
 }

@@ -1,6 +1,6 @@
 using AutoMapper;
+using FekraHubAPI.@class.Courses;
 using FekraHubAPI.Data.Models;
-using FekraHubAPI.Models.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +22,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // GET: api/Rooms
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<mdl_Room>>> GetRooms()
+        public async Task<ActionResult<IEnumerable<Map_Room>>> GetRooms()
         {
             var rooms = await _roomRepository.GetAll();
             return Ok(rooms);
@@ -30,7 +30,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // GET: api/Rooms/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<mdl_Room>> GetRoom(int id)
+        public async Task<ActionResult<Map_Room>> GetRoom(int id)
         {
             var room = await _roomRepository.GetById(id);
             if (room == null)
@@ -43,7 +43,7 @@ namespace FekraHubAPI.Controllers.CoursesController
         // PUT: api/Rooms/5
         [HttpPut("{id}")]
    
-        public async Task<IActionResult> PutRoom(int id, [FromForm] mdl_Room room)
+        public async Task<IActionResult> PutRoom(int id, [FromForm] Map_Room room)
         {
             if (!ModelState.IsValid)
             {
@@ -66,7 +66,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
 
         [HttpPost]
-        public async Task<ActionResult<Room>> PostRoom([FromForm] mdl_Room room)
+        public async Task<ActionResult<Room>> PostRoom([FromForm] Map_Room room)
         {
             var roomEntity = _mapper.Map<Room>(room);
             await _roomRepository.Add(roomEntity);

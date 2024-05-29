@@ -1,6 +1,6 @@
 using AutoMapper;
+using FekraHubAPI.@class.Courses;
 using FekraHubAPI.Data.Models;
-using FekraHubAPI.Models.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +21,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // GET: api/Locations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<mdl_location>>> GetLocations()
+        public async Task<ActionResult<IEnumerable<Map_location>>> GetLocations()
         {
             var locations = await _locationRepository.GetAll();
           
@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers.CoursesController
         // GET: api/Locations/5
    
         [HttpGet("{id}")]
-        public async Task<ActionResult<mdl_location>> GetLocation(int id)
+        public async Task<ActionResult<Map_location>> GetLocation(int id)
         {
             var location = await _locationRepository.GetById(id);
             if (location == null)
@@ -46,7 +46,7 @@ namespace FekraHubAPI.Controllers.CoursesController
         // PUT: api/Locations/5
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, [FromForm] mdl_location locationMdl)
+        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl)
         {
             if (!ModelState.IsValid)
             {
@@ -66,7 +66,7 @@ namespace FekraHubAPI.Controllers.CoursesController
         }
         // POST: api/Locations
         [HttpPost]
-        public async Task<ActionResult<Location>> PostLocation([FromForm] mdl_location location)
+        public async Task<ActionResult<Location>> PostLocation([FromForm] Map_location location)
         {
 
             if (!ModelState.IsValid)

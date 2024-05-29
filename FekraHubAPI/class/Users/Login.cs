@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FekraHubAPI.HttpRequests.Users
+namespace FekraHubAPI.@class.Users
 {
     public class Login
     {

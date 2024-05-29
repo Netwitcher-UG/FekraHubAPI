@@ -2,9 +2,9 @@ using AutoMapper;
 using FekraHubAPI.Data.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace FekraHubAPI.Models.Courses
+namespace FekraHubAPI.@class.Courses
 {
-    public class mdl_Course  : IMapFrom<Course>
+    public class Map_Course : IMapFrom<Course>
     {
         [StringLength(50)]
         public string Name { get; set; }
@@ -21,7 +21,7 @@ namespace FekraHubAPI.Models.Courses
 
         public void Mapping(Profile profile)
         {
-            profile.CreateMap<mdl_Course, Course>();
+            profile.CreateMap<Map_Course, Course>();
         }
     }
 }

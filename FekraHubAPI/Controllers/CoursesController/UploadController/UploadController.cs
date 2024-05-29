@@ -1,7 +1,7 @@
 using AutoMapper;
+using FekraHubAPI.@class.Courses;
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
-using FekraHubAPI.Models.Courses;
 using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -71,7 +71,7 @@ namespace FekraHubAPI.Controllers.CoursesController.UploadController
                         fileBytes = ms.ToArray();
                     }
 
-                    var upload = new mdl_Upload
+                    var upload = new Map_Upload
                     {
                         UploadTypeID = TypeId,
                         file = fileBytes
@@ -83,7 +83,7 @@ namespace FekraHubAPI.Controllers.CoursesController.UploadController
                     await _uploadRepository.Add(uploadEntity);
 
 
-                    var UploadCourse = new mdl_UploadCourse
+                    var UploadCourse = new Map_UploadCourse
                     {
                         CourseID = courseId,
                         UploadID = uploadEntity.Id

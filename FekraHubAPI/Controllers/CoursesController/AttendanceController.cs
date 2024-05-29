@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Data.Models;
-using FekraHubAPI.Models.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

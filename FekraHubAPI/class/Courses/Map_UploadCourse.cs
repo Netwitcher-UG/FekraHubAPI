@@ -1,16 +1,16 @@
 using AutoMapper;
 using FekraHubAPI.Data.Models;
 
-namespace FekraHubAPI.Models.Courses
+namespace FekraHubAPI.@class.Courses
 {
-    public class mdl_UploadCourse: IMapFrom<UploadCourse>
+    public class Map_UploadCourse : IMapFrom<UploadCourse>
     {
         public int? UploadID { get; set; }
         public int? CourseID { get; set; }
 
         public void Mapping(Profile profile)
         {
-            profile.CreateMap<mdl_UploadCourse, UploadCourse>();
+            profile.CreateMap<Map_UploadCourse, UploadCourse>();
         }
     }
 }

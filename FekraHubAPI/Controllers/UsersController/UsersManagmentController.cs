@@ -1,8 +1,6 @@
 ﻿using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-
-using FekraHubAPI.HttpRequests.Users;
 using FekraHubAPI.HttpRequests.Response;
 using FekraHubAPI.Seeds;
 using FekraHubAPI.Data;

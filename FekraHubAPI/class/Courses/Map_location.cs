@@ -1,9 +1,9 @@
 using AutoMapper;
 using FekraHubAPI.Data.Models;
 
-namespace FekraHubAPI.Models.Courses
+namespace FekraHubAPI.@class.Courses
 {
-    public class mdl_location : IMapFrom<Location>
+    public class Map_location : IMapFrom<Location>
     {
 
         public string Street { get; set; }
@@ -13,7 +13,7 @@ namespace FekraHubAPI.Models.Courses
 
         public void Mapping(Profile profile)
         {
-            profile.CreateMap<mdl_location, Location>();
+            profile.CreateMap<Map_location, Location>();
         }
 
     }

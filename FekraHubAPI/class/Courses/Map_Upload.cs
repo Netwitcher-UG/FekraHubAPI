@@ -1,19 +1,19 @@
 using AutoMapper;
 using FekraHubAPI.Data.Models;
 
-namespace FekraHubAPI.Models.Courses
+namespace FekraHubAPI.@class.Courses
 {
-    public class mdl_Upload: IMapFrom<Upload>
+    public class Map_Upload : IMapFrom<Upload>
     {
 
         public byte[] file { get; set; }
 
         public int? UploadTypeID { get; set; }
-    
+
 
         public void Mapping(Profile profile)
         {
-            profile.CreateMap<mdl_Upload, Upload>();
+            profile.CreateMap<Map_Upload, Upload>();
         }
 
     }

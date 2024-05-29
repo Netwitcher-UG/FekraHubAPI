@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using AutoMapper;
 
-namespace FekraHubAPI.Models.Courses
+namespace FekraHubAPI.@class.Courses
 {
-    public class mdl_Room : IMapFrom<Room>
+    public class Map_Room : IMapFrom<Room>
     {
         [StringLength(50)]
         public string Name { get; set; }
@@ -14,7 +14,7 @@ namespace FekraHubAPI.Models.Courses
 
         public void Mapping(Profile profile)
         {
-            profile.CreateMap<mdl_Room, Room>();
+            profile.CreateMap<Map_Room, Room>();
         }
     }
 }

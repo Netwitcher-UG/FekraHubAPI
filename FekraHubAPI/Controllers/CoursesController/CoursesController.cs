@@ -1,6 +1,6 @@
 using AutoMapper;
+using FekraHubAPI.@class.Courses;
 using FekraHubAPI.Data.Models;
-using FekraHubAPI.Models.Courses;
 using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -23,7 +23,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // GET: api/Course
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<mdl_Course>>> GetCourses()
+        public async Task<ActionResult<IEnumerable<Map_Course>>> GetCourses()
         {
             var courses = await _courseRepository.GetAll();
        
@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // GET: api/Course/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<mdl_Course>> GetCourse(int id)
+        public async Task<ActionResult<Map_Course>> GetCourse(int id)
         {
             var course = await _courseRepository.GetById(id);
             if (course == null)
@@ -44,7 +44,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // POST: api/Course
         [HttpPost]
-        public async Task<ActionResult<mdl_Course>> PostCourse([FromForm] mdl_Course courseMdl)
+        public async Task<ActionResult<Map_Course>> PostCourse([FromForm] Map_Course courseMdl)
         {
             if (!ModelState.IsValid)
             {
@@ -58,7 +58,7 @@ namespace FekraHubAPI.Controllers.CoursesController
 
         // PUT: api/Course/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse(int id, [FromForm] mdl_Course courseMdl)
+        public async Task<IActionResult> PutCourse(int id, [FromForm] Map_Course courseMdl)
         {
             if (!ModelState.IsValid)
             {

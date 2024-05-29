@@ -1,6 +1,6 @@
 using AutoMapper;
+using FekraHubAPI.@class.Courses;
 using FekraHubAPI.Data.Models;
-using FekraHubAPI.Models.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +21,7 @@ namespace FekraHubAPI.Controllers.CoursesController.UploadController
 
         // GET: api/UploadTypes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<mdl_UploadType>>> GetUploadTypes()
+        public async Task<ActionResult<IEnumerable<Map_UploadType>>> GetUploadTypes()
         {
             var uploadType = await _uploadTypeRepository.GetAll();
 
@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers.CoursesController.UploadController
         // GET: api/UploadTypes/5
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<mdl_UploadType>> GetUploadType(int id)
+        public async Task<ActionResult<Map_UploadType>> GetUploadType(int id)
         {
             var location = await _uploadTypeRepository.GetById(id);
             if (location == null)
@@ -46,7 +46,7 @@ namespace FekraHubAPI.Controllers.CoursesController.UploadController
         // PUT: api/UploadTypes/5
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUploadType(int id, [FromForm] mdl_UploadType uploadTypeMdl)
+        public async Task<IActionResult> PutUploadType(int id, [FromForm] Map_UploadType uploadTypeMdl)
         {
             if (!ModelState.IsValid)
             {
@@ -66,7 +66,7 @@ namespace FekraHubAPI.Controllers.CoursesController.UploadController
         }
         // POST: api/UploadTypes
         [HttpPost]
-        public async Task<ActionResult<UploadType>> PostUploadType([FromForm] mdl_UploadType uploadType)
+        public async Task<ActionResult<UploadType>> PostUploadType([FromForm] Map_UploadType uploadType)
         {
 
             if (!ModelState.IsValid)

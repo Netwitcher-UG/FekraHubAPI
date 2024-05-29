@@ -1,18 +1,17 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Data.Models;
-
-namespace FekraHubAPI.Models.Courses
+namespace FekraHubAPI.@class.Courses
 {
-    public class Mdl_TeacherAttendance : IMapFrom<TeacherAttendance>
+    public class Map_StudentAttendance : IMapFrom<StudentAttendance>
     {
         public DateTime Date { get; set; }
         public int? CourseID { get; set; }
-        public string? TeacherID { get; set; }
+        public int? StudentID { get; set; }
         public int? StatusID { get; set; }
 
         public void Mapping(Profile profile)
         {
-            profile.CreateMap<Mdl_TeacherAttendance, TeacherAttendance>();
+            profile.CreateMap<Map_StudentAttendance, StudentAttendance>();
         }
     }
 }

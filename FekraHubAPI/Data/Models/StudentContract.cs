@@ -9,11 +9,11 @@ namespace FekraHubAPI.Data.Models
         [Key]
         public int Id { get; set; }
       
-        public byte File { get; set; }
+        public byte[] File { get; set; }
         
-        public DateTime CreationDate { get; set; }
+        public DateTime CreationDate { get; set; } = DateTime.Now;
 
-       
+
 
 
         [ForeignKey("StudentID")]

@@ -12,11 +12,17 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
     public class EventsController : ControllerBase
     {
         private readonly IRepository<Event> _eventRepository;
+        private readonly IRepository<CourseSchedule> _ScheduleRepository;
+        private readonly IRepository<CourseEvent> _CourseEventRepository;
         private readonly IMapper _mapper;
-        public EventsController(IRepository<Event> eventRepository, IMapper mapper)
+        public EventsController(IRepository<Event> eventRepository, IRepository<CourseEvent> CourseEventRepository
+           , IMapper mapper ,
+            IRepository<CourseSchedule> ScheduleRepository)
         {
             _eventRepository = eventRepository;
             _mapper = mapper;
+            _ScheduleRepository = ScheduleRepository;
+            _CourseEventRepository  = CourseEventRepository;
         }
 
         // GET: api/Event
@@ -65,16 +71,39 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
             return NoContent();
         }
         // POST: api/Event
-        [HttpPost]
-        public async Task<ActionResult<Event>> PostEvent([FromForm] mdl_Event eventMdl)
+
+        [HttpPost("{scheduleId}/Event")]
+        public async Task<ActionResult<Event>> PostEvent(int scheduleId, [FromForm] mdl_Event eventMdl)
         {
+            var schedule = await _ScheduleRepository.GetById(scheduleId);
+            if (schedule == null)
+            {
+                return NotFound("Course schedule not found or does not belong to the course.");
+            }
+
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
+
             var eventEntity = _mapper.Map<Event>(eventMdl);
             await _eventRepository.Add(eventEntity);
+
+
+         
+
+
+            var courseEvent = new CourseEvent
+            {
+                ScheduleID = schedule.Id,
+                EventID = eventEntity.Id
+            };
+
+            var courseEventEntity = _mapper.Map<CourseEvent>(courseEvent);
+            await _CourseEventRepository.Add(courseEventEntity);
+
             return CreatedAtAction("GetEvent", new { id = eventEntity.Id }, eventEntity);
 
         }

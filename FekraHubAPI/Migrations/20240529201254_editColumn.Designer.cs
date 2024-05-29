@@ -4,6 +4,7 @@ using FekraHubAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FekraHubAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240529201254_editColumn")]
+    partial class editColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -891,7 +894,7 @@ namespace FekraHubAPI.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "8f18d45c-89b7-425c-b40e-78cfac4bdd2b",
+                            UserId = "7ffa1e95-ca28-4391-8496-1570a6abe88f",
                             RoleId = "1"
                         });
                 });
@@ -986,18 +989,18 @@ namespace FekraHubAPI.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "8f18d45c-89b7-425c-b40e-78cfac4bdd2b",
+                            Id = "7ffa1e95-ca28-4391-8496-1570a6abe88f",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "a81f9f4f-f74a-4162-a519-63b3ff78b854",
+                            ConcurrencyStamp = "ff53fa48-da17-451e-b62d-00924d2f10ac",
                             Email = "admin@admin.com",
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             NormalizedEmail = "admin@admin.com",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEQmGin2jc+eRmWhy7rQmvh3PUcEVDn97lMVShjJ8/4BqnYIX9rMuCczeJD4iFFzjw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGeBIHtMJRiswUlnTH76oEdWd74pSFxb2uc5S2W1JzuwjLkrGPd0jdjKAvGHvqj7ew==",
                             PhoneNumber = "+1234567890",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "505a3c4f-2a76-405d-8557-e49824134c9b",
+                            SecurityStamp = "bb1c794c-496a-4f51-888d-dff4bba28eba",
                             TwoFactorEnabled = false,
                             UserName = "Admin",
                             Birthday = new DateTime(1985, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),

@@ -11,10 +11,10 @@ namespace FekraHubAPI.Data.Models
        
         public string DayOfWeek { get; set; }
   
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public TimeSpan StartTime { get; set; } = TimeSpan.Now;
+        public TimeSpan EndTime { get; set; } = DateTime.Now;
 
-       
+
 
 
         [ForeignKey("CourseID")]

@@ -73,7 +73,16 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
             {
                 return BadRequest(ModelState);
             }
-            var courseScheduleEntity = _mapper.Map<CourseSchedule>(courseSchedMdl);
+
+            var courseSchedule = new CourseSchedule
+            {
+                DayOfWeek = courseSchedMdl.DayOfWeek,
+                StartTime = TimeSpan.Parse(courseSchedMdl.StartTime),
+                EndTime = TimeSpan.Parse(courseSchedMdl.EndTime),
+                CourseID = courseSchedMdl.CourseID
+            };
+
+            var courseScheduleEntity = _mapper.Map<CourseSchedule>(courseSchedule);
             await _courseScheduleRepository.Add(courseScheduleEntity);
             return CreatedAtAction("GetCourseSchedule", new { id = courseScheduleEntity.Id }, courseScheduleEntity);
 

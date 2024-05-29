@@ -9,7 +9,7 @@ namespace FekraHubAPI.Data.Models
         [Key]
         public int Id { get; set; }
 
-        public byte File { get; set; }
+        public byte[] File { get; set; }
 
         public DateTime Timestamp  { get; set; }
 

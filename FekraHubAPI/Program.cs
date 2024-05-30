@@ -36,6 +36,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(op =>
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddDefaultTokenProviders().AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddScoped<ApplicationUsersServices>();
+
 builder.Services.AddTransient<IContractMaker, ContractMaker>();
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {

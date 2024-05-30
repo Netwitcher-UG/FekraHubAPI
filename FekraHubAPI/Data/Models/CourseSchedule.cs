@@ -11,8 +11,8 @@ namespace FekraHubAPI.Data.Models
        
         public string DayOfWeek { get; set; }
   
-        public TimeSpan StartTime { get; set; } = TimeSpan.Now;
-        public TimeSpan EndTime { get; set; } = DateTime.Now;
+        public TimeSpan StartTime { get; set; }  
+        public TimeSpan EndTime { get; set; }
 
 
 

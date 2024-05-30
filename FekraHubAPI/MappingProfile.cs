@@ -1,6 +1,7 @@
 
 using AutoMapper;
-using FekraHubAPI.Models.Courses;
+
+using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Data.Models;
 using System.Reflection;
 

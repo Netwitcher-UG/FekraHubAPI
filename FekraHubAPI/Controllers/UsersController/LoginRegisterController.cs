@@ -1,4 +1,4 @@
-﻿using FekraHubAPI.Data.Models;
+using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +8,8 @@ using System.Text;
 using FekraHubAPI.Seeds;
 using FekraHubAPI.Data;
 using Microsoft.EntityFrameworkCore.Storage;
+using FekraHubAPI.EmailSender;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using FekraHubAPI.MapModels.Users;
 
 namespace FekraHubAPI.Controllers.UsersController

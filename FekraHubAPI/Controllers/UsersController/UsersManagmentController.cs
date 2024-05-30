@@ -64,6 +64,8 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(string id)
         {
+            var currentUser = await GetCurrentUserAsync();
+
             var userRole = User.FindFirstValue(ClaimTypes.Role);
 
             var user = await _userManager.FindByIdAsync(id);
@@ -72,9 +74,9 @@ namespace FekraHubAPI.Controllers.UsersController
                 return NotFound($"user not exists!");
             }
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var  isAdmin = await _userManager.IsInRoleAsync(user ,DefaultRole.Admin);
 
-            if (userRole != DefaultRole.Admin)
+            if (userRole != DefaultRole.Admin && isAdmin)
             {
                 return BadRequest("Cant Access This User");
             }

@@ -7,13 +7,17 @@ using FekraHubAPI.Extentions;
 using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Data;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text.Json.Serialization;
 using IEmailSender = FekraHubAPI.EmailSender.IEmailSender;
 
@@ -56,9 +60,19 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("value", policy =>
-        policy.RequireClaim("type", "value"));
+    /*options.AddPolicy("Create_View", policy =>
+        policy.RequireClaim("type", "Create_View"));*/
+
+    options.AddPolicy("RequireAdministratorRole", policy => policy.RequireRole("Admin"));
+
 });
+
+/*builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});*/
 // Add services to the container.
 builder.Services.AddTransient(typeof(IRepository<>), typeof(GenericRepository<>));
 // Add services to the container.

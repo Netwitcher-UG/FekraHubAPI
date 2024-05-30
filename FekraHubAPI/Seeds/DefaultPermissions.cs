@@ -17,6 +17,7 @@ namespace FekraHubAPI.Seeds
 {
     public static class DefaultPermissions
     {
+        public const string Create_View = "Create_User";
         public static  async Task SeedClaimsAsync(ModelBuilder builder)
         {
             var modules = Enum.GetValues(typeof(Helper.PermissionModuleNameAdmin));
@@ -38,7 +39,7 @@ namespace FekraHubAPI.Seeds
                 }
                 i++;
             }
-            modules = Enum.GetValues(typeof(Helper.PermissionModuleNameSecretariat));
+           /* modules = Enum.GetValues(typeof(Helper.PermissionModuleNameSecretariat));
             foreach (var module in modules)
             {
                 var AllPermissions = Permissions.GeneratePermissionsFromModule(module.ToString());
@@ -92,6 +93,7 @@ namespace FekraHubAPI.Seeds
                 }
                 i++;
             }
+            */
         }
        
     }

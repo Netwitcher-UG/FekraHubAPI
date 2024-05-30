@@ -41,26 +41,43 @@ namespace FekraHubAPI.Controllers
             this.serviceProvider = serviceProvider;
         }
 
+        [Authorize(Policy = "RequireAdministratorRole")]
 
         [HttpGet("[action]")]
         //[Authorize(Roles =  ""+DefaultRole.Admin+","+DefaultRole.Secretariat )]
         public async Task<IActionResult> GetUser()
         {
             var Roles = await _roleManager.FindByNameAsync("Admin");
-            return Ok(Roles);
+            var role = await _roleManager.FindByNameAsync("Admin");
+            var roleClaims = await _roleManager.GetClaimsAsync(role);
+            return Ok(roleClaims);
         }
 
         [HttpGet("[action]")]
-
         public List<IdentityRole> AllRoles()
         {
             /*
+             * 
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
+            var userRole = User.FindFirstValue(ClaimTypes.Role); // will give the user's userName
+
+            //var user = await _userManager.FindAsync(EmailID, Password);
+            //string rolename = await _userManager.GetClaimsAsync(user.Id);
+
+           var allUsers = await _db.ApplicationUser.ToListAsync();
+            string rolse = DefaultRole.AllRolesWithoutAadmin().ToString();
+             //  var allUsers = await _userManager.GetUsersInRoleAsync("Parent");
+
+
             IList<string> userRoles = UserManager.GetRoles(userId);
             IList<string> userRoles = await UserManager.GetRolesAsync(userId);
             */
             var Roles =  _roleManager.FindByNameAsync("Admin");
+            var Role =  _roleManager.GetClaimsAsync;
+           
+                //_roleManager.Roles.ToList()
 
-            return _roleManager.Roles.ToList();
+                return _roleManager.Roles.ToList();
         }
     }
 

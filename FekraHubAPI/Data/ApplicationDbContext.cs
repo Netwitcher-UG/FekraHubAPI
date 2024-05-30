@@ -37,7 +37,9 @@ namespace FekraHubAPI.Data
 
         }
 
+        public DbSet<AspNetPermissions> AspNetPermissions { get; set; }
         public DbSet<Course> Courses { get; set; }
+        
 
         public DbSet<AttendanceStatus> AttendanceStatuses { get; set; }
         public DbSet<CourseEvent> CourseEvents { get; set; }

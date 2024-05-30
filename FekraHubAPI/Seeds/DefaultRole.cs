@@ -36,6 +36,15 @@ namespace FekraHubAPI.Seeds
             };
         }
 
+        public static List<string> AllRolesWithoutAadmin()
+        {
+            return new List<string>
+            {
+                Secretariat,
+                Parent,
+                Teacher,
+            };
+        }
         public static bool checkRole(string role)
         {
             var allrole = AllRoles();

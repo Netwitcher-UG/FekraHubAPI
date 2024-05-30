@@ -95,7 +95,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
          
 
 
-            var courseEvent = new CourseEvent
+            var courseEvent = new Map_CourseEvent
             {
                 ScheduleID = schedule.Id,
                 EventID = eventEntity.Id

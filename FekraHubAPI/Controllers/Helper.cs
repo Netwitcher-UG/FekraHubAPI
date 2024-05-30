@@ -4,21 +4,11 @@
     {
         public const string Permission = "Permission";
         public enum PermissionModuleNameAdmin {
-            
-        }
-        public enum PermissionModuleNameSecretariat
-        {
-            
+            Create_User,
+            View_User,
 
         }
-        public enum PermissionModuleNameParent
-        {
-            
-        }
-        public enum PermissionModuleNameTeacher
-        {
-            
-        }
+
         public  enum AllRolesE
         {
             Admin,

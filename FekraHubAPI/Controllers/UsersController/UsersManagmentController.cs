@@ -10,6 +10,10 @@ using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using FekraHubAPI.EmailSender;
 using System.Security.Claims;
+using FekraHubAPI.Repositories.Interfaces;
+using static System.Net.Mime.MediaTypeNames;
+using System.Reflection.Metadata;
+using System.IO;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -25,14 +29,19 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _db;
         private  UserManager<ApplicationUser>  currentUser ;
+        private readonly IRepository<ApplicationUser> _applicationUserRepository;
+        private readonly ApplicationUsersServices _applicationUsersServices;
+
         public UsersManagment(ApplicationDbContext context, UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager,
-            ApplicationDbContext db)
+            RoleManager<IdentityRole> roleManager, IRepository<ApplicationUser> applicationUserRepository , ApplicationUsersServices applicationUsersServices  ,
+        ApplicationDbContext db)
         {
 
             _userManager = userManager;
             _roleManager = roleManager;
             _db = db;
+            _applicationUserRepository = applicationUserRepository;
+            _applicationUsersServices = applicationUsersServices;
 
 
         }
@@ -40,31 +49,34 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-            var currentUser = await GetCurrentUserAsync();
-            string currentUserRolename = ClaimTypes.Role;
+
+            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
+            var userRole = User.FindFirstValue(ClaimTypes.Role); 
+
             var allUsers = await _db.ApplicationUser.ToListAsync();
-           /* if (currentUserRolename != DefaultRole.Admin ){
-            }*/
 
+            if (userRole != DefaultRole.Admin ){
+                allUsers = await _applicationUsersServices.GetAllNonAdminUsersAsync();
 
+            }
             return Ok(allUsers);
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(string id)
         {
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
 
-            var user = await _db.ApplicationUser.SingleOrDefaultAsync(x => x.Id == id);
-            string userRole = User.FindFirstValue(ClaimTypes.Name);
-            var currentUser = await GetCurrentUserAsync();
-            string currentUserRolename = ClaimTypes.Role;
-            if (currentUserRolename != DefaultRole.Admin && userRole== DefaultRole.Admin)
-            {
-                return BadRequest("Cant Access This User");
-
-            }
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound($"user not exists!");
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            if (userRole != DefaultRole.Admin)
+            {
+                return BadRequest("Cant Access This User");
             }
             return Ok(user);
         }
@@ -76,8 +88,24 @@ namespace FekraHubAPI.Controllers.UsersController
             var email = user.email;
             var normalizedEmail = email.Normalize().ToLower();
             var normalizedUserName = user.userName.Normalize().ToLower();
-            using var stream = new MemoryStream();
-            await user.imageUser.CopyToAsync(stream);
+
+            string image = "";
+
+            if (user.imageUser != null)
+            {
+                string folderFile = "images/users/";
+                string folder = Guid.NewGuid().ToString() + "_" + user.imageUser.FileName;
+                image = folderFile +folder;
+                if (!System.IO.Directory.Exists(folderFile))
+                {
+                    System.IO.Directory.CreateDirectory(folderFile);
+                }
+                string serverFolder = Path.Combine(folderFile, folder);
+                using var stream = new FileStream(serverFolder, FileMode.Create);
+                    user.imageUser.CopyTo(stream);
+                    //image = user.imageUser.ToString();
+            }
+
             using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
             {
                 try
@@ -89,7 +117,7 @@ namespace FekraHubAPI.Controllers.UsersController
                         Email = email,
                         FirstName = user.firstName,
                         LastName = user.lastname,
-                        ImageUser = stream.ToString(),
+                        ImageUser = image,
                         NormalizedEmail = normalizedEmail,
                         SecurityStamp = Guid.NewGuid().ToString("D"),
                         PhoneNumber = user.phoneNumber,
@@ -132,7 +160,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromForm] Account accountUpdate)
+        public async Task<IActionResult> UpdateUser(string id, [FromForm] AccountUpdate accountUpdate)
         {
             var account = await _db.ApplicationUser.FindAsync(id);
             if (account == null)
@@ -140,13 +168,32 @@ namespace FekraHubAPI.Controllers.UsersController
                 return NotFound($" account id {id} not exists !");
             }
 
+            string folderFile = "images/users/";
             if (accountUpdate.imageUser != null)
             {
-                using var stream = new MemoryStream();
-                await accountUpdate.imageUser.CopyToAsync(stream);
-                account.ImageUser = stream.ToString();
+                if (account.ImageUser != accountUpdate.imageUser.FileName)
+                {
+                    string folder = Guid.NewGuid().ToString() + "_" + accountUpdate.imageUser.FileName;
+                    string image = folderFile + folder;
+
+                    if (!System.IO.Directory.Exists(folderFile))
+                    {
+                        System.IO.Directory.Delete(folderFile);
+
+                    }
+                    string serverFolder = Path.Combine(folderFile, folder);
+                    using var stream = new FileStream(serverFolder, FileMode.Create);
+                    accountUpdate.imageUser.CopyTo(stream);
+                    account.ImageUser = image;
+                    //image = user.imageUser.ToString();
+                }
 
             }
+
+
+
+            // await _applicationUserRepository.Update(account);
+
             var normalizedEmail = accountUpdate.email.Normalize().ToLower();
             var normalizedUserName = accountUpdate.userName.Normalize().ToLower();
 

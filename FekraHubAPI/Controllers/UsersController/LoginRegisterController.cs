@@ -42,6 +42,8 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     if (await userManager.CheckPasswordAsync(user, login.password))
                     {
+                        ;
+
                         var claims = new List<Claim>();
                         //claims.Add(new Claim("name", "value"));
                         claims.Add(new Claim(ClaimTypes.Name, user.UserName));
@@ -51,7 +53,12 @@ namespace FekraHubAPI.Controllers.UsersController
                         foreach (var role in roles)
                         {
                             claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
-                            claims.Add(new Claim("type", "value"));
+                            var roleUser = await this.roleManager.FindByNameAsync(role.ToString());
+                            var roleClaims = await this.roleManager.GetClaimsAsync(roleUser);
+                            foreach (var roleClaim in roleClaims)
+                            {
+                                claims.Add(new Claim(roleClaim.Type, roleClaim.Value));
+                            }
                         }
                         //signingCredentials
                         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"]));

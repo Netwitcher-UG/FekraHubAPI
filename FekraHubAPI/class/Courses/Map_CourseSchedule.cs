@@ -6,7 +6,7 @@ using FekraHubAPI.Models.Courses;
 
 namespace FekraHubAPI.Data.Models
 {
-    public class mdl_CourseSchedule : IMapFrom<CourseSchedule>
+    public class Map_CourseSchedule : IMapFrom<CourseSchedule>
     {
        
         public string DayOfWeek { get; set; }
@@ -21,7 +21,7 @@ namespace FekraHubAPI.Data.Models
         public int? CourseID { get; set; }
         public void Mapping(Profile profile)
         {
-            profile.CreateMap<mdl_CourseSchedule, CourseSchedule>();
+            profile.CreateMap<Map_CourseSchedule, CourseSchedule>();
         }
 
     }

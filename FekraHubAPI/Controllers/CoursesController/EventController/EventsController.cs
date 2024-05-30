@@ -27,7 +27,7 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
 
         // GET: api/Event
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<mdl_Event>>> GetEvents()
+        public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents()
         {
             var eventE = await _eventRepository.GetAll();
 
@@ -38,7 +38,7 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
         // GET: api/Event/5
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<mdl_Event>> GetEvent(int id)
+        public async Task<ActionResult<Map_Event>> GetEvent(int id)
         {
             var eventE = await _eventRepository.GetById(id);
             if (eventE == null)
@@ -52,7 +52,7 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
         // PUT: api/Event/5
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEvent(int id, [FromForm] mdl_Event eventMdl)
+        public async Task<IActionResult> PutEvent(int id, [FromForm] Map_Event eventMdl)
         {
             if (!ModelState.IsValid)
             {
@@ -73,7 +73,7 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
         // POST: api/Event
 
         [HttpPost("{scheduleId}/Event")]
-        public async Task<ActionResult<Event>> PostEvent(int scheduleId, [FromForm] mdl_Event eventMdl)
+        public async Task<ActionResult<Event>> PostEvent(int scheduleId, [FromForm] Map_Event eventMdl)
         {
             var schedule = await _ScheduleRepository.GetById(scheduleId);
             if (schedule == null)

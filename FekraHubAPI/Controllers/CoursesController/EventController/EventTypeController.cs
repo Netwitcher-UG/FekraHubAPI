@@ -21,7 +21,7 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
 
         // GET: api/EventType
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<mdl_EventType>>> GetEventTypes()
+        public async Task<ActionResult<IEnumerable<Map_EventType>>> GetEventTypes()
         {
             var eventType = await _eventTypeRepository.GetAll();
 
@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
         // GET: api/EventType/5
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<mdl_EventType>> GetEventType(int id)
+        public async Task<ActionResult<Map_EventType>> GetEventType(int id)
         {
             var eventType = await _eventTypeRepository.GetById(id);
             if (eventType == null)
@@ -46,7 +46,7 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
         // PUT: api/EventType/5
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEventType(int id, [FromForm] mdl_EventType eventTypeMdl)
+        public async Task<IActionResult> PutEventType(int id, [FromForm] Map_EventType eventTypeMdl)
         {
             if (!ModelState.IsValid)
             {
@@ -66,7 +66,7 @@ namespace FekraHubAPI.Controllers.CoursesController.EventController
         }
         // POST: api/EventType
         [HttpPost]
-        public async Task<ActionResult<EventType>> PostEventType([FromForm] mdl_EventType eventType)
+        public async Task<ActionResult<EventType>> PostEventType([FromForm] Map_EventType eventType)
         {
 
             if (!ModelState.IsValid)

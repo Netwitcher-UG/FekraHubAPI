@@ -19,13 +19,12 @@
         {
             
         }
-        public  enum AllRolesE
+        public enum AllRolesE
         {
             Admin,
             Secretariat,
             Parent,
             Teacher,
         }
-
     }
 }

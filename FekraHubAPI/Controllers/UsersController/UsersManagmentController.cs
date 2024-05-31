@@ -1,7 +1,6 @@
 ﻿using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using FekraHubAPI.HttpRequests.Response;
 using FekraHubAPI.Seeds;
 using FekraHubAPI.Data;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +9,8 @@ using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using FekraHubAPI.EmailSender;
 using System.Security.Claims;
+using FekraHubAPI.MapModels.Users;
+using FekraHubAPI.MapModels.Response;
 
 
 namespace FekraHubAPI.Controllers.UsersController

@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using FekraHubAPI.HttpRequests.Response;
 using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Authorization;
 using FekraHubAPI.Data;
@@ -21,6 +20,8 @@ using System.Security.Cryptography;
 using System.IO;
 using System.Reflection.Emit;
 using System.ComponentModel.DataAnnotations;
+using FekraHubAPI.MapModels.Users;
+using FekraHubAPI.MapModels.Response;
 
 namespace FekraHubAPI.Controllers.UsersController
 {

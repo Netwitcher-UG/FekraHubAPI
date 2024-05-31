@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Data.Models;
+using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -257,7 +258,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
         
         [HttpPost("/Attendance/CreateStudentAttendance")]
-        public async Task<IActionResult> AddStudentAttendance([FromForm] Mdl_StudentAttendance studentAttendance)
+        public async Task<IActionResult> AddStudentAttendance([FromForm] Map_StudentAttendance studentAttendance)
         {
             if (!ModelState.IsValid)
             {
@@ -343,7 +344,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
        
         [HttpPost("/Attendance/CreateTeacherAttendance")]
-        public async Task<IActionResult> AddTeacherAttendance([FromForm] Mdl_TeacherAttendance teacherAttendance)
+        public async Task<IActionResult> AddTeacherAttendance([FromForm] Map_TeacherAttendance teacherAttendance)
         {
             if (!ModelState.IsValid)
             {
@@ -380,7 +381,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         [HttpPatch("/Attendance/UpdateStudentAttendance")]
-        public async Task<IActionResult> UpdateStudentAttendance([FromForm] Mdl_StudentAttendance studentAtt)
+        public async Task<IActionResult> UpdateStudentAttendance([FromForm] Map_StudentAttendance studentAtt)
         {
             var allStudentAttendance = await _studentAttendanceRepo.GetRelation();
             var studentAttendance = await allStudentAttendance.Where(sa => sa.date == studentAtt.Date && sa.StudentID == studentAtt.StudentID && sa.CourseID == studentAtt.CourseID).SingleOrDefaultAsync();
@@ -407,7 +408,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         [HttpPatch("/Attendance/UpdateTeacherAttendance")]
-        public async Task<IActionResult> UpdateTeacherAttendance([FromForm] Mdl_TeacherAttendance teacherAtt)
+        public async Task<IActionResult> UpdateTeacherAttendance([FromForm] Map_TeacherAttendance teacherAtt)
         {
             var allTeacherAttendance = await _teacherAttendanceRepo.GetRelation();
             var teacherAttendance = await allTeacherAttendance.Where(ta => ta.date == teacherAtt.Date && ta.TeacherID == teacherAtt.TeacherID && ta.CourseID == teacherAtt.CourseID).SingleOrDefaultAsync();

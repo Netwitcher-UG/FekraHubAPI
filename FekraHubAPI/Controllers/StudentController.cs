@@ -1,6 +1,8 @@
-﻿using FekraHubAPI.ContractMaker;
+﻿using AutoMapper;
+using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
+using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -18,14 +20,16 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<Course> _courseRepo;
         private readonly IContractMaker _contractMaker;
         private readonly IEmailSender _emailSender;
+        private readonly IMapper _mapper;
         public StudentController(IRepository<StudentContract> studentContractRepo, IContractMaker contractMaker,
-            IRepository<Student> studentRepo, IRepository<Course> courseRepo, IEmailSender emailSender)
+            IRepository<Student> studentRepo, IRepository<Course> courseRepo, IEmailSender emailSender, IMapper mapper)
         {
             _studentContractRepo = studentContractRepo;
             _contractMaker = contractMaker;
             _studentRepo = studentRepo;
             _courseRepo = courseRepo;
             _emailSender = emailSender;
+            _mapper = mapper;
         }
         
         [HttpGet("/courses/capacityCourse")]
@@ -40,14 +44,20 @@ namespace FekraHubAPI.Controllers
             return Ok(courses);
         }
         [HttpPost("/student/add")]
-        public async Task<IActionResult> CreateStudent(Student student)
+        public async Task<IActionResult> CreateStudent( [FromForm] Map_Student student)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            await _studentRepo.Add(student);
-            string contract = await _contractMaker.ContractHtml(student.Id);
+            var studentMap = _mapper.Map<Student>(student);
+            await _studentRepo.Add(studentMap);
+            var Students = await _studentRepo.GetAll();
+            var NewStudent = Students.Where(x => x.ParentID == student.ParentID
+                                  && x.FirstName == student.FirstName
+                                  && x.LastName == student.LastName).SingleOrDefault();
+
+            string contract = await _contractMaker.ContractHtml(NewStudent.Id);
             return Content(contract);
         }
         [HttpPost("/student/acceptedContract/{studentId}")]
@@ -77,8 +87,14 @@ namespace FekraHubAPI.Controllers
         public async Task<IActionResult> GetSonsOfParentContracts(string parentId)
         {
             var AllContracts = await _studentContractRepo.GetRelation();
-            var constracts = AllContracts.Include(x => x.Student).Where(x => x.Student.ParentID == parentId).ToListAsync();
+            var constracts = AllContracts.Include(x => x.Student).Where(x => x.Student.ParentID == parentId).Select(x => x.File).ToList();
             return Ok(constracts);
         }
+        [HttpGet("/testing/sendEmails/foreach")]
+        public async Task Testing( )
+        {
+            await _emailSender.SendToAllNewEvent();
+        }
+       
     }
 }

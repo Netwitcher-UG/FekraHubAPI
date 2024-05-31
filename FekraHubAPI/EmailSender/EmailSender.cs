@@ -180,16 +180,19 @@ namespace FekraHubAPI.EmailSender
                             .Where(x => x.RoleId == "3")
                             .Select(x => x.UserId)
                             .ToListAsync();
-            var emails = await context.Users
+            var Users = await context.Users
                          .Where(user => ParentsId.Contains(user.Id))
-                         .Select(user => user.Email)
                          .ToListAsync();
-            var content = @$"<div style='width:100%;text-align:center;'>
-                        <h1>Hello</h1>
+            foreach(var user in Users)
+            {
+                var content = @$"<div style='width:100%;text-align:center;'>
+                        <h1>Hello </h1>
                          <p>New files has been added</p>
                         <p>Thank you for your time. </p>
                      </div>";
-            await SendEmail(emails, "", Message(content), true);
+                await SendEmail([user.Email], "", Message(content), true);
+            }
+            
         }
 
         public async Task SendToSecretaryNewReportsForStudents()

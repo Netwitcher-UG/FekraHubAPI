@@ -1,4 +1,5 @@
 using AutoMapper;
+using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
@@ -30,6 +31,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(op =>
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddDefaultTokenProviders().AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddTransient<IContractMaker, ContractMaker>();
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromDays(7);

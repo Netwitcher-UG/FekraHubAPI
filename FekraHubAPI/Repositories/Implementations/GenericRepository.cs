@@ -78,7 +78,10 @@ namespace FekraHubAPI.Repositories.Implementations
             var userRoles = await _context.UserRoles.FirstOrDefaultAsync(x => x.UserId == userId && x.RoleId == roles.Id);
             return user != null && userRoles != null;
         }
-
+        public async Task<T> GetUser(string id)
+        {
+            return await _dbSet.FindAsync(id);
+        }
 
     }
 }

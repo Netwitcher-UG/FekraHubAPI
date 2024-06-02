@@ -195,7 +195,7 @@ namespace FekraHubAPI.EmailSender
             foreach (var user in parent)
             {
                 var student = students.Where(x => x.ParentID == user.Id).ToList();
-                if (student != null)
+                if (student.Any())
                 {
                     var childrenNames = "";
                     foreach (var child in student)
@@ -283,15 +283,18 @@ namespace FekraHubAPI.EmailSender
             
         }
 
-        public async Task SendToParentsNewReportsForStudents()
+        public async Task SendToParentsNewReportsForStudents(List<ApplicationUser>? parents)
         {
-            var ParentsId = await context.UserRoles
+            if(parents == null)
+            {
+                var ParentsId = await context.UserRoles
                             .Where(x => x.RoleId == "3")
                             .Select(x => x.UserId)
                             .ToListAsync();
-            var parents = await userManager.Users
-                         .Where(user => ParentsId.Contains(user.Id))
-                         .ToListAsync();
+                parents = await userManager.Users
+                             .Where(user => ParentsId.Contains(user.Id))
+                             .ToListAsync();
+            }
             var students = await studentRepo.GetAll();
             foreach (var parent in parents)
             {

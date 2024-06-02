@@ -32,69 +32,149 @@ namespace FekraHubAPI.Controllers
             _mapper = mapper;
         }
         
-        [HttpGet("/courses/capacityCourse")]
-        public async Task<IActionResult> ChooseCourse()
+        [HttpGet("courses/capacity")]
+        public async Task<IActionResult> GetCoursesWithCapacity()
         {
-            var courses = await _courseRepo.GetAll();
-            var allstudentsInCourses = await _studentRepo.GetAll();
-            foreach (var course in courses)
+            try
             {
-                course.Capacity = course.Capacity - allstudentsInCourses.Where(c => c.CourseID == course.Id).Count();
+                var courses = await _courseRepo.GetAll();
+                var allStudentsInCourses = await _studentRepo.GetAll();
+
+                foreach (var course in courses)
+                {
+                    course.Capacity -= allStudentsInCourses.Count(c => c.CourseID == course.Id);
+                }
+
+                return Ok(courses);
             }
-            return Ok(courses);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
+            }
         }
-        [HttpPost("/student/add")]
-        public async Task<IActionResult> CreateStudent( [FromForm] Map_Student student)
+        [HttpPost("student/add")]
+        public async Task<IActionResult> AddStudent([FromForm] Map_Student student)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var studentMap = _mapper.Map<Student>(student);
-            await _studentRepo.Add(studentMap);
-            var Students = await _studentRepo.GetAll();
-            var NewStudent = Students.Where(x => x.ParentID == student.ParentID
-                                  && x.FirstName == student.FirstName
-                                  && x.LastName == student.LastName).SingleOrDefault();
 
-            string contract = await _contractMaker.ContractHtml(NewStudent.Id);
-            return Content(contract);
+            try
+            {
+                var studentEntity = _mapper.Map<Student>(student);
+                await _studentRepo.Add(studentEntity);
+
+                var newStudent = (await _studentRepo.GetAll())
+                    .SingleOrDefault(x => x.ParentID == student.ParentID
+                                          && x.FirstName == student.FirstName
+                                          && x.LastName == student.LastName);
+
+                if (newStudent == null)
+                {
+                    return NotFound("Student not found after creation.");
+                }
+
+                string contract = await _contractMaker.ContractHtml(newStudent.Id);
+                return Content(contract);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating new student record");
+            }
         }
-        [HttpPost("/student/acceptedContract/{studentId}")]
+        [HttpPost("student/acceptedContract/{studentId}")]
         public async Task<IActionResult> AcceptedContract(int studentId)
         {
-            var contracts = await _studentContractRepo.GetAll();
-            var isExists = contracts.Where(c => c.StudentID == studentId).Any();
-            if (isExists)
+            try
             {
-                return BadRequest("This student already has a contract!");
+                var contracts = await _studentContractRepo.GetAll();
+                if (contracts.Any(c => c.StudentID == studentId))
+                {
+                    return BadRequest("This student already has a contract!");
+                }
+
+                await _contractMaker.ConverterHtmlToPdf(studentId);
+                var res = await _emailSender.SendContractEmail(studentId, "Son_Contract");
+                if (res is BadRequestObjectResult)
+                {
+                    await _emailSender.SendContractEmail(studentId, "Son_Contract");
+                }
+
+                return Ok("Fekra Hub welcomes your son in our family . A copy of the contract was sent to your email");
             }
-            await _contractMaker.ConverterHtmlToPdf(studentId);
-            var res = await _emailSender.SendContractEmail(studentId, "Son_Contract");
-            if (res is BadRequestObjectResult)
+            catch (Exception ex)
             {
-                await _emailSender.SendContractEmail(studentId, "Son_Contract");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
-            return Ok();
         }
-        [HttpGet("/student/getContracts")]
+        [HttpPost("student/notAcceptedContract/{studentId}")]
+        public async Task<IActionResult> NotAcceptedContract(int studentId)
+        {
+            try
+            {
+                var contracts = await _studentContractRepo.GetAll();
+                if (contracts.Any(c => c.StudentID == studentId))
+                {
+                    return BadRequest("This student has a contract!");
+                }
+
+                var student = await _studentRepo.GetById(studentId);
+                if (student != null)
+                {
+                    await _studentRepo.Delete(studentId);
+                    return Ok($"The student ({student.FirstName} {student.LastName}) has been removed successfully");
+                }
+                return BadRequest("This student was not found");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+        [HttpGet("student/getContracts")]
         public async Task<IActionResult> GetContracts()
         {
-            var contracts = await _studentContractRepo.GetAll();
-            return Ok(contracts);
+            try
+            {
+                var contracts = await _studentContractRepo.GetAll();
+                return Ok(contracts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
-        [HttpGet("/student/GetSonsOfParentContracts")]
+        [HttpGet("student/GetSonsOfParentContracts")]
         public async Task<IActionResult> GetSonsOfParentContracts(string parentId)
         {
-            var AllContracts = await _studentContractRepo.GetRelation();
-            var constracts = AllContracts.Include(x => x.Student).Where(x => x.Student.ParentID == parentId).Select(x => x.File).ToList();
-            return Ok(constracts);
+            try
+            {
+                var allContracts = await _studentContractRepo.GetRelation();
+                var contracts = allContracts.Include(x => x.Student)
+                                            .Where(x => x.Student.ParentID == parentId)
+                                            .Select(x => x.File)
+                                            .ToList();
+                return Ok(contracts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
-        [HttpGet("/testing/sendEmails/foreach")]
-        public async Task Testing( )
+        [HttpGet("testing/sendEmails/foreach")]
+        public async Task<IActionResult> Testing()
         {
-            await _emailSender.SendToAllNewEvent();
+            try
+            {
+                await _emailSender.SendToAllNewEvent();
+                return Ok("Emails sent successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
-       
+
     }
 }

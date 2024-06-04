@@ -3,7 +3,7 @@
 
 namespace FekraHubAPI.MapModels.Users
 {
-    public class Account
+    public class Map_Account
     {
         [Required]
         public string role { get; set; }

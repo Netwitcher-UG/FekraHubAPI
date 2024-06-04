@@ -2,7 +2,7 @@
 
 namespace FekraHubAPI.MapModels.Users
 {
-    public class Login
+    public class Map_Login
     {
         [EmailAddress]
         [Required(ErrorMessage = "Email is required")]

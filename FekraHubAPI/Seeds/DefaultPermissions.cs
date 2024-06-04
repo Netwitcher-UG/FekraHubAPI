@@ -17,10 +17,26 @@ namespace FekraHubAPI.Seeds
 {
     public static class DefaultPermissions
     {
-        public const string Create_View = "Create_User";
+
+        public static async Task SeedPermissionsAsync(ModelBuilder builder)
+        {
+            var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
+            var i = 1;
+            foreach (var Permission in AllPermissions)
+            {
+                builder.Entity<AspNetPermissions>().HasData(
+                new AspNetPermissions()
+                {
+                    Id = i,
+                    Type = Permission.ToString(),
+                    Value = Permission.ToString()
+                });
+                i++;
+            }
+        }
         public static  async Task SeedClaimsAsync(ModelBuilder builder)
         {
-            var modules = Enum.GetValues(typeof(Helper.PermissionModuleNameAdmin));
+            var modules = Enum.GetValues(typeof(PermissionsEnum.PermissionModuleNameAdmin));
             var i = 1 ;
             foreach (var module in modules)
             {

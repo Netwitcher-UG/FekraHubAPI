@@ -86,7 +86,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
 
         [HttpPost]
-        public async Task<IActionResult> AddUser([FromForm] Account user)
+        public async Task<IActionResult> AddUser([FromForm] Map_Account user)
         {
             var email = user.email;
             var normalizedEmail = email.Normalize().ToLower();
@@ -163,7 +163,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromForm] AccountUpdate accountUpdate)
+        public async Task<IActionResult> UpdateUser(string id, [FromForm] Map_Account accountUpdate)
         {
             var account = await _db.ApplicationUser.FindAsync(id);
             if (account == null)

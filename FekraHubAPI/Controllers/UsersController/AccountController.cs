@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
@@ -7,6 +7,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using FekraHubAPI.MapModels.Response;
+using FekraHubAPI.MapModels.Users;
 using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Authorization;
 using FekraHubAPI.Data;
@@ -20,8 +22,6 @@ using System.Security.Cryptography;
 using System.IO;
 using System.Reflection.Emit;
 using System.ComponentModel.DataAnnotations;
-using FekraHubAPI.MapModels.Users;
-using FekraHubAPI.MapModels.Response;
 
 namespace FekraHubAPI.Controllers.UsersController
 {
@@ -63,7 +63,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
         
         [HttpPut]
-        public async Task<IActionResult> UpdateAccount( [FromForm] AccountUpdate accountUpdate)
+        public async Task<IActionResult> UpdateAccount( [FromForm] Map_Account accountUpdate)
         {
             var getCurrentAccount = await GetCurrentUserAsync();
             var account = await _db.ApplicationUser.FindAsync(getCurrentAccount.Id);

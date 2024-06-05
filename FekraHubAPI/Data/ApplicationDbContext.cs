@@ -27,7 +27,8 @@ namespace FekraHubAPI.Data
         private  static void SeedRoles(ModelBuilder builder)
         {
             DefaultRole.SeedRoleAsync(builder);
-            DefaultPermissions.SeedClaimsAsync(builder);
+            DefaultPermissions.SeedPermissionsAsync(builder);
+            DefaultPermissions.SeedRoleAdminClaimsAsync(builder);
         }
 
         private static void SeedAdminUser(ModelBuilder builder )

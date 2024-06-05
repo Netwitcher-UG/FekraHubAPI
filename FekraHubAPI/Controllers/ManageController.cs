@@ -12,6 +12,8 @@ using FekraHubAPI.Data;
 using  FekraHubAPI.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using FekraHubAPI.Constract;
+using Microsoft.Extensions.Options;
 
 namespace FekraHubAPI.Controllers
 {
@@ -41,7 +43,7 @@ namespace FekraHubAPI.Controllers
             this.serviceProvider = serviceProvider;
         }
 
-        [Authorize(Policy = "RequireAdministratorRole")]
+        [Authorize(Policy = "GetUsers")]
 
         [HttpGet("[action]")]
         //[Authorize(Roles =  ""+DefaultRole.Admin+","+DefaultRole.Secretariat )]
@@ -56,6 +58,13 @@ namespace FekraHubAPI.Controllers
         [HttpGet("[action]")]
         public List<IdentityRole> AllRoles()
         {
+
+            var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
+            foreach (var permission in AllPermissions)
+            {
+                var s = permission.ToString();
+            }
+
             /*
              * 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId

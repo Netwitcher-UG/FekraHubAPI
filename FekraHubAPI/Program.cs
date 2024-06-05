@@ -1,4 +1,5 @@
 using AutoMapper;
+using FekraHubAPI.Constract;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
@@ -60,21 +61,23 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 });
-builder.Services.AddAuthorization(options =>
+
+
+using (var scope = builder.Services.BuildServiceProvider().CreateScope())
 {
-    /*options.AddPolicy("Create_View", policy =>
-        policy.RequireClaim("type", "Create_View"));*/
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
+    //var permissions = context.AspNetPermissions.ToList();
 
-    options.AddPolicy("RequireAdministratorRole", policy => policy.RequireRole("Admin"));
-
-});
-
-/*builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-});*/
+    builder.Services.AddAuthorization(options =>
+    {
+        foreach (var permission in AllPermissions)
+        {
+            options.AddPolicy(permission.ToString(),
+            policy => policy.RequireClaim(permission.ToString(), permission.ToString()));
+        }
+    });
+}
 // Add services to the container.
 builder.Services.AddTransient(typeof(IRepository<>), typeof(GenericRepository<>));
 // Add services to the container.

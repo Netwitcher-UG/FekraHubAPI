@@ -10,25 +10,25 @@ namespace FekraHubAPI.Constract
 
         public enum AllPermissions
         {
-            GetUsers
-            AddUsers
-            GetStudentsCourse
-            UpdateStudentsCourse
-            GetTeachersCourse
-            UpdateTeachersCourse
-            GetContracts
-            ManageEvents
-            GetEvents
-            GetStudentsAttendance
-            UpdateStudentsAttendance
-            GetTeachersAttendance
-            UpdateTeachersAttendance
-            InsertUpdateStudentsReports
-            GetStudentsReports
-            ApproveReports
-            ManagePayrolls
-            ManageBooks
-            DeleteSchoolData
+            GetUsers,
+            AddUsers,
+            GetStudentsCourse,
+            UpdateStudentsCourse,
+            GetTeachersCourse,
+            UpdateTeachersCourse,
+            GetContracts,
+            ManageEvents,
+            GetEvents,
+            GetStudentsAttendance,
+            UpdateStudentsAttendance,
+            GetTeachersAttendance,
+            UpdateTeachersAttendance,
+            InsertUpdateStudentsReports,
+            GetStudentsReports,
+            ApproveReports,
+            ManagePayrolls,
+            ManageBooks,
+            DeleteSchoolData,
             ResetData
 
 
@@ -36,25 +36,25 @@ namespace FekraHubAPI.Constract
 
         public enum PermissionModuleNameAdmin
         {
-            GetUsers
-            AddUsers
-            GetStudentsCourse
-            UpdateStudentsCourse
-            GetTeachersCourse
-            UpdateTeachersCourse
-            GetContracts
-            ManageEvents
-            GetEvents
-            GetStudentsAttendance
-            UpdateStudentsAttendance
-            GetTeachersAttendance
-            UpdateTeachersAttendance
-            InsertUpdateStudentsReports
-            GetStudentsReports
-            ApproveReports
-            ManagePayrolls
-            ManageBooks
-            DeleteSchoolData
+            GetUsers,
+            AddUsers,
+            GetStudentsCourse,
+            UpdateStudentsCourse,
+            GetTeachersCourse,
+            UpdateTeachersCourse,
+            GetContracts,
+            ManageEvents,
+            GetEvents,
+            GetStudentsAttendance,
+            UpdateStudentsAttendance,
+            GetTeachersAttendance,
+            UpdateTeachersAttendance,
+            InsertUpdateStudentsReports,
+            GetStudentsReports,
+            ApproveReports,
+            ManagePayrolls,
+            ManageBooks,
+            DeleteSchoolData,
             ResetData
 
         }

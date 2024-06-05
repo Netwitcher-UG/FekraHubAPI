@@ -59,7 +59,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             var roleClaims = await this.roleManager.GetClaimsAsync(roleUser);
                             foreach (var roleClaim in roleClaims)
                             {
-                                claims.Add(new Claim(roleClaim.Type, roleClaim.Value));
+                                claims.Add(new Claim("Permissions", roleClaim.Value));
                             }
                         }
                         //signingCredentials

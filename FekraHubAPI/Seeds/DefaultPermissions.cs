@@ -34,82 +34,77 @@ namespace FekraHubAPI.Seeds
                 i++;
             }
         }
-        public static  async Task SeedClaimsAsync(ModelBuilder builder)
+        public static  async Task SeedRoleAdminClaimsAsync(ModelBuilder builder)
         {
-            var modules = Enum.GetValues(typeof(PermissionsEnum.PermissionModuleNameAdmin));
+            var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.PermissionModuleNameAdmin));
             var i = 1 ;
-            foreach (var module in modules)
+            foreach (var Permission in AllPermissions)
             {
-                var AllPermissions = Permissions.GeneratePermissionsFromModule(module.ToString());
-                foreach (var Permission in AllPermissions)
+                builder.Entity<IdentityRoleClaim<string>>().HasData(
+                new IdentityRoleClaim<string>()
                 {
-                    builder.Entity<IdentityRoleClaim<string>>().HasData(
-                    new IdentityRoleClaim<string>()
-                    {
-                        Id = i,
-                        RoleId = "1",
-                        ClaimType = Permission,
-                        ClaimValue = Permission
-                    });
-                    i++;
-                }
+                    Id = i,
+                    RoleId = "1",
+                    ClaimType = Permission.ToString(),
+                    ClaimValue = Permission.ToString()
+                });
                 i++;
             }
-           /* modules = Enum.GetValues(typeof(Helper.PermissionModuleNameSecretariat));
-            foreach (var module in modules)
-            {
-                var AllPermissions = Permissions.GeneratePermissionsFromModule(module.ToString());
-                foreach (var Permission in AllPermissions)
-                {
-                    builder.Entity<IdentityRoleClaim<string>>().HasData(
-                    new IdentityRoleClaim<string>()
-                    {
-                        Id = i,
-                        RoleId = "2",
-                        ClaimType = Permission,
-                        ClaimValue = Permission
-                    });
-                    i++;
-                }
-                i++;
-            }
-            modules = Enum.GetValues(typeof(Helper.PermissionModuleNameParent));
-            foreach (var module in modules)
-            {
-                var AllPermissions = Permissions.GeneratePermissionsFromModule(module.ToString());
-                foreach (var Permission in AllPermissions)
-                {
-                    builder.Entity<IdentityRoleClaim<string>>().HasData(
-                    new IdentityRoleClaim<string>()
-                    {
-                        Id = i,
-                        RoleId = "3",
-                        ClaimType = Permission,
-                        ClaimValue = Permission
-                    });
-                    i++;
-                }
-                i++;
-            }
-            modules = Enum.GetValues(typeof(Helper.PermissionModuleNameTeacher));
-            foreach (var module in modules)
-            {
-                var AllPermissions = Permissions.GeneratePermissionsFromModule(module.ToString());
-                foreach (var Permission in AllPermissions)
-                {
-                    builder.Entity<IdentityRoleClaim<string>>().HasData(
-                    new IdentityRoleClaim<string>()
-                    {
-                        Id = i,
-                        RoleId = "4",
-                        ClaimType = Permission,
-                        ClaimValue = Permission
-                    });
-                    i++;
-                }
-                i++;
-            }
-            */
+            /* modules = Enum.GetValues(typeof(Helper.PermissionModuleNameSecretariat));
+             foreach (var module in modules)
+             {
+                 var AllPermissions = Permissions.GeneratePermissionsFromModule(module.ToString());
+                 foreach (var Permission in AllPermissions)
+                 {
+                     builder.Entity<IdentityRoleClaim<string>>().HasData(
+                     new IdentityRoleClaim<string>()
+                     {
+                         Id = i,
+                         RoleId = "2",
+                         ClaimType = Permission,
+                         ClaimValue = Permission
+                     });
+                     i++;
+                 }
+                 i++;
+             }
+             modules = Enum.GetValues(typeof(Helper.PermissionModuleNameParent));
+             foreach (var module in modules)
+             {
+                 var AllPermissions = Permissions.GeneratePermissionsFromModule(module.ToString());
+                 foreach (var Permission in AllPermissions)
+                 {
+                     builder.Entity<IdentityRoleClaim<string>>().HasData(
+                     new IdentityRoleClaim<string>()
+                     {
+                         Id = i,
+                         RoleId = "3",
+                         ClaimType = Permission,
+                         ClaimValue = Permission
+                     });
+                     i++;
+                 }
+                 i++;
+             }
+             modules = Enum.GetValues(typeof(Helper.PermissionModuleNameTeacher));
+             foreach (var module in modules)
+             {
+                 var AllPermissions = Permissions.GeneratePermissionsFromModule(module.ToString());
+                 foreach (var Permission in AllPermissions)
+                 {
+                     builder.Entity<IdentityRoleClaim<string>>().HasData(
+                     new IdentityRoleClaim<string>()
+                     {
+                         Id = i,
+                         RoleId = "4",
+                         ClaimType = Permission,
+                         ClaimValue = Permission
+                     });
+                     i++;
+                 }
+                 i++;
+             }
+             */
         }
        
     }

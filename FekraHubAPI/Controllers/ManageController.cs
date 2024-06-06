@@ -79,6 +79,24 @@ namespace FekraHubAPI.Controllers
 
                 return _roleManager.Roles.ToList();
         }
+
+        /*public async Task<List<IdentityUser>> GetAllNonAdminUsersAsync()
+{
+    var adminRoleId = await _context.Roles
+        .Where(r => r.Name == DefaultRole.Admin)
+        .Select(r => r.Id)
+        .FirstOrDefaultAsync();
+
+    var adminUsers = _context.UserRoles
+        .Where(ur => ur.RoleId == adminRoleId)
+        .Select(ur => ur.UserId);
+
+    var nonAdminUsers = await _context.Users
+        .Where(u => !adminUsers.Contains(u.Id))
+        .ToListAsync();
+
+    return nonAdminUsers;
+}*/
     }
 
 

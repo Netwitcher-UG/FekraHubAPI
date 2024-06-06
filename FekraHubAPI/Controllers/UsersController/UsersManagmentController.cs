@@ -67,8 +67,7 @@ namespace FekraHubAPI.Controllers.UsersController
         public async Task<IActionResult> GetUser(string id)
         {
             var currentUser = await GetCurrentUserAsync();
-
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);  // cuurent role
 
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)

@@ -14,11 +14,10 @@ namespace FekraHubAPI.Services
             _userManager = userManager;
         }
 
-
-        public static bool CheckCanDoWorkContract(string userRole)
+        public static bool  CheckUserWorkContract(string userRole)
         {
-            List<string> CanDo = [DefaultRole.Admin, DefaultRole.Teacher, DefaultRole.Secretariat];
-            if (CanDo.Contains(userRole))
+            List<string> RoleWorkContract = [DefaultRole.Teacher, DefaultRole.Secretariat];
+            if (RoleWorkContract.Contains(userRole))
             {
                 return true;
             }

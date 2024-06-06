@@ -32,23 +32,18 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         [HttpPost]
         public async Task<ActionResult> UploadWorkContract([FromQuery][Required] List<IFormFile> files, [FromQuery][Required] string UserID)
         {
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
-
-            if (! WorkContractService.CheckCanDoWorkContract(userRole))
-            {
-                return BadRequest("Cant Upload Work Contract");
-            }
-
             var user = await _userManager.FindByIdAsync(UserID);
             if (user == null)
             {
                 return NotFound();
             }
-            var isTeacher = await _userManager.IsInRoleAsync(user, DefaultRole.Teacher);
 
-            if (!isTeacher)
+            var isTeacher = await _userManager.IsInRoleAsync(user, DefaultRole.Teacher);
+            var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
+
+            if (!(isTeacher || isSecretariat))
             {
-                return BadRequest("User Must Have Teacher Role");
+                return BadRequest("User Must Have Teacher Or Secrtaria Role");
             }
             foreach (var file in files)
             {
@@ -61,17 +56,15 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                         fileBytes = ms.ToArray();
                     }
                     var fileWorkContract = fileBytes;
-
-
-                    var UploadWorkContract = new WorkContract
+                    var UploadWorkContract = new Map_WorkContract
                     {
-                        File = fileWorkContract,
-                        TeacherID = user.Id,
+                        file = fileWorkContract,
+                        UserId = user.Id,
                     };
 
-                    /*var UploadWorkContractEntity = _mapper.Map<WorkContract>(UploadWorkContract);
+                    var courseEntity = _mapper.Map<WorkContract>(UploadWorkContract);
+                    await _workContractRepository.Add(courseEntity);
 
-                    await _workContractRepository.Add(UploadWorkContractEntity);*/
 
                 }
             }
@@ -81,12 +74,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteWorkContract(int id)
         {
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
 
-            if (!WorkContractService.CheckCanDoWorkContract(userRole))
-            {
-                 return BadRequest("Cant Delete Work Contract");
-            }
             var WorkContractEntity = await _workContractRepository.GetById(id);
             if (WorkContractEntity == null)
             {

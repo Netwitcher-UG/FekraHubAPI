@@ -11,6 +11,7 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task Delete(int id);
         Task<IQueryable<T>> GetRelation();
         Task ManyAdd(T entity);
+        void ManyUpdate(T entity);
         Task SaveManyAdd();
         Task<bool> IDExists(int id);
         Task<bool> IsTeacherIDExists(string userId);

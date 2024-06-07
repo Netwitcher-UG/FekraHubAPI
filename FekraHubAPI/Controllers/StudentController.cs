@@ -31,7 +31,7 @@ namespace FekraHubAPI.Controllers
             _emailSender = emailSender;
             _mapper = mapper;
         }
-        
+
         [HttpGet("courses/capacity")]
         public async Task<IActionResult> GetCoursesWithCapacity()
         {
@@ -75,8 +75,8 @@ namespace FekraHubAPI.Controllers
                     return NotFound("Student not found after creation.");
                 }
 
-                string contract = await _contractMaker.ContractHtml(newStudent.Id);
-                return Content(contract);
+                List<string> contract = await _contractMaker.ContractHtml(newStudent.Id);
+                return Ok(contract);
             }
             catch (Exception ex)
             {

@@ -30,18 +30,22 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> UploadWorkContract([FromQuery][Required] List<IFormFile> files, [FromQuery][Required] string UserID)
+        public async Task<ActionResult> UploadWorkContract([FromQuery][Required] List<IFormFile> files
+            //, [FromQuery][Required] string UserID
+            )
         {
+            string UserID = "8712a164-c50a-433e-a4d0-0e82375a7ab5";
             var user = await _userManager.FindByIdAsync(UserID);
             if (user == null)
             {
                 return NotFound();
             }
+            var isTeacher = await _workContractRepository.IsTeacherIDExists(user.Id);
+            var isSecretariat = await _workContractRepository.IsSecretariatIDExists(user.Id);
 
-            var isTeacher = await _userManager.IsInRoleAsync(user, DefaultRole.Teacher);
-            var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
+           // var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
 
-            if (!(isTeacher || isSecretariat))
+            if (! (isTeacher || isSecretariat))
             {
                 return BadRequest("User Must Have Teacher Or Secrtaria Role");
             }
@@ -56,14 +60,14 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                         fileBytes = ms.ToArray();
                     }
                     var fileWorkContract = fileBytes;
-                    var UploadWorkContract = new Map_WorkContract
+                    var UploadWorkContract = new WorkContract
                     {
-                        file = fileWorkContract,
-                        UserId = user.Id,
+                        File = fileWorkContract,
+                        TeacherID = UserID,
                     };
 
-                    var courseEntity = _mapper.Map<WorkContract>(UploadWorkContract);
-                    await _workContractRepository.Add(courseEntity);
+                   //var workContractEntity = _mapper.Map<WorkContract>(UploadWorkContract);
+                   //await _workContractRepository.Add(workContractEntity);
 
 
                 }

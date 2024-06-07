@@ -11,7 +11,7 @@ namespace FekraHubAPI.Data.Models
 
         public byte[] File { get; set; }
 
-        public DateTime Timestamp  { get; set; }
+        public DateTime Timestamp  { get; set; } = DateTime.Now;
 
       
         [ForeignKey("TeacherID")]

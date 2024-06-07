@@ -34,7 +34,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             //, [FromQuery][Required] string UserID
             )
         {
-            string UserID = "8712a164-c50a-433e-a4d0-0e82375a7ab5";
+            string UserID = "17de782a-6b7a-4dfc-b007-dcc730694668";
             var user = await _userManager.FindByIdAsync(UserID);
             if (user == null)
             {
@@ -64,10 +64,11 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                     {
                         File = fileWorkContract,
                         TeacherID = UserID,
+
                     };
 
-                   //var workContractEntity = _mapper.Map<WorkContract>(UploadWorkContract);
-                   //await _workContractRepository.Add(workContractEntity);
+                   var workContractEntity = _mapper.Map<WorkContract>(UploadWorkContract);
+                   await _workContractRepository.Add(workContractEntity);
 
 
                 }
@@ -86,8 +87,21 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             }
 
             await _workContractRepository.Delete(id);
-            return NoContent();
+            return Ok();
         }
-       
+
+        [HttpGet]
+        public async Task<ActionResult> GetsWorkContract()
+        {
+
+            var WorkContractEntity = await _workContractRepository.GetAll();
+            if (WorkContractEntity == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(WorkContractEntity);
+        }
+
     }
 }

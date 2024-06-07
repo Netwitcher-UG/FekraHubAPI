@@ -59,6 +59,11 @@ namespace FekraHubAPI.Repositories.Implementations
         {
             await _dbSet.AddAsync(entity);
         }
+
+        public void ManyUpdate(T entity)
+        {
+            _dbSet.Update(entity);
+        }
         public async Task SaveManyAdd()
         {
             await _context.SaveChangesAsync();

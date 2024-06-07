@@ -11,7 +11,7 @@ namespace FekraHubAPI.Data.Models
        
         public string data { get; set; }
 
-        public bool Improved { get; set; }
+        public bool? Improved { get; set; }
 
         public DateTime CreationDate { get; set; }
 

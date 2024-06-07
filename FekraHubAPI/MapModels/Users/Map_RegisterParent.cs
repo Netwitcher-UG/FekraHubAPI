@@ -3,23 +3,27 @@
 
 namespace FekraHubAPI.MapModels.Users
 {
-    public class AccountUpdate
+    public class Map_RegisterParent
     {
 
+        [Required]
+        public string userName { get; set; }
 
-        public string? userName { get; set; }
+        [Required]
+        public string password { get; set; }
 
-        public string? firstName { get; set; }
-        public string? lastname { get; set; }
-        public string? email { get; set; }
+        [Required]
+        public string email { get; set; }
 
         public string? phoneNumber { get; set; }
-
+        public string? firstName { get; set; }
+        public string? lastname { get; set; }
         public IFormFile? imageUser { get; set; }
+        public bool? activeUser { get; set; } = true;
         public string? gender { get; set; }
 
         public string? emergencyPhoneNumber { get; set; }
-        public DateTime birthday { get; set; } = DateTime.MinValue;
+        public DateTime? birthday { get; set; }
         public string? birthplace { get; set; }
 
         public string? nationality { get; set; }
@@ -29,8 +33,6 @@ namespace FekraHubAPI.MapModels.Users
         public string? city { get; set; }
         public string? job { get; set; }
         public string? graduation { get; set; }
-
-
     }
 
 

@@ -35,7 +35,7 @@ namespace FekraHubAPI.Controllers.UsersController
         }
         
         [HttpPost("[action]")]
-        public async Task<IActionResult> LogIn(Login login)
+        public async Task<IActionResult> LogIn(Map_Login login)
         {
             if (ModelState.IsValid)
             {
@@ -59,7 +59,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             var roleClaims = await this.roleManager.GetClaimsAsync(roleUser);
                             foreach (var roleClaim in roleClaims)
                             {
-                                claims.Add(new Claim(roleClaim.Type, roleClaim.Value));
+                                claims.Add(new Claim("Permissions", roleClaim.Value));
                             }
                         }
                         //signingCredentials
@@ -93,7 +93,7 @@ namespace FekraHubAPI.Controllers.UsersController
         }
 
         [HttpPost("RegisterParent")]
-        public async Task<IActionResult> RegisterParent(RegisterParent user)
+        public async Task<IActionResult> RegisterParent(Map_RegisterParent user)
         {
             using (IDbContextTransaction transaction = this.context.Database.BeginTransaction())
             {

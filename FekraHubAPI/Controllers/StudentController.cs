@@ -4,8 +4,7 @@ using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,28 +31,34 @@ namespace FekraHubAPI.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("courses/capacity")]
+        [HttpGet("CoursesCapacity")]
         public async Task<IActionResult> GetCoursesWithCapacity()
         {
             try
             {
-                var courses = await _courseRepo.GetAll();
+                var courses = await _courseRepo.GetRelation();
                 var allStudentsInCourses = await _studentRepo.GetAll();
 
                 foreach (var course in courses)
                 {
                     course.Capacity -= allStudentsInCourses.Count(c => c.CourseID == course.Id);
                 }
-
-                return Ok(courses);
+                var courseInfo = courses.Select(x => new { x.Id , x.Name , x.Capacity}).ToList();
+                return Ok(courseInfo);
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
         }
-        [HttpPost("student/add")]
-        public async Task<IActionResult> AddStudent([FromForm] Map_Student student)
+        [HttpGet]
+        public async Task<IActionResult> GetStudents()
+        {
+             var students = await _studentRepo.GetAll();
+             return Ok(students);
+        }
+        [HttpPost]
+        public async Task<IActionResult> InsertStudent([FromForm] Map_Student student)
         {
             if (!ModelState.IsValid)
             {
@@ -65,17 +70,22 @@ namespace FekraHubAPI.Controllers
                 var studentEntity = _mapper.Map<Student>(student);
                 await _studentRepo.Add(studentEntity);
 
-                var newStudent = (await _studentRepo.GetAll())
+                var newStudentID = studentEntity.Id;
+
+                if (newStudentID == 0)
+                {
+                    var newStudent = (await _studentRepo.GetAll())
                     .SingleOrDefault(x => x.ParentID == student.ParentID
                                           && x.FirstName == student.FirstName
                                           && x.LastName == student.LastName);
-
-                if (newStudent == null)
-                {
-                    return NotFound("Student not found after creation.");
+                    if(newStudent != null) 
+                    {
+                        newStudentID = newStudent.Id;
+                    }
+                    
                 }
 
-                List<string> contract = await _contractMaker.ContractHtml(newStudent.Id);
+                List<string> contract = await _contractMaker.ContractHtml(newStudentID);
                 return Ok(contract);
             }
             catch (Exception ex)
@@ -83,11 +93,15 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error creating new student record");
             }
         }
-        [HttpPost("student/acceptedContract/{studentId}")]
+        [HttpPost("AcceptedContract/{studentId}")]
         public async Task<IActionResult> AcceptedContract(int studentId)
         {
             try
             {
+                if(!await _studentRepo.IDExists(studentId))
+                {
+                    return BadRequest("This student not found");
+                }
                 var contracts = await _studentContractRepo.GetAll();
                 if (contracts.Any(c => c.StudentID == studentId))
                 {
@@ -108,7 +122,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPost("student/notAcceptedContract/{studentId}")]
+        [HttpPost("NotAcceptedContract/{studentId}")]
         public async Task<IActionResult> NotAcceptedContract(int studentId)
         {
             try
@@ -125,19 +139,27 @@ namespace FekraHubAPI.Controllers
                     await _studentRepo.Delete(studentId);
                     return Ok($"The student ({student.FirstName} {student.LastName}) has been removed successfully");
                 }
-                return BadRequest("This student was not found");
+                return BadRequest("This student not found");
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpGet("student/getContracts")]
+        [HttpGet("Contracts")]
         public async Task<IActionResult> GetContracts()
         {
             try
             {
-                var contracts = await _studentContractRepo.GetAll();
+                var contracts = (await _studentContractRepo.GetAll()).Select(x => new { 
+                    x.Id,
+                    x.StudentID,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    ParentId = x.Student.ParentID,
+                    x.CreationDate,
+                    x.File
+                    });
                 return Ok(contracts);
             }
             catch (Exception ex)
@@ -145,16 +167,20 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpGet("student/GetSonsOfParentContracts")]
+        [HttpGet("SonsContractsForParent")]
         public async Task<IActionResult> GetSonsOfParentContracts(string parentId)
         {
             try
             {
                 var allContracts = await _studentContractRepo.GetRelation();
-                var contracts = allContracts.Include(x => x.Student)
-                                            .Where(x => x.Student.ParentID == parentId)
-                                            .Select(x => x.File)
-                                            .ToList();
+                var contracts = allContracts.Where(x => x.Student.ParentID == parentId).Select(x => new {
+                    x.Id ,
+                    studentId = x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    x.CreationDate,
+                    x.File 
+                }).ToList();
                 return Ok(contracts);
             }
             catch (Exception ex)

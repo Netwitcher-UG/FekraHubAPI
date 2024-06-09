@@ -3,10 +3,9 @@ using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Linq.Expressions;
+
 
 namespace FekraHubAPI.Controllers
 {
@@ -17,27 +16,42 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<Report> _reportRepo;
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<SchoolInfo> _schoolInfo;
-        private readonly IRepository<Course> _courseRepo;
-        private readonly IMapper _mapper;
         private readonly IEmailSender _emailSender;
         public ReportsController(IRepository<Report> reportRepo, IRepository<SchoolInfo> schoolInfo,
-            IRepository<Student> studentRepo, IMapper mapper, IEmailSender emailSender, IRepository<Course> courseRepo)
+            IRepository<Student> studentRepo, IEmailSender emailSender)
         {
             _reportRepo = reportRepo;
             _schoolInfo = schoolInfo;
             _studentRepo = studentRepo;
-            _mapper = mapper;
             _emailSender = emailSender;
-            _courseRepo = courseRepo;
         }
         
-        [HttpGet("/reports/getKeys")]
+        [HttpGet("Keys")]
         public async Task<IActionResult> GetReportKeys()
         {
             var keys = (await _schoolInfo.GetRelation()).Select(x => x.StudentsReportsKeys).SingleOrDefault();
             return Ok(keys);
         }
-        [HttpGet("/reports/get")]
+        [HttpGet("All")]
+        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] bool? Improved)
+        {
+            IQueryable<Report> query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == Improved);
+            var result = query.Select(x => new
+            {
+                x.Id,
+                x.data,
+                x.CreationDate,
+                TeacherId = x.UserId,
+                TeacherFirstName = x.User.FirstName,
+                TeacherLastName = x.User.LastName,
+                x.StudentId,
+                StudentFirstName = x.Student.FirstName,
+                StudentLastName = x.Student.LastName,
+                x.Improved
+            }).ToList();
+            return Ok(result);
+        }
+        [HttpGet("Filter")]
         public async Task<ActionResult<IEnumerable<Report>>> GetReports(
             [FromQuery] string? teacherId,
             [FromQuery] int? studentId,
@@ -83,11 +97,25 @@ namespace FekraHubAPI.Controllers
             {
                 return NotFound("No reports found.");
             }
-            return Ok(query);
+            var result = query.Select(x => new
+            {
+                x.Id,
+                x.data,
+                x.CreationDate,
+                TeacherId = x.UserId,
+                TeacherFirstName = x.User.FirstName,
+                TeacherLastName = x.User.LastName,
+                x.StudentId,
+                StudentFirstName = x.Student.FirstName,
+                StudentLastName = x.Student.LastName,
+                x.Improved
+            }).ToList();
+
+            return Ok(result);
 
         }
 
-        [HttpPost("/reports/add")]
+        [HttpPost]
         public async Task<IActionResult> CreateReports(List<Map_Report> map_Report)
         {
             if (!ModelState.IsValid)
@@ -112,7 +140,7 @@ namespace FekraHubAPI.Controllers
                     Improved = null,
                     UserId = map.UserId
                 };
-                //var report = _mapper.Map<Report>(map);
+
                 await _reportRepo.ManyAdd(report);
             }
 
@@ -120,7 +148,7 @@ namespace FekraHubAPI.Controllers
             await _emailSender.SendToSecretaryNewReportsForStudents();
             return Ok(map_Report);
         }
-        [HttpPatch("/reports/acceptReport")]
+        [HttpPatch("AcceptReport")]
         public async Task<IActionResult> AcceptReport(int ReportId)
         {
             var report = await _reportRepo.GetById(ReportId);
@@ -141,7 +169,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-        [HttpPatch("/reports/UnAcceptReport")]
+        [HttpPatch("UnAcceptReport")]
         public async Task<IActionResult> UnAcceptReport(int ReportId)
         {
             var report = await _reportRepo.GetById(ReportId);
@@ -162,7 +190,7 @@ namespace FekraHubAPI.Controllers
             }
         }
         
-        [HttpPatch("/reports/acceptAllReport")]
+        [HttpPatch("AcceptAllReport")]
         public async Task<IActionResult> AcceptAllReport(List<int> ReportIds)
         {
             var AllReports = await _reportRepo.GetRelation();
@@ -172,13 +200,15 @@ namespace FekraHubAPI.Controllers
                 return BadRequest("This reports not found");
             }
 
-            foreach (var report in reports)
-            {
-                report.Improved = true;
-                _reportRepo.ManyUpdate(report);
-            }
+            
             try
             {
+                foreach (var report in reports)
+                {
+                    report.Improved = true;
+                    _reportRepo.ManyUpdate(report);
+                }
+
                 await _reportRepo.SaveManyAdd();
                 List<string> parentsIds = reports.Select(x => x.UserId).ToList();
                 await _emailSender.SendToParentsNewReportsForStudents(parentsIds);

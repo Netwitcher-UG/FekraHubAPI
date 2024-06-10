@@ -7,13 +7,13 @@ import Typography from '@mui/material/Typography'
 
 // Component Imports
 
-import FormValidationAsyncSubmit from '@views/parents/form-validation/FormValidationAsyncSubmit'
+import RegisterChildren from '@views/pages/parents/children/RegisterChildren'
 
 const FormValidation = () => {
   return (
     <Grid container spacing={6} justifyContent={'center'}>
-      <Grid item xs={12} md={6}>
-        <FormValidationAsyncSubmit />
+      <Grid item xs={12} md={10}>
+        <RegisterChildren />
       </Grid>
     </Grid>
   )

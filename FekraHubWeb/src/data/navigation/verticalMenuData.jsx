@@ -19,9 +19,9 @@ const verticalMenuData = (dictionary, params) => [
     isSection: true,
     children: [
       {
-        label: dictionary['navigation'].parents,
+        label: dictionary['navigation'].children,
         icon: 'ri-checkbox-multiple-line',
-        href: '/parents/form-validation'
+        href: '/pages/parents/children'
       }
     ]
   }

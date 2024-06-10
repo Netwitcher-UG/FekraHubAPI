@@ -14,29 +14,29 @@ namespace FekraHubAPI.EmailSender
 {
     public class EmailSender : IEmailSender
     {
-        private readonly UserManager<ApplicationUser> userManager;
-        private readonly ApplicationDbContext context;
-        private readonly IRepository<Student> studentRepo;
-        private readonly IRepository<StudentContract> studentContract;
-        private readonly IRepository<SchoolInfo> schoolInfo;
-        private readonly IRepository<Course> courseRepo;
-        private readonly IConfiguration configuration;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
+        private readonly IRepository<Student> _studentRepo;
+        private readonly IRepository<StudentContract> _studentContract;
+        private readonly IRepository<SchoolInfo> _schoolInfo;
+        private readonly IRepository<Course> _courseRepo;
+        private readonly IConfiguration _configuration;
         public EmailSender(IRepository<SchoolInfo> schoolInfo, UserManager<ApplicationUser> userManager,
             IRepository<Student> studentRepo, IRepository<StudentContract> studentContract, ApplicationDbContext context,
             IConfiguration configuration, IRepository<Course> courseRepo)
         {
-            this.schoolInfo = schoolInfo;
-            this.userManager = userManager;
-            this.studentRepo = studentRepo;
-            this.studentContract = studentContract;
-            this.context = context;
-            this.configuration = configuration;
-            this.courseRepo = courseRepo;
+            _schoolInfo = schoolInfo;
+            _userManager = userManager;
+            _studentRepo = studentRepo;
+            _studentContract = studentContract;
+            _context = context;
+            _configuration = configuration;
+            _courseRepo = courseRepo;
         }
 
         private async Task<Task> SendEmail(string toEmail, string subject, string body, bool isBodyHTML, byte[]? pdf = null, string? pdfName = null)
         {
-            var schoolInfo = (await this.schoolInfo.GetRelation()).SingleOrDefault();
+            var schoolInfo = await _context.SchoolInfos.FirstAsync();
             string MailServer = schoolInfo.EmailServer;
             int Port = schoolInfo.EmailPortNumber;
             string FromEmail = schoolInfo.FromEmail;
@@ -72,14 +72,17 @@ namespace FekraHubAPI.EmailSender
             mailMessage.Attachments.Add(image);
             return client.SendMailAsync(mailMessage);
         }
+        
+
         private string Message(string contentHtml)
         {
+            var schoolName = _context.SchoolInfos.First().SchoolName;
             string ConstantsMessage = @$"<div class='container' style='width: 100%;background-color: rgb(242, 242, 242);text-align: center;padding: 20px 0;margin: 0;'>
                 <div class='message' style=' width: 300px;margin: 0 auto;'>
                     <table style='width:90%;margin: 0 auto;'>
                         <tr>
                             <td style='text-align:left;'>
-                                <h3>Fekra Hub</h3>
+                                <h3>{schoolName}</h3>
                             </td>
                             <td style='text-align:right;'>
                                 <img style='width:40px;' src='cid:MyImage' />
@@ -90,7 +93,7 @@ namespace FekraHubAPI.EmailSender
                     {contentHtml}
                     </div>
                     <footer>
-                        <p>© 2024 Fekra Hub. All rights reserved.</p>
+                        <p>© 2024 NetWitcher. All rights reserved.</p>
                     </footer>
                 </div>
             </div>";
@@ -98,8 +101,8 @@ namespace FekraHubAPI.EmailSender
         }
         public async Task<IActionResult> SendConfirmationEmail(ApplicationUser user)
         {
-            string FekraHupUrl = configuration["EmailSenderSettings:ApiUrl"];
-            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            string FekraHupUrl = _configuration["EmailSenderSettings:ApiUrl"];
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = $"{FekraHupUrl}/NewUser/confirm?ID={user.Id}&Token={token}";
             var content = $@"<div style='width:100%;text-align:left;'>
                             <h1 style='width:100%;text-align:center;'>Hello {user.UserName}</h1>
@@ -121,15 +124,15 @@ namespace FekraHubAPI.EmailSender
             }
         }
 
-        public async Task<IActionResult> SendContractEmail(int studentId, string pdfName)
+        public async Task<IActionResult> SendContractEmail(int studentId, string pdfName)//
         {
-            var student = await studentRepo.GetById(studentId);
-            var parent = await userManager.FindByIdAsync(student.ParentID ?? "");
+            var student = await _studentRepo.GetById(studentId);
+            var parent = await _userManager.FindByIdAsync(student.ParentID ?? "");
             if (student == null || parent == null)
             {
                 return new BadRequestObjectResult("Something seems wrong. Please re-register your child or contact us");
             }
-            var contracts = await studentContract.GetAll();
+            var contracts = await _studentContract.GetAll();
             byte[] contract = contracts.Where(x => x.StudentID == studentId).Select(x => x.File).First();
             var content = @$"<div style='width:100%;text-align:left;'>
                         <h1 style='width:100%;text-align:center;'>Hello {parent.FirstName} {parent.LastName}</h1><hr></hr><br></br>
@@ -152,8 +155,8 @@ namespace FekraHubAPI.EmailSender
 
         public async Task SendToAdminNewParent(ApplicationUser user)
         {
-            var AdminId = await context.UserRoles.Where(x => x.RoleId == "1").Select(x => x.UserId).FirstOrDefaultAsync();
-            var admin = await userManager.Users.Where(x => x.Id == AdminId).FirstOrDefaultAsync();
+            var AdminId = await _context.UserRoles.Where(x => x.RoleId == "1").Select(x => x.UserId).FirstOrDefaultAsync();
+            var admin = await _userManager.Users.Where(x => x.Id == AdminId).FirstOrDefaultAsync();
             var content = @$"<div style='width:100%;text-align:left;'>
                         <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your school</p>
@@ -164,7 +167,7 @@ namespace FekraHubAPI.EmailSender
                                Name : {user.FirstName} {user.LastName}
                                 </li>
                                 <li>
-                                StreetNr : {user.StreetNr} 
+                                StreetNr :{user.Street} {user.StreetNr} 
                                 </li>
                                 <li>
                                 City : {user.City}
@@ -187,8 +190,8 @@ namespace FekraHubAPI.EmailSender
 
         public async Task SendToAllNewEvent()
         {
-            var users = await userManager.Users.ToListAsync();
-            var parentsId = await context.UserRoles.Where(x => x.RoleId == "3").Select(x => x.UserId).ToListAsync();
+            var users = await _userManager.Users.ToListAsync();
+            var parentsId = await _context.UserRoles.Where(x => x.RoleId == "3").Select(x => x.UserId).ToListAsync();
             List<ApplicationUser> parent = users
                 .Where(user => parentsId.Contains(user.Id))
                 .ToList();
@@ -196,7 +199,7 @@ namespace FekraHubAPI.EmailSender
                 .Where(user => !parentsId.Contains(user.Id))
                 .ToList(); ;
 
-            var students = await studentRepo.GetAll();
+            var students = await _studentRepo.GetAll();
             foreach (var user in parent)
             {
                 var student = students.Where(x => x.ParentID == user.Id).ToList();
@@ -237,7 +240,7 @@ namespace FekraHubAPI.EmailSender
 
         public async Task SendToParentsNewFiles(List<ApplicationUser> parents)
         {
-            var students = await studentRepo.GetAll();
+            var students = await _studentRepo.GetAll();
             foreach (var parent in parents)
             {
                 var student = students.Where(x => x.ParentID == parent.Id).ToList();
@@ -267,11 +270,11 @@ namespace FekraHubAPI.EmailSender
 
         public async Task SendToSecretaryNewReportsForStudents()
         {
-            var SecretariesId = await context.UserRoles
+            var SecretariesId = await _context.UserRoles
                             .Where(x => x.RoleId == "2")
                             .Select(x => x.UserId)
                             .ToListAsync();
-            var Secretaries = await userManager.Users
+            var Secretaries = await _userManager.Users
                          .Where(user => SecretariesId.Contains(user.Id))
                          .ToListAsync();
             foreach (var Secretary in Secretaries)
@@ -293,22 +296,22 @@ namespace FekraHubAPI.EmailSender
             List<ApplicationUser> parents = [];
             if (!parentsId.Any())
             {
-                var ParentsId = await context.UserRoles
+                var ParentsId = await _context.UserRoles
                             .Where(x => x.RoleId == "3")
                             .Select(x => x.UserId)
                             .ToListAsync();
-                parents = await userManager.Users
+                parents = await _userManager.Users
                              .Where(user => ParentsId.Contains(user.Id))
                              .ToListAsync();
             }
             else
             {
-                parents = await userManager.Users
+                parents = await _userManager.Users
                              .Where(user => parentsId.Contains(user.Id))
                              .ToListAsync();
             }
 
-            var students = await studentRepo.GetAll();
+            var students = await _studentRepo.GetAll();
             foreach (var parent in parents)
             {
                 var student = students.Where(x => x.ParentID == parent.Id).ToList();
@@ -335,14 +338,12 @@ namespace FekraHubAPI.EmailSender
             }
         }
 
-        public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId)
+        public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId,string teacherId)
         {
-            var student = await studentRepo.GetById(studentId);
-            var course = await courseRepo.GetById(student.CourseID ?? 0);
-            
-            if (await studentRepo.IsTeacherIDExists(course.UserId))
+            var student = await _studentRepo.GetById(studentId);
+            if (await _studentRepo.IsTeacherIDExists(teacherId))
             {
-                var teacher = await userManager.FindByIdAsync(course.UserId);
+                var teacher = await _userManager.FindByIdAsync(teacherId);
                 var content = @$"<div style='width:100%;text-align:left;'>
                         <h1 style='width:100%;text-align:center;'>Hello {teacher.FirstName} {teacher.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your students</p>

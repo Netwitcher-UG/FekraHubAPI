@@ -4,9 +4,10 @@ using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
-
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FekraHubAPI.Controllers
 {
@@ -57,7 +58,28 @@ namespace FekraHubAPI.Controllers
              var students = await _studentRepo.GetAll();
              return Ok(students);
         }
+        [HttpGet("ByParent")]
+        public async Task<IActionResult> GetStudentsByParent(string parentId)//
+        {
+            //var parentId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            //if (string.IsNullOrEmpty(parentId))
+            //{
+            //    return Unauthorized("Parent ID not found in token.");
+            //}
+
+            var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId);
+            
+            var result = students.Select(z => new
+            {
+                student = z,
+                course = new { z.Course.Id, z.Course.Name, z.Course.Capacity, z.Course.StartDate, z.Course.EndDate, z.Course.Price }
+            }).ToList();
+            
+
+            return Ok(result);
+        }
         [HttpPost]
+        //[Authorize]
         public async Task<IActionResult> InsertStudent([FromForm] Map_Student student)
         {
             if (!ModelState.IsValid)
@@ -67,6 +89,13 @@ namespace FekraHubAPI.Controllers
 
             try
             {
+                //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                //if (string.IsNullOrEmpty(userId))
+                //{
+                //    return Unauthorized("User ID not found in token.");
+                //}
+                //student.ParentID = userId;
                 var studentEntity = _mapper.Map<Student>(student);
                 await _studentRepo.Add(studentEntity);
 
@@ -107,9 +136,15 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest("This student already has a contract!");
                 }
+                //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                await _contractMaker.ConverterHtmlToPdf(studentId);
-                var res = await _emailSender.SendContractEmail(studentId, "Son_Contract");
+                //if (string.IsNullOrEmpty(userId))
+                //{
+                //    return Unauthorized("User ID not found in token.");
+                //}
+                //student.ParentID = userId;
+                await _contractMaker.ConverterHtmlToPdf(studentId);//
+                var res = await _emailSender.SendContractEmail(studentId, "Son_Contract");//
                 if (res is BadRequestObjectResult)
                 {
                     await _emailSender.SendContractEmail(studentId, "Son_Contract");
@@ -168,10 +203,17 @@ namespace FekraHubAPI.Controllers
             }
         }
         [HttpGet("SonsContractsForParent")]
-        public async Task<IActionResult> GetSonsOfParentContracts(string parentId)
+        public async Task<IActionResult> GetSonsOfParentContracts(string parentId)// (string parentId) delete when [Authorize]
         {
             try
             {
+                //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                //if (string.IsNullOrEmpty(userId))
+                //{
+                //    return Unauthorized("User ID not found in token.");
+                //}
+                //var parentId = userId;
                 var allContracts = await _studentContractRepo.GetRelation();
                 var contracts = allContracts.Where(x => x.Student.ParentID == parentId).Select(x => new {
                     x.Id ,

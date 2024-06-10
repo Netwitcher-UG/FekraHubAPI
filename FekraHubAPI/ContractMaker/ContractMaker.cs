@@ -23,29 +23,25 @@ namespace FekraHubAPI.ContractMaker
         }
         public async Task ConverterHtmlToPdf(int studentId)
         {
-            var contracts = await _repo.GetRelation();
-            var isExists = contracts.Where(s => s.StudentID == studentId).ToList();
-            if (!isExists.Any())
+            HtmlToPdf HtmlToPdf = new HtmlToPdf();
+            var contractPages = await ContractHtmlPage(studentId);
+            PdfDocument finalPdf = new PdfDocument();
+            foreach (var contractPage in contractPages)
             {
-                HtmlToPdf HtmlToPdf = new HtmlToPdf();
-                var contractPages = await ContractHtmlPage(studentId);
-                PdfDocument finalPdf = new PdfDocument();
-                foreach (var contractPage in contractPages)
-                {
-                    PdfDocument pdfDocument = HtmlToPdf.ConvertHtmlString(contractPage);
-                    finalPdf.Append(pdfDocument);
+                PdfDocument pdfDocument = HtmlToPdf.ConvertHtmlString(contractPage);
+                finalPdf.Append(pdfDocument);
 
-                }
-                byte[] pdf = finalPdf.Save();
-                finalPdf.Close();
-                StudentContract studentContract = new()
-                {
-                    StudentID = studentId,
-                    File = pdf,
-                    CreationDate = DateTime.Now
-                };
-                await _repo.Add(studentContract);
             }
+            byte[] pdf = finalPdf.Save();
+            finalPdf.Close();
+            StudentContract studentContract = new()
+            {
+                StudentID = studentId,
+                File = pdf,
+                CreationDate = DateTime.Now
+            };
+            await _repo.Add(studentContract);
+
         }
         public async Task<byte[]> GetContractPdf(int studentId)
         {
@@ -53,12 +49,12 @@ namespace FekraHubAPI.ContractMaker
             var contract = AllContracts.Where(c => c.StudentID == studentId).First();
             return contract.File;
         }
-        public async Task<List<string>> ContractHtml(int studentId)
+        public async Task<List<string>> ContractHtml(int studentId)//
         {
             return await ContractHtmlPage(studentId);
         }
 
-        private async Task<List<string>> ContractHtmlPage(int studentID)
+        private async Task<List<string>> ContractHtmlPage(int studentID)//
         {
             var schoolInfo = (await _schoolInforepo.GetRelation()).SingleOrDefault();
             var student = await _studentrepo.GetById(studentID);

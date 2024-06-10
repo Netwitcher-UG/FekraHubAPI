@@ -4,6 +4,9 @@ using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 using System.Linq.Expressions;
 
 
@@ -17,13 +20,15 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<SchoolInfo> _schoolInfo;
         private readonly IEmailSender _emailSender;
+        private readonly IMapper _mapper;
         public ReportsController(IRepository<Report> reportRepo, IRepository<SchoolInfo> schoolInfo,
-            IRepository<Student> studentRepo, IEmailSender emailSender)
+            IRepository<Student> studentRepo, IEmailSender emailSender,IMapper mapper)
         {
             _reportRepo = reportRepo;
             _schoolInfo = schoolInfo;
             _studentRepo = studentRepo;
             _emailSender = emailSender;
+            _mapper = mapper;
         }
         
         [HttpGet("Keys")]
@@ -44,9 +49,8 @@ namespace FekraHubAPI.Controllers
                 TeacherId = x.UserId,
                 TeacherFirstName = x.User.FirstName,
                 TeacherLastName = x.User.LastName,
-                x.StudentId,
-                StudentFirstName = x.Student.FirstName,
-                StudentLastName = x.Student.LastName,
+                TeacherEmail = x.User.Email,
+                x.Student,
                 x.Improved
             }).ToList();
             return Ok(result);
@@ -105,9 +109,8 @@ namespace FekraHubAPI.Controllers
                 TeacherId = x.UserId,
                 TeacherFirstName = x.User.FirstName,
                 TeacherLastName = x.User.LastName,
-                x.StudentId,
-                StudentFirstName = x.Student.FirstName,
-                StudentLastName = x.Student.LastName,
+                TeacherEmail = x.User.Email,
+                x.Student,
                 x.Improved
             }).ToList();
 
@@ -122,31 +125,43 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var mapDates = map_Report.Select(x => new { x.CreationDate.Year, x.CreationDate.Month, x.StudentId }).ToList();
+            var mapDates = new HashSet<(int Year, int Month, int StudentId)>(
+                map_Report.Select(x => (x.CreationDate.Year, x.CreationDate.Month, x.StudentId))
+            );
+
             var reports = (await _reportRepo.GetAll())
-                .Where(d => mapDates.Any(md => md.Year == d.CreationDate.Year &&
-                md.Month == d.CreationDate.Month && md.StudentId == d.StudentId)).ToList();
+                .Where(d => mapDates.Contains((d.CreationDate.Year, d.CreationDate.Month, d.StudentId ?? 0)))
+                .ToList();
+
             if (reports.Any())
             {
-                return BadRequest($"There is a report for the student with Id: {reports[0].Id}  on this date {reports[0].CreationDate.Month}/{reports[0].CreationDate.Year}");
+                return BadRequest($"There is a report for the student with Id: {reports[0].StudentId} on this date {reports[0].CreationDate.Month}/{reports[0].CreationDate.Year}");
             }
-            foreach (var map in map_Report)
+            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            //if (string.IsNullOrEmpty(userId))
+            //{
+            //    return Unauthorized("User ID not found in token.");
+            //}
+            //UserId = userId;
+            List<Report> AllReports = map_Report.Select(map => new Report
             {
-                var report = new Report()
-                {
-                    CreationDate = map.CreationDate,
-                    StudentId = map.StudentId,  
-                    data = map.data,
-                    Improved = null,
-                    UserId = map.UserId
-                };
-
-                await _reportRepo.ManyAdd(report);
+                CreationDate = map.CreationDate,
+                StudentId = map.StudentId,
+                data = map.data,
+                Improved = null,
+                UserId = map.UserId//
+            }).ToList();
+            try
+            {
+                await _reportRepo.ManyAdd(AllReports);
+                await _emailSender.SendToSecretaryNewReportsForStudents();
+                return Ok(map_Report);
             }
-
-            await _reportRepo.SaveManyAdd();
-            await _emailSender.SendToSecretaryNewReportsForStudents();
-            return Ok(map_Report);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
         [HttpPatch("AcceptReport")]
         public async Task<IActionResult> AcceptReport(int ReportId)
@@ -166,7 +181,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
         [HttpPatch("UnAcceptReport")]
@@ -181,12 +196,12 @@ namespace FekraHubAPI.Controllers
             try
             {
                 await _reportRepo.Update(report);
-                await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0);
+                await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0,report.UserId ?? "");
                 return Ok($"Report not accepted");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
         
@@ -199,24 +214,18 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest("This reports not found");
             }
-
-            
             try
             {
-                foreach (var report in reports)
-                {
-                    report.Improved = true;
-                    _reportRepo.ManyUpdate(report);
-                }
+                await reports.ForEachAsync(report => report.Improved = true);
+                await _reportRepo.ManyUpdate(reports);
 
-                await _reportRepo.SaveManyAdd();
                 List<string> parentsIds = reports.Select(x => x.UserId).ToList();
                 await _emailSender.SendToParentsNewReportsForStudents(parentsIds);
                 return Ok($"Reports accepted");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
     }

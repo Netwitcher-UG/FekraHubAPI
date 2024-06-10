@@ -106,10 +106,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 }
             }
 
-            if (attendanceStatus == null)
-            {
-                return BadRequest("Unable to find the specified attendance status.");
-            }
+            
             try { 
                 await _attendanceStatusRepo.Delete(attendanceStatus.Id);
 
@@ -322,7 +319,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
         
@@ -338,18 +335,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return BadRequest("This date already exists.");
             }
-            if (!await _coursRepo.IDExists(studentAttendance.CourseID ?? 0))
-            {
-                return BadRequest("Invalid Course ID.");
-            }
-            if (!await _studentRepo.IDExists(studentAttendance.StudentID ?? 0))
-            {
-                return BadRequest("Invalid Student ID.");
-            }
-            if (!await _attendanceStatusRepo.IDExists(studentAttendance.StatusID ?? 0))
-            {
-                return BadRequest("Invalid Status ID.");
-            }
+            
             var studentAttendanceResult =  _mapper.Map<StudentAttendance>(studentAttendance);
             try
             {
@@ -358,7 +344,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error. Please try again later.");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
         
@@ -381,16 +367,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     return BadRequest("Invalid Status ID.");
                 }
-                var attendanceTable = await _studentAttendanceRepo.GetRelation();
-                var attendanceInDate = attendanceTable.Where(d => d.date == dateTime && d.CourseID == courseID);
+                var attendanceInDate = (await _studentAttendanceRepo.GetRelation()).Where(d => d.date == dateTime && d.CourseID == courseID);
                 var studentIdsToUpdate = attendanceInDate.Select(a => a.StudentID).ToList();
                 if (attendanceInDate.Any())
                 {
-                    foreach (var attendance in attendanceInDate)
-                    {
-                        attendance.StatusID = statusID;
-                        _studentAttendanceRepo.ManyUpdate(attendance);
-                    }
+                    await attendanceInDate.ForEachAsync(attendance => attendance.StatusID = statusID);
+                    await _studentAttendanceRepo.ManyUpdate(attendanceInDate);
                 }
                 var allStudents = await _studentRepo.GetRelation();
                 var studentsInCourse = allStudents.Where(s => s.CourseID == courseID && !studentIdsToUpdate.Contains(s.Id)).ToList();
@@ -398,23 +380,21 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     return NotFound("No students found for the specified course.");
                 }
-                foreach (var student in studentsInCourse)
-                {
-                    StudentAttendance studentAttendance = new()
-                    {
-                        date = dateTime,
-                        CourseID = courseID,
-                        StudentID = student.Id,
-                        StatusID = statusID
-                    };
-                    await _studentAttendanceRepo.ManyAdd(studentAttendance);
-                }
-                await _studentAttendanceRepo.SaveManyAdd();
+               
+                List<StudentAttendance> studentAttendances = studentsInCourse
+                        .Select(student => new StudentAttendance
+                        {
+                            date = dateTime,
+                            CourseID = courseID,
+                            StudentID = student.Id,
+                            StatusID = statusID
+                        }).ToList();
+                await _studentAttendanceRepo.ManyAdd(studentAttendances);
                 return Ok("Attendance records added successfully.");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error. Please try again later.");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
        
@@ -426,21 +406,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return BadRequest(ModelState);
             }
             var attendanceTable = await _teacherAttendanceRepo.GetRelation();
-            if(await attendanceTable.AnyAsync(d => d.date == teacherAttendance.Date))
+            if (await attendanceTable.AnyAsync(d => d.date == teacherAttendance.Date))
             {
                 return BadRequest("This date already exists");
-            }
-            if (!await _coursRepo.IDExists(teacherAttendance.CourseID ?? 0))
-            {
-                return BadRequest("Invalid Course ID.");
-            }
-            if (!await _coursRepo.IsTeacherIDExists(teacherAttendance.TeacherID ?? ""))
-            {
-                return BadRequest("Invalid Teacher ID.");
-            }
-            if (!await _attendanceStatusRepo.IDExists(teacherAttendance.StatusID ?? 0))
-            {
-                return BadRequest("Invalid Status ID.");
             }
             var teacherAttendanceResult = _mapper.Map<TeacherAttendance>(teacherAttendance);
             try
@@ -450,7 +418,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error. Please try again later.");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -470,10 +438,6 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return NotFound("Student Attendance not found.");
             }
 
-            if (!await _attendanceStatusRepo.IDExists(studentAtt.StatusID ?? 0))
-            {
-                return BadRequest("Invalid Status ID.");
-            }
             studentAttendance.StatusID = studentAtt.StatusID;
             try
             {
@@ -482,7 +446,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -500,11 +464,6 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return NotFound("Teacher Attendance not found.");
             }
-
-            if (!await _attendanceStatusRepo.IDExists(teacherAtt.StatusID ?? 0))
-            {
-                return BadRequest("Invalid Status ID.");
-            }
             teacherAttendance.StatusID = teacherAtt.StatusID;
             try
             {
@@ -513,7 +472,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
     }

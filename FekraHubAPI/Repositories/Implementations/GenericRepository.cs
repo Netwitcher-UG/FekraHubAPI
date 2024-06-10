@@ -56,19 +56,18 @@ namespace FekraHubAPI.Repositories.Implementations
         {
             return await Task.FromResult(_dbSet.AsQueryable());
         }
-        public async Task ManyAdd(T entity)
+        public async Task ManyAdd(List<T> entity)
         {
-            await _dbSet.AddAsync(entity);
-        }
-
-        public void ManyUpdate(T entity)
-        {
-            _dbSet.Update(entity);
-        }
-        public async Task SaveManyAdd()
-        {
+            await _dbSet.AddRangeAsync(entity);
             await _context.SaveChangesAsync();
         }
+
+        public async Task ManyUpdate(IEnumerable<T> entity)
+        {
+            _dbSet.UpdateRange(entity);
+            await _context.SaveChangesAsync();
+        }
+        
         public async Task<bool> IDExists(int id)
         {
             return await _dbSet.FindAsync(id) != null;

@@ -13,7 +13,7 @@ namespace FekraHubAPI.EmailSender
         Task SendToParentsNewFiles(List<ApplicationUser> parents);
         Task SendToSecretaryNewReportsForStudents();
         Task SendToParentsNewReportsForStudents(List<string>? parents);
-        Task SendToTeacherReportsForStudentsNotAccepted(int studentId);
+        Task SendToTeacherReportsForStudentsNotAccepted(int studentId, string teacherId);
 
     }
 }

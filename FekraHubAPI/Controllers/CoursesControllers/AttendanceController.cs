@@ -76,37 +76,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
         }
 
-        [HttpDelete("AttendanceStatus")]
-        public async Task<IActionResult> DeleteAttendanceStatus([FromForm] string? status, int? id)
+        [HttpDelete("AttendanceStatus/{id}")]
+        public async Task<IActionResult> DeleteAttendanceStatus( int id)
         {
-            if (string.IsNullOrEmpty(status) && id == null)
-            {
-                return BadRequest("Please provide a status or an ID.");
-            }
-
-            var statuses = await _attendanceStatusRepo.GetRelation();
-
-            AttendanceStatus attendanceStatus = null;
-
-            if (id.HasValue)
-            {
-                attendanceStatus = await _attendanceStatusRepo.GetById(id.Value);
-                if (attendanceStatus == null)
-                {
-                    return NotFound("The status with the provided ID does not exist.");
-                }
-
-            }
-            else if (!string.IsNullOrEmpty(status))
-            {
-                attendanceStatus = await statuses.Where(s => s.Title.ToLower() == status.ToLower()).SingleOrDefaultAsync();
-                if (attendanceStatus == null)
-                {
-                    return NotFound("The status with the provided title does not exist.");
-                }
-            }
-
             
+            var attendanceStatus = await _attendanceStatusRepo.GetById(id);
+            if (attendanceStatus == null)
+            {
+                return NotFound("The status with the provided ID does not exist.");
+            }
+
+
             try { 
                 await _attendanceStatusRepo.Delete(attendanceStatus.Id);
 
@@ -127,13 +107,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     var result = await query.Select(sa => new
                     {
-                        sa.date,
-                        courseId = sa.Course.Id,
-                        sa.Course.Name,
-                        sa.StudentID,
-                        sa.Student.FirstName,
-                        sa.Student.LastName,
-                        sa.AttendanceStatus.Title
+                        Date = sa.date,
+                        course = new { sa.Course.Id, sa.Course.Name },
+                        student = new { sa.Student.Id, sa.Student.FirstName , sa.Student.LastName },
+                        AttendanceStatus = new {sa.AttendanceStatus.Id,sa.AttendanceStatus.Title}
                     }).ToListAsync();
                     return Ok(result);
                 }

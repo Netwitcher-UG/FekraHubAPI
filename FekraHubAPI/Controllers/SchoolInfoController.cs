@@ -24,6 +24,10 @@ namespace FekraHubAPI.Controllers
         public async Task<IActionResult> GetSchoolInfo()
         {
             var schoolInfo = (await _schoolInfoRepo.GetAll()).FirstOrDefault();
+            if(schoolInfo == null)
+            {
+                return NotFound();
+            }
             return Ok(schoolInfo);
         }
         
@@ -39,24 +43,24 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest(SchoolInfo);
             }
-            var schoolInfo = _mapper.Map<SchoolInfo>(schoolInfos);
+            var schoolInfo = _mapper.Map<SchoolInfo>(SchoolInfo);
             await _schoolInfoRepo.Add(schoolInfo);
             return Ok(schoolInfo);
         }
         [HttpPut]
-        public async Task<IActionResult> UpdateSchoolInfo([FromForm] Map_SchoolInfo SchoolInfo)
+        public async Task<IActionResult> UpdateSchoolInfo([FromForm] Map_SchoolInfo schoolInfo)
         {
-            var schoolInfos = await _schoolInfoRepo.GetAll();
-            if (!schoolInfos.Any())
-            {
-                return BadRequest("No school Information has been added");
-            }
             if (!ModelState.IsValid)
             {
-                return BadRequest(SchoolInfo);
+                return BadRequest(schoolInfo);
             }
-            var schoolInfo = _mapper.Map<SchoolInfo>(schoolInfos);
-            await _schoolInfoRepo.Update(schoolInfo);
+            var schoolInfos = (await _schoolInfoRepo.GetRelation()).FirstOrDefault();
+            if (schoolInfos == null)
+            {
+                return BadRequest("No school Information added");
+            }
+            _mapper.Map(schoolInfo, schoolInfos);
+            await _schoolInfoRepo.Update(schoolInfos);
             return Ok(schoolInfo);
         }
         [HttpDelete]

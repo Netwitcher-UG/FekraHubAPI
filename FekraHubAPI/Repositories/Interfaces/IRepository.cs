@@ -14,7 +14,7 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task SaveManyAdd();
         Task<bool> IDExists(int id);
         Task<bool> IsTeacherIDExists(string userId);
-        Task<bool> IsSecretariatIDExists(string userId);
+        Task<bool> IsSecretariatIDExists(ApplicationUser user);
         
         Task<T> GetUser(string id);
     }

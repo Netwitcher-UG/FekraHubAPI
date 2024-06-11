@@ -20,7 +20,6 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         private readonly IMapper _mapper;
         private readonly IRepository<WorkContract> _workContractRepository;
         private readonly UserManager<ApplicationUser> _userManager;
-        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
 
         public WorkContractController(IRepository<WorkContract> workContractRepository, IMapper mapper , UserManager<ApplicationUser> userManager)
         {
@@ -28,22 +27,33 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             _workContractRepository = workContractRepository;
             _mapper = mapper;
         }
+        [HttpGet("{workContractID}")]
+        public async Task<IActionResult> GetWorkContract(int workContractID)
+        {
+            try
+            {
+                var WorkContract = await _workContractRepository.GetById(workContractID);
+                return Ok(WorkContract);
 
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
         [HttpPost]
         public async Task<ActionResult> UploadWorkContract([FromQuery][Required] List<IFormFile> files
-            //, [FromQuery][Required] string UserID
+            , [FromQuery][Required] string UserID
             )
         {
-            string UserID = "17de782a-6b7a-4dfc-b007-dcc730694668";
             var user = await _userManager.FindByIdAsync(UserID);
             if (user == null)
             {
-                return NotFound();
+                return BadRequest("User Not Found");
             }
             var isTeacher = await _workContractRepository.IsTeacherIDExists(user.Id);
-            var isSecretariat = await _workContractRepository.IsSecretariatIDExists(user.Id);
+            var isSecretariat = await _workContractRepository.IsSecretariatIDExists(user);
 
-           // var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
 
             if (! (isTeacher || isSecretariat))
             {
@@ -66,11 +76,8 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                         TeacherID = UserID,
 
                     };
-
                    var workContractEntity = _mapper.Map<WorkContract>(UploadWorkContract);
                    await _workContractRepository.Add(workContractEntity);
-
-
                 }
             }
             return Ok();
@@ -85,23 +92,18 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             {
                 return NotFound();
             }
-
             await _workContractRepository.Delete(id);
             return Ok();
         }
 
-        [HttpGet]
-        public async Task<ActionResult> GetsWorkContract()
+        [HttpGet("[action]/{userID}")]
+        public async Task<List<WorkContract>> GetByUserID(string userID)
         {
-
             var WorkContractEntity = await _workContractRepository.GetAll();
-            if (WorkContractEntity == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(WorkContractEntity);
+            var WorkContractUser =   WorkContractEntity.Where(i => i.TeacherID == userID);
+            return WorkContractUser.ToList();
         }
+      
 
     }
 }

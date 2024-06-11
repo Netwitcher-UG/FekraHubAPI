@@ -2,6 +2,7 @@
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,8 +18,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<AttendanceStatus> _attendanceStatusRepo;
         private readonly IMapper _mapper;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public AttendanceController(IRepository<TeacherAttendance> teacherAttendanceRepo, IRepository<StudentAttendance> studentAttendanceRepo, IRepository<Course> coursRepo, IRepository<AttendanceStatus> attendanceStatusRepo, IRepository<Student> studentRepo, IMapper mapper)
+        public AttendanceController(IRepository<TeacherAttendance> teacherAttendanceRepo, IRepository<StudentAttendance> studentAttendanceRepo, IRepository<Course> coursRepo, IRepository<AttendanceStatus> attendanceStatusRepo, IRepository<Student> studentRepo, IMapper mapper  , UserManager<ApplicationUser> userManager)
         {
             _teacherAttendanceRepo = teacherAttendanceRepo;
             _studentAttendanceRepo = studentAttendanceRepo;
@@ -26,6 +28,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _studentRepo = studentRepo;
             _attendanceStatusRepo = attendanceStatusRepo;
             _mapper = mapper;
+            _userManager = userManager;
         }
 
 

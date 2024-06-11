@@ -2,6 +2,7 @@ using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.Repositories.Interfaces;
 using FekraHubAPI.Seeds;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -14,6 +15,7 @@ namespace FekraHubAPI.Repositories.Implementations
     {
         private readonly ApplicationDbContext _context;
         private readonly DbSet<T> _dbSet;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public GenericRepository(ApplicationDbContext context)
         {
@@ -84,16 +86,10 @@ namespace FekraHubAPI.Repositories.Implementations
             var userRoles = await _context.UserRoles.FirstOrDefaultAsync(x => x.UserId == userId && x.RoleId == roles.Id);
             return user != null && userRoles != null;
         }
-        public async Task<bool> IsSecretariatIDExists(string userId)
+        public async Task<bool> IsSecretariatIDExists(ApplicationUser user)
         {
-            var roles = await _context.Roles.FirstOrDefaultAsync(r => r.Name == RolesEnum.Secretariat.ToString());
-            if (roles == null)
-            {
-                return false;
-            }
-            var user = await _context.Users.FindAsync(userId);
-            var userRoles = await _context.UserRoles.FirstOrDefaultAsync(x => x.UserId == userId && x.RoleId == roles.Id);
-            return user != null && userRoles != null;
+            var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
+            return isSecretariat;
         }
         public async Task<T> GetUser(string id)
         {

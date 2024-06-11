@@ -22,6 +22,8 @@ using System.Security.Cryptography;
 using System.IO;
 using System.Reflection.Emit;
 using System.ComponentModel.DataAnnotations;
+using FekraHubAPI.EmailSender;
+using Microsoft.Extensions.Configuration;
 
 namespace FekraHubAPI.Controllers.UsersController
 {
@@ -35,20 +37,21 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _db;
-
+        private readonly IConfiguration _configuration;
+        private readonly EmailSender.IEmailSender _emailSender;
         public AccountController(ApplicationDbContext context  , UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager ,
+            RoleManager<IdentityRole> roleManager , EmailSender.IEmailSender emailSender , IConfiguration configuration ,
             ApplicationDbContext db)
         {
 
             _userManager = userManager;
             _roleManager = roleManager;
             _db = db;
+            _configuration = configuration;
+            _emailSender = emailSender;
         }
 
         [HttpGet]
-
-        [HttpGet()]
         public async Task<IActionResult> GetAccount()
         {
             var getCurrentAccount = await GetCurrentUserAsync();
@@ -59,9 +62,6 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             return Ok(user);
         }
-
-
-        
         [HttpPut]
         public async Task<IActionResult> UpdateAccount( [FromForm] Map_Account accountUpdate)
         {
@@ -104,12 +104,9 @@ namespace FekraHubAPI.Controllers.UsersController
             _db.SaveChanges();
             return Ok(account);
         }
-
-
         [HttpPost]
         [AllowAnonymous]
         [Route("[action]")]
-
         public async Task<IActionResult> ForgotPassword([Required] string email)
         {
 
@@ -130,12 +127,10 @@ namespace FekraHubAPI.Controllers.UsersController
             return StatusCode(StatusCodes.Status400BadRequest,
                    new Response { Status = "Error", Message = $"Could not send link to email , please try again." });
         }
-
-
         [HttpPost]
         [AllowAnonymous]
-        [Route("reset-password")]
-        public async Task<IActionResult> ResetPasswordr(ResetPassword resetPassword)
+        [Route("[action]")]
+        public async Task<IActionResult> ResetPassword(ResetPassword resetPassword)
         {
             var user = await _userManager.FindByEmailAsync(resetPassword.Email);
             if (user != null)
@@ -160,7 +155,7 @@ namespace FekraHubAPI.Controllers.UsersController
         }
         [HttpPost]
         [Route("[action]")]
-        public async Task<IActionResult> ChangePassword(ChangePassword changePassword)
+        public async Task<IActionResult> UpdatePassword(ChangePassword changePassword)
         {
             var currentUser = await GetCurrentUserAsync();
 
@@ -187,5 +182,153 @@ namespace FekraHubAPI.Controllers.UsersController
                     new Response { Status = "Error", Message = $"Could not change password , please try again." });
 
         }
+        [HttpPost("[action]")]
+        public async Task<IActionResult> LogIn(Map_Login login)
+        {
+            if (ModelState.IsValid)
+            {
+                ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
+                if (user != null)
+                {
+                    if (await _userManager.CheckPasswordAsync(user, login.password))
+                    {
+                        ;
+
+                        var claims = new List<Claim>();
+                        //claims.Add(new Claim("name", "value"));
+                        claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
+                        claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+                        var roles = await _userManager.GetRolesAsync(user);
+                        foreach (var role in roles)
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+                            var roleUser = await _roleManager.FindByNameAsync(role.ToString());
+                            var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
+                            foreach (var roleClaim in roleClaims)
+                            {
+                                claims.Add(new Claim("Permissions", roleClaim.Value));
+                            }
+                        }
+                        //signingCredentials
+                        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
+                        var sc = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                        var token = new JwtSecurityToken(
+                            claims: claims,
+                            issuer: _configuration["JWT:Issuer"],
+                            audience: _configuration["JWT:Audience"],
+                            expires: DateTime.Now.AddHours(1),
+                            signingCredentials: sc
+                            );
+                        var _token = new
+                        {
+                            token = new JwtSecurityTokenHandler().WriteToken(token),
+                            expiration = token.ValidTo,
+                        };
+                        return Ok(_token);
+                    }
+                    else
+                    {
+                        return Unauthorized();
+                    }
+                }
+                else
+                {
+                    ModelState.AddModelError("message", "Email is invalid");
+                }
+            }
+            return BadRequest(ModelState);
+        }
+
+        [HttpPost("RegisterParent")]
+        public async Task<IActionResult> RegisterParent(Map_RegisterParent user)
+        {
+            using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
+            {
+                try
+                {
+                    string RoleParent = DefaultRole.Parent;
+                    if (ModelState.IsValid)
+                    {
+                        ApplicationUser appUser = new()
+                        {
+                            UserName = user.userName,
+                            Email = user.email,
+                        };
+                        IdentityResult result = await _userManager.CreateAsync(appUser, user.password);
+
+
+
+                        if (result.Succeeded)
+                        {
+                            ApplicationUser? ThisNewUser = await _userManager.FindByEmailAsync(user.email);
+                            if (ThisNewUser != null)
+                            {
+                                var res = await _emailSender.SendConfirmationEmail(ThisNewUser);
+                                if (res is OkResult)
+                                {
+                                    _userManager.AddToRoleAsync(appUser, RoleParent).Wait();
+                                    transaction.Commit();
+                                    return Ok("Success!! . Please go to your email message box and confirm your email");
+                                }
+                                else
+                                {
+                                    await _userManager.DeleteAsync(ThisNewUser);
+                                    return BadRequest("Change your email please!");
+                                }
+                            }
+                            else
+                            {
+                                return Ok("Resend Link");
+                            }
+                            return Ok("Success");
+                        }
+                        else
+                        {
+                            foreach (var item in result.Errors)
+                            {
+                                ModelState.AddModelError("", item.Description);
+                            }
+                        }
+                    }
+                    transaction.Rollback();
+                    return BadRequest(ModelState);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    return BadRequest(ex.Message);
+
+                }
+
+            }
+        }
+        [HttpGet("[action]")]
+        public async Task<string> ConfirmUser(string token, string ID)
+        {
+            if (ID == null || token == null)
+            {
+                return "Link expired";
+            }
+            var user = await _userManager.FindByIdAsync(ID);
+            if (user == null)
+            {
+                return "User not Found";
+            }
+            else
+            {
+                token = token.Replace(" ", "+");
+                var result = await _userManager.ConfirmEmailAsync(user, token);
+                if (result.Succeeded)
+                {
+                    return "Thank you for confirming your email";
+                }
+                else
+                {
+                    return "Email not confirmed";
+                }
+            }
+        }
     }
+
 }

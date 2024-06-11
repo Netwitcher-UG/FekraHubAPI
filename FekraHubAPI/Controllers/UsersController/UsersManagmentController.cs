@@ -83,8 +83,6 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             return Ok(user);
         }
-
-
         [HttpPost]
         public async Task<IActionResult> AddUser([FromForm] Map_Account user)
         {
@@ -106,7 +104,6 @@ namespace FekraHubAPI.Controllers.UsersController
                 string serverFolder = Path.Combine(folderFile, folder);
                 using var stream = new FileStream(serverFolder, FileMode.Create);
                     user.imageUser.CopyTo(stream);
-                    //image = user.imageUser.ToString();
             }
 
             using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
@@ -242,7 +239,6 @@ namespace FekraHubAPI.Controllers.UsersController
             await _db.SaveChangesAsync();
             return Ok("User Deleted");
         }
-
 
         [HttpPost]
         [Route("[action]")]

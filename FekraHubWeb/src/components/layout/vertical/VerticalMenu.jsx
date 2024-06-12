@@ -60,7 +60,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     >
       {/* Incase you also want to scroll NavHeader to scroll with Vertical Menu, remove NavHeader from above and paste it below this comment */}
       {/* Vertical Menu */}
-      <Menu 
+      <Menu
         popoutMenuOffset={{ mainAxis: 10 }}
         menuItemStyles={menuItemStyles(verticalNavOptions, theme, settings)}
         renderExpandIcon={({ open }) => <RenderExpandIcon open={open} transitionDuration={transitionDuration} />}
@@ -75,7 +75,14 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           {dictionary['navigation'].dashboard}
         </MenuItem>
         <MenuSection label={dictionary['navigation'].pages}>
-          <MenuItem href={`/${locale}/pages/parents/children`}>{dictionary['navigation'].children}</MenuItem>
+          <SubMenu label={dictionary['navigation'].children} icon={<i className='ri-user-line' />}>
+            <MenuItem href={`/${locale}/pages/parents/children/create-student`}>
+              {dictionary['navigation'].add}
+            </MenuItem>
+            <MenuItem href={`/${locale}/pages/parents/children/view-students`}>
+              {dictionary['navigation'].view}
+            </MenuItem>
+          </SubMenu>
         </MenuSection>
       </Menu>
     </ScrollWrapper>

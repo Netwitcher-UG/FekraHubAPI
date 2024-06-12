@@ -23,7 +23,7 @@ const CardStatVertical = props => {
             {...(moreOptions
               ? moreOptions
               : {
-                  options: ['Refresh', 'Share', 'Update'],
+                  options: ['Reports', 'Update'],
                   iconButtonProps: { className: 'text-textPrimary' }
                 })}
           />

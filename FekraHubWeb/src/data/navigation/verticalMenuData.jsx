@@ -21,7 +21,19 @@ const verticalMenuData = (dictionary, params) => [
       {
         label: dictionary['navigation'].children,
         icon: 'ri-checkbox-multiple-line',
-        href: '/pages/parents/children'
+
+        children: [
+          {
+            label: dictionary['navigation'].add,
+            icon: 'ri-checkbox-multiple-line',
+            href: '/pages/parents/children/create-student'
+          },
+          {
+            label: dictionary['navigation'].view,
+            icon: 'ri-checkbox-multiple-line',
+            href: '/pages/parents/children/view-students'
+          }
+        ]
       }
     ]
   }

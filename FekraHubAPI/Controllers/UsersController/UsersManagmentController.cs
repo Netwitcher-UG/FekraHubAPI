@@ -86,16 +86,16 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpPost]
         public async Task<IActionResult> AddUser([FromForm] Map_Account user)
         {
-            var email = user.email;
+            var email = user.Email;
             var normalizedEmail = email.Normalize().ToLower();
-            var normalizedUserName = user.userName.Normalize().ToLower();
+            var normalizedUserName = user.UserName.Normalize().ToLower();
 
             string image = "";
 
-            if (user.imageUser != null)
+            if (user.ImageUser != null)
             {
                 string folderFile = "images/users/";
-                string folder = Guid.NewGuid().ToString() + "_" + user.imageUser.FileName;
+                string folder = Guid.NewGuid().ToString() + "_" + user.ImageUser.FileName;
                 image = folderFile +folder;
                 if (!System.IO.Directory.Exists(folderFile))
                 {
@@ -103,7 +103,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 }
                 string serverFolder = Path.Combine(folderFile, folder);
                 using var stream = new FileStream(serverFolder, FileMode.Create);
-                    user.imageUser.CopyTo(stream);
+                    user.ImageUser.CopyTo(stream);
             }
 
             using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
@@ -112,35 +112,35 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     ApplicationUser adduser = new ApplicationUser()
                     {
-                        UserName = user.userName,
+                        UserName = user.UserName,
                         NormalizedUserName = normalizedUserName,
                         Email = email,
-                        FirstName = user.firstName,
-                        LastName = user.lastname,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
                         ImageUser = image,
                         NormalizedEmail = normalizedEmail,
                         SecurityStamp = Guid.NewGuid().ToString("D"),
-                        PhoneNumber = user.phoneNumber,
-                        Gender = user.gender,
-                        EmergencyPhoneNumber = user.emergencyPhoneNumber,
-                        Birthday = user.birthday,
-                        Birthplace = user.birthplace,
-                        Nationality = user.nationality,
-                        Street = user.street,
-                        StreetNr = user.streetNr,
-                        ZipCode = user.zipCode,
-                        City = user.city,
-                        Job = user.job,
-                        Graduation = user.graduation,
+                        PhoneNumber = user.PhoneNumber,
+                        Gender = user.Gender,
+                        EmergencyPhoneNumber = user.EmergencyPhoneNumber,
+                        Birthday = user.Birthday,
+                        Birthplace = user.Birthplace,
+                        Nationality = user.Nationality,
+                        Street = user.Street,
+                        StreetNr = user.StreetNr,
+                        ZipCode = user.ZipCode,
+                        City = user.City,
+                        Job = user.Job,
+                        Graduation = user.Graduation,
 
 
                     };
-                    IdentityResult result = await _userManager.CreateAsync(adduser, user.password);
+                    IdentityResult result = await _userManager.CreateAsync(adduser, user.Password);
                     await _db.ApplicationUser.AddAsync(adduser);
                     await _db.SaveChangesAsync();
-                    if (DefaultRole.checkRole(user.role))
+                    if (DefaultRole.checkRole(user.Role))
                     {
-                        _userManager.AddToRoleAsync(adduser, user.role).Wait();
+                        _userManager.AddToRoleAsync(adduser, user.Role).Wait();
                     }
                     else
                     {
@@ -169,11 +169,11 @@ namespace FekraHubAPI.Controllers.UsersController
             }
 
             string folderFile = "images/users/";
-            if (accountUpdate.imageUser != null)
+            if (accountUpdate.ImageUser != null)
             {
-                if (account.ImageUser != accountUpdate.imageUser.FileName)
+                if (account.ImageUser != accountUpdate.ImageUser.FileName)
                 {
-                    string folder = Guid.NewGuid().ToString() + "_" + accountUpdate.imageUser.FileName;
+                    string folder = Guid.NewGuid().ToString() + "_" + accountUpdate.ImageUser.FileName;
                     string image = folderFile + folder;
 
                     if (!System.IO.Directory.Exists(folderFile))
@@ -183,7 +183,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     }
                     string serverFolder = Path.Combine(folderFile, folder);
                     using var stream = new FileStream(serverFolder, FileMode.Create);
-                    accountUpdate.imageUser.CopyTo(stream);
+                    accountUpdate.ImageUser.CopyTo(stream);
                     account.ImageUser = image;
                     //image = user.imageUser.ToString();
                 }
@@ -194,29 +194,29 @@ namespace FekraHubAPI.Controllers.UsersController
 
             // await _applicationUserRepository.Update(account);
 
-            var normalizedEmail = accountUpdate.email.Normalize().ToLower();
-            var normalizedUserName = accountUpdate.userName.Normalize().ToLower();
+            var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
+            var normalizedUserName = accountUpdate.UserName.Normalize().ToLower();
 
-            account.UserName = accountUpdate.userName;
-            account.Email = accountUpdate.email;
+            account.UserName = accountUpdate.UserName;
+            account.Email = accountUpdate.Email;
             account.NormalizedUserName = normalizedUserName;
             account.NormalizedEmail = normalizedEmail;
 
-            account.FirstName = accountUpdate.firstName;
-            account.LastName = accountUpdate.lastname;
+            account.FirstName = accountUpdate.FirstName;
+            account.LastName = accountUpdate.LastName;
             account.SecurityStamp = Guid.NewGuid().ToString("D");
-            account.PhoneNumber = accountUpdate.phoneNumber;
-            account.Gender = accountUpdate.gender;
-            account.EmergencyPhoneNumber = accountUpdate.emergencyPhoneNumber;
-            account.Birthday = accountUpdate.birthday;
-            account.Birthplace = accountUpdate.birthplace;
-            account.Nationality = accountUpdate.nationality;
-            account.Street = accountUpdate.street;
-            account.StreetNr = accountUpdate.streetNr;
-            account.ZipCode = accountUpdate.zipCode;
-            account.City = accountUpdate.city;
-            account.Job = accountUpdate.job;
-            account.Graduation = accountUpdate.graduation;
+            account.PhoneNumber = accountUpdate.PhoneNumber;
+            account.Gender = accountUpdate.Gender;
+            account.EmergencyPhoneNumber = accountUpdate.EmergencyPhoneNumber;
+            account.Birthday = accountUpdate.Birthday;
+            account.Birthplace = accountUpdate.Birthplace;
+            account.Nationality = accountUpdate.Nationality;
+            account.Street = accountUpdate.Street;
+            account.StreetNr = accountUpdate.Street;
+            account.ZipCode = accountUpdate.ZipCode;
+            account.City = accountUpdate.City;
+            account.Job = accountUpdate.Job;
+            account.Graduation = accountUpdate.Graduation;
 
             _db.SaveChanges();
             return Ok(account);

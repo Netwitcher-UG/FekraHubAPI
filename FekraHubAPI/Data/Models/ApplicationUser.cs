@@ -13,7 +13,7 @@ namespace FekraHubAPI.Data.Models
         
 
         public string? ImageUser { get; set; }
-        public bool? ActiveUser { get; set; }
+        public bool ActiveUser { get; set; } = false;
 
 
 

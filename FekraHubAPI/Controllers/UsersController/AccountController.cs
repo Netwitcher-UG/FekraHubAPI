@@ -193,7 +193,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     
                     if (!user.ActiveUser)
                     {
-                        return BadRequest("You Must Confirm You Account")
+                        return BadRequest("You Must Confirm You Account");
                     }
                     if (await _userManager.CheckPasswordAsync(user, login.password))
                     {

@@ -36,7 +36,7 @@ namespace FekraHubAPI.Seeds
         }
         public static  async Task SeedRoleAdminClaimsAsync(ModelBuilder builder)
         {
-            var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.PermissionModuleNameAdmin));
+            var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
             var i = 1 ;
             foreach (var Permission in AllPermissions)
             {

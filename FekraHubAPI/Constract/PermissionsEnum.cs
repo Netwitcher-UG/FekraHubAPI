@@ -31,33 +31,8 @@ namespace FekraHubAPI.Constract
             DeleteSchoolData,
             ResetData
 
-
         }
-
-        public enum PermissionModuleNameAdmin
-        {
-            GetUsers,
-            AddUsers,
-            GetStudentsCourse,
-            UpdateStudentsCourse,
-            GetTeachersCourse,
-            UpdateTeachersCourse,
-            GetContracts,
-            ManageEvents,
-            GetEvents,
-            GetStudentsAttendance,
-            UpdateStudentsAttendance,
-            GetTeachersAttendance,
-            UpdateTeachersAttendance,
-            InsertUpdateStudentsReports,
-            GetStudentsReports,
-            ApproveReports,
-            ManagePayrolls,
-            ManageBooks,
-            DeleteSchoolData,
-            ResetData
-
-        }
+        
 
 
         public static bool CheckPermissionExist(string permission)

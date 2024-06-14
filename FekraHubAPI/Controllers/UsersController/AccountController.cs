@@ -69,37 +69,37 @@ namespace FekraHubAPI.Controllers.UsersController
             var account = await _db.ApplicationUser.FindAsync(getCurrentAccount.Id);
             
             
-            if (accountUpdate.imageUser != null)
+            if (accountUpdate.ImageUser != null)
             {
                 using var stream = new MemoryStream();
-                await accountUpdate.imageUser.CopyToAsync(stream);
+                await accountUpdate.ImageUser.CopyToAsync(stream);
                 account.ImageUser = stream.ToString();
 
             }
             
-            var normalizedEmail = accountUpdate.email.Normalize().ToLower();
-            var normalizedUserName = accountUpdate.userName.Normalize().ToLower();
+            var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
+            var normalizedUserName = accountUpdate.UserName.Normalize().ToLower();
 
-            account.UserName = accountUpdate.userName;
-            account.Email = accountUpdate.email;
-            account.FirstName = accountUpdate.firstName;
-            account.LastName = accountUpdate.lastname;
+            account.UserName = accountUpdate.UserName;
+            account.Email = accountUpdate.Email;
+            account.FirstName = accountUpdate.FirstName;
+            account.LastName = accountUpdate.LastName;
             account.NormalizedUserName = normalizedUserName;
             account.NormalizedEmail = normalizedEmail;
 
             account.SecurityStamp = Guid.NewGuid().ToString("D");
-            account.PhoneNumber = accountUpdate.phoneNumber;
-            account.Gender = accountUpdate.gender;
-            account.EmergencyPhoneNumber = accountUpdate.emergencyPhoneNumber;
-            account.Birthday = accountUpdate.birthday;
-            account.Birthplace = accountUpdate.birthplace;
-            account.Nationality = accountUpdate.nationality;
-            account.Street = accountUpdate.street;
-            account.StreetNr = accountUpdate.streetNr;
-            account.ZipCode = accountUpdate.zipCode;
-            account.City = accountUpdate.city;
-            account.Job = accountUpdate.job;
-            account.Graduation = accountUpdate.graduation;
+            account.PhoneNumber = accountUpdate.PhoneNumber;
+            account.Gender = accountUpdate.Gender;
+            account.EmergencyPhoneNumber = accountUpdate.EmergencyPhoneNumber;
+            account.Birthday = accountUpdate.Birthday;
+            account.Birthplace = accountUpdate.Birthplace;
+            account.Nationality = accountUpdate.Nationality;
+            account.Street = accountUpdate.Street;
+            account.StreetNr = accountUpdate.StreetNr;
+            account.ZipCode = accountUpdate.ZipCode;
+            account.City = accountUpdate.City;
+            account.Job = accountUpdate.Job;
+            account.Graduation = accountUpdate.Graduation;
 
             _db.SaveChanges();
             return Ok(account);
@@ -190,9 +190,14 @@ namespace FekraHubAPI.Controllers.UsersController
                 ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
                 if (user != null)
                 {
+                    
+                    if (!user.ActiveUser)
+                    {
+                        return BadRequest("You Must Confirm You Account")
+                    }
                     if (await _userManager.CheckPasswordAsync(user, login.password))
                     {
-                        ;
+                        
 
                         var claims = new List<Claim>();
                         //claims.Add(new Claim("name", "value"));

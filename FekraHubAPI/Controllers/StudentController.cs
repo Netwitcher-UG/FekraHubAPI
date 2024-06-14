@@ -31,7 +31,7 @@ namespace FekraHubAPI.Controllers
             _emailSender = emailSender;
             _mapper = mapper;
         }
-
+        
         [HttpGet("CoursesCapacity")]
         public async Task<IActionResult> GetCoursesWithCapacity()
         {
@@ -59,9 +59,11 @@ namespace FekraHubAPI.Controllers
              return Ok(students);
         }
         [HttpGet("ByParent")]
+        //[Authorize]
         public async Task<IActionResult> GetStudentsByParent(string parentId)//
         {
-            //var parentId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            //var parentId =_courseRepo.GetUserIDFromToken(User);
+            
             //if (string.IsNullOrEmpty(parentId))
             //{
             //    return Unauthorized("Parent ID not found in token.");

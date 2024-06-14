@@ -1,6 +1,26 @@
-@FekraHubAPI_HostAddress = http://localhost:5008
+@FekraHubAPI_HostAddress = 88
 
 GET {{FekraHubAPI_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+GET {{FekraHubAPI_HostAddress}}/api/Reports/Keys
+Accept: application/json
+
+###
+POST {{FekraHubAPI_HostAddress}}/api/Reports
+Content-Type: application/json
+
+[
+  {
+    "data": "object",
+    "userId": "75a4b004-055f-4b4e-a233-9fe582f583ac",
+    "studentId": 1
+  },
+  {
+    "data": "object",
+    "userId": "75a4b004-055f-4b4e-a233-9fe582f583ac",
+    "studentId": 2
+  }
+]
+

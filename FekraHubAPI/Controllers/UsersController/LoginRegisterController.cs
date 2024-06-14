@@ -116,7 +116,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             ApplicationUser? ThisNewUser = await userManager.FindByEmailAsync(user.email);
                             if (ThisNewUser != null)
                             {
-                                var res = await emailSender.SendConfirmationEmail(ThisNewUser);
+                                var res = await emailSender.SendConfirmationEmail(ThisNewUser,HttpContext);
                                 if (res is OkResult)
                                 {
                                     userManager.AddToRoleAsync(appUser, RoleParent).Wait();

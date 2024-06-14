@@ -176,7 +176,7 @@ namespace FekraHubAPI.Controllers
             {
                 await _reportRepo.Update(report);
                 var student = await _studentRepo.GetById(report.StudentId ?? 0);
-                await _emailSender.SendToParentsNewReportsForStudents([student.ParentID ?? ""]);
+                await _emailSender.SendToParentsNewReportsForStudents([student]);
                 return Ok($"Report accepted");
             }
             catch (Exception ex)
@@ -219,8 +219,8 @@ namespace FekraHubAPI.Controllers
                 await reports.ForEachAsync(report => report.Improved = true);
                 await _reportRepo.ManyUpdate(reports);
 
-                List<string> parentsIds = reports.Select(x => x.UserId).ToList();
-                await _emailSender.SendToParentsNewReportsForStudents(parentsIds);
+                List<Student> students = reports.Select(x => x.Student).ToList();
+                await _emailSender.SendToParentsNewReportsForStudents(students);
                 return Ok($"Reports accepted");
             }
             catch (Exception ex)

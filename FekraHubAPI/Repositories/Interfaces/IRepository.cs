@@ -1,5 +1,6 @@
 using FekraHubAPI.Data.Models;
 using System.Linq.Expressions;
+using System.Security.Claims;
 
 namespace FekraHubAPI.Repositories.Interfaces
 {
@@ -18,5 +19,6 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task<bool> IsSecretariatIDExists(string userId);
         
         Task<T> GetUser(string id);
+        string GetUserIDFromToken(ClaimsPrincipal User);
     }
 }

@@ -99,11 +99,12 @@ namespace FekraHubAPI.EmailSender
             </div>";
             return ConstantsMessage;
         }
-        public async Task<IActionResult> SendConfirmationEmail(ApplicationUser user)
+        public async Task<IActionResult> SendConfirmationEmail(ApplicationUser user, HttpContext httpContext)
         {
-            string FekraHupUrl = _configuration["EmailSenderSettings:ApiUrl"];
+            var request = httpContext.Request;
+            var domain = $"{request.Scheme}://{request.Host}";
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = $"{FekraHupUrl}/NewUser/confirm?ID={user.Id}&Token={token}";
+            var confirmationLink = $"{domain}/NewUser/confirm?ID={user.Id}&Token={token}";
             var content = $@"<div style='width:100%;text-align:left;'>
                             <h1 style='width:100%;text-align:center;'>Hello {user.UserName}</h1>
                              <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
@@ -191,13 +192,13 @@ namespace FekraHubAPI.EmailSender
         public async Task SendToAllNewEvent()
         {
             var users = await _userManager.Users.ToListAsync();
-            var parentsId = await _context.UserRoles.Where(x => x.RoleId == "3").Select(x => x.UserId).ToListAsync();
+            var NotParentsId = await _context.UserRoles.Where(x => x.RoleId != "3").Select(x => x.UserId).ToListAsync();
             List<ApplicationUser> parent = users
-                .Where(user => parentsId.Contains(user.Id))
+                .Where(user => !NotParentsId.Contains(user.Id))
                 .ToList();
             List<ApplicationUser> notParent = users
-                .Where(user => !parentsId.Contains(user.Id))
-                .ToList(); ;
+                .Where(user => NotParentsId.Contains(user.Id))
+                .ToList(); 
 
             var students = await _studentRepo.GetAll();
             foreach (var user in parent)
@@ -238,25 +239,22 @@ namespace FekraHubAPI.EmailSender
 
         }
 
-        public async Task SendToParentsNewFiles(List<ApplicationUser> parents)
+        public async Task SendToParentsNewFiles(List<Student> students)
         {
-            var students = await _studentRepo.GetAll();
-            foreach (var parent in parents)
-            {
-                var student = students.Where(x => x.ParentID == parent.Id).ToList();
-                if (student != null)
-                {
-                    var childrenNames = "";
-                    foreach (var child in student)
-                    {
-                        childrenNames += "<p 'font-size:14px;'>" + child.FirstName + " " + child.LastName + "</p>";
-                    }
+            var parents = await _userManager.Users.ToListAsync();
 
-                    var content = @$"<div style='width:100%;text-align:left;'>
+            foreach (var student in students)
+            {
+                var parent = parents.Where(x => x.Id == student.ParentID).FirstOrDefault();
+                if (parent == null)
+                {
+                    continue;
+                }
+
+                var content = @$"<div style='width:100%;text-align:left;'>
                         <h1 style='width:100%;text-align:center;'>Hello {parent.FirstName} {parent.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your children</p>
-                        <p><b>Children Name :</b></p>
-                        {childrenNames}
+                         <p><b>Name : {student.FirstName} {student.LastName}</b></p>
                          <p style='font-size:14px;'><b>A new file has been added .</b></p>
                         <p style='font-size:14px;'>For more information, please go to the events page on our official website or click the button to be directed to the page directly</p>
                        <br></br><div style='width:100%;text-align:center'> <a href='www.google.com' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>files page</a>
@@ -264,7 +262,6 @@ namespace FekraHubAPI.EmailSender
                      </div>";
                     await SendEmail(parent.Email ?? "", "", Message(content), true);
                 }
-            }
 
         }
 
@@ -291,50 +288,30 @@ namespace FekraHubAPI.EmailSender
 
         }
 
-        public async Task SendToParentsNewReportsForStudents(List<string>? parentsId)
+        public async Task SendToParentsNewReportsForStudents(List<Student> students)
         {
-            List<ApplicationUser> parents = [];
-            if (!parentsId.Any())
+            var parents = await _userManager.Users.ToListAsync();
+             
+            foreach (var student in students)
             {
-                var ParentsId = await _context.UserRoles
-                            .Where(x => x.RoleId == "3")
-                            .Select(x => x.UserId)
-                            .ToListAsync();
-                parents = await _userManager.Users
-                             .Where(user => ParentsId.Contains(user.Id))
-                             .ToListAsync();
-            }
-            else
-            {
-                parents = await _userManager.Users
-                             .Where(user => parentsId.Contains(user.Id))
-                             .ToListAsync();
-            }
-
-            var students = await _studentRepo.GetAll();
-            foreach (var parent in parents)
-            {
-                var student = students.Where(x => x.ParentID == parent.Id).ToList();
-                if (student != null)
+                var parent = parents.Where(x => x.Id == student.ParentID).FirstOrDefault();
+                if (parent == null)
                 {
-                    var childrenNames = "";
-                    foreach (var child in student)
-                    {
-                        childrenNames += "<p 'font-size:14px;'>" + child.FirstName + " " + child.LastName + "</p>";
-                    }
-
-                    var content = @$"<div style='width:100%;text-align:left;'>
+                    continue;
+                }
+                var content = @$"<div style='width:100%;text-align:left;'>
                         <h1 style='width:100%;text-align:center;'>Hello {parent.FirstName} {parent.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your children</p>
-                        <p><b>Children Name :</b></p>
-                        {childrenNames}
+                        <p><b>Name : {student.FirstName} {student.LastName}</b></p>
                          <p style='font-size:14px;'><b>A new report has been added .</b></p>
                         <p style='font-size:14px;'>For more information, please go to the events page on our official website or click the button to be directed to the page directly</p>
                        <br></br><div style='width:100%;text-align:center'> <a href='www.google.com' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>reports page</a>
                         <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div>
                      </div>";
-                    await SendEmail(parent.Email ?? "", "", Message(content), true);
-                }
+                await SendEmail(parent.Email ?? "", "", Message(content), true);
+
+
+
             }
         }
 

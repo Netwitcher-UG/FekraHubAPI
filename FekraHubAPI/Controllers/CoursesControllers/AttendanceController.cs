@@ -335,15 +335,6 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     return BadRequest(ModelState);
                 }
-                
-                if (!await _coursRepo.IDExists(courseID))
-                {
-                    return BadRequest("Invalid Course ID.");
-                }
-                if (!await _attendanceStatusRepo.IDExists(statusID))
-                {
-                    return BadRequest("Invalid Status ID.");
-                }
                 var attendanceInDate = (await _studentAttendanceRepo.GetRelation()).Where(d => d.date == dateTime && d.CourseID == courseID);
                 var studentIdsToUpdate = attendanceInDate.Select(a => a.StudentID).ToList();
                 if (attendanceInDate.Any())
@@ -386,6 +377,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             if (await attendanceTable.AnyAsync(d => d.date == teacherAttendance.Date))
             {
                 return BadRequest("This date already exists");
+            }
+            if(!await _teacherAttendanceRepo.IsTeacherIDExists(teacherAttendance.TeacherID))
+            {
+                return BadRequest("This teacher not exists");
             }
             var teacherAttendanceResult = _mapper.Map<TeacherAttendance>(teacherAttendance);
             try

@@ -5,6 +5,7 @@ using FekraHubAPI.Seeds;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace FekraHubAPI.Repositories.Implementations
@@ -99,5 +100,9 @@ namespace FekraHubAPI.Repositories.Implementations
             return await _dbSet.FindAsync(id);
         }
 
+        public string GetUserIDFromToken(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
     }
 }

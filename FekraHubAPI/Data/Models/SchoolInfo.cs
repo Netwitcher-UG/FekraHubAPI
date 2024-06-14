@@ -10,7 +10,7 @@ namespace FekraHubAPI.Data.Models
         [MaxLength(50)]
         public string SchoolName { get; set; }
         [MaxLength(50)]
-        public string ShoolOwner { get; set; }
+        public string SchoolOwner { get; set; }
         public string LogoBase64 { get; set; }
         public List<string> StudentsReportsKeys { get; set; }
         [MaxLength(50)]

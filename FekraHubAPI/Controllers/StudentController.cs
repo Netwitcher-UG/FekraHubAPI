@@ -121,7 +121,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating new student record");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating new student record {ex}");
             }
         }
         [HttpPost("AcceptedContract/{studentId}")]

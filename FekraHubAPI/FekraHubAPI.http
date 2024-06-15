@@ -1,9 +1,8 @@
 @FekraHubAPI_HostAddress = 88
 
-GET {{FekraHubAPI_HostAddress}}/weatherforecast/
-Accept: application/json
 
-###
+
+
 GET {{FekraHubAPI_HostAddress}}/api/Reports/Keys
 Accept: application/json
 

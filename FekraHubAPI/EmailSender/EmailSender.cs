@@ -62,14 +62,16 @@ namespace FekraHubAPI.EmailSender
                 Attachment pdfAttachment = new Attachment(new MemoryStream(pdf), pdfName ?? "pdf.pdf", "application/pdf");
                 mailMessage.Attachments.Add(pdfAttachment);
             }
-            byte[] bytes = Convert.FromBase64String(schoolInfo.LogoBase64);
-            Attachment image = new Attachment(new MemoryStream(bytes), "logo.png");
-            image.ContentDisposition.Inline = true;
-            image.ContentDisposition.DispositionType = DispositionTypeNames.Inline;
-            image.ContentId = "MyImage";
-            image.ContentType.MediaType = "image/png";
-            image.ContentType.Name = "logo.png";
-            mailMessage.Attachments.Add(image);
+            //byte[] bytes = Convert.FromBase64String(schoolInfo.LogoBase64);
+            //MemoryStream ms = new MemoryStream(bytes);
+            //LinkedResource inlineLogo = new LinkedResource(ms, "image/png")
+            //{
+            //    ContentId = "MyImage",
+            //    TransferEncoding = TransferEncoding.Base64
+            //};
+            //AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
+            //htmlView.LinkedResources.Add(inlineLogo);
+            //mailMessage.AlternateViews.Add(htmlView);
             return client.SendMailAsync(mailMessage);
         }
         
@@ -85,7 +87,7 @@ namespace FekraHubAPI.EmailSender
                                 <h3>{schoolName}</h3>
                             </td>
                             <td style='text-align:right;'>
-                                <img style='width:40px;' src='cid:MyImage' />
+                                <img style='width:40px;' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHv6N2GNpRENY0a68wIGbZC-_BNshBPI2xtVxfp5kMq5QLz9i1YECNXh1Klk8um8LXybQ&usqp=CAU' alt='Logo'/>
                             </td>
                         </tr>
                     </table>
@@ -144,7 +146,7 @@ namespace FekraHubAPI.EmailSender
                      </div>";
             try
             {
-                await SendEmail(parent.Email ?? "", "", Message(content), true, contract, pdfName + ".pdf");
+                await SendEmail(parent.Email ?? "", "Registration Confirmation", Message(content), true, contract, pdfName + ".pdf");
                 return new OkResult();
             }
             catch (Exception ex)
@@ -159,7 +161,7 @@ namespace FekraHubAPI.EmailSender
             var AdminId = await _context.UserRoles.Where(x => x.RoleId == "1").Select(x => x.UserId).FirstOrDefaultAsync();
             var admin = await _userManager.Users.Where(x => x.Id == AdminId).FirstOrDefaultAsync();
             var content = @$"<div style='width:100%;text-align:left;'>
-                        <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1><hr></hr><br></br>
+                        <h1 style='width:100%;text-align:center;'>Hello {admin.FirstName} {admin.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your school</p>
                          <p style='font-size:14px;'><b>A new family has been added .</b></p>
                          <p style='font-size:14px;'>family information :</p>
@@ -168,25 +170,42 @@ namespace FekraHubAPI.EmailSender
                                Name : {user.FirstName} {user.LastName}
                                 </li>
                                 <li>
-                                StreetNr :{user.Street} {user.StreetNr} 
-                                </li>
-                                <li>
-                                City : {user.City}
-                                </li>
-                                <li>
-                                ZipCode : {user.ZipCode}
-                                </li>
-                                <li>
                                 Email : {user.Email}
                                 </li>
                                 <li>
                                 PhoneNumber : {user.PhoneNumber} / {user.EmergencyPhoneNumber}
                                 </li>
+                                <li>
+                                Gender : {user.Gender}
+                                </li>
+                                <li>
+                                Birthday : {user.Birthday}
+                                </li>
+                                <li>
+                                Birthplace : {user.Birthplace}
+                                </li>
+                                <li>
+                                Nationality : {user.Nationality}
+                                </li>
+                                <li>
+                                Job : {user.Job}
+                                </li>
+                                <li>
+                                City : {user.City}
+                                </li>
+                                <li>
+                                StreetNr :{user.Street} {user.StreetNr} 
+                                </li>
+                                <li>
+                                ZipCode : {user.ZipCode}
+                                </li>
+                                
+                                
                             </ul>
                            <div style='width:100%;text-align:center'>
                         <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div>
                      </div>";
-            await SendEmail(admin.Email ?? "", "", Message(content), true);
+            await SendEmail(admin?.Email ?? "", "New User Registration", Message(content), true);
         }
 
         public async Task SendToAllNewEvent()
@@ -222,7 +241,7 @@ namespace FekraHubAPI.EmailSender
                            <br></br><div style='width:100%;text-align:center'> <a href='www.google.com' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>event page</a>
                             <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div>
                          </div>";
-                    await SendEmail(user.Email ?? "", "", Message(content), true);
+                    await SendEmail(user.Email ?? "", "New Event", Message(content), true);
                 }
             }
             foreach (var user in notParent)
@@ -260,7 +279,7 @@ namespace FekraHubAPI.EmailSender
                        <br></br><div style='width:100%;text-align:center'> <a href='www.google.com' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>files page</a>
                         <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div>
                      </div>";
-                    await SendEmail(parent.Email ?? "", "", Message(content), true);
+                    await SendEmail(parent.Email ?? "", "New Files", Message(content), true);
                 }
 
         }
@@ -308,7 +327,7 @@ namespace FekraHubAPI.EmailSender
                        <br></br><div style='width:100%;text-align:center'> <a href='www.google.com' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>reports page</a>
                         <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div>
                      </div>";
-                await SendEmail(parent.Email ?? "", "", Message(content), true);
+                await SendEmail(parent.Email ?? "", "New Reports", Message(content), true);
 
 
 

@@ -12,9 +12,6 @@ namespace FekraHubAPI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
 
-
-          
-
             migrationBuilder.RenameColumn(
                 name: "StartDate",
                 table: "CourseSchedules",
@@ -56,11 +53,6 @@ namespace FekraHubAPI.Migrations
                 nullable: false,
                 oldClrType: typeof(byte),
                 oldType: "tinyint");
-
-     
-
-
-
 
         }
 

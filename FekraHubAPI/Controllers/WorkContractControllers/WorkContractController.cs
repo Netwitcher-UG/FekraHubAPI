@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -21,7 +21,8 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         private readonly IRepository<WorkContract> _workContractRepository;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public WorkContractController(IRepository<WorkContract> workContractRepository, IMapper mapper , UserManager<ApplicationUser> userManager)
+        public WorkContractController(IRepository<WorkContract> workContractRepository,
+            IMapper mapper , UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
             _workContractRepository = workContractRepository;

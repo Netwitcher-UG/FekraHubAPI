@@ -18,7 +18,6 @@ namespace FekraHubAPI.MapModels.Courses
         public int? RoomId { get; set; }
 
 
-
         public void Mapping(Profile profile)
         {
             profile.CreateMap<Map_Course, Course>();

@@ -37,7 +37,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AttendanceStatuses");
+                    b.ToTable("AttendanceStatuses", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Course", b =>
@@ -80,7 +80,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Courses");
+                    b.ToTable("Courses", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.CourseEvent", b =>
@@ -103,7 +103,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("ScheduleID");
 
-                    b.ToTable("CourseEvents");
+                    b.ToTable("CourseEvents", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.CourseSchedule", b =>
@@ -131,7 +131,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("CourseID");
 
-                    b.ToTable("CourseSchedules");
+                    b.ToTable("CourseSchedules", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Event", b =>
@@ -156,7 +156,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("TypeID");
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.EventType", b =>
@@ -174,7 +174,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EventsTypes");
+                    b.ToTable("EventsTypes", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Location", b =>
@@ -207,7 +207,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Location");
+                    b.ToTable("Location", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.ParentInvoice", b =>
@@ -232,7 +232,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("StudentID");
 
-                    b.ToTable("ParentInvoices");
+                    b.ToTable("ParentInvoices", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.PayRoll", b =>
@@ -257,7 +257,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("PayRoll");
+                    b.ToTable("PayRoll", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Report", b =>
@@ -290,7 +290,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reports");
+                    b.ToTable("Reports", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Room", b =>
@@ -313,7 +313,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("LocationID");
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Student", b =>
@@ -357,7 +357,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("ParentID");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.StudentAttendance", b =>
@@ -388,7 +388,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("StudentID");
 
-                    b.ToTable("StudentAttendances");
+                    b.ToTable("StudentAttendances", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.StudentContract", b =>
@@ -413,7 +413,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("StudentID");
 
-                    b.ToTable("StudentContract");
+                    b.ToTable("StudentContract", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.TeacherAttendance", b =>
@@ -444,7 +444,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("TeacherID");
 
-                    b.ToTable("TeacherAttendances");
+                    b.ToTable("TeacherAttendances", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.TeacherCourse", b =>
@@ -467,7 +467,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("TeacherCourse");
+                    b.ToTable("TeacherCourse", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Upload", b =>
@@ -489,7 +489,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("UploadTypeID");
 
-                    b.ToTable("Uploads");
+                    b.ToTable("Uploads", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.UploadCourse", b =>
@@ -512,7 +512,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("UploadID");
 
-                    b.ToTable("UploadsCourse");
+                    b.ToTable("UploadsCourse", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.UploadType", b =>
@@ -529,7 +529,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UploadsType");
+                    b.ToTable("UploadsType", (string)null);
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.WorkContract", b =>
@@ -554,7 +554,7 @@ namespace FekraHubAPI.Migrations
 
                     b.HasIndex("TeacherID");
 
-                    b.ToTable("WorkContracts");
+                    b.ToTable("WorkContracts", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -891,7 +891,7 @@ namespace FekraHubAPI.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "8f18d45c-89b7-425c-b40e-78cfac4bdd2b",
+                            UserId = "7ffa1e95-ca28-4391-8496-1570a6abe88f",
                             RoleId = "1"
                         });
                 });
@@ -986,18 +986,18 @@ namespace FekraHubAPI.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "8f18d45c-89b7-425c-b40e-78cfac4bdd2b",
+                            Id = "7ffa1e95-ca28-4391-8496-1570a6abe88f",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "a81f9f4f-f74a-4162-a519-63b3ff78b854",
+                            ConcurrencyStamp = "ff53fa48-da17-451e-b62d-00924d2f10ac",
                             Email = "admin@admin.com",
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             NormalizedEmail = "admin@admin.com",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEQmGin2jc+eRmWhy7rQmvh3PUcEVDn97lMVShjJ8/4BqnYIX9rMuCczeJD4iFFzjw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGeBIHtMJRiswUlnTH76oEdWd74pSFxb2uc5S2W1JzuwjLkrGPd0jdjKAvGHvqj7ew==",
                             PhoneNumber = "+1234567890",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "505a3c4f-2a76-405d-8557-e49824134c9b",
+                            SecurityStamp = "bb1c794c-496a-4f51-888d-dff4bba28eba",
                             TwoFactorEnabled = false,
                             UserName = "Admin",
                             Birthday = new DateTime(1985, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -22,7 +22,8 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         private readonly UserManager<ApplicationUser> _userManager;
         private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
 
-        public WorkContractController(IRepository<WorkContract> workContractRepository, IMapper mapper , UserManager<ApplicationUser> userManager)
+        public WorkContractController(IRepository<WorkContract> workContractRepository,
+            IMapper mapper , UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
             _workContractRepository = workContractRepository;

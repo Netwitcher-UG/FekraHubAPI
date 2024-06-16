@@ -106,13 +106,13 @@ namespace FekraHubAPI.EmailSender
             var request = httpContext.Request;
             var domain = $"{request.Scheme}://{request.Host}";
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = $"{domain}/NewUser/confirm?ID={user.Id}&Token={token}";
+            var confirmationLink = $"{domain}/api/Account/ConfirmUser?ID={user.Id}&Token={token}";
             var content = $@"<div style='width:100%;text-align:left;'>
                             <h1 style='width:100%;text-align:center;'>Hello {user.UserName}</h1>
                              <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
                              <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
                             <p style='font-size:14px;'>To complete the confirmation, please click the confirm button</p><br><br/>
-                            <div style='width:100%;text-align:center'> <a href='{confirmationLink}' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>event page</a>
+                            <div style='width:100%;text-align:center'> <a href='{confirmationLink}' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>confirm</a>
                             <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div> </div>
                             ";
             try

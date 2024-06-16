@@ -176,7 +176,7 @@ namespace FekraHubAPI.Controllers
             {
                 await _reportRepo.ManyAdd(AllReports);
                 await _emailSender.SendToSecretaryNewReportsForStudents();
-                return Ok(AllReports);
+                return Ok(AllReports.Select(x =>  new { x.Id, x.CreationDate, x.data, x.Improved,x.UserId,x.StudentId}).ToList());
             }
             catch (Exception ex)
             {

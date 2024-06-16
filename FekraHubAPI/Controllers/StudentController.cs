@@ -176,7 +176,7 @@ namespace FekraHubAPI.Controllers
                     await _emailSender.SendContractEmail(studentId, "Son_Contract");
                 }
 
-                return Ok("Fekra Hub welcomes your son in our family . A copy of the contract was sent to your email");
+                return Ok("welcomes your son to our family . A copy of the contract was sent to your email");
             }
             catch (Exception ex)
             {
@@ -212,16 +212,19 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var contracts = (await _studentContractRepo.GetAll()).Select(x => new { 
+                var contracts = await _studentContractRepo.GetRelation();
+                var result = contracts.Select(x => new { 
                     x.Id,
                     x.StudentID,
                     x.Student.FirstName,
                     x.Student.LastName,
                     ParentId = x.Student.ParentID,
+                    ParentFirstName =x.Student.User.FirstName,
+                    ParentLastName = x.Student.User.LastName,
                     x.CreationDate,
                     x.File
-                    });
-                return Ok(contracts);
+                    }).ToList();
+                return Ok(result);
             }
             catch (Exception ex)
             {

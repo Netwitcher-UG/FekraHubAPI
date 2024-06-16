@@ -70,7 +70,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             try
             {
                 await _attendanceStatusRepo.Add(attendanceStatus);
-                return Ok($"{status} Added seccessfuly");
+                return Ok(attendanceStatus);
 
             }
             catch (Exception ex)
@@ -93,7 +93,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             try { 
                 await _attendanceStatusRepo.Delete(attendanceStatus.Id);
 
-                return Ok("Status deleted successfully.");
+                return Ok($"{attendanceStatus.Title} deleted successfully.");
             }
             catch (Exception ex)
             {
@@ -211,7 +211,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         id = sa.Id,
                         Date = sa.date,
                         course = new { sa.Course.Id, sa.Course.Name },
-                        student = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
+                        Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
                         AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }
                     }).ToListAsync();
                     return Ok(result);
@@ -282,7 +282,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         id = sa.Id,
                         Date = sa.date,
                         course = new { sa.Course.Id, sa.Course.Name },
-                        student = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
+                        Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
                         AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }
                     }).ToListAsync();
                     return Ok(result);
@@ -311,11 +311,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return BadRequest("This date already exists.");
             }
             
-            var studentAttendanceResult =  _mapper.Map<StudentAttendance>(studentAttendance);
+            var Result =  _mapper.Map<StudentAttendance>(studentAttendance);
             try
             {
-                await _studentAttendanceRepo.Add(studentAttendanceResult);
-                return Ok("Attendance record added successfully.");
+                await _studentAttendanceRepo.Add(Result);
+                return Ok(new { Result.Id, Result.StudentID, Result.CourseID, Result.date,Result.StatusID });
             }
             catch (Exception ex)
             {
@@ -380,11 +380,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return BadRequest("This teacher not exists");
             }
-            var teacherAttendanceResult = _mapper.Map<TeacherAttendance>(teacherAttendance);
+            var Result = _mapper.Map<TeacherAttendance>(teacherAttendance);
             try
             {
-                await _teacherAttendanceRepo.Add(teacherAttendanceResult);
-                return Ok("Success");
+                await _teacherAttendanceRepo.Add(Result);
+                return Ok(new { Result.Id, Result.TeacherID, Result.CourseID, Result.date, Result.StatusID });
             }
             catch (Exception ex)
             {
@@ -409,7 +409,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             try
             {
                 await _studentAttendanceRepo.Update(studentAttendance);
-                return Ok($"Attendance for the student with id:{studentAttendance.StudentID} has changed");
+                return Ok(new
+                {
+                    studentAttendance.Id,
+                    studentAttendance.date,
+                    studentAttendance.CourseID,
+                    studentAttendance.StudentID,
+                    NewStatusId = studentAttendance.StatusID
+                });
             }
             catch (Exception ex)
             {
@@ -432,7 +439,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             try
             {
                 await _teacherAttendanceRepo.Update(teacherAttendance);
-                return Ok($"Attendance changed");
+                return Ok(new
+                {
+                    teacherAttendance.Id,
+                    teacherAttendance.date,
+                    teacherAttendance.CourseID,
+                    teacherAttendance.TeacherID,
+                    NewStatusId = teacherAttendance.StatusID
+                });
             }
             catch (Exception ex)
             {

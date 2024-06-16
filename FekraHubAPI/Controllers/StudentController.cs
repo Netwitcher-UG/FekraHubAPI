@@ -148,8 +148,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating new student record {ex}");
             }
         }
-        [HttpPost("AcceptedContract/{studentId}")]
-        public async Task<IActionResult> AcceptedContract(int studentId)
+        [HttpPost("AcceptedContract")]
+        public async Task<IActionResult> AcceptedContract([FromForm] int studentId)
         {
             try
             {
@@ -183,8 +183,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPost("NotAcceptedContract/{studentId}")]
-        public async Task<IActionResult> NotAcceptedContract(int studentId)
+        [HttpPost("NotAcceptedContract")]
+        public async Task<IActionResult> NotAcceptedContract([FromForm] int studentId)
         {
             try
             {

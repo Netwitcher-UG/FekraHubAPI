@@ -110,6 +110,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     var result = await query.Select(sa => new
                     {
+                        id = sa.Id,
                         Date = sa.date,
                         course = new { sa.Course.Id, sa.Course.Name },
                         student = new { sa.Student.Id, sa.Student.FirstName , sa.Student.LastName },
@@ -179,13 +180,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     var result = await query.Select(sa => new 
                     {
-                        sa.date,
-                        courseId = sa.Course.Id,
-                        sa.Course.Name,
-                        sa.StudentID,
-                        sa.Student.FirstName,
-                        sa.Student.LastName,
-                        sa.AttendanceStatus.Title
+                        id = sa.Id,
+                        Date = sa.date,
+                        course = new { sa.Course.Id, sa.Course.Name },
+                        student = new { sa.Student.Id, sa.Student.FirstName, sa.Student.LastName },
+                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }
                     }).ToListAsync();
                     return Ok(result);
                 }
@@ -209,13 +208,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     var result = await query.Select(sa => new
                     {
-                        sa.date,
-                        sa.CourseID,
-                        sa.Course.Name,
-                        TeacherId = sa.TeacherID,
-                        TeacherFirstName = sa.Teacher.FirstName,
-                        TeacherLastName = sa.Teacher.LastName,
-                        sa.AttendanceStatus.Title
+                        id = sa.Id,
+                        Date = sa.date,
+                        course = new { sa.Course.Id, sa.Course.Name },
+                        student = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
+                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }
                     }).ToListAsync();
                     return Ok(result);
                 }
@@ -282,13 +279,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     var result = await query.Select(sa => new
                     {
-                        sa.date,
-                        sa.CourseID,
-                        sa.Course.Name,
-                        TeacherId = sa.TeacherID,
-                        TeacherFirstName = sa.Teacher.FirstName,
-                        TeacherLastName = sa.Teacher.LastName,
-                        sa.AttendanceStatus.Title
+                        id = sa.Id,
+                        Date = sa.date,
+                        course = new { sa.Course.Id, sa.Course.Name },
+                        student = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
+                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }
                     }).ToListAsync();
                     return Ok(result);
                 }
@@ -361,7 +356,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                             StatusID = statusID
                         }).ToList();
                 await _studentAttendanceRepo.ManyAdd(studentAttendances);
-                return Ok("Attendance records added successfully.");
+                return Ok(studentAttendances.Select(x => new { x.Id, x.date, x.CourseID, x.StudentID, x.StatusID }));
             }
             catch (Exception ex)
             {
@@ -398,14 +393,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         [HttpPatch("Student")]
-        public async Task<IActionResult> UpdateStudentAttendance([FromForm] Map_StudentAttendance studentAtt)
+        public async Task<IActionResult> UpdateStudentAttendance([FromForm] int id, [FromForm] int statusId)
         {
             var allStudentAttendance = await _studentAttendanceRepo.GetRelation();
             var studentAttendance = await allStudentAttendance
-                .Where(sa => 
-                    sa.date == studentAtt.Date &&
-                    sa.StudentID == studentAtt.StudentID &&
-                    sa.CourseID == studentAtt.CourseID)
+                .Where(sa => sa.Id == id )
                 .SingleOrDefaultAsync();
 
             if (studentAttendance == null)
@@ -413,11 +405,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return NotFound("Student Attendance not found.");
             }
 
-            studentAttendance.StatusID = studentAtt.StatusID;
+            studentAttendance.StatusID = statusId;
             try
             {
                 await _studentAttendanceRepo.Update(studentAttendance);
-                return Ok($"Attendance for the student with id:{studentAtt.StudentID} has changed");
+                return Ok($"Attendance for the student with id:{studentAttendance.StudentID} has changed");
             }
             catch (Exception ex)
             {
@@ -426,20 +418,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         [HttpPatch("Teacher")]
-        public async Task<IActionResult> UpdateTeacherAttendance([FromForm] Map_TeacherAttendance teacherAtt)
+        public async Task<IActionResult> UpdateTeacherAttendance([FromForm] int id, [FromForm] int statusId)
         {
             var allTeacherAttendance = await _teacherAttendanceRepo.GetRelation();
             var teacherAttendance = await allTeacherAttendance
-                .Where(ta =>
-                        ta.date == teacherAtt.Date
-                        && ta.TeacherID == teacherAtt.TeacherID 
-                        && ta.CourseID == teacherAtt.CourseID)
+                .Where(sa => sa.Id == id)
                 .SingleOrDefaultAsync();
             if (teacherAttendance == null)
             {
                 return NotFound("Teacher Attendance not found.");
             }
-            teacherAttendance.StatusID = teacherAtt.StatusID;
+            teacherAttendance.StatusID = statusId;
             try
             {
                 await _teacherAttendanceRepo.Update(teacherAttendance);

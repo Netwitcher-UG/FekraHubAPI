@@ -37,7 +37,7 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var courses = await _courseRepo.GetRelation();
+                var courses = await _courseRepo.GetAll();
                 var allStudentsInCourses = await _studentRepo.GetAll();
 
                 foreach (var course in courses)
@@ -55,8 +55,27 @@ namespace FekraHubAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStudents()
         {
-             var students = await _studentRepo.GetAll();
-             return Ok(students);
+            var Allstudents = await _studentRepo.GetRelation();
+            var students = Allstudents.Select(x => new
+            {
+                x.Id,
+                x.FirstName,
+                x.LastName,
+                x.Birthday,
+                x.Nationality,
+                x.Note,
+                course = new
+                {
+                    x.CourseID,
+                    x.Course.Name,
+                    x.Course.Capacity,
+                    startDate = x.Course.StartDate.Date,
+                    EndDate = x.Course.EndDate.Date,
+                    x.Course.Price
+                },
+                parent = new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email }
+            }).ToList();
+            return Ok(students);
         }
         [HttpGet("ByParent")]
         //[Authorize]
@@ -73,8 +92,13 @@ namespace FekraHubAPI.Controllers
             
             var result = students.Select(z => new
             {
-                student = z,
-                course = new { z.Course.Id, z.Course.Name, z.Course.Capacity, z.Course.StartDate, z.Course.EndDate, z.Course.Price }
+                z.Id,
+                z.FirstName,
+                z.LastName,
+                z.Birthday,
+                z.Nationality,
+                z.Note,
+                course = new { z.Course.Id, z.Course.Name, z.Course.Capacity,startDate = z.Course.StartDate.Date, EndDate = z.Course.EndDate.Date, z.Course.Price }
             }).ToList();
             
 

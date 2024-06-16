@@ -50,7 +50,17 @@ namespace FekraHubAPI.Controllers
                 TeacherFirstName = x.User.FirstName,
                 TeacherLastName = x.User.LastName,
                 TeacherEmail = x.User.Email,
-                x.Student,
+                Student = new
+                {
+                    x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    x.Student.Birthday,
+                    x.Student.Nationality,
+                    x.Student.Note,
+                    x.Student.ParentID,
+                    course = new { x.Student.CourseID, x.Student.Course.Name }
+                },
                 x.Improved
             }).ToList();
             return Ok(result);
@@ -110,7 +120,17 @@ namespace FekraHubAPI.Controllers
                 TeacherFirstName = x.User.FirstName,
                 TeacherLastName = x.User.LastName,
                 TeacherEmail = x.User.Email,
-                x.Student,
+                Student = new
+                {
+                    x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    x.Student.Birthday,
+                    x.Student.Nationality,
+                    x.Student.Note,
+                    x.Student.ParentID,
+                    course = new { x.Student.CourseID, x.Student.Course.Name }
+                },
                 x.Improved
             }).ToList();
 
@@ -156,7 +176,7 @@ namespace FekraHubAPI.Controllers
             {
                 await _reportRepo.ManyAdd(AllReports);
                 await _emailSender.SendToSecretaryNewReportsForStudents();
-                return Ok(map_Report);
+                return Ok(AllReports);
             }
             catch (Exception ex)
             {
@@ -177,7 +197,7 @@ namespace FekraHubAPI.Controllers
                 await _reportRepo.Update(report);
                 var student = await _studentRepo.GetById(report.StudentId ?? 0);
                 await _emailSender.SendToParentsNewReportsForStudents([student]);
-                return Ok($"Report accepted");
+                return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId,report.Improved});
             }
             catch (Exception ex)
             {
@@ -197,7 +217,7 @@ namespace FekraHubAPI.Controllers
             {
                 await _reportRepo.Update(report);
                 await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0,report.UserId ?? "");
-                return Ok($"Report not accepted");
+                return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId, report.Improved });
             }
             catch (Exception ex)
             {
@@ -221,7 +241,7 @@ namespace FekraHubAPI.Controllers
 
                 List<Student> students = reports.Select(x => x.Student).ToList();
                 await _emailSender.SendToParentsNewReportsForStudents(students);
-                return Ok($"Reports accepted");
+                return Ok(reports.Select(x => new { x.Id, x.CreationDate, x.data, x.StudentId, x.UserId, x.Improved }));
             }
             catch (Exception ex)
             {

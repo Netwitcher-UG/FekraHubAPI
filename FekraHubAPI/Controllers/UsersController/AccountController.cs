@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
@@ -269,7 +269,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             ApplicationUser? ThisNewUser = await _userManager.FindByEmailAsync(user.email);
                             if (ThisNewUser != null)
                             {
-                                var res = await _emailSender.SendConfirmationEmail(ThisNewUser);
+                                var res = await _emailSender.SendConfirmationEmail(ThisNewUser ,HttpContext);
                                 if (res is OkResult)
                                 {
                                     _userManager.AddToRoleAsync(appUser, RoleParent).Wait();

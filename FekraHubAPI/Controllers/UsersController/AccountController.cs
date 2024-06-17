@@ -190,8 +190,12 @@ namespace FekraHubAPI.Controllers.UsersController
                 ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
                 if (user != null)
                 {
-                    
+
                     if (!user.ActiveUser)
+                    {
+                        return BadRequest("You Must Active You Account");
+                    }
+                    if (!user.EmailConfirmed)
                     {
                         return BadRequest("You Must Confirm You Account");
                     }

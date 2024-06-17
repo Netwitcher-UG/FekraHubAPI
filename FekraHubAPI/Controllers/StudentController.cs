@@ -37,7 +37,7 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var courses = await _courseRepo.GetRelation();
+                var courses = await _courseRepo.GetAll();
                 var allStudentsInCourses = await _studentRepo.GetAll();
 
                 foreach (var course in courses)
@@ -55,8 +55,27 @@ namespace FekraHubAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStudents()
         {
-             var students = await _studentRepo.GetAll();
-             return Ok(students);
+            var Allstudents = await _studentRepo.GetRelation();
+            var students = Allstudents.Select(x => new
+            {
+                x.Id,
+                x.FirstName,
+                x.LastName,
+                x.Birthday,
+                x.Nationality,
+                x.Note,
+                course = new
+                {
+                    x.CourseID,
+                    x.Course.Name,
+                    x.Course.Capacity,
+                    startDate = x.Course.StartDate.Date,
+                    EndDate = x.Course.EndDate.Date,
+                    x.Course.Price
+                },
+                parent = new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email }
+            }).ToList();
+            return Ok(students);
         }
         [HttpGet("ByParent")]
         //[Authorize]
@@ -73,8 +92,13 @@ namespace FekraHubAPI.Controllers
             
             var result = students.Select(z => new
             {
-                student = z,
-                course = new { z.Course.Id, z.Course.Name, z.Course.Capacity, z.Course.StartDate, z.Course.EndDate, z.Course.Price }
+                z.Id,
+                z.FirstName,
+                z.LastName,
+                z.Birthday,
+                z.Nationality,
+                z.Note,
+                course = new { z.Course.Id, z.Course.Name, z.Course.Capacity,startDate = z.Course.StartDate.Date, EndDate = z.Course.EndDate.Date, z.Course.Price }
             }).ToList();
             
 
@@ -124,8 +148,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating new student record {ex}");
             }
         }
-        [HttpPost("AcceptedContract/{studentId}")]
-        public async Task<IActionResult> AcceptedContract(int studentId)
+        [HttpPost("AcceptedContract")]
+        public async Task<IActionResult> AcceptedContract([FromForm] int studentId)
         {
             try
             {
@@ -152,15 +176,15 @@ namespace FekraHubAPI.Controllers
                     await _emailSender.SendContractEmail(studentId, "Son_Contract");
                 }
 
-                return Ok("Fekra Hub welcomes your son in our family . A copy of the contract was sent to your email");
+                return Ok("welcomes your son to our family . A copy of the contract was sent to your email");
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPost("NotAcceptedContract/{studentId}")]
-        public async Task<IActionResult> NotAcceptedContract(int studentId)
+        [HttpPost("NotAcceptedContract")]
+        public async Task<IActionResult> NotAcceptedContract([FromForm] int studentId)
         {
             try
             {
@@ -188,16 +212,19 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var contracts = (await _studentContractRepo.GetAll()).Select(x => new { 
+                var contracts = await _studentContractRepo.GetRelation();
+                var result = contracts.Select(x => new { 
                     x.Id,
                     x.StudentID,
                     x.Student.FirstName,
                     x.Student.LastName,
                     ParentId = x.Student.ParentID,
+                    ParentFirstName =x.Student.User.FirstName,
+                    ParentLastName = x.Student.User.LastName,
                     x.CreationDate,
                     x.File
-                    });
-                return Ok(contracts);
+                    }).ToList();
+                return Ok(result);
             }
             catch (Exception ex)
             {

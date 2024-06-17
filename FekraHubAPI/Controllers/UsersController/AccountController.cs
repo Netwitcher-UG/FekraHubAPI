@@ -24,11 +24,12 @@ using System.Reflection.Emit;
 using System.ComponentModel.DataAnnotations;
 using FekraHubAPI.EmailSender;
 using Microsoft.Extensions.Configuration;
+using static System.Net.WebRequestMethods;
 
 namespace FekraHubAPI.Controllers.UsersController
 {
     [Route("api/[controller]")]
-    [Authorize]
+    //[Authorize]
     [ApiController]
     public class AccountController : ControllerBase
     {
@@ -183,7 +184,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
         }
         [HttpPost("[action]")]
-        public async Task<IActionResult> LogIn(Map_Login login)
+        public async Task<IActionResult> LogIn([FromForm] Map_Login login)
         {
             if (ModelState.IsValid)
             {
@@ -246,7 +247,7 @@ namespace FekraHubAPI.Controllers.UsersController
         }
 
         [HttpPost("RegisterParent")]
-        public async Task<IActionResult> RegisterParent(Map_RegisterParent user)
+        public async Task<IActionResult> RegisterParent([FromForm] Map_RegisterParent user)
         {
             using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
             {
@@ -269,12 +270,12 @@ namespace FekraHubAPI.Controllers.UsersController
                             ApplicationUser? ThisNewUser = await _userManager.FindByEmailAsync(user.email);
                             if (ThisNewUser != null)
                             {
-                                var res = await _emailSender.SendConfirmationEmail(ThisNewUser);
+                                var res = await _emailSender.SendConfirmationEmail(ThisNewUser, HttpContext);
                                 if (res is OkResult)
                                 {
                                     _userManager.AddToRoleAsync(appUser, RoleParent).Wait();
                                     transaction.Commit();
-                                    return Ok("Success!! . Please go to your email message box and confirm your email");
+                                    return Ok($"Success!! . Please go to your email message box and confirm your email (https://mail.google.com/mail/u/1/#inbox) .");
                                 }
                                 else
                                 {
@@ -308,31 +309,34 @@ namespace FekraHubAPI.Controllers.UsersController
 
             }
         }
-        [HttpGet("[action]")]
-        public async Task<string> ConfirmUser(string token, string ID)
+        [HttpPost("[action]")]
+        public async Task ResendConfirmEmail(string Email)
         {
-            if (ID == null || token == null)
+            var user = await _userManager.FindByEmailAsync(Email);
+            if (user != null) 
             {
-                return "Link expired";
+                await _emailSender.SendConfirmationEmail(user, HttpContext);
+            }
+        }
+        [HttpGet("[action]")]
+        public async Task<IActionResult> ConfirmUser(string token, string ID)
+        {
+            if (string.IsNullOrEmpty(ID) || string.IsNullOrEmpty(token))
+            {
+                return BadRequest("Invalid or expired link.");
             }
             var user = await _userManager.FindByIdAsync(ID);
-            if (user == null)
-            {
-                return "User not Found";
-            }
-            else
+            if (user != null)
             {
                 token = token.Replace(" ", "+");
                 var result = await _userManager.ConfirmEmailAsync(user, token);
                 if (result.Succeeded)
                 {
-                    return "Thank you for confirming your email";
-                }
-                else
-                {
-                    return "Email not confirmed";
+                    return Redirect("https://www.google.com");
                 }
             }
+            
+            return BadRequest("Email confirmation failed.");
         }
     }
 

@@ -23,7 +23,19 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_CourseSchedule>>> GetCourseSchedules()
         {
-            var courseSched = await _courseScheduleRepository.GetAll();
+     
+            IQueryable<CourseSchedule> courseSched = (await _courseScheduleRepository.GetRelation());
+            var result = courseSched.Select(z => new
+            {
+             
+                    z.Id,
+                    z.DayOfWeek,
+                    z.StartTime,
+                    z.EndTime,
+                    courseName = z.Course.Name,
+                    courseID = z.Course.Id
+
+            }).ToList();
 
             return Ok(courseSched);
         }

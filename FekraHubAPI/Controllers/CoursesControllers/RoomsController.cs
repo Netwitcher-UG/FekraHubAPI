@@ -4,6 +4,8 @@ using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using System.Reflection.Emit;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
@@ -24,8 +26,21 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Room>>> GetRooms()
         {
-            var rooms = await _roomRepository.GetAll();
-            return Ok(rooms);
+         
+            IQueryable<Room> rooms = (await _roomRepository.GetRelation());
+            var result = rooms.Select(x => new
+            {
+                x.Id,
+                x.Name,
+                locationName = x.Location.Name,
+                locationStreet = x.Location.Street, 
+                locationStreetNr = x.Location.StreetNr, 
+                locationZipCode = x.Location.ZipCode, 
+                locationCity = x.Location.City, 
+
+
+            }).ToList();
+            return Ok(result);
         }
 
         // GET: api/Rooms/5

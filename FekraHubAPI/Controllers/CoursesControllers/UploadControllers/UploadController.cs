@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
@@ -38,21 +39,29 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             _env = env;
             _context = context;
         }
-
+      
 
 
         // GET: api/UploadTypes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Upload>>> GetUploadTypes()
         {
-            var upload = await _uploadRepository.GetAll();
 
-            return Ok(upload);
+            IQueryable<Upload> query = (await _uploadRepository.GetRelation());
+            var result = query.Select(x => new
+            {
+                   x.Id,
+                   x.file,
+                   TypeUPload= x.UploadType.TypeTitle
+           
+            }).ToList();
+
+            return Ok(result);
         }
 
 
-        [HttpPost("{courseId}/{UploadTypeId}/upload")]
-        public async Task<IActionResult> UploadFiles(int courseId,int UploadTypeId, List<IFormFile> files)
+        [HttpPost]
+        public async Task<IActionResult> UploadFiles([FromForm] int courseId, [FromForm] int UploadTypeId, [FromForm] List<IFormFile> files)
         {
 
             return await SaveFile(courseId, files, UploadTypeId);

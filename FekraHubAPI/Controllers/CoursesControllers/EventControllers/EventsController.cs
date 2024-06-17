@@ -29,9 +29,29 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents()
         {
-            var eventE = await _eventRepository.GetAll();
+           
+            IQueryable<Event> eventE = (await _eventRepository.GetRelation());
+            var result = eventE.Select(x => new
+            {
+                x.Id,
+                x.EventName,
+                x.Date,
+                x.EventType.TypeTitle,
+                courseEvent = x.CourseEvent.Select(z => new
+                {
+                    z.CourseSchedule.Id,
+                    z.CourseSchedule.DayOfWeek,
+                    z.CourseSchedule.StartTime,
+                    z.CourseSchedule.EndTime,
+                    courseName= z.CourseSchedule.Course.Name,
+                    courseID = z.CourseSchedule.Course.Id
 
-            return Ok(eventE);
+                })
+            
+
+            }).ToList();
+
+            return Ok(result);
         }
 
 
@@ -72,8 +92,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         }
         // POST: api/Event
 
-        [HttpPost("{scheduleId}/Event")]
-        public async Task<ActionResult<Event>> PostEvent(int scheduleId, [FromForm] Map_Event eventMdl)
+        [HttpPost]
+        public async Task<ActionResult<Event>> PostEvent([FromForm] int scheduleId, [FromForm] Map_Event eventMdl)
         {
             var schedule = await _ScheduleRepository.GetById(scheduleId);
             if (schedule == null)

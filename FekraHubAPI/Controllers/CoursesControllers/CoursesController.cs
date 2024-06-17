@@ -5,6 +5,9 @@ using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
@@ -25,8 +28,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Course>>> GetCourses()
         {
-            var courses = await _courseRepository.GetAll();
-       
+            IQueryable<Course> courses = await _courseRepository.GetRelation();
+
+            var result = await courses.Select(sa => new
+            {
+                name = sa.Name,
+                price = sa.Price,
+                lessons = sa.Lessons,
+                capacity = sa.Capacity,
+                startDate = sa.StartDate,
+                endDate = sa.EndDate,
+                Room = new { sa.Room.Id, sa.Room.Name }
+
+
+            }).ToListAsync();
+        
+
             return Ok(courses);
         }
 

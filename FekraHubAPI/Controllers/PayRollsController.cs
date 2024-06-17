@@ -36,7 +36,7 @@ namespace FekraHubAPI.Controllers
             }
 
             var isTeacher = await _payRollRepository.IsTeacherIDExists(user.Id);
-            var isSecretariat = await _payRollRepository.IsSecretariatIDExists(user.Id);
+            var isSecretariat = await _payRollRepository.IsSecretariatIDExists(user);
 
             // var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
 

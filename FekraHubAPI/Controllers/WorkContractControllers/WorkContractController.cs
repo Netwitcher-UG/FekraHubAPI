@@ -53,7 +53,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 return BadRequest("User Not Found");
             }
             var isTeacher = await _workContractRepository.IsTeacherIDExists(user.Id);
-            var isSecretariat = await _workContractRepository.IsSecretariatIDExists(user);
+            var isSecretariat = await _workContractRepository.IsSecretariatIDExists(user.Id);
 
 
             if (! (isTeacher || isSecretariat))

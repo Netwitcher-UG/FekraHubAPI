@@ -25,9 +25,9 @@ namespace FekraHubAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostpayRoll( List<IFormFile> files)
+        public async Task<IActionResult> PostpayRoll([FromForm] string UserID, List<IFormFile> files)
         {
-            string UserID = "17de782a-6b7a-4dfc-b007-dcc730694668";
+            //string UserID = "86687f5a-ab0e-4dc7-a830-367329c91e8a";
             var user = await _userManager.FindByIdAsync(UserID);
 
             if (user == null)
@@ -36,9 +36,8 @@ namespace FekraHubAPI.Controllers
             }
 
             var isTeacher = await _payRollRepository.IsTeacherIDExists(user.Id);
-            var isSecretariat = await _payRollRepository.IsSecretariatIDExists(user);
+            var isSecretariat = await _payRollRepository.IsSecretariatIDExists(user.Id);
 
-            // var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
 
             if (!(isTeacher || isSecretariat))
             {

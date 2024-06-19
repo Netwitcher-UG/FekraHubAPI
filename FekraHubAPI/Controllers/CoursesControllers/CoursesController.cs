@@ -44,7 +44,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }).ToListAsync();
         
 
-            return Ok(courses);
+            return Ok(result);
         }
 
         // GET: api/Course/5

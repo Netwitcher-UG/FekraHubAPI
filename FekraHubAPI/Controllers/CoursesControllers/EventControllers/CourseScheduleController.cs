@@ -37,7 +37,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
             }).ToList();
 
-            return Ok(courseSched);
+            return Ok(result);
         }
 
 

@@ -90,28 +90,28 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         fileBytes = ms.ToArray();
                     }
 
-                    var upload = new Map_Upload
+                    var upload = new Upload
                     {
-                        UploadTypeID = TypeId,
+                        UploadTypeid = TypeId,
                         file = fileBytes
 
                     };
 
-                    var uploadEntity = _mapper.Map<Upload>(upload);
+                   
 
-                    await _uploadRepository.Add(uploadEntity);
+                    await _uploadRepository.Add(upload);
 
 
                     var UploadCourse = new Map_UploadCourse
                     {
                         CourseID = courseId,
-                        UploadID = uploadEntity.Id
+                        UploadID = upload.Id
 
                     };
                     var UploadCourseEntity = _mapper.Map<UploadCourse>(UploadCourse);
 
                     await _courseUploadRepository.Add(UploadCourseEntity);
-                
+
                 }
             }
 

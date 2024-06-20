@@ -1,7 +1,6 @@
 'use client'
 
-// React Imports
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 // MUI Imports
 import Grid from '@mui/material/Grid'
@@ -196,6 +195,9 @@ const StepperLinearWithValidation = () => {
                   name='FirstName'
                   control={control}
                   rules={{ required: true }}
+                  onChange={([event]) => {
+                    setValue(event.target.value)
+                  }}
                   render={({ field }) => (
                     <TextField
                       fullWidth
@@ -214,6 +216,9 @@ const StepperLinearWithValidation = () => {
                   name='LastName'
                   control={control}
                   rules={{ required: true }}
+                  onChange={([event]) => {
+                    setValue(event.target.value)
+                  }}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -277,12 +282,16 @@ const StepperLinearWithValidation = () => {
                     <TextField {...field} fullWidth label='StreetNr' placeholder='Street And House Number' />
                   )}
                 />
-              </Grid>
+              </Grid> */}
               <Grid item xs={12} sm={6}>
                 <Controller
                   name='Nationality'
                   control={control}
                   rules={{ required: true }}
+                  control={control}
+                  onChange={([event]) => {
+                    setValue(event.target.value)
+                  }}
                   render={({ field }) => (
                     <TextField
                       {...field}

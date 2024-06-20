@@ -7,13 +7,13 @@ import Typography from '@mui/material/Typography'
 
 // Component Imports
 
-import RegisterChildren from '@views/pages/parents/children/RegisterChildren'
+import CreateStudent from '@views/pages/parents/children/CreateStudent'
 
 const FormValidation = () => {
   return (
     <Grid container spacing={6} justifyContent={'center'}>
       <Grid item xs={12} md={10}>
-        <RegisterChildren />
+        <CreateStudent />
       </Grid>
     </Grid>
   )

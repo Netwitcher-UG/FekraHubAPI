@@ -1,7 +1,6 @@
 'use client'
 
-// React Imports
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -40,6 +39,8 @@ const top100Films = [
 const CreateStudent = () => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [datafetch, setData] = useState(null)
+  const [values, setValue] = useState(null)
 
   // Hooks
   const {
@@ -49,20 +50,34 @@ const CreateStudent = () => {
     formState: { errors }
   } = useForm({
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      password: '',
-      dob: null,
-      select: '',
-      textarea: '',
-      radio: false,
-      checkbox: false
+      FirstName: '',
+      LastName: '',
+      Birthday: '',
+      Nationality: '',
+      Note: '',
+      ParentID: '0788b331-7b8e-4294-882e-560c884b4f8f',
+      CourseID: '1'
     }
   })
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
-  const onSubmit = () => toast.success('Form Submitted')
+
+  async function onSubmit(data) {
+    console.log(data)
+    await fetch('http://localhost:5008/api/Student/student/add', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Content-type': 'application/json'
+      }
+    })
+      .then(response => {
+        return response.json()
+      })
+      .then(data => setData(data))
+      .catch(err => console.log(err.message))
+
+  }
 
   return (
     <div>
@@ -73,32 +88,38 @@ const CreateStudent = () => {
             <Grid container spacing={5}>
               <Grid item xs={12} sm={6}>
                 <Controller
-                  name='firstName'
+                  name='FirstName'
                   control={control}
                   rules={{ required: true }}
+                  onChange={([event]) => {
+                    setValue(event.target.value)
+                  }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       label='First Name'
                       placeholder='John'
-                      {...(errors.firstName && { error: true, helperText: 'This field is required.' })}
+                      {...(errors.FirstName && { error: true, helperText: 'This field is required.' })}
                     />
                   )}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Controller
-                  name='lastname'
+                  name='LastName'
                   control={control}
                   rules={{ required: true }}
+                  onChange={([event]) => {
+                    setValue(event.target.value)
+                  }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       label='Last Name'
-                      placeholder='Last Name'
-                      {...(errors.lastName && { error: true, helperText: 'This field is required.' })}
+                      placeholder='John'
+                      {...(errors.LastName && { error: true, helperText: 'This field is required.' })}
                     />
                   )}
                 />
@@ -106,9 +127,12 @@ const CreateStudent = () => {
 
               <Grid item xs={12} sm={6}>
                 <Controller
-                  name='birthday '
+                  name='Birthday'
                   control={control}
                   rules={{ required: true }}
+                  onChange={([event]) => {
+                    setValue(event.target.value)
+                  }}
                   render={({ field: { value, onChange } }) => (
                     <AppReactDatepicker
                       selected={value}
@@ -122,7 +146,7 @@ const CreateStudent = () => {
                           onChange={onChange}
                           fullWidth
                           label='Date Of Birth'
-                          {...(errors.dob && { error: true, helperText: 'This field is required.' })}
+                          {...(errors.Birthday && { error: true, helperText: 'This field is required.' })}
                         />
                       }
                     />
@@ -130,11 +154,13 @@ const CreateStudent = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              {/* <Grid item xs={12} sm={6}>
                 <Controller
                   name='country'
                   control={control}
                   rules={{ required: true }}
+                  value={inputvalues}
+                  onChange={e => this.setInputValues(e.target.value)}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -145,27 +171,31 @@ const CreateStudent = () => {
                     />
                   )}
                 />
-              </Grid>
+              </Grid> */}
 
-              <Grid item xs={12}>
+              {/* <Grid item xs={12}>
                 <FormControl error={Boolean(errors.checkbox)}>
                   <Controller
                     name='adress_parent'
                     control={control}
                     rules={{ required: true }}
+                    value={keywords}
+                    onChange={e => setKeywords(e.target.value)}
                     render={({ field }) => (
                       <FormControlLabel control={<Checkbox {...field} />} label='Same as Parents address' />
                     )}
                   />
                   {errors.checkbox && <FormHelperText error>This field is required.</FormHelperText>}
                 </FormControl>
-              </Grid>
+              </Grid> */}
 
-              <Grid item xs={12} sm={6}>
+              {/* <Grid item xs={12} sm={6}>
                 <Controller
                   name='street'
                   control={control}
                   rules={{ required: true }}
+                  value={keywords}
+                  onChange={e => setKeywords(e.target.value)}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -176,26 +206,30 @@ const CreateStudent = () => {
                     />
                   )}
                 />
-              </Grid>
+              </Grid> */}
 
-              <Grid item xs={12} sm={6}>
+              {/* <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel error={Boolean(errors.select)}>Courses</InputLabel>
                   <Autocomplete
                     disablePortal
+                    name='course'
                     id='combo-box-demo'
                     options={top100Films}
+                    onChange={e => setKeywords(e.target.value)}
                     sx={{ width: 300 }}
                     renderInput={params => <TextField {...params} label='Courses' />}
                   />
                   {errors.select && <FormHelperText error>This field is required.</FormHelperText>}
                 </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Grid> */}
+              {/* <Grid item xs={12} sm={6}>
                 <Controller
                   name='city'
                   control={control}
                   rules={{ required: true }}
+                  value={keywords}
+                  onChange={e => setKeywords(e.target.value)}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -206,19 +240,22 @@ const CreateStudent = () => {
                     />
                   )}
                 />
-              </Grid>
+              </Grid> */}
               <Grid item xs={12} sm={6}>
                 <Controller
-                  name='nationality'
-                  control={control}
+                  name='Nationality'
                   rules={{ required: true }}
+                  control={control}
+                  onChange={([event]) => {
+                    setValue(event.target.value)
+                  }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       label='Nationality'
                       placeholder='Nationality'
-                      {...(errors.lastName && { error: true, helperText: 'This field is required.' })}
+                      {...(errors.Nationality && { error: true, helperText: 'This field is required.' })}
                     />
                   )}
                 />
@@ -226,9 +263,12 @@ const CreateStudent = () => {
 
               <Grid item xs={12} sm={6}>
                 <Controller
-                  name='notes'
-                  control={control}
+                  name='Note'
                   rules={{ required: true }}
+                  control={control}
+                  onChange={([event]) => {
+                    setValue(event.target.value)
+                  }}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -237,14 +277,14 @@ const CreateStudent = () => {
                       fullWidth
                       multiline
                       label='Notes'
-                      {...(errors.textarea && { error: true, helperText: 'This field is required.' })}
+                      {...(errors.Note && { error: true, helperText: 'This field is required.' })}
                     />
                   )}
                 />
               </Grid>
 
               <Grid item xs={12} className='flex gap-4'>
-                <Button variant='contained' endIcon={<i className='ri-send-plane-2-line' type='submit' />}>
+                <Button variant='contained' endIcon={<i className='ri-send-plane-2-line' />} type='submit'>
                   Send
                 </Button>
                 <Button variant='outlined' type='reset' onClick={() => reset()}>

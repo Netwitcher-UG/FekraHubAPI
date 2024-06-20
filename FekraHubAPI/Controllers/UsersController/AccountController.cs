@@ -253,6 +253,18 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpPost("RegisterParent")]
         public async Task<IActionResult> RegisterParent([FromForm] Map_RegisterParent user)
         {
+            var img = "";
+            if (user.imageUser != null && user.imageUser.Length != 0)
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    await user.imageUser.CopyToAsync(memoryStream);
+                    var imageBytes = memoryStream.ToArray();
+                    img = Convert.ToBase64String(imageBytes);
+                }
+            }
+
+
             using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
             {
                 try
@@ -260,11 +272,32 @@ namespace FekraHubAPI.Controllers.UsersController
                     string RoleParent = DefaultRole.Parent;
                     if (ModelState.IsValid)
                     {
+                        var normalizedEmail = user.email.ToUpperInvariant();
+                        var normalizedUserName = user.userName.ToUpperInvariant();
                         ApplicationUser appUser = new()
                         {
                             UserName = user.userName,
                             Email = user.email,
+                            NormalizedUserName = normalizedUserName,
+                            FirstName = user.firstName,
+                            LastName = user.lastname,
+                            ImageUser = img,
+                            NormalizedEmail = normalizedEmail,
+                            SecurityStamp = Guid.NewGuid().ToString("D"),
+                            PhoneNumber = user.phoneNumber,
+                            Gender = user.gender,
+                            EmergencyPhoneNumber = user.emergencyPhoneNumber,
+                            Birthday = user.birthday,
+                            Birthplace = user.birthplace,
+                            Nationality = user.nationality,
+                            Street = user.street,
+                            StreetNr = user.streetNr,
+                            ZipCode = user.zipCode,
+                            City = user.city,
+                            Job = user.job,
+                            Graduation = user.graduation,
                         };
+
                         IdentityResult result = await _userManager.CreateAsync(appUser, user.password);
 
 
@@ -291,7 +324,6 @@ namespace FekraHubAPI.Controllers.UsersController
                             {
                                 return Ok("Resend Link");
                             }
-                            return Ok("Success");
                         }
                         else
                         {

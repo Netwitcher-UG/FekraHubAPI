@@ -1,16 +1,12 @@
-﻿using AutoMapper;
+﻿﻿using AutoMapper;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using System.Security.Claims;
 
 namespace FekraHubAPI.Controllers
@@ -121,31 +117,6 @@ namespace FekraHubAPI.Controllers
         [HttpPost]
         //[Authorize]
         public async Task<IActionResult> InsertStudent([FromForm] Map_Student student)
-        }
-        [HttpGet("ByParent")]
-        [Authorize]
-        public async Task<IActionResult> GetStudentsByParent()//
-        {
-            var parentId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-    if (string.IsNullOrEmpty(parentId))
-    {
-        return Unauthorized("Parent ID not found in token.");
-    }
-
-    var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId);
-    
-            var result = students.Select(z => new
-            {
-                student = z,
-                course = new { z.Course.Id, z.Course.Name, z.Course.Capacity, z.Course.StartDate, z.Course.EndDate, z.Course.Price }
-            }).ToList();
-            
-
-         return Ok(result);
-       }
-        [HttpPost("student/add")]
-        public async Task<IActionResult> AddStudent([FromForm] Map_Student student)
         {
             var par =  _userManager.Users.FirstOrDefault();
             student.ParentID = par.Id;

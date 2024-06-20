@@ -8,7 +8,7 @@ namespace FekraHubAPI.MapModels.Courses
 
         public byte[] file { get; set; }
 
-        public int? UploadTypeID { get; set; }
+        public int? UploadTypeid { get; set; }
 
 
         public void Mapping(Profile profile)

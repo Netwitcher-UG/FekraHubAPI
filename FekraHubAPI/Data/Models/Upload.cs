@@ -12,9 +12,9 @@ namespace FekraHubAPI.Data.Models
 
      
 
-        [ForeignKey("UploadTypeID")]
+        [ForeignKey("UploadTypeid")]
         public virtual UploadType UploadType { get; set; }
-        public int? UploadTypeID { get; set; }
+        public int? UploadTypeid { get; set; }
 
 
 

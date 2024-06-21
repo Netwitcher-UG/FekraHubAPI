@@ -64,6 +64,10 @@ namespace FekraHubAPI.Controllers
                 x.Birthday,
                 x.Nationality,
                 x.Note,
+                city = x.City ?? "Like parent",
+                Street = x.Street ?? "Like parent",
+                StreetNr = x.StreetNr ?? "Like parent",
+                ZipCode = x.ZipCode ?? "Like parent",
                 course = new
                 {
                     x.CourseID,
@@ -98,6 +102,10 @@ namespace FekraHubAPI.Controllers
                 z.Birthday,
                 z.Nationality,
                 z.Note,
+                city = z.City ?? "Like parent",
+                Street = z.Street ?? "Like parent",
+                StreetNr = z.StreetNr ?? "Like parent",
+                ZipCode = z.ZipCode ?? "Like parent",
                 course = new { z.Course.Id, z.Course.Name, z.Course.Capacity,startDate = z.Course.StartDate.Date, EndDate = z.Course.EndDate.Date, z.Course.Price }
             }).ToList();
             

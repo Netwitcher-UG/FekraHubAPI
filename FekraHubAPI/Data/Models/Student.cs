@@ -16,6 +16,10 @@ namespace FekraHubAPI.Data.Models
         public DateTime Birthday { get; set; }
         public string Nationality { get; set; }
         public string Note { get; set; }
+        public string? Street { get; set; }
+        public string? StreetNr { get; set; }
+        public string? ZipCode { get; set; }
+        public string? City { get; set; }
 
         [ForeignKey("ParentID")]
         public virtual ApplicationUser User { get; set; }

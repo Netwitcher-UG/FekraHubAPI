@@ -77,7 +77,7 @@ namespace FekraHubAPI.Controllers
                     EndDate = x.Course.EndDate.Date,
                     x.Course.Price
                 },
-                parent = new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email }
+                parent = new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email , x.User.City,x.User.Street,x.User.StreetNr,x.User.ZipCode }
             }).ToList();
             return Ok(students);
         }

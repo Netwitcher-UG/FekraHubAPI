@@ -183,6 +183,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     new Response { Status = "Error", Message = $"Could not change password , please try again." });
 
         }
+        [AllowAnonymous]
         [HttpPost("[action]")]
         public async Task<IActionResult> LogIn([FromForm] Map_Login login)
         {
@@ -249,7 +250,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             return BadRequest(ModelState);
         }
-
+        [AllowAnonymous]
         [HttpPost("RegisterParent")]
         public async Task<IActionResult> RegisterParent([FromForm] Map_RegisterParent user)
         {
@@ -308,17 +309,17 @@ namespace FekraHubAPI.Controllers.UsersController
                             if (ThisNewUser != null)
                             {
                                 var res = await _emailSender.SendConfirmationEmail(ThisNewUser, HttpContext);
-                                if (res is OkResult)
-                                {
+                                //if (res is OkResult)
+                                //{
                                     _userManager.AddToRoleAsync(appUser, RoleParent).Wait();
                                     transaction.Commit();
                                     return Ok($"Success!! . Please go to your email message box and confirm your email (https://mail.google.com/mail/u/1/#inbox) .");
-                                }
+                                /*}
                                 else
                                 {
                                     await _userManager.DeleteAsync(ThisNewUser);
                                     return BadRequest("Change your email please!");
-                                }
+                                }*/
                             }
                             else
                             {

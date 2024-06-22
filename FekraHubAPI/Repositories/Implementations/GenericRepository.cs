@@ -102,6 +102,16 @@ namespace FekraHubAPI.Repositories.Implementations
             //var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
             //return isSecretariat;
         }
+        public async Task<bool> IsSecretariat(ApplicationUser user)
+        {
+            var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
+            return isSecretariat;
+        }
+        public async Task<bool> IsTeacher(ApplicationUser user)
+        {
+            var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Teacher);
+            return isSecretariat;
+        }
         public async Task<T> GetUser(string id)
         {
             return await _dbSet.FindAsync(id);

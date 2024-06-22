@@ -34,7 +34,8 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             try
             {
                 var WorkContract = await _workContractRepository.GetById(workContractID);
-                return Ok(WorkContract);
+                var data = new {WorkContract.Id , WorkContract.File ,  WorkContract.TeacherID};
+                return Ok(data);
 
             }
             catch (Exception ex)
@@ -53,7 +54,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 return BadRequest("User Not Found");
             }
             var isTeacher = await _workContractRepository.IsTeacherIDExists(user.Id);
-            var isSecretariat = await _workContractRepository.IsSecretariatIDExists(user.Id);
+            var isSecretariat = await _workContractRepository.IsSecretariat(user);
 
 
             if (! (isTeacher || isSecretariat))
@@ -81,6 +82,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                    await _workContractRepository.Add(workContractEntity);
                 }
             }
+
             return Ok();
         }
 
@@ -98,11 +100,13 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         }
 
         [HttpGet("[action]/{userID}")]
-        public async Task<List<WorkContract>> GetByUserID(string userID)
+        public async Task<IActionResult> GetByUserID(string userID)
         {
             var WorkContractEntity = await _workContractRepository.GetAll();
             var WorkContractUser =   WorkContractEntity.Where(i => i.TeacherID == userID);
-            return WorkContractUser.ToList();
+            var data = WorkContractUser.Select(x => new { x.Id , x.TeacherID , x.File }).ToList();
+
+            return Ok(data);
         }
       
 

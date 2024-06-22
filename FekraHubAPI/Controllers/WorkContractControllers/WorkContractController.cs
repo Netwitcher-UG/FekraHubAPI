@@ -4,7 +4,6 @@ using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using FekraHubAPI.Seeds;
 using FekraHubAPI.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -20,6 +19,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         private readonly IMapper _mapper;
         private readonly IRepository<WorkContract> _workContractRepository;
         private readonly UserManager<ApplicationUser> _userManager;
+        public ClaimsPrincipal User => HttpContext?.User!;
 
         public WorkContractController(IRepository<WorkContract> workContractRepository,
             IMapper mapper , UserManager<ApplicationUser> userManager)
@@ -37,6 +37,23 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 var data = new {WorkContract.Id , WorkContract.File ,  WorkContract.TeacherID};
                 return Ok(data);
 
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpGet("[action]")]
+
+        public async Task<IActionResult> GetMyWorkContract()
+        {
+            try
+            {
+                var authId = _workContractRepository.GetUserIDFromToken(User);
+                var WorkContractEntity = await _workContractRepository.GetAll();
+                var WorkContractUser = WorkContractEntity.Where(i => i.TeacherID == authId);
+                var data = WorkContractUser.Select(x => new { x.Id, x.TeacherID, x.File }).ToList();
+                return Ok(data);
             }
             catch (Exception ex)
             {

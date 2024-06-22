@@ -288,7 +288,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             PhoneNumber = user.phoneNumber,
                             Gender = user.gender,
                             EmergencyPhoneNumber = user.emergencyPhoneNumber,
-                            Birthday = user.birthday,
+                            Birthday = DateTime.Parse(user.birthday) ,
                             Birthplace = user.birthplace,
                             Nationality = user.nationality,
                             Street = user.street,

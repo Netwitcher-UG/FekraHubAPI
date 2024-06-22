@@ -62,21 +62,28 @@ const CreateStudent = () => {
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
-  async function onSubmit(data) {
-    console.log(data)
-    await fetch('http://localhost:5008/api/Student/student/add', {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-type': 'application/json'
-      }
-    })
-      .then(response => {
-        return response.json()
-      })
-      .then(data => setData(data))
-      .catch(err => console.log(err.message))
+  const onSubmit = async data => {
+    Object.assign(data, { ParentID: '0788b331-7b8e-4294-882e-560c884b4f8f', CourseID: '1' })
 
+    try {
+      const response = await fetch('http://localhost:5008/api/Student', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      console.log('Success:', result)
+    } catch (error) {
+      console.error('Error:', error)
+    }
   }
 
   return (

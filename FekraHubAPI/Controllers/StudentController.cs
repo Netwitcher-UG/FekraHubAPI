@@ -116,6 +116,7 @@ namespace FekraHubAPI.Controllers
         //[Authorize]
         public async Task<IActionResult> InsertStudent([FromForm] Map_Student student)
         {
+            student.ParentID = "e4f58d8a-7d2f-428f-b061-0fc1b3f57ea1";
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);

@@ -34,6 +34,11 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             try
             {
                 var WorkContract = await _workContractRepository.GetById(workContractID);
+                if (WorkContract == null )
+                {
+                    return BadRequest("WorkContract Not Fount");
+
+                }
                 var data = new {WorkContract.Id , WorkContract.File ,  WorkContract.TeacherID};
                 return Ok(data);
 

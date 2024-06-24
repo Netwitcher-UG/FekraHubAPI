@@ -18,6 +18,11 @@ import FormControl from '@mui/material/FormControl'
 import FormHelperText from '@mui/material/FormHelperText'
 import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from '@mui/material/IconButton'
+<<<<<<< HEAD
+=======
+import Autocomplete from '@mui/material/Autocomplete'
+import axios from 'axios'
+>>>>>>> 8f5e278 (..)
 
 // Third-party Imports
 import { toast } from 'react-toastify'
@@ -195,9 +200,6 @@ const StepperLinearWithValidation = () => {
                   name='FirstName'
                   control={control}
                   rules={{ required: true }}
-                  onChange={([event]) => {
-                    setValue(event.target.value)
-                  }}
                   render={({ field }) => (
                     <TextField
                       fullWidth
@@ -216,13 +218,12 @@ const StepperLinearWithValidation = () => {
                   name='LastName'
                   control={control}
                   rules={{ required: true }}
-                  onChange={([event]) => {
-                    setValue(event.target.value)
-                  }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
+                      value={formData.LastName}
+                      onChange={handleChange}
                       label='Last Name'
                       placeholder='Last Name'
                       value={formData.LastName}
@@ -282,16 +283,14 @@ const StepperLinearWithValidation = () => {
                     <TextField {...field} fullWidth label='StreetNr' placeholder='Street And House Number' />
                   )}
                 />
-              </Grid> */}
+              </Grid>
               <Grid item xs={12} sm={6}>
                 <Controller
                   name='Nationality'
                   control={control}
                   rules={{ required: true }}
                   control={control}
-                  onChange={([event]) => {
-                    setValue(event.target.value)
-                  }}
+                  rules={{ required: true }}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -308,7 +307,6 @@ const StepperLinearWithValidation = () => {
               <Grid item xs={12} sm={6}>
                 <Controller
                   name='Note'
-                  rules={{ required: true }}
                   control={control}
                   render={({ field }) => (
                     <TextField
@@ -376,11 +374,8 @@ const StepperLinearWithValidation = () => {
                   Submit
                 </Button>
               </Grid>
-            </Grid>
           </form>
         )
-      default:
-        return <Typography color='text.primary'>Unknown stepIndex</Typography>
     }
   }
 

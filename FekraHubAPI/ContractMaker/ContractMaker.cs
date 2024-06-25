@@ -21,26 +21,41 @@ namespace FekraHubAPI.ContractMaker
             _Usersrepo = Usersrepo;
             _schoolInforepo = schoolInforepo;
         }
-        public async Task ConverterHtmlToPdf(int studentId)
+        public async Task ConverterHtmlToPdf(Student student)
         {
-            HtmlToPdf HtmlToPdf = new HtmlToPdf();
-            var contractPages = await ContractHtmlPage(studentId);
-            PdfDocument finalPdf = new PdfDocument();
-            foreach (var contractPage in contractPages)
+            try
             {
-                PdfDocument pdfDocument = HtmlToPdf.ConvertHtmlString(contractPage);
-                finalPdf.Append(pdfDocument);
+                HtmlToPdf HtmlToPdf = new HtmlToPdf();
+                var contractPages = await ContractHtmlPage(student, student.ParentID);
+                PdfDocument finalPdf = new PdfDocument();
+                foreach (var contractPage in contractPages)
+                {
+                    PdfDocument pdfDocument = HtmlToPdf.ConvertHtmlString(contractPage);
+                    finalPdf.Append(pdfDocument);
 
+                }
+                byte[] pdf = finalPdf.Save();
+                finalPdf.Close();
+                StudentContract studentContract = new()
+                {
+                    StudentID = student.Id,
+                    File = pdf,
+                    CreationDate = DateTime.Now
+                };
+                await _repo.Add(studentContract);
             }
-            byte[] pdf = finalPdf.Save();
-            finalPdf.Close();
-            StudentContract studentContract = new()
+            catch (Exception ex) 
             {
-                StudentID = studentId,
-                File = pdf,
-                CreationDate = DateTime.Now
-            };
-            await _repo.Add(studentContract);
+                if (await _studentrepo.IDExists(student.Id)) 
+                {
+                    await _studentrepo.Delete(student.Id);
+                }
+                if ((await _repo.GetRelation()).Where(x => x.StudentID == student.Id).Any())
+                {
+                    await _repo.Delete(student.Id);
+                }
+            }
+            
 
         }
         public async Task<byte[]> GetContractPdf(int studentId)
@@ -49,16 +64,15 @@ namespace FekraHubAPI.ContractMaker
             var contract = AllContracts.Where(c => c.StudentID == studentId).First();
             return contract.File;
         }
-        public async Task<List<string>> ContractHtml(int studentId)//
+        public async Task<List<string>> ContractHtml(Student student, string parentId)//
         {
-            return await ContractHtmlPage(studentId);
+            return await ContractHtmlPage(student, parentId);
         }
 
-        private async Task<List<string>> ContractHtmlPage(int studentID)//
+        private async Task<List<string>> ContractHtmlPage(Student student, string parentId)//
         {
             var schoolInfo = (await _schoolInforepo.GetRelation()).SingleOrDefault();
-            var student = await _studentrepo.GetById(studentID);
-            var parent = await _Usersrepo.GetUser(student.ParentID);
+            var parent = await _Usersrepo.GetUser(parentId);
             List<string> contractPages = schoolInfo.ContractPages;
 
             contractPages[0] = contractPages[0]

@@ -25,6 +25,7 @@ using System.ComponentModel.DataAnnotations;
 using FekraHubAPI.EmailSender;
 using Microsoft.Extensions.Configuration;
 using static System.Net.WebRequestMethods;
+using FekraHubAPI.Repositories.Interfaces;
 
 namespace FekraHubAPI.Controllers.UsersController
 {
@@ -37,11 +38,14 @@ namespace FekraHubAPI.Controllers.UsersController
 
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IRepository<SchoolInfo> _schoolInfoRepo;
         private readonly ApplicationDbContext _db;
         private readonly IConfiguration _configuration;
         private readonly EmailSender.IEmailSender _emailSender;
         public AccountController(ApplicationDbContext context  , UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager , EmailSender.IEmailSender emailSender , IConfiguration configuration ,
+            RoleManager<IdentityRole> roleManager , EmailSender.IEmailSender emailSender
+            , IConfiguration configuration 
+            , IRepository<SchoolInfo> schoolInfoRepo,
             ApplicationDbContext db)
         {
 
@@ -50,6 +54,7 @@ namespace FekraHubAPI.Controllers.UsersController
             _db = db;
             _configuration = configuration;
             _emailSender = emailSender;
+            _schoolInfoRepo = schoolInfoRepo;
         }
 
         [HttpGet]
@@ -115,19 +120,21 @@ namespace FekraHubAPI.Controllers.UsersController
             if (user != null)
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var forgotPasswordLink = Url.Action(nameof(ResetPassword), "Authentication", new { token, email = user.Email }, Request.Scheme);
-                /*var message = new Message(new string[] { user.Email! }, "Forgot Password Link", forgotPasswordLink!);
-                _emailService.SendEmail(message);
+                // var callbackUrl = Url.Action("GetResetPassword", "Account", new { email = user.Email, token = token }, protocol: HttpContext.Request.Scheme);
                 
-                return StatusCode(StatusCodes.Status2000K,
-                new Response { Status = "Success", Message = $"User created & Email Sent to {user.Email} SuccessFully" });
-                */
-                return Ok(token);
+                var domain = (await _schoolInfoRepo.GetRelation()).Select(x=>x.UrlDomain).First();
+                var restPaswordLink = "";
+                var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={token}";
+
+                await _emailSender.SendRestPassword(user.Email, callbackUrlLink);
+                return Ok( new { callbackUrlLink, token });
 
             }
             return StatusCode(StatusCodes.Status400BadRequest,
                    new Response { Status = "Error", Message = $"Could not send link to email , please try again." });
         }
+
+
         [HttpPost]
         [AllowAnonymous]
         [Route("[action]")]
@@ -136,7 +143,6 @@ namespace FekraHubAPI.Controllers.UsersController
             var user = await _userManager.FindByEmailAsync(resetPassword.Email);
             if (user != null)
             {
-
                 var resetPassResult = await _userManager.ResetPasswordAsync(user, resetPassword.Token, resetPassword.Password);
                 if (!resetPassResult.Succeeded)
                 {

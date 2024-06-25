@@ -354,5 +354,19 @@ namespace FekraHubAPI.EmailSender
 
             }
         }
+
+        public async Task SendRestPassword(string email, string link)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            var schooleInfo = (await _schoolInfo.GetRelation()).First();
+            var content = $@"<div style='width:100%;text-align:left;'>
+                    <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1>
+                     <p style='font-size:14px;'>Welcome to {schooleInfo.SchoolName}!</p>
+                    <p style='font-size:14px;'>To complete forget password, please click the button</p><br><br/>
+                    <div style='width:100%;text-align:center'> <a href='{link}' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>Click</a>
+                    <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div> </div>
+                    ";
+            await SendEmail(email ?? "", "Reset Password", Message(content), true);
+        }
     }
 }

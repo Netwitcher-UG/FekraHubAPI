@@ -136,10 +136,11 @@ const StepperLinearWithValidation = () => {
 
     if (validateForm()) {
       // Form is valid, handle submission (e.g., API call)
-    
-      if (activeStep === steps.length - 1) {
-        console.log("2")
-        formData.Birthday = date
+
+      if (activeStep === steps.length - 3) {
+        console.log('2')
+        formData.Birthday = date.toString().split('T')[0]
+        
         console.log('Submitting form with data:', formData)
         const formData1 = new FormData()
 
@@ -151,8 +152,7 @@ const StepperLinearWithValidation = () => {
           method: 'post',
           url: 'http://localhost:5008/api/Student',
           data: formData1,
-          headers: { 'Content-Type': 'multipart/form-data' },
-          
+          headers: { 'Content-Type': 'multipart/form-data' }
         })
           .then(function (response) {
             //handle success

@@ -5,6 +5,7 @@ using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -21,6 +22,7 @@ namespace FekraHubAPI.Controllers
         private readonly IContractMaker _contractMaker;
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
+        private readonly UserManager<ApplicationUser> _userManager;
         public StudentController(IRepository<StudentContract> studentContractRepo, IContractMaker contractMaker,
             IRepository<Student> studentRepo, IRepository<Course> courseRepo, IEmailSender emailSender, IMapper mapper, UserManager<ApplicationUser> userManager)
         {
@@ -30,6 +32,7 @@ namespace FekraHubAPI.Controllers
             _courseRepo = courseRepo;
             _emailSender = emailSender;
             _mapper = mapper;
+            _userManager = userManager;
         }
 
         [HttpGet("CoursesCapacity")]
@@ -114,9 +117,10 @@ namespace FekraHubAPI.Controllers
         }
         [HttpPost]
         //[Authorize]
-        public async Task<IActionResult> InsertStudent([FromForm] Map_Student student)
+        public async Task<IActionResult> GetContract([FromForm] Map_Student student)
         {
-            student.ParentID = "0788b331-7b8e-4294-882e-560c884b4f8f";
+            var par = _userManager.Users.FirstOrDefault();
+            student.ParentID = par.Id;
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -133,24 +137,7 @@ namespace FekraHubAPI.Controllers
                 //student.ParentID = userId;
 
                 var studentEntity = _mapper.Map<Student>(student);
-                await _studentRepo.Add(studentEntity);
-
-                var newStudentID = studentEntity.Id;
-
-                if (newStudentID == 0)
-                {
-                    var newStudent = (await _studentRepo.GetAll())
-                    .SingleOrDefault(x => x.ParentID == student.ParentID
-                                          && x.FirstName == student.FirstName
-                                          && x.LastName == student.LastName);
-                    if(newStudent != null) 
-                    {
-                        newStudentID = newStudent.Id;
-                    }
-                    
-                }
-
-                List<string> contract = await _contractMaker.ContractHtml(newStudentID);
+                List<string> contract = await _contractMaker.ContractHtml(studentEntity, student.ParentID);
                 return Ok(contract);
             }
             catch (Exception ex)
@@ -159,31 +146,34 @@ namespace FekraHubAPI.Controllers
             }
         }
         [HttpPost("AcceptedContract")]
-        public async Task<IActionResult> AcceptedContract([FromForm] int studentId)
+        public async Task<IActionResult> AcceptedContract([FromForm] Map_Student student)
         {
+            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            //if (string.IsNullOrEmpty(userId))
+            //{
+            //    return Unauthorized("User ID not found in token.");
+            //}
+            //student.ParentID = userId;
+            var par = _userManager.Users.FirstOrDefault();
+            student.ParentID = par.Id;
             try
             {
-                if(!await _studentRepo.IDExists(studentId))
+                if (!ModelState.IsValid)
                 {
-                    return BadRequest("This student not found");
+                    return BadRequest(ModelState);
                 }
-                var contracts = await _studentContractRepo.GetAll();
-                if (contracts.Any(c => c.StudentID == studentId))
+                var studentEntity = _mapper.Map<Student>(student);
+                await _studentRepo.Add(studentEntity);
+                await _contractMaker.ConverterHtmlToPdf(studentEntity);//
+                if (!(await _studentContractRepo.GetRelation()).Where(x => x.StudentID == studentEntity.Id).Any())
                 {
-                    return BadRequest("This student already has a contract!");
+                    return BadRequest("something is wrong please try again");
                 }
-                //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-                //if (string.IsNullOrEmpty(userId))
-                //{
-                //    return Unauthorized("User ID not found in token.");
-                //}
-                //student.ParentID = userId;
-                await _contractMaker.ConverterHtmlToPdf(studentId);//
-                var res = await _emailSender.SendContractEmail(studentId, "Son_Contract");//
+                var res = await _emailSender.SendContractEmail(studentEntity.Id, "Son_Contract");//
                 if (res is BadRequestObjectResult)
                 {
-                    await _emailSender.SendContractEmail(studentId, "Son_Contract");
+                    await _emailSender.SendContractEmail(studentEntity.Id, "Son_Contract");
                 }
 
                 return Ok("welcomes your son to our family . A copy of the contract was sent to your email");

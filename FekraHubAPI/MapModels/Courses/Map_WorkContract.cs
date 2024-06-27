@@ -3,7 +3,7 @@ using FekraHubAPI.Data.Models;
 
 namespace FekraHubAPI.MapModels.Courses
 {
-    public class Map_WorkContract : IMapFrom<WorkContract>
+    public class Map_WorkContract
 
 
     {

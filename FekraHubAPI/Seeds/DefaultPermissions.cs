@@ -21,7 +21,7 @@ namespace FekraHubAPI.Seeds
         public static async Task SeedPermissionsAsync(ModelBuilder builder)
         {
             var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
-            var i = 1;
+            var i = 20;
             foreach (var Permission in AllPermissions)
             {
                 builder.Entity<AspNetPermissions>().HasData(

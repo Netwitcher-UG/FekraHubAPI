@@ -51,23 +51,42 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-
-            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
             var userRole = User.FindFirstValue(ClaimTypes.Role); 
 
             var allUsers = await _db.ApplicationUser.ToListAsync();
 
             if (userRole != DefaultRole.Admin ){
                 allUsers = await _applicationUsersServices.GetAllNonAdminUsersAsync();
-
             }
-            return Ok(allUsers);
+            var data = allUsers.Select(x => new
+            {
+                x.Id,
+                x.Name,
+                x.UserName,
+                x.FirstName,
+                x.LastName,
+                x.Email,
+                x.ImageUser,
+                x.Gender,
+                x.Job,
+                x.Birthday,
+                x.Birthplace,
+                x.Nationality,
+                x.City,
+                x.Street,
+                x.StreetNr,
+                x.ZipCode,
+                x.PhoneNumber,
+                x.EmergencyPhoneNumber,
+
+            }).ToList();
+            return Ok(data);
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(string id)
         {
             var currentUser = await GetCurrentUserAsync();
-            var userRole = User.FindFirstValue(ClaimTypes.Role);  // cuurent role
+            var userRole = User.FindFirstValue(ClaimTypes.Role);  // current role
 
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
@@ -81,7 +100,29 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 return BadRequest("Cant Access This User");
             }
-            return Ok(user);
+            var data = new
+            {
+                user.Id,
+                user.Name,
+                user.UserName,
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.ImageUser,
+                user.Gender,
+                user.Job,
+                user.Birthday,
+                user.Birthplace,
+                user.Nationality,
+                user.City,
+                user.Street,
+                user.StreetNr,
+                user.ZipCode,
+                user.PhoneNumber,
+                user.EmergencyPhoneNumber,
+
+            };
+            return Ok(data);
         }
         [HttpPost]
         public async Task<IActionResult> AddUser([FromForm] Map_Account user)

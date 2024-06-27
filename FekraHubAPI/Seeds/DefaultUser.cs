@@ -31,6 +31,8 @@ namespace FekraHubAPI.Seeds
                 Name = "admin",
                 NormalizedUserName = "ADMIN",
                 Email = email,
+                ActiveUser = true,
+                EmailConfirmed = true,
                 NormalizedEmail = normalizedEmail,
                 SecurityStamp = Guid.NewGuid().ToString("D"),
                 PhoneNumber = "+1234567890",

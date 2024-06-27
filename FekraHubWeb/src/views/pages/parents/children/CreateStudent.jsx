@@ -1,45 +1,70 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+// React Imports
+import { useState } from 'react'
 
 // MUI Imports
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-import CardContent from '@mui/material/CardContent'
 import Grid from '@mui/material/Grid'
-import TextField from '@mui/material/TextField'
-import Select from '@mui/material/Select'
-import FormControlLabel from '@mui/material/FormControlLabel'
+import Card from '@mui/material/Card'
+import Step from '@mui/material/Step'
 import Button from '@mui/material/Button'
-import Checkbox from '@mui/material/Checkbox'
-import FormHelperText from '@mui/material/FormHelperText'
-import MenuItem from '@mui/material/MenuItem'
+import Divider from '@mui/material/Divider'
+import Stepper from '@mui/material/Stepper'
+import TextField from '@mui/material/TextField'
+import StepLabel from '@mui/material/StepLabel'
+import Typography from '@mui/material/Typography'
 import InputLabel from '@mui/material/InputLabel'
+import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
+import FormHelperText from '@mui/material/FormHelperText'
+import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from '@mui/material/IconButton'
-import Autocomplete from '@mui/material/Autocomplete'
-import axios from 'axios'
 
 // Third-party Imports
 import { toast } from 'react-toastify'
-import { useForm, Controller } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
+import { valibotResolver } from '@hookform/resolvers/valibot'
+import { object, minLength, string } from 'valibot'
+
+import axios from 'axios'
+
+// Component Imports
+import StepperWrapper from '@core/styles/stepper'
+
+import StepperCustomDot from './StepperCustomDot'
 
 // Styled Component Imports
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
 
-const top100Films = [
-  { id: '1', label: 'class1' },
-  { id: '2', label: 'class2' },
-  { id: '3', label: 'class3' },
-  { id: '4', label: 'class4' },
-  { id: '5', label: 'class5' },
-  { id: '6', label: 'class6' },
-  { id: '7', label: 'class7' }
+import '../../../../assets/css/myStyle.css'
+
+// Vars
+const steps = [
+  {
+    title: 'Personal Info',
+    subtitle: 'Enter your Personal Details'
+  },
+  {
+    title: 'Course Info',
+    subtitle: 'Setup Information'
+  },
+  {
+    title: 'Contract',
+    subtitle: 'Add Social Links'
+  }
 ]
 
-const CreateStudent = () => {
+const https = require('https')
+
+const agent = new https.Agent({
+  rejectUnauthorized: false
+})
+
+const socialSchema = object({})
+
+const StepperLinearWithValidation = () => {
   // States
-  const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [activeStep, setActiveStep] = useState(0)
 
   const [formData, setFormData] = useState({
     FirstName: '',
@@ -47,15 +72,27 @@ const CreateStudent = () => {
     Nationality: '',
     City: '',
     Note: '',
-    Birthday: '03-04-2022',
+    Birthday: '',
     Street: '',
     StreetNr: '',
     ZipCode: '',
-    ParentID: '0788b331-7b8e-4294-882e-560c884b4f8f',
     CourseID: '1'
   })
 
+  const { control, reset } = useForm({})
+
+  const [errors, setErrors] = useState({})
+
+  const [date, setDate] = useState('')
+
+  const handleChangeDate = date => {
+    setDate(date)
+  }
+
+  // Handle form field changes
   const handleChange = e => {
+    validateForm()
+
     const { name, value } = e.target
 
     setFormData({
@@ -64,52 +101,96 @@ const CreateStudent = () => {
     })
   }
 
-  // Hooks
-  const {
-    control,
-    reset,
-    formState: { errors }
-  } = useForm({})
+  const validateForm = () => {
+    let errors = {}
+    let isValid = true
 
-  const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+    if (!formData.FirstName.trim() && formData.FirstName == '') {
+      errors.FirstName = 'This field is required'
+      isValid = false
+    }
 
-  const handleSubmit = async e => {
+    if (!formData.LastName.trim()) {
+      errors.LastName = 'This field is required'
+      isValid = false
+    }
+
+    if (!formData.Nationality.trim()) {
+      errors.Nationality = 'This field is required'
+      isValid = false
+    }
+
+    if (!formData.Note.trim()) {
+      errors.Note = 'This field is required'
+      isValid = false
+    }
+
+    setErrors(errors)
+
+    return isValid
+  }
+
+  const handleSubmit = e => {
     e.preventDefault()
+    setActiveStep(prevActiveStep => prevActiveStep + 1)
 
-    const data = {
-      FirstName: 'basel',
-      LastName: 'wael',
-      Birthday: '2010-01-01',
-      Nationality: 'bbb',
-      Note: 'bbbb',
-      CourseID: '1',
-      ParentID: '0788b331-7b8e-4294-882e-560c884b4f8f'
-    }
+    if (validateForm()) {
+      // Form is valid, handle submission (e.g., API call)
+    
+      if (activeStep === steps.length - 1) {
+        console.log("2")
+        formData.Birthday = date
+        console.log('Submitting form with data:', formData)
+        const formData1 = new FormData()
 
-    const formData = new FormData()
-
-    for (const key in data) {
-      formData.append(key, data[key])
-    }
-
-    try {
-      const response = await axios.post('https://localhost:5008/api/Student', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+        for (const key in formData) {
+          formData1.append(key, formData[key])
         }
-      })
-    } catch (error) {
-      console.error('There was a problem with your fetch operation:', error)
+
+        axios({
+          method: 'post',
+          url: 'http://localhost:5008/api/Student',
+          data: formData1,
+          headers: { 'Content-Type': 'multipart/form-data' },
+          
+        })
+          .then(function (response) {
+            //handle success
+            console.log(response + 'ddddd')
+          })
+          .catch(function (response) {
+            //handle error
+            console.log(response)
+          })
+      }
+    } else {
+      // Form validation failed, do something (e.g., show error messages)
+      console.log('Form validation failed')
     }
   }
 
-  return (
-    <div>
-      <Card>
-        <CardHeader title='Create Student' />
-        <CardContent>
-          <form onSubmit={handleSubmit}>
+  const handleBack = () => {
+    setActiveStep(prevActiveStep => prevActiveStep - 1)
+  }
+
+  const handleReset = () => {
+    setActiveStep(0)
+    personalReset({ FirstName: '', LastName: '', Nationality: '', Birthday: '', Note: '' })
+    courseReset({ CourseID: '' })
+  }
+
+  const renderStepContent = activeStep => {
+    switch (activeStep) {
+      case 0:
+        return (
+          <form key={0} onSubmit={handleSubmit}>
             <Grid container spacing={5}>
+              <Grid item xs={12}>
+                <Typography className='font-medium' color='text.primary'>
+                  {steps[0].title}
+                </Typography>
+                <Typography variant='body2'>{steps[0].subtitle}</Typography>
+              </Grid>
               <Grid item xs={12} sm={6}>
                 <Controller
                   name='FirstName'
@@ -117,16 +198,16 @@ const CreateStudent = () => {
                   rules={{ required: true }}
                   render={({ field }) => (
                     <TextField
-                      {...field}
                       fullWidth
-                      label='First Name'
+                      {...field}
                       value={formData.FirstName}
-                      placeholder='John'
                       onChange={handleChange}
-                      {...(errors.FirstName && { error: true, helperText: 'This field is required.' })}
+                      label='First Name'
+                      placeholder='First Name'
                     />
                   )}
                 />
+                {errors.FirstName && <p className='error_custom'> {errors.FirstName}</p>}
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Controller
@@ -137,74 +218,46 @@ const CreateStudent = () => {
                     <TextField
                       {...field}
                       fullWidth
+                      label='Last Name'
+                      placeholder='Last Name'
                       value={formData.LastName}
                       onChange={handleChange}
-                      label='Last Name'
-                      placeholder='John'
-                      {...(errors.LastName && { error: true, helperText: 'This field is required.' })}
                     />
                   )}
                 />
+                {errors.LastName && <span className='error_custom'>{errors.LastName}</span>}
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <Controller
                   name='Birthday'
                   control={control}
-                  rules={{ required: true }}
-                  render={({ field: { value, onChange } }) => (
+                  render={({ field }) => (
                     <AppReactDatepicker
-                      selected={value}
+                      {...field}
+                      selected={date}
                       showYearDropdown
                       showMonthDropdown
-                      onChange={onChange}
+                      dateFormat='yyyy-MM-dd'
+                      onChange={handleChangeDate}
                       placeholderText='MM/DD/YYYY'
-                      customInput={
-                        <TextField
-                          value={value}
-                          onChange={onChange}
-                          fullWidth
-                          label='Date Of Birth'
-                          {...(errors.Birthday && { error: true, helperText: 'This field is required.' })}
-                        />
-                      }
+                      customInput={<TextField value={date} onChange={handleChangeDate} fullWidth label='Birthday' />}
                     />
                   )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='City'
+                  control={control}
+                  render={({ field }) => <TextField {...field} fullWidth label='City' placeholder='City' />}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Controller
                   name='Street'
                   control={control}
-                  rules={{ required: true }}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      value={formData.Street}
-                      onChange={handleChange}
-                      label='Street'
-                      placeholder='Street And House Number'
-                      {...(errors.lastName && { error: true, helperText: 'This field is required.' })}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  name='StreetNr'
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      value={formData.StreetNr}
-                      onChange={handleChange}
-                      label='StreetNr'
-                      placeholder='Street And House Number'
-                      {...(errors.lastName && { error: true, helperText: 'This field is required.' })}
-                    />
+                    <TextField {...field} fullWidth label='Street' placeholder='Street And House Number' />
                   )}
                 />
               </Grid>
@@ -212,36 +265,16 @@ const CreateStudent = () => {
                 <Controller
                   name='ZipCode'
                   control={control}
-                  rules={{ required: true }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      value={formData.ZipCode}
-                      onChange={handleChange}
-                      label='ZipCode'
-                      placeholder='ZipCode'
-                      {...(errors.lastName && { error: true, helperText: 'This field is required.' })}
-                    />
-                  )}
+                  render={({ field }) => <TextField {...field} fullWidth label='ZipCode' placeholder='ZipCode' />}
                 />
               </Grid>
 
               <Grid item xs={12} sm={6}>
                 <Controller
-                  name='City'
-                  rules={{ required: true }}
+                  name='StreetNr'
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label='City'
-                      value={formData.City}
-                      onChange={handleChange}
-                      placeholder='City'
-                      {...(errors.lastName && { error: true, helperText: 'This field is required.' })}
-                    />
+                    <TextField {...field} fullWidth label='StreetNr' placeholder='Street And House Number' />
                   )}
                 />
               </Grid>
@@ -258,17 +291,16 @@ const CreateStudent = () => {
                       value={formData.Nationality}
                       onChange={handleChange}
                       placeholder='Nationality'
-                      {...(errors.Nationality && { error: true, helperText: 'This field is required.' })}
                     />
                   )}
                 />
+                {errors.Nationality && <span className='error_custom'>{errors.Nationality}</span>}
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <Controller
                   name='Note'
-                  control={control}
                   rules={{ required: true }}
+                  control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -279,26 +311,128 @@ const CreateStudent = () => {
                       onChange={handleChange}
                       multiline
                       label='Notes'
-                      {...(errors.Note && { error: true, helperText: 'This field is required.' })}
                     />
                   )}
                 />
+                {errors.Note && <span className='error_custom'>{errors.Note}</span>}
               </Grid>
-
-              <Grid item xs={12} className='flex gap-4'>
-                <Button variant='contained' endIcon={<i className='ri-send-plane-2-line' />} type='submit'>
-                  Send
+              <Grid item xs={12} className='flex justify-between'>
+                <Button variant='outlined' disabled color='secondary'>
+                  Back
                 </Button>
-                <Button variant='outlined' type='reset' onClick={() => reset()}>
-                  Cancel
+                <Button variant='contained' type='submit'>
+                  Next
                 </Button>
               </Grid>
             </Grid>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+        )
+      case 1:
+        return (
+          <form key={1} onSubmit={handleSubmit}>
+            <Grid container spacing={5}>
+              <Grid item xs={12}>
+                <Typography className='font-medium' color='text.primary'>
+                  {steps[1].title}
+                </Typography>
+                <Typography variant='body2'>{steps[1].subtitle}</Typography>
+              </Grid>
+              <Grid item xs={12} className='flex justify-between'>
+                <Button variant='outlined' onClick={handleBack} color='secondary'>
+                  Back
+                </Button>
+                <Button variant='contained' type='submit'>
+                  Next
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        )
+      case 2:
+        return (
+          <form key={2}>
+            <Grid container spacing={5}>
+              <Grid item xs={12}>
+                <Typography className='font-medium' color='text.primary'>
+                  {steps[2].title}
+                </Typography>
+                <Typography variant='body2'>{steps[2].subtitle}</Typography>
+              </Grid>
+
+              <Grid item xs={12} className='flex justify-between'>
+                <Button variant='outlined' onClick={handleBack} color='secondary'>
+                  Back
+                </Button>
+                <Button variant='contained' type='submit'>
+                  Submit
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        )
+      default:
+        return <Typography color='text.primary'>Unknown stepIndex</Typography>
+    }
+  }
+
+  return (
+    <Card>
+      <CardContent>
+        <StepperWrapper>
+          <Stepper activeStep={activeStep}>
+            {steps.map((label, index) => {
+              const labelProps = {}
+
+              if (index === activeStep) {
+                labelProps.error = false
+
+                if ((errors.FirstName || errors.LastName) && activeStep === 0) {
+                  labelProps.error = true
+                } else {
+                  labelProps.error = false
+                }
+              }
+
+              return (
+                <Step key={index}>
+                  <StepLabel {...labelProps} StepIconComponent={StepperCustomDot}>
+                    <div className='step-label'>
+                      <Typography className='step-number' color='text.primary'>{`0${index + 1}`}</Typography>
+                      <div>
+                        <Typography className='step-title' color='text.primary'>
+                          {label.title}
+                        </Typography>
+                        <Typography className='step-subtitle' color='text.primary'>
+                          {label.subtitle}
+                        </Typography>
+                      </div>
+                    </div>
+                  </StepLabel>
+                </Step>
+              )
+            })}
+          </Stepper>
+        </StepperWrapper>
+      </CardContent>
+      <Divider />
+      <CardContent>
+        {activeStep === steps.length ? (
+          <>
+            <Typography className='mlb-2 mli-1' color='text.primary'>
+              All steps are completed!
+            </Typography>
+            <div className='flex justify-end mt-4'>
+              <Button variant='contained' onClick={handleReset}>
+                Reset
+              </Button>
+            </div>
+          </>
+        ) : (
+          renderStepContent(activeStep)
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
-export default CreateStudent
+export default StepperLinearWithValidation

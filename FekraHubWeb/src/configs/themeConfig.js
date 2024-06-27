@@ -20,7 +20,7 @@ const themeConfig = {
   settingsCookieName: 'materio-mui-next-demo-1',
   mode: 'system',
   skin: 'default',
-  semiDark: false,
+  semiDark: true,
   layout: 'vertical',
   layoutPadding: 24,
   compactContentWidth: 1440,

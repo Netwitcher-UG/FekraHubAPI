@@ -113,7 +113,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
 
         [HttpPost("AssignStudentsToCourse")]
-        public async Task<IActionResult> AssignStudentsToCourse(int courseID, [FromBody] List<int> studentIds)
+        public async Task<IActionResult> AssignStudentsToCourse( int courseID, [FromBody] List<int> studentIds)
         {
             if (courseID <= 0 || studentIds == null || !studentIds.Any())
             {
@@ -125,10 +125,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return NotFound("Course not found");
             }
-            var students = await _studentRepository.GetRelation();
+            var students =( await _studentRepository.GetRelation())
+                                           .Where(s => studentIds.Contains(s.Id));
 
-            var studentsALL = students.Where(s => studentIds.Contains(s.Id))
-                .ToListAsync();
             if (!students.Any())
             {
                 return NotFound("No students found with the provided IDs");
@@ -136,6 +135,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
             await students.ForEachAsync(student => student.CourseID = courseID);
             await _studentRepository.ManyUpdate(students);
+
 
             return NoContent(); // HTTP 204 No Content
         }

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
@@ -24,7 +24,7 @@ namespace FekraHubAPI.Controllers
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         public StudentController(IRepository<StudentContract> studentContractRepo, IContractMaker contractMaker,
-            IRepository<Student> studentRepo, IRepository<Course> courseRepo, IEmailSender emailSender, IMapper mapper,UserManager<ApplicationUser> userManager)
+            IRepository<Student> studentRepo, IRepository<Course> courseRepo, IEmailSender emailSender, IMapper mapper, UserManager<ApplicationUser> userManager)
         {
             _studentContractRepo = studentContractRepo;
             _contractMaker = contractMaker;
@@ -34,7 +34,7 @@ namespace FekraHubAPI.Controllers
             _mapper = mapper;
             _userManager = userManager;
         }
-        
+
         [HttpGet("CoursesCapacity")]
         public async Task<IActionResult> GetCoursesWithCapacity()
         {
@@ -47,7 +47,7 @@ namespace FekraHubAPI.Controllers
                 {
                     course.Capacity -= allStudentsInCourses.Count(c => c.CourseID == course.Id);
                 }
-                var courseInfo = courses.Select(x => new { x.Id , x.Name , x.Capacity}).ToList();
+                var courseInfo = courses.Select(x => new { x.Id, x.Name, x.Capacity }).ToList();
                 return Ok(courseInfo);
             }
             catch (Exception ex)
@@ -80,7 +80,7 @@ namespace FekraHubAPI.Controllers
                     EndDate = x.Course.EndDate.Date,
                     x.Course.Price
                 },
-                parent = new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email , x.User.City,x.User.Street,x.User.StreetNr,x.User.ZipCode }
+                parent = new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
             }).ToList();
             return Ok(students);
         }
@@ -89,14 +89,14 @@ namespace FekraHubAPI.Controllers
         public async Task<IActionResult> GetStudentsByParent(string parentId)//
         {
             //var parentId =_courseRepo.GetUserIDFromToken(User);
-            
+
             //if (string.IsNullOrEmpty(parentId))
             //{
             //    return Unauthorized("Parent ID not found in token.");
             //}
 
             var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId);
-           
+
             var result = students.Select(z => new
             {
                 z.Id,
@@ -109,9 +109,9 @@ namespace FekraHubAPI.Controllers
                 Street = z.Street ?? "Like parent",
                 StreetNr = z.StreetNr ?? "Like parent",
                 ZipCode = z.ZipCode ?? "Like parent",
-                course = new { z.Course.Id, z.Course.Name, z.Course.Capacity,startDate = z.Course.StartDate.Date, EndDate = z.Course.EndDate.Date, z.Course.Price }
+                course = new { z.Course.Id, z.Course.Name, z.Course.Capacity, startDate = z.Course.StartDate.Date, EndDate = z.Course.EndDate.Date, z.Course.Price }
             }).ToList();
-            
+
 
             return Ok(result);
         }
@@ -119,7 +119,7 @@ namespace FekraHubAPI.Controllers
         //[Authorize]
         public async Task<IActionResult> GetContract([FromForm] Map_Student student)
         {
-            var par =  _userManager.Users.FirstOrDefault();
+            var par = _userManager.Users.FirstOrDefault();
             student.ParentID = par.Id;
             if (!ModelState.IsValid)
             {
@@ -135,7 +135,7 @@ namespace FekraHubAPI.Controllers
                 //    return Unauthorized("User ID not found in token.");
                 //}
                 //student.ParentID = userId;
-                
+
                 var studentEntity = _mapper.Map<Student>(student);
                 List<string> contract = await _contractMaker.ContractHtml(studentEntity, student.ParentID);
                 return Ok(contract);
@@ -183,24 +183,24 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-       
+
         [HttpGet("Contracts")]
         public async Task<IActionResult> GetContracts()
         {
             try
             {
                 var contracts = await _studentContractRepo.GetRelation();
-                var result = contracts.Select(x => new { 
+                var result = contracts.Select(x => new {
                     x.Id,
                     x.StudentID,
                     x.Student.FirstName,
                     x.Student.LastName,
                     ParentId = x.Student.ParentID,
-                    ParentFirstName =x.Student.User.FirstName,
+                    ParentFirstName = x.Student.User.FirstName,
                     ParentLastName = x.Student.User.LastName,
                     x.CreationDate,
                     x.File
-                    }).ToList();
+                }).ToList();
                 return Ok(result);
             }
             catch (Exception ex)
@@ -222,12 +222,12 @@ namespace FekraHubAPI.Controllers
                 //var parentId = userId;
                 var allContracts = await _studentContractRepo.GetRelation();
                 var contracts = allContracts.Where(x => x.Student.ParentID == parentId).Select(x => new {
-                    x.Id ,
+                    x.Id,
                     studentId = x.Student.Id,
                     x.Student.FirstName,
                     x.Student.LastName,
                     x.CreationDate,
-                    x.File 
+                    x.File
                 }).ToList();
                 return Ok(contracts);
             }

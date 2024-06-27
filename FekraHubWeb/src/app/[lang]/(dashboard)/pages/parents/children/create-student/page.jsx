@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography'
 
 // Component Imports
 
-import CreateStudent from '@views/pages/parents/children/CreateStudent'
+import CreateStudent from '@/views/pages/parents/children/CreateStudent'
 
 const FormValidation = () => {
   return (

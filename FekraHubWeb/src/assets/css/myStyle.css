@@ -1,0 +1,4 @@
+.error_custom {
+  margin-block-start: 0.6rem;
+  color: var(--mui-palette-error-main) !important;
+}

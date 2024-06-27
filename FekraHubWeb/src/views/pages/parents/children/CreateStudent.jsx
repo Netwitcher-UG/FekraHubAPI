@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+// React Imports
+import { useState } from 'react'
 
 // MUI Imports
 import Grid from '@mui/material/Grid'
@@ -222,6 +223,8 @@ const StepperLinearWithValidation = () => {
                     <TextField
                       {...field}
                       fullWidth
+                      label='Last Name'
+                      placeholder='Last Name'
                       value={formData.LastName}
                       onChange={handleChange}
                       label='Last Name'

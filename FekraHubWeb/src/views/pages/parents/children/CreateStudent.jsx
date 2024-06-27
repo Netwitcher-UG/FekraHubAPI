@@ -139,8 +139,8 @@ const StepperLinearWithValidation = () => {
 
       if (activeStep === steps.length - 3) {
         console.log('2')
-        formData.Birthday = date.toString().split('T')[0]
-        
+        formData.Birthday = '03-03-2022'
+
         console.log('Submitting form with data:', formData)
         const formData1 = new FormData()
 

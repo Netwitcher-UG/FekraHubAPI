@@ -23,7 +23,7 @@ namespace FekraHubAPI.MapModels.Users
         public string? gender { get; set; }
 
         public string? emergencyPhoneNumber { get; set; }
-        public DateTime birthday { get; set; }
+        public DateTime? birthday { get; set; }
         public string? birthplace { get; set; }
 
         public string? nationality { get; set; }

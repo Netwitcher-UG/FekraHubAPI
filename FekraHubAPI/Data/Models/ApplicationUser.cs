@@ -27,7 +27,7 @@ namespace FekraHubAPI.Data.Models
 
 
         public string? EmergencyPhoneNumber { get; set; }
-        public DateTime Birthday { get; set; }  // 1/1/1985 12:00:00 AM
+        public DateTime? Birthday { get; set; }  // 1/1/1985 12:00:00 AM
         public string Birthplace { get; set; }
 
         public string Nationality { get; set; }

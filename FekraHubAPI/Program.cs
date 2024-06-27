@@ -44,16 +44,7 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromDays(7);
 });
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(builder =>
-    {
-        builder.WithOrigins("http://localhost:3000")//frontend url
-               .AllowAnyHeader()
-               .AllowAnyMethod()
-               .AllowCredentials();
-    });
-});
+
 //Adding Authentication 
 builder.Services.AddAuthentication(options =>
 {
@@ -105,7 +96,19 @@ builder.Services.Configure<FormOptions>(options =>
 
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var schoolInfos = await scope.ServiceProvider.GetRequiredService<IRepository<SchoolInfo>>().GetRelation();
+    var frontendUrl = schoolInfos.Select(x => x.UrlDomain).FirstOrDefault();
 
+    app.UseCors(options =>
+    {
+        options.WithOrigins(frontendUrl ?? "http://localhost:3000")
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials();
+    });
+}
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

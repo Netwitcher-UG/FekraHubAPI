@@ -11,16 +11,16 @@ namespace FekraHubAPI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_Uploads_UploadsType_UploadTypeIDid",
+                name: "FK_Uploads_UploadsType_UploadTypeID",
                 table: "Uploads");
 
             migrationBuilder.RenameColumn(
-                name: "UploadTypeIDid",
+                name: "UploadTypeID",
                 table: "Uploads",
                 newName: "UploadTypeid");
 
             migrationBuilder.RenameIndex(
-                name: "IX_Uploads_UploadTypeIDid",
+                name: "IX_Uploads_UploadTypeID",
                 table: "Uploads",
                 newName: "IX_Uploads_UploadTypeid");
 

@@ -6,6 +6,7 @@ using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -16,11 +17,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
     public class CoursesController : ControllerBase
     {
         private readonly IRepository<Course> _courseRepository;
+        private readonly IRepository<Student> _studentRepository;
         private readonly IMapper _mapper;
 
-        public CoursesController(IRepository<Course> courseRepository, IMapper mapper)
+        public CoursesController(IRepository<Course> courseRepository, IRepository<Student> studentRepository, IMapper mapper)
         {
             _courseRepository = courseRepository;
+            _studentRepository = studentRepository;
             _mapper = mapper;
         }
 
@@ -107,6 +110,37 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             await _courseRepository.Delete(id);
             return NoContent();
         }
+
+
+        [HttpPost("AssignStudentsToCourse")]
+        public async Task<IActionResult> AssignStudentsToCourse(int courseID, [FromBody] List<int> studentIds)
+        {
+            if (courseID <= 0 || studentIds == null || !studentIds.Any())
+            {
+                return BadRequest("Invalid course ID or student list");
+            }
+
+            var course = await _courseRepository.GetById(courseID);
+            if (course == null)
+            {
+                return NotFound("Course not found");
+            }
+            var students = await _studentRepository.GetRelation();
+
+            var studentsALL = students.Where(s => studentIds.Contains(s.Id))
+                .ToListAsync();
+            if (!students.Any())
+            {
+                return NotFound("No students found with the provided IDs");
+            }
+
+            await students.ForEachAsync(student => student.CourseID = courseID);
+            await _studentRepository.ManyUpdate(students);
+
+            return NoContent(); // HTTP 204 No Content
+        }
+
+
 
     }
 }

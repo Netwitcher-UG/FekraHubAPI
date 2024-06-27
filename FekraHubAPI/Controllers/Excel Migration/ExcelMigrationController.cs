@@ -118,6 +118,9 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                                     await transaction.CommitAsync();
 
                                 }
+                            }
+                            if (UserNameExists == null)
+                            {
                                 var student = new Student
                                 {
                                     FirstName = worksheet.Cells[row, 2].Text,
@@ -133,7 +136,6 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
                                 };
                                 await _studentRepository.Add(student);
-
                             }
 
 

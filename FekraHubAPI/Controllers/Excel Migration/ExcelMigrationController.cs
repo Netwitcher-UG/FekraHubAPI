@@ -52,9 +52,11 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 using (var package = new ExcelPackage(stream))
                 {
                     ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
-
-
                     for (int row = 3; row <= 302; row++)
+                    {
+
+                    }
+                        for (int row = 3; row <= 302; row++)
                     {
                         if (
                             !string.IsNullOrEmpty(worksheet.Cells[row, 2].Text) &&
@@ -66,36 +68,36 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                             !string.IsNullOrEmpty(worksheet.Cells[row, 13].Text)
                             )
                         {
-                            
-                            
+
                                 string RoleParent = DefaultRole.Parent;
                                 var email = worksheet.Cells[row, 13].Text;
-                                var user = new ApplicationUser
-                                {
-                                    UserName = worksheet.Cells[row, 11].Text,// Name as user name
-                                    FirstName = worksheet.Cells[row, 11].Text,
-                                    LastName = worksheet.Cells[row, 12].Text,
-                                    Email = email,
-                                    Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 14].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 14].Text),
-                                    Birthplace = worksheet.Cells[row, 15].Text,
-                                    Nationality = worksheet.Cells[row, 16].Text,
-                                    PhoneNumber = worksheet.Cells[row, 17].Text,
-                                    EmergencyPhoneNumber = worksheet.Cells[row, 18].Text,
-                                    Gender = worksheet.Cells[row, 19].Text,
-                                    City = worksheet.Cells[row, 20].Text,
-                                    Street = worksheet.Cells[row, 21].Text,
-                                    StreetNr = worksheet.Cells[row, 22].Text,
-                                    ZipCode = worksheet.Cells[row, 23].Text,
-                                    Job = worksheet.Cells[row, 24].Text,
-                                    Graduation = worksheet.Cells[row, 25].Text,
-                                    SecurityStamp = Guid.NewGuid().ToString("D"),
-                                    NormalizedUserName = email.ToUpper(),
-                                    NormalizedEmail = email.ToUpper(),
-                                    EmailConfirmed = true,
-                                    ActiveUser = true
-                                };
+                            var user = new ApplicationUser
+                            {
+                                UserName =  worksheet.Cells[row, 11].Text ,// Name as user name
+                                FirstName = worksheet.Cells[row, 11].Text,
+                                LastName = worksheet.Cells[row, 12].Text,
+                                Email = email,
+                                Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 14].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 14].Text),
+                                Birthplace = worksheet.Cells[row, 15].Text,
+                                Nationality = worksheet.Cells[row, 16].Text,
+                                PhoneNumber = worksheet.Cells[row, 17].Text,
+                                EmergencyPhoneNumber = worksheet.Cells[row, 18].Text,
+                                Gender = worksheet.Cells[row, 19].Text,
+                                City = worksheet.Cells[row, 20].Text,
+                                Street = worksheet.Cells[row, 21].Text,
+                                StreetNr = worksheet.Cells[row, 22].Text,
+                                ZipCode = worksheet.Cells[row, 23].Text,
+                                Job = worksheet.Cells[row, 24].Text,
+                                Graduation = worksheet.Cells[row, 25].Text,
+                                SecurityStamp = Guid.NewGuid().ToString("D"),
+                                NormalizedUserName = email.ToUpper(),
+                                NormalizedEmail = email.ToUpper(),
+                                EmailConfirmed = true,
+                                ActiveUser = true
+                            };
                             var UserExists = await _userManager.FindByEmailAsync(email);
-                            if(UserExists == null)
+                            var UserNameExists = await _userManager.FindByNameAsync(user.UserName);
+                            if (UserExists == null && UserNameExists == null)
                             {
                                 using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
                                 {
@@ -116,27 +118,28 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                                     await transaction.CommitAsync();
 
                                 }
-                            }
-                            
-                            var student = new Student
-                            {
-                                FirstName = worksheet.Cells[row, 2].Text,
-                                LastName = worksheet.Cells[row, 3].Text,
-                                Birthday = DateTime.Parse(worksheet.Cells[row, 4].Text),
-                                Nationality = worksheet.Cells[row, 5].Text,
-                                Note = worksheet.Cells[row, 6].Text,
-                                City = worksheet.Cells[row, 7].Text,
-                                Street = worksheet.Cells[row, 8].Text,
-                                StreetNr = worksheet.Cells[row, 9].Text,
-                                ZipCode = worksheet.Cells[row, 10].Text,
-                                ParentID = UserExists == null ? user.Id : UserExists.Id
+                                var student = new Student
+                                {
+                                    FirstName = worksheet.Cells[row, 2].Text,
+                                    LastName = worksheet.Cells[row, 3].Text,
+                                    Birthday = DateTime.Parse(worksheet.Cells[row, 4].Text),
+                                    Nationality = worksheet.Cells[row, 5].Text,
+                                    Note = worksheet.Cells[row, 6].Text,
+                                    City = worksheet.Cells[row, 7].Text,
+                                    Street = worksheet.Cells[row, 8].Text,
+                                    StreetNr = worksheet.Cells[row, 9].Text,
+                                    ZipCode = worksheet.Cells[row, 10].Text,
+                                    ParentID = UserExists == null ? user.Id : UserExists.Id
 
-                            };
-                            await _studentRepository.Add(student);
-                            
-                       
-                         
-                            
+                                };
+                                await _studentRepository.Add(student);
+
+                            }
+
+
+
+
+
                         }
                     }
                 }

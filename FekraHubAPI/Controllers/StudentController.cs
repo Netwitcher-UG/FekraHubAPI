@@ -47,7 +47,7 @@ namespace FekraHubAPI.Controllers
                 {
                     course.Capacity -= allStudentsInCourses.Count(c => c.CourseID == course.Id);
                 }
-                var courseInfo = courses.Select(x => new { x.Id, x.Name, x.Capacity }).ToList();
+                var courseInfo = courses.Select(x => new { x.Id, x.Name, x.Capacity,x.Price,x.StartDate,x.EndDate,x.Lessons }).ToList();
                 return Ok(courseInfo);
             }
             catch (Exception ex)

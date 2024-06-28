@@ -25,11 +25,9 @@ using IEmailSender = FekraHubAPI.EmailSender.IEmailSender;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-// Add Connection DataBase.
 #if DEBUG
 builder.Services.AddDbContext<ApplicationDbContext>(op =>
-      op.UseSqlServer(builder.Configuration.GetConnectionString("develpConn")));
+      op.UseMySql(builder.Configuration.GetConnectionString("develpConn"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("develpConn"))));
 #else
 builder.Services.AddDbContext<ApplicationDbContext>(op =>
       op.UseSqlServer(builder.Configuration.GetConnectionString("myConn")));

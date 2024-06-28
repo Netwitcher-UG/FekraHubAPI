@@ -17,7 +17,6 @@ using Microsoft.EntityFrameworkCore.Storage;
 using FekraHubAPI.EmailSender;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using static System.Net.Mime.MediaTypeNames;
-using static Azure.Core.HttpHeader;
 using System.Security.Cryptography;
 using System.IO;
 using System.Reflection.Emit;

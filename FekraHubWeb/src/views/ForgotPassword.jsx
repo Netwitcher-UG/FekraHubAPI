@@ -60,7 +60,7 @@ const ForgotPasswordV2 = ({ mode }) => {
       const response = await axios.post(`https://localhost:7288/api/Account/ForgotPassword?email=${email}`)
 
       localStorage.setItem('p-email', email)
-      router.push('/confirmPassword')
+      router.push('/sendConfirmPassword')
 
       console.log(response.data)
     } catch (error) {

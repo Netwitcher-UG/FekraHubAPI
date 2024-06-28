@@ -1,4 +1,4 @@
-import ConfirmPassword from '../../../../views/ConfirmPassword'
+import ConfPassword from '../../../../views/ConfPassword'
 
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
@@ -12,7 +12,7 @@ const ConfirmPage = () => {
   // Vars
   const mode = getServerMode()
 
-  return <ConfirmPassword mode={mode} />
+  return <ConfPassword mode={mode} />
 }
 
 export default ConfirmPage

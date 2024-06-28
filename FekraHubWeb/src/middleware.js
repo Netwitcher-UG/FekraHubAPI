@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 
 // Third-party Imports
 import Negotiator from 'negotiator'
-import { withAuth } from 'next-auth/middleware'
 import { match as matchLocale } from '@formatjs/intl-localematcher'
 
 // Config Imports
@@ -11,7 +10,7 @@ import { i18n } from '@configs/i18n'
 
 // Util Imports
 import { getLocalizedUrl, isUrlMissingLocale } from '@/utils/i18n'
-import { ensurePrefix, withoutSuffix } from '@/utils/string'
+import { ensurePrefix } from '@/utils/string'
 
 // Constants
 const HOME_PAGE_URL = '/dashboards/crm'
@@ -56,66 +55,25 @@ const localizedRedirect = (url, locale, request) => {
   return NextResponse.redirect(redirectUrl)
 }
 
-export default withAuth(
-  async function middleware(request) {
-    // Get locale from request headers
-    const locale = getLocale(request)
-    const pathname = request.nextUrl.pathname
+export default async function middleware(request) {
+  // Get locale from request headers
+  const locale = getLocale(request)
+  const pathname = request.nextUrl.pathname
 
-    // If the user is logged in, `token` will be an object containing the user's details
-    const token = request.nextauth.token
+  // Private routes (Routes that can only be accessed by logged in users)
+  const privateRoutes = ['private-route']
 
-    // Check if the user is logged in
-    const isUserLoggedIn = !!token
+  // Check if user is logged in
+  const token = request.nextauth?.token // Safely access token using optional chaining (?.)
 
-    // Guest routes (Routes that can be accessed by guest users who are not logged in)
-    const guestRoutes = ['login', 'register', 'forgot-password']
-
-    // Shared routes (Routes that can be accessed by both guest and logged in users)
-    const sharedRoutes = ['shared-route']
-
-    // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
-    const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
-
-    // If the user is not logged in and is trying to access a private route, redirect to the login page
-    if (!isUserLoggedIn && privateRoute) {
-      let redirectUrl = '/login'
-
-      if (!(pathname === '/' || pathname === `/${locale}`)) {
-        const searchParamsStr = new URLSearchParams({ redirectTo: withoutSuffix(pathname, '/') }).toString()
-
-        redirectUrl += `?${searchParamsStr}`
-      }
-
-      return localizedRedirect(redirectUrl, locale, request)
-    }
-
-    // If the user is logged in and is trying to access a guest route, redirect to the root page
-    const isRequestedRouteIsGuestRoute = guestRoutes.some(route => pathname.endsWith(route))
-
-    if (isUserLoggedIn && isRequestedRouteIsGuestRoute) {
-      return localizedRedirect(HOME_PAGE_URL, locale, request)
-    }
-
-    // If the user is logged in and is trying to access root page, redirect to the home page
-    if (pathname === '/' || pathname === `/${locale}`) {
-      return localizedRedirect(HOME_PAGE_URL, locale, request)
-    }
-
-    // If pathname already contains a locale, return next() else redirect with localized URL
-    return isUrlMissingLocale(pathname) ? localizedRedirect(pathname, locale, request) : NextResponse.next()
-  },
-  {
-    callbacks: {
-      authorized: () => {
-        // This is a work-around for handling redirect on auth pages.
-        // We return true here so that the middleware function above
-        // is always called.
-        return true
-      }
-    }
+  // If the user is trying to access a private route and is not logged in, redirect to the home page
+  if (!token && privateRoutes.some(route => pathname.endsWith(route))) {
+    return localizedRedirect(HOME_PAGE_URL, locale, request)
   }
-)
+
+  // If pathname already contains a locale, return next() else redirect with localized URL
+  return isUrlMissingLocale(pathname) ? localizedRedirect(pathname, locale, request) : NextResponse.next()
+}
 
 // Matcher Config
 export const config = {

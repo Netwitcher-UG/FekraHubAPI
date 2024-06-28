@@ -10,7 +10,16 @@ const horizontalMenuData = (dictionary, params) => [
         icon: 'ri-pie-chart-2-line',
         href: '/dashboards/crm'
       },
-      
+      {
+        label: dictionary['navigation'].analytics,
+        icon: 'ri-bar-chart-line',
+        href: '/dashboards/analytics'
+      },
+      {
+        label: dictionary['navigation'].eCommerce,
+        icon: 'ri-shopping-bag-3-line',
+        href: '/dashboards/ecommerce'
+      }
     ]
   },
   {
@@ -178,6 +187,13 @@ const horizontalMenuData = (dictionary, params) => [
                 label: dictionary['navigation'].registerMultiSteps,
                 icon: 'ri-circle-line',
                 href: '/pages/auth/register-multi-steps',
+                target: '_blank'
+              },
+              {
+                // Edit
+                label: dictionary['navigation'].confirm,
+                icon: 'ri-circle-line',
+                href: '/pages/auth/confirm',
                 target: '_blank'
               }
             ]

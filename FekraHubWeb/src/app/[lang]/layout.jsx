@@ -11,9 +11,9 @@ import '@/app/globals.css'
 import '@assets/iconify-icons/generated-icons.css'
 
 export const metadata = {
-  title: 'Fekrahub - Material Design Next.js Admin Template',
+  title: 'Materio - Material Design Next.js Admin Template',
   description:
-    'Fekrahub Next.js Admin Dashboard Template - is the most developer friendly & highly customizable Admin Dashboard Template based on MUI v5.'
+    'Materio - Material Design Next.js Admin Dashboard Template - is the most developer friendly & highly customizable Admin Dashboard Template based on MUI v5.'
 }
 
 const RootLayout = ({ children, params }) => {

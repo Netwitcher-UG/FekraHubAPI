@@ -19,13 +19,12 @@ import FormControl from '@mui/material/FormControl'
 import FormHelperText from '@mui/material/FormHelperText'
 import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from '@mui/material/IconButton'
-<<<<<<< HEAD
-=======
-import Autocomplete from '@mui/material/Autocomplete'
-import axios from 'axios'
->>>>>>> 8f5e278 (..)
+import Radio from '@mui/material/Radio'
+import RadioGroup from '@mui/material/RadioGroup'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import FormLabel from '@mui/material/FormLabel'
 
-// Third-party Imports
+
 import { toast } from 'react-toastify'
 import { Controller, useForm } from 'react-hook-form'
 import { valibotResolver } from '@hookform/resolvers/valibot'
@@ -59,12 +58,6 @@ const steps = [
   }
 ]
 
-const https = require('https')
-
-const agent = new https.Agent({
-  rejectUnauthorized: false
-})
-
 const socialSchema = object({})
 
 const StepperLinearWithValidation = () => {
@@ -96,10 +89,9 @@ const StepperLinearWithValidation = () => {
 
   // Handle form field changes
   const handleChange = e => {
-    validateForm()
-
     const { name, value } = e.target
 
+    validateForm()
     setFormData({
       ...formData,
       [name]: value
@@ -110,7 +102,7 @@ const StepperLinearWithValidation = () => {
     let errors = {}
     let isValid = true
 
-    if (!formData.FirstName.trim() && formData.FirstName == '') {
+    if (!formData.FirstName.trim()) {
       errors.FirstName = 'This field is required'
       isValid = false
     }
@@ -135,12 +127,18 @@ const StepperLinearWithValidation = () => {
     return isValid
   }
 
+  const https = require('https')
+
+  const agent = new https.Agent({
+    rejectUnauthorized: false
+  })
+
   const handleSubmit = e => {
     e.preventDefault()
-    setActiveStep(prevActiveStep => prevActiveStep + 1)
 
     if (validateForm()) {
       // Form is valid, handle submission (e.g., API call)
+      setActiveStep(prevActiveStep => prevActiveStep + 1)
 
       if (activeStep === steps.length - 3) {
         console.log('2')
@@ -157,6 +155,7 @@ const StepperLinearWithValidation = () => {
           method: 'post',
           url: 'http://localhost:5008/api/Student',
           data: formData1,
+          httpsAgent: agent,
           headers: { 'Content-Type': 'multipart/form-data' }
         })
           .then(function (response) {
@@ -169,8 +168,6 @@ const StepperLinearWithValidation = () => {
           })
       }
     } else {
-      // Form validation failed, do something (e.g., show error messages)
-      console.log('Form validation failed')
     }
   }
 
@@ -223,10 +220,6 @@ const StepperLinearWithValidation = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label='Last Name'
-                      placeholder='Last Name'
-                      value={formData.LastName}
-                      onChange={handleChange}
                       label='Last Name'
                       placeholder='Last Name'
                       value={formData.LastName}
@@ -292,8 +285,6 @@ const StepperLinearWithValidation = () => {
                   name='Nationality'
                   control={control}
                   rules={{ required: true }}
-                  control={control}
-                  rules={{ required: true }}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -310,6 +301,7 @@ const StepperLinearWithValidation = () => {
               <Grid item xs={12} sm={6}>
                 <Controller
                   name='Note'
+                  rules={{ required: true }}
                   control={control}
                   render={({ field }) => (
                     <TextField
@@ -347,6 +339,24 @@ const StepperLinearWithValidation = () => {
                 </Typography>
                 <Typography variant='body2'>{steps[1].subtitle}</Typography>
               </Grid>
+              <Grid item xs={12}>
+                <FormControl error={Boolean(errors.radio)}>
+                  <FormLabel>Gender</FormLabel>
+                  <Controller
+                    name='radio'
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <RadioGroup row {...field} name='radio-buttons-group'>
+                        <FormControlLabel value='female' control={<Radio />} label='Female' />
+                        <FormControlLabel value='male' control={<Radio />} label='Male' />
+                        <FormControlLabel value='other' control={<Radio />} label='Other' />
+                      </RadioGroup>
+                    )}
+                  />
+                  {errors.radio && <FormHelperText error>This field is required.</FormHelperText>}
+                </FormControl>
+              </Grid>
               <Grid item xs={12} className='flex justify-between'>
                 <Button variant='outlined' onClick={handleBack} color='secondary'>
                   Back
@@ -377,8 +387,11 @@ const StepperLinearWithValidation = () => {
                   Submit
                 </Button>
               </Grid>
+            </Grid>
           </form>
         )
+      default:
+        return <Typography color='text.primary'>Unknown stepIndex</Typography>
     }
   }
 

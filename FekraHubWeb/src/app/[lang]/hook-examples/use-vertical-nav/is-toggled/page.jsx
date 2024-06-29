@@ -18,7 +18,10 @@ const IsToggled = () => {
     <div className='flex'>
       <VerticalNav customBreakpoint='200px'>
         <Menu menuItemStyles={{ button: { paddingBlock: '12px' } }}>
-          <MenuItem>Dashboards</MenuItem>
+          <SubMenu label='Dashboards'>
+            <MenuItem>Analytics</MenuItem>
+            <MenuItem>eCommerce</MenuItem>
+          </SubMenu>
           <MenuItem>Calendar</MenuItem>
           <MenuItem>FAQ</MenuItem>
           <SubMenu label='Menu Level'>

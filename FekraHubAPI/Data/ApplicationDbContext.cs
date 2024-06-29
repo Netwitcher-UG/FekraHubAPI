@@ -23,7 +23,15 @@ namespace FekraHubAPI.Data
             SeedRoles(builder);
             //SeedAdminUser(builder);
 
-
+            builder.Entity<IdentityRole>(entity =>
+            {
+                entity.Property(m => m.NormalizedName).HasMaxLength(85);
+            });
+            builder.Entity<IdentityUser>(entity =>
+            {
+                entity.Property(m => m.NormalizedUserName)
+                      .HasMaxLength(85); // Adjust the length to a suitable value
+            });
             //Delete This code before publishing the application and add new migration
             builder.Entity<SchoolInfo>().HasData(
                 new SchoolInfo()

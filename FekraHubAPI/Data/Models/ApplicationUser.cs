@@ -46,5 +46,10 @@ namespace FekraHubAPI.Data.Models
         public ICollection<Report> Report { get; set; }
         public ICollection<WorkContract> WorkContract { get; set; }
         public ICollection<PayRoll> PayRoll { get; set; }
+        public override string NormalizedUserName
+        {
+            get => base.NormalizedUserName;
+            set => base.NormalizedUserName = value.Length > 85 ? value.Substring(0, 85) : value;
+        }
     }
 }

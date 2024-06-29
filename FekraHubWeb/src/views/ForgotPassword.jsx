@@ -1,7 +1,11 @@
 'use client'
 
 // Next Imports
+import { useState } from 'react'
+
 import Link from 'next/link'
+
+import { useRouter } from 'next/navigation'
 
 // MUI Imports
 import Typography from '@mui/material/Typography'
@@ -9,6 +13,8 @@ import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 
 // Component Imports
+import axios from 'axios'
+
 import Logo from '@core/svg/Logo'
 import Illustrations from '@components/Illustrations'
 
@@ -30,6 +36,8 @@ const ForgotPasswordV2 = ({ mode }) => {
   // Hooks
   const authBackground = useImageVariant(mode, lightImg, darkImg)
 
+  const router = useRouter()
+
   const characterIllustration = useImageVariant(
     mode,
     lightIllustration,
@@ -37,6 +45,28 @@ const ForgotPasswordV2 = ({ mode }) => {
     borderedLightIllustration,
     borderedDarkIllustration
   )
+
+  // State
+  const [email, setEmail] = useState('')
+
+  const handleChange = event => {
+    setEmail(event.target.value)
+  }
+
+  const handleSubmit = async event => {
+    event.preventDefault()
+
+    try {
+      const response = await axios.post(`https://localhost:7288/api/Account/ForgotPassword?email=${email}`)
+
+      localStorage.setItem('p-email', email)
+      router.push('/sendConfirmPassword')
+
+      console.log(response.data)
+    } catch (error) {
+      console.error('Error sending reset link:', error)
+    }
+  }
 
   return (
     <div className='flex bs-full justify-center'>
@@ -70,8 +100,8 @@ const ForgotPasswordV2 = ({ mode }) => {
               Enter your email and we&#39;ll send you instructions to reset your password
             </Typography>
           </div>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-5'>
-            <TextField autoFocus fullWidth label='Email' />
+          <form noValidate autoComplete='off' onSubmit={handleSubmit} className='flex flex-col gap-5'>
+            <TextField autoFocus fullWidth label='Email' value={email} onChange={handleChange} />
             <Button fullWidth variant='contained' type='submit'>
               Send reset link
             </Button>

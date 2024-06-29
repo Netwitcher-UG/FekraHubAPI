@@ -85,6 +85,15 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           </SubMenu>
         </MenuSection>
       </Menu>
+      {/* <Menu
+          popoutMenuOffset={{ mainAxis: 10 }}
+          menuItemStyles={menuItemStyles(verticalNavOptions, theme, settings)}
+          renderExpandIcon={({ open }) => <RenderExpandIcon open={open} transitionDuration={transitionDuration} />}
+          renderExpandedMenuItemIcon={{ icon: <i className='ri-circle-line' /> }}
+          menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
+        >
+          <GenerateVerticalMenu menuData={menuData(dictionary, params)} />
+        </Menu> */}
     </ScrollWrapper>
   )
 }

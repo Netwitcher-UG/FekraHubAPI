@@ -1,0 +1,23 @@
+.confirm {
+  inline-size: 1275px;
+  block-size: 600px;
+  background-color: #312d4b;
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 3px;
+  padding: 40px;
+  z-index: 1000;
+  color: rgb(231 227 252 / 90%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0px 0px 11px -1px #fff;
+}
+.confirm h1 {
+  margin-block-end: 20px;
+}

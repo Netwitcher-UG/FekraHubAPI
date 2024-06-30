@@ -123,7 +123,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 // var callbackUrl = Url.Action("GetResetPassword", "Account", new { email = user.Email, token = token }, protocol: HttpContext.Request.Scheme);
                 
                 var domain = (await _schoolInfoRepo.GetRelation()).Select(x=>x.UrlDomain).First();
-                var restPaswordLink = "";
+                var restPaswordLink = "/en/confirm-password";
                 var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={token}";
 
                 await _emailSender.SendRestPassword(user.Email, callbackUrlLink);

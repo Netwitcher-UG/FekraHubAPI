@@ -17,7 +17,6 @@ namespace FekraHubAPI.Data.Models
         public int? UploadTypeid { get; set; }
 
 
-
-        public ICollection<UploadCourse> UploadCourses { get; set; }
+        public ICollection<Course> Courses { get; set; }
     }
 }

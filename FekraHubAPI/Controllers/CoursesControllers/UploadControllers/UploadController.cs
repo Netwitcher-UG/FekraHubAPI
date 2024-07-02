@@ -22,24 +22,24 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         private readonly ApplicationDbContext _context;
         private readonly IRepository<Course> _courseRepository;
         private readonly IRepository<Upload> _uploadRepository;
-        private readonly IRepository<UploadCourse> _courseUploadRepository;
+
         private readonly IRepository<UploadType> _uploadTypeRepository;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _env;
         public UploadController(IRepository<Course> courseRepository, IRepository<Upload> uploadRepository,
-            IRepository<UploadCourse> courseUploadRepository,
+
             ApplicationDbContext context,
             IRepository<UploadType> uploadTypeRepository, IMapper mapper, IWebHostEnvironment env)
         {
             _courseRepository = courseRepository;
             _uploadRepository = uploadRepository;
-            _courseUploadRepository = courseUploadRepository;
+
             _uploadTypeRepository = uploadTypeRepository;
             _mapper = mapper;
             _env = env;
             _context = context;
         }
-      
+
 
 
         // GET: api/UploadTypes
@@ -50,10 +50,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             IQueryable<Upload> query = (await _uploadRepository.GetRelation());
             var result = query.Select(x => new
             {
-                   x.Id,
-                   x.file,
-                   TypeUPload= x.UploadType.TypeTitle
-           
+                x.Id,
+                x.file,
+                TypeUPload = x.UploadType.TypeTitle
+
             }).ToList();
 
             return Ok(result);
@@ -67,7 +67,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             return await SaveFile(courseId, files, UploadTypeId);
         }
 
-       
+
         private async Task<IActionResult> SaveFile(int courseId, List<IFormFile> files, int TypeId)
         {
             var course = await _courseRepository.GetById(courseId);
@@ -81,7 +81,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             {
                 if (file.Length > 0)
                 {
-                   
+
 
                     byte[] fileBytes;
                     using (var ms = new MemoryStream())
@@ -93,24 +93,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                     var upload = new Upload
                     {
                         UploadTypeid = TypeId,
-                        file = fileBytes
-
+                        file = fileBytes,
+                        Courses = new List<Course>()
                     };
-
-                   
+                    var existingCourse = await _courseRepository.GetById(courseId);
+                    if (existingCourse == null)
+                    {
+                        return NotFound("Course not found.");
+                    }
+                    upload.Courses.Add(existingCourse);
 
                     await _uploadRepository.Add(upload);
-
-
-                    var UploadCourse = new Map_UploadCourse
-                    {
-                        CourseID = courseId,
-                        UploadID = upload.Id
-
-                    };
-                    var UploadCourseEntity = _mapper.Map<UploadCourse>(UploadCourse);
-
-                    await _courseUploadRepository.Add(UploadCourseEntity);
 
                 }
             }
@@ -118,7 +111,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             return Ok("Files uploaded successfully.");
         }
 
-  
+
 
         // DELETE: api/UploadTypes/5
         [HttpDelete("{id}")]
@@ -131,11 +124,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 return NotFound();
             }
 
-            var UploadsCourse = await _context.UploadsCourse.SingleOrDefaultAsync(ut => ut.UploadID == id);
 
-
-            await _courseUploadRepository.Delete(UploadsCourse.Id);
-            
             await _uploadRepository.Delete(id);
 
             return NoContent();

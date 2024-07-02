@@ -20,8 +20,7 @@ namespace FekraHubAPI.Data.Models
         [ForeignKey("CourseID")]
         public virtual Course Course { get; set; }
         public int? CourseID { get; set; }
-
-
-        public ICollection<CourseEvent> courseEvent {  get; set; }
+  
+        public ICollection<Event> Event { get; set; }
     }
 }

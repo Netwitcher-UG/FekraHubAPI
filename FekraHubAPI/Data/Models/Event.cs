@@ -14,7 +14,7 @@ namespace FekraHubAPI.Data.Models
         public virtual EventType EventType { get; set; }
         public int? TypeID { get; set; }
 
-       public ICollection<CourseEvent> CourseEvent { get; set; }
+        public ICollection<CourseSchedule> CourseSchedule { get; set; }
 
 
     }

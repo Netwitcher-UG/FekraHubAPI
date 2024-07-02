@@ -4,6 +4,10 @@ using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
+using System;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 {
@@ -13,41 +17,42 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
     {
         private readonly IRepository<Event> _eventRepository;
         private readonly IRepository<CourseSchedule> _ScheduleRepository;
-        private readonly IRepository<CourseEvent> _CourseEventRepository;
+
         private readonly IMapper _mapper;
-        public EventsController(IRepository<Event> eventRepository, IRepository<CourseEvent> CourseEventRepository
-           , IMapper mapper ,
+        public EventsController(IRepository<Event> eventRepository
+           , IMapper mapper,
             IRepository<CourseSchedule> ScheduleRepository)
         {
             _eventRepository = eventRepository;
             _mapper = mapper;
             _ScheduleRepository = ScheduleRepository;
-            _CourseEventRepository  = CourseEventRepository;
+
         }
 
         // GET: api/Event
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents()
         {
-           
+
             IQueryable<Event> eventE = (await _eventRepository.GetRelation());
+
             var result = eventE.Select(x => new
             {
                 x.Id,
                 x.EventName,
                 x.Date,
                 x.EventType.TypeTitle,
-                courseEvent = x.CourseEvent.Select(z => new
+                CourseSchedule = x.CourseSchedule.Select(z => new
                 {
-                    z.CourseSchedule.Id,
-                    z.CourseSchedule.DayOfWeek,
-                    z.CourseSchedule.StartTime,
-                    z.CourseSchedule.EndTime,
-                    courseName= z.CourseSchedule.Course.Name,
-                    courseID = z.CourseSchedule.Course.Id
+                    z.Id,
+                    z.DayOfWeek,
+                    z.StartTime,
+                    z.EndTime,
+                    courseName = z.Course.Name,
+                    courseID = z.Course.Id
 
                 })
-            
+
 
             }).ToList();
 
@@ -72,34 +77,53 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         // PUT: api/Event/5
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEvent(int id, [FromForm] Map_Event eventMdl)
+        public async Task<IActionResult> PutEvent(int id, [FromForm] int[] scheduleId, [FromForm] Map_Event eventMdl)
         {
+            var schedule = (await _ScheduleRepository.GetRelation()).Where(n => scheduleId.Contains(n.Id)).ToList();
+
+
+
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var eventEntity = await _eventRepository.GetById(id);
+
+            var eventEntity = (await _eventRepository.GetRelation()).Where(n => n.Id == id)
+               .Include(e => e.CourseSchedule).First();
+
             if (eventEntity == null)
             {
                 return NotFound();
             }
+            eventEntity.CourseSchedule.Clear();
+
+
+            eventEntity.CourseSchedule = schedule;
+
 
             _mapper.Map(eventMdl, eventEntity);
             await _eventRepository.Update(eventEntity);
+
+
+
+
 
             return NoContent();
         }
         // POST: api/Event
 
         [HttpPost]
-        public async Task<ActionResult<Event>> PostEvent([FromForm] int scheduleId, [FromForm] Map_Event eventMdl)
+        public async Task<ActionResult<Event>> PostEvent([FromForm] int[] scheduleId, [FromForm] Map_Event eventMdl)
         {
-            var schedule = await _ScheduleRepository.GetById(scheduleId);
-            if (schedule == null)
-            {
-                return NotFound("Course schedule not found or does not belong to the course.");
-            }
+            var x = (await _ScheduleRepository.GetRelation()).Where(n => scheduleId.Contains(n.Id)).ToList();
+
+            //var schedule = await _ScheduleRepository.GetById(scheduleId);
+            //if (schedule == null)
+            //{
+            //    return NotFound("Course schedule not found or does not belong to the course.");
+            //}
 
 
             if (!ModelState.IsValid)
@@ -108,21 +132,19 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             }
 
 
-            var eventEntity = _mapper.Map<Event>(eventMdl);
-            await _eventRepository.Add(eventEntity);
-
-
-         
-
-
-            var courseEvent = new Map_CourseEvent
+            var eventEntity = new Event
             {
-                ScheduleID = schedule.Id,
-                EventID = eventEntity.Id
+                EventName = eventMdl.EventName,
+                Date = eventMdl.Date,
+                TypeID = eventMdl.TypeID,
+
+                CourseSchedule = new List<CourseSchedule>()
             };
 
-            var courseEventEntity = _mapper.Map<CourseEvent>(courseEvent);
-            await _CourseEventRepository.Add(courseEventEntity);
+
+            eventEntity.CourseSchedule = x;
+
+            await _eventRepository.Add(eventEntity);
 
             return CreatedAtAction("GetEvent", new { id = eventEntity.Id }, eventEntity);
 

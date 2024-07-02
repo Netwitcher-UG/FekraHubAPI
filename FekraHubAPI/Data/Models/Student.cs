@@ -12,7 +12,8 @@ namespace FekraHubAPI.Data.Models
         public string FirstName { get; set; }
         [StringLength(50)]
         public string LastName { get; set; }
-      
+        public string Gender { get; set; }
+
         public DateTime Birthday { get; set; }
         public string Nationality { get; set; }
         public string Note { get; set; }

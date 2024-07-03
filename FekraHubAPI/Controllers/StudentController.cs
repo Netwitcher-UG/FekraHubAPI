@@ -12,6 +12,7 @@ using System.Security.Claims;
 
 namespace FekraHubAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class StudentController : ControllerBase

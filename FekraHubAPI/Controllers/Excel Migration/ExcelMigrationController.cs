@@ -52,18 +52,23 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
                     for (int row = 3; row <= 302; row++)
                     {
-                        var email = worksheet.Cells[row, 13].Text.Trim().Replace(" ", "");
+                        var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
                         if (!emailRegex.IsMatch(email) && IsRowValid(worksheet, row))
                         {
                             return BadRequest($"Error at row {row - 2}: Invalid email format.");
                         }
+                        var dateP = worksheet.Cells[row, 15].Text;
+                        var dateS = worksheet.Cells[row, 4].Text;
+                        if ((!DateTime.TryParse(dateP, out DateTime dateValueP) || !DateTime.TryParse(dateS, out DateTime dateValueS)) && IsRowValid(worksheet, row))
+                        {
+                            return BadRequest($"Error at row {row - 2}: Invalid DateTime format.");
+                        }
                     }
-
                     for (int row = 3; row <= 302; row++)
                     {
                         if (IsRowValid(worksheet, row))
                         {
-                            var email = worksheet.Cells[row, 13].Text.Trim().Replace(" ", "");
+                            var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
                             var user = await GetUserAsync(email, worksheet, row);
 
                             if (user != null)
@@ -86,8 +91,9 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                    !string.IsNullOrEmpty(worksheet.Cells[row, 4].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 5].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 6].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 11].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 13].Text);
+                   !string.IsNullOrEmpty(worksheet.Cells[row, 7].Text) &&
+                   !string.IsNullOrEmpty(worksheet.Cells[row, 12].Text) &&
+                   !string.IsNullOrEmpty(worksheet.Cells[row, 14].Text);
         }
 
         private async Task<ApplicationUser> GetUserAsync(string email, ExcelWorksheet worksheet, int row)
@@ -98,21 +104,21 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 user = new ApplicationUser
                 {
                     UserName = email,
-                    FirstName = worksheet.Cells[row, 11].Text,
-                    LastName = worksheet.Cells[row, 12].Text,
+                    FirstName = worksheet.Cells[row, 12].Text,
+                    LastName = worksheet.Cells[row, 13].Text,
                     Email = email,
-                    Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 14].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 14].Text),
-                    Birthplace = worksheet.Cells[row, 15].Text,
-                    Nationality = worksheet.Cells[row, 16].Text,
-                    PhoneNumber = worksheet.Cells[row, 17].Text,
-                    EmergencyPhoneNumber = worksheet.Cells[row, 18].Text,
-                    Gender = worksheet.Cells[row, 19].Text,
-                    City = worksheet.Cells[row, 20].Text,
-                    Street = worksheet.Cells[row, 21].Text,
-                    StreetNr = worksheet.Cells[row, 22].Text,
-                    ZipCode = worksheet.Cells[row, 23].Text,
-                    Job = worksheet.Cells[row, 24].Text,
-                    Graduation = worksheet.Cells[row, 25].Text,
+                    Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 15].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 15].Text),
+                    Birthplace = worksheet.Cells[row, 16].Text,
+                    Nationality = worksheet.Cells[row, 17].Text,
+                    PhoneNumber = worksheet.Cells[row, 18].Text,
+                    EmergencyPhoneNumber = worksheet.Cells[row, 19].Text,
+                    Gender = MaleOrFemail(worksheet.Cells[row, 20].Text.Trim()),
+                    City = worksheet.Cells[row, 21].Text,
+                    Street = worksheet.Cells[row, 22].Text,
+                    StreetNr = worksheet.Cells[row, 23].Text,
+                    ZipCode = worksheet.Cells[row, 24].Text,
+                    Job = worksheet.Cells[row, 25].Text,
+                    Graduation = worksheet.Cells[row, 26].Text,
                     SecurityStamp = Guid.NewGuid().ToString("D"),
                     NormalizedUserName = email.ToUpper(),
                     NormalizedEmail = email.ToUpper(),
@@ -149,7 +155,20 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
             return user;
         }
-
+        private string MaleOrFemail(string gender)
+        {
+            if(gender == "m")
+            {
+                return "male";
+            }else if(gender == "f")
+            {
+                return "female";
+            }
+            else
+            {
+                return gender;
+            }
+        }
         private Student CreateStudent(ExcelWorksheet worksheet, int row, string parentId)
         {
             return new Student
@@ -159,10 +178,11 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 Birthday = DateTime.Parse(worksheet.Cells[row, 4].Text.Trim()),
                 Nationality = worksheet.Cells[row, 5].Text.Trim(),
                 Note = worksheet.Cells[row, 6].Text.Trim(),
-                City = worksheet.Cells[row, 7].Text.Trim(),
-                Street = worksheet.Cells[row, 8].Text.Trim(),
-                StreetNr = worksheet.Cells[row, 9].Text.Trim(),
-                ZipCode = worksheet.Cells[row, 10].Text.Trim(),
+                Gender = MaleOrFemail( worksheet.Cells[row, 7].Text.Trim()) ,
+                City = worksheet.Cells[row, 8].Text.Trim(),
+                Street = worksheet.Cells[row, 9].Text.Trim(),
+                StreetNr = worksheet.Cells[row, 10].Text.Trim(),
+                ZipCode = worksheet.Cells[row, 11].Text.Trim(),
                 ParentID = parentId
             };
         }

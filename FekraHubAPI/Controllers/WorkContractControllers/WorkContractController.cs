@@ -4,6 +4,7 @@ using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using FekraHubAPI.Seeds;
 using FekraHubAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -12,6 +13,7 @@ using System.Security.Claims;
 
 namespace FekraHubAPI.Controllers.WorkContractControllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class WorkContractController : ControllerBase

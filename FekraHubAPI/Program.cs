@@ -103,7 +103,7 @@ using (var scope = app.Services.CreateScope())
 
     app.UseCors(options =>
     {
-        options.WithOrigins(frontendUrl ?? "http://localhost:3000")
+        options.WithOrigins(frontendUrl)
                .AllowAnyHeader()
                .AllowAnyMethod()
                .AllowCredentials();

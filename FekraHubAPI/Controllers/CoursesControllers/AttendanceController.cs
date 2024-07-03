@@ -2,12 +2,14 @@
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AttendanceController : ControllerBase

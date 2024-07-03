@@ -9,9 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
 

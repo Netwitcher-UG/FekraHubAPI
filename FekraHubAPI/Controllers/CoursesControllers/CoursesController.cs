@@ -3,6 +3,7 @@ using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CoursesController : ControllerBase

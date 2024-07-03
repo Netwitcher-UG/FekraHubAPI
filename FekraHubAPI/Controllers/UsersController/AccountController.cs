@@ -30,7 +30,7 @@ using FekraHubAPI.Repositories.Interfaces;
 namespace FekraHubAPI.Controllers.UsersController
 {
     [Route("api/[controller]")]
-    //[Authorize]
+    [Authorize]
     [ApiController]
     public class AccountController : ControllerBase
     {

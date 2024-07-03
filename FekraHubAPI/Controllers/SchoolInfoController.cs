@@ -2,12 +2,14 @@
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels;
 using FekraHubAPI.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SchoolInfoController : ControllerBase

@@ -3,6 +3,7 @@ using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -12,6 +13,7 @@ using System.Linq.Expressions;
 
 namespace FekraHubAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ReportsController : ControllerBase

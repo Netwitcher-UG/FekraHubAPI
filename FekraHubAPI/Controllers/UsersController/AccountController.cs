@@ -196,63 +196,48 @@ namespace FekraHubAPI.Controllers.UsersController
             if (ModelState.IsValid)
             {
                 ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
-                if (user != null)
+                if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
                 {
+                    return Unauthorized("Email or password is invalid");
+                }
 
-                    if (!user.ActiveUser)
+                if (!user.ActiveUser)
+                {
+                    return BadRequest("You Must Active You Account");
+                }
+                if (!user.EmailConfirmed)
+                {
+                    return BadRequest("You Must Confirm You Account");
+                }
+                var claims = new List<Claim>();
+                //claims.Add(new Claim("name", "value"));
+                claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
+                claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+                var roles = await _userManager.GetRolesAsync(user);
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+                    var roleUser = await _roleManager.FindByNameAsync(role.ToString());
+                    var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
+                    foreach (var roleClaim in roleClaims)
                     {
-                        return BadRequest("You Must Active You Account");
-                    }
-                    if (!user.EmailConfirmed)
-                    {
-                        return BadRequest("You Must Confirm You Account");
-                    }
-                    if (await _userManager.CheckPasswordAsync(user, login.password))
-                    {
-                        
-
-                        var claims = new List<Claim>();
-                        //claims.Add(new Claim("name", "value"));
-                        claims.Add(new Claim(ClaimTypes.Name, user.UserName));
-                        claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
-                        claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
-                        var roles = await _userManager.GetRolesAsync(user);
-                        foreach (var role in roles)
-                        {
-                            claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
-                            var roleUser = await _roleManager.FindByNameAsync(role.ToString());
-                            var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
-                            foreach (var roleClaim in roleClaims)
-                            {
-                                claims.Add(new Claim("Permissions", roleClaim.Value));
-                            }
-                        }
-                        //signingCredentials
-                        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
-                        var sc = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                        var token = new JwtSecurityToken(
-                            claims: claims,
-                            issuer: _configuration["JWT:Issuer"],
-                            audience: _configuration["JWT:Audience"],
-                            expires: DateTime.Now.AddHours(1),
-                            signingCredentials: sc
-                            );
-                        var _token = new
-                        {
-                            token = new JwtSecurityTokenHandler().WriteToken(token),
-                            expiration = token.ValidTo,
-                        };
-                        return Ok(_token);
-                    }
-                    else
-                    {
-                        return Unauthorized();
+                        claims.Add(new Claim("Permissions", roleClaim.Value));
                     }
                 }
-                else
-                {
-                    ModelState.AddModelError("message", "Email is invalid");
-                }
+                //signingCredentials
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
+                var sc = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                var token = new JwtSecurityToken(
+                    claims: claims,
+                    issuer: _configuration["JWT:Issuer"],
+                    audience: _configuration["JWT:Audience"],
+                    expires: DateTime.Now.AddHours(1),
+                    signingCredentials: sc
+                    );
+                var Token = new JwtSecurityTokenHandler().WriteToken(token);
+               
+                return Ok(new {UserData = new { user.FirstName, user.LastName, user.Email }, Token, token.ValidTo });
             }
             return BadRequest(ModelState);
         }

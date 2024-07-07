@@ -127,11 +127,10 @@ namespace FekraHubAPI.Controllers.UsersController
                 var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={token}";
 
                 await _emailSender.SendRestPassword(user.Email, callbackUrlLink);
-                return Ok( new { callbackUrlLink, token });
+                return Ok();
 
             }
-            return StatusCode(StatusCodes.Status400BadRequest,
-                   new Response { Status = "Error", Message = $"Could not send link to email , please try again." });
+            return BadRequest($"{email} is not registered !");
         }
 
 
@@ -255,7 +254,11 @@ namespace FekraHubAPI.Controllers.UsersController
                     img = Convert.ToBase64String(imageBytes);
                 }
             }
-
+            var IsEmailExists = await _userManager.FindByEmailAsync(user.email);
+            if (IsEmailExists != null)
+            {
+                return BadRequest($"Email {user.email} is already token.");
+            }
 
             using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
             {
@@ -296,33 +299,24 @@ namespace FekraHubAPI.Controllers.UsersController
 
                         if (result.Succeeded)
                         {
+                            _userManager.AddToRoleAsync(appUser, RoleParent).Wait();
+                            transaction.Commit();
                             ApplicationUser? ThisNewUser = await _userManager.FindByEmailAsync(user.email);
                             if (ThisNewUser != null)
                             {
                                 var res = await _emailSender.SendConfirmationEmail(ThisNewUser, HttpContext);
-                                //if (res is OkResult)
-                                //{
-                                    _userManager.AddToRoleAsync(appUser, RoleParent).Wait();
-                                    transaction.Commit();
-                                    return Ok($"Success!! . Please go to your email message box and confirm your email (https://mail.google.com/mail/u/1/#inbox) .");
-                                /*}
-                                else
-                                {
-                                    await _userManager.DeleteAsync(ThisNewUser);
-                                    return BadRequest("Change your email please!");
-                                }*/
+                                return Ok($"Success!! . Please go to your email message box and confirm your email");
                             }
-                            else
-                            {
-                                return Ok("Resend Link");
-                            }
+
+                           
                         }
                         else
                         {
-                            foreach (var item in result.Errors)
-                            {
-                                ModelState.AddModelError("", item.Description);
-                            }
+                            //foreach (var item in result.Errors)
+                            //{
+                            //    ModelState.AddModelError("", item.Description);
+                            //}
+                            return BadRequest(result.Errors.Select(x => x.Description).FirstOrDefault());
                         }
                     }
                     transaction.Rollback();
@@ -346,18 +340,19 @@ namespace FekraHubAPI.Controllers.UsersController
                 await _emailSender.SendConfirmationEmail(user, HttpContext);
             }
         }
+        [AllowAnonymous]
         [HttpGet("[action]")]
-        public async Task<IActionResult> ConfirmUser(string token, string ID)
+        public async Task<IActionResult> ConfirmUser(string Token, string ID)
         {
-            if (string.IsNullOrEmpty(ID) || string.IsNullOrEmpty(token))
+            if (string.IsNullOrEmpty(ID) || string.IsNullOrEmpty(Token))
             {
                 return BadRequest("Invalid or expired link.");
             }
             var user = await _userManager.FindByIdAsync(ID);
             if (user != null)
             {
-                token = token.Replace(" ", "+");
-                var result = await _userManager.ConfirmEmailAsync(user, token);
+                Token = Token.Replace(" ", "+");
+                var result = await _userManager.ConfirmEmailAsync(user, Token);
                 if (result.Succeeded)
                 {
                     return Redirect("https://www.google.com");

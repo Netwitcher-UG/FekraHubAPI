@@ -26,6 +26,8 @@ using FekraHubAPI.EmailSender;
 using Microsoft.Extensions.Configuration;
 using static System.Net.WebRequestMethods;
 using FekraHubAPI.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 
 namespace FekraHubAPI.Controllers.UsersController
 {
@@ -231,7 +233,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     claims: claims,
                     issuer: _configuration["JWT:Issuer"],
                     audience: _configuration["JWT:Audience"],
-                    expires: DateTime.Now.AddHours(1),
+                    expires: DateTime.Now.AddMonths(1),
                     signingCredentials: sc
                     );
                 var Token = new JwtSecurityTokenHandler().WriteToken(token);
@@ -360,6 +362,46 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             
             return BadRequest("Email confirmation failed.");
+        }
+        [AllowAnonymous]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> ValidateToken([FromForm] string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized("Token is required");
+            }
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"])),
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                var principal = new JwtSecurityTokenHandler().ValidateToken(token, tokenValidationParameters, out var validatedToken);
+                var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user != null)
+                {
+                    return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, token, validatedToken.ValidTo });
+                }
+                else
+                {
+                    return Unauthorized("Invalid token");
+                }
+            }
+            catch (SecurityTokenException)
+            {
+                return Unauthorized("Invalid token");
+            }
         }
     }
 

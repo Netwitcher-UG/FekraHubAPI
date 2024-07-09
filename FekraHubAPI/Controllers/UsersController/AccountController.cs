@@ -333,14 +333,22 @@ namespace FekraHubAPI.Controllers.UsersController
 
             }
         }
+        [AllowAnonymous]
         [HttpPost("[action]")]
-        public async Task ResendConfirmEmail(string Email)
+        public async Task<IActionResult> ResendConfirmEmail(string Email)
         {
             var user = await _userManager.FindByEmailAsync(Email);
             if (user != null) 
             {
                 await _emailSender.SendConfirmationEmail(user);
+
+                return Ok();
             }
+            else
+            {
+                return BadRequest();
+            }
+
         }
         [AllowAnonymous]
         [HttpPost("[action]")]

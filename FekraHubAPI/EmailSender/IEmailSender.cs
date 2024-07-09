@@ -1,4 +1,4 @@
-﻿using FekraHubAPI.Data.Models;
+using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,7 +7,7 @@ namespace FekraHubAPI.EmailSender
     public interface IEmailSender
     {
 
-        Task<IActionResult> SendConfirmationEmail(ApplicationUser user, HttpContext httpContext);
+        Task<IActionResult> SendConfirmationEmail(ApplicationUser user);
         Task<IActionResult> SendContractEmail(int studentId, string pdfName);
         Task SendRestPassword(string email, string link);
         Task SendToAdminNewParent(ApplicationUser user);

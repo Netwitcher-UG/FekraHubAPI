@@ -1,4 +1,4 @@
-﻿using FekraHubAPI.Data;
+using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -101,12 +101,12 @@ namespace FekraHubAPI.EmailSender
             </div>";
             return ConstantsMessage;
         }
-        public async Task<IActionResult> SendConfirmationEmail(ApplicationUser user, HttpContext httpContext)
+        public async Task<IActionResult> SendConfirmationEmail(ApplicationUser user)
         {
-            var request = httpContext.Request;
-            var domain = $"{request.Scheme}://{request.Host}";
+
+            var domain = (await _schoolInfo.GetRelation()).Select(x => x.UrlDomain).First();
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = $"{domain}/api/Account/ConfirmUser?ID={user.Id}&Token={token}";
+            var confirmationLink = $"{domain}/confirm-user?ID={user.Id}&Token={token}";
             var content = $@"<div style='width:100%;text-align:left;'>
                             <h1 style='width:100%;text-align:center;'>Hello {user.UserName}</h1>
                              <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>

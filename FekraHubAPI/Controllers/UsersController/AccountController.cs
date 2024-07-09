@@ -306,7 +306,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             ApplicationUser? ThisNewUser = await _userManager.FindByEmailAsync(user.email);
                             if (ThisNewUser != null)
                             {
-                                var res = await _emailSender.SendConfirmationEmail(ThisNewUser, HttpContext);
+                                var res = await _emailSender.SendConfirmationEmail(ThisNewUser);
                                 return Ok($"Success!! . Please go to your email message box and confirm your email");
                             }
 
@@ -339,11 +339,11 @@ namespace FekraHubAPI.Controllers.UsersController
             var user = await _userManager.FindByEmailAsync(Email);
             if (user != null) 
             {
-                await _emailSender.SendConfirmationEmail(user, HttpContext);
+                await _emailSender.SendConfirmationEmail(user);
             }
         }
         [AllowAnonymous]
-        [HttpGet("[action]")]
+        [HttpPost("[action]")]
         public async Task<IActionResult> ConfirmUser(string Token, string ID)
         {
             if (string.IsNullOrEmpty(ID) || string.IsNullOrEmpty(Token))
@@ -357,16 +357,23 @@ namespace FekraHubAPI.Controllers.UsersController
                 var result = await _userManager.ConfirmEmailAsync(user, Token);
                 if (result.Succeeded)
                 {
-                    return Redirect("https://www.google.com");
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest();
                 }
             }
             
-            return BadRequest("Email confirmation failed.");
+            return BadRequest("The User isn't registered.");
         }
-        [AllowAnonymous]
+        
         [HttpPost("[action]")]
-        public async Task<IActionResult> ValidateToken([FromForm] string token)
+        public async Task<IActionResult> ValidateToken()
         {
+
+            var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
             if (string.IsNullOrEmpty(token))
             {
                 return Unauthorized("Token is required");
@@ -391,7 +398,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user != null)
                 {
-                    return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, token, validatedToken.ValidTo });
+                    return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
                 }
                 else
                 {

@@ -4,7 +4,9 @@ using FekraHubAPI.Repositories.Interfaces;
 using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -121,5 +123,7 @@ namespace FekraHubAPI.Repositories.Implementations
         {
             return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
+
+        
     }
 }

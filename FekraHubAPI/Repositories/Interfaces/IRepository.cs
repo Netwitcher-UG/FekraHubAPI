@@ -21,5 +21,6 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task<bool> IsTeacher(ApplicationUser user);
         Task<T> GetUser(string id);
         string GetUserIDFromToken(ClaimsPrincipal User);
+       
     }
 }

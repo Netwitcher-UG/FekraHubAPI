@@ -28,6 +28,8 @@ using static System.Net.WebRequestMethods;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
+using System.Net; 
+
 
 namespace FekraHubAPI.Controllers.UsersController
 {
@@ -122,11 +124,12 @@ namespace FekraHubAPI.Controllers.UsersController
             if (user != null)
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var encodedToken = WebUtility.UrlEncode(token);
                 // var callbackUrl = Url.Action("GetResetPassword", "Account", new { email = user.Email, token = token }, protocol: HttpContext.Request.Scheme);
-                
+
                 var domain = (await _schoolInfoRepo.GetRelation()).Select(x=>x.UrlDomain).First();
-                var restPaswordLink = "/en/confirm-password";
-                var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={token}";
+                var restPaswordLink = "/reset-password";
+                var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={encodedToken}";
 
                 await _emailSender.SendRestPassword(user.Email, callbackUrlLink);
                 return Ok();
@@ -152,14 +155,11 @@ namespace FekraHubAPI.Controllers.UsersController
 
                         ModelState.AddModelError(error.Code, error.Description);
                     }
-                    return Ok(ModelState);
+                    return BadRequest();
                 }
-                return StatusCode(StatusCodes.Status200OK,
-                    new Response { Status = "Success", Message = $"Password has been changed" });
+                return Ok();
             }
-            return StatusCode(StatusCodes.Status400BadRequest,
-                    new Response { Status = "Error", Message = $"Could not change password , please try again." });
-
+            return BadRequest();
         }
         [HttpPost]
         [Route("[action]")]

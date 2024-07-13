@@ -82,6 +82,91 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
+
+        [HttpGet("GetEmployee")]
+        public async Task<IActionResult> GetEmployee()
+        {
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            var allUsers = await _db.ApplicationUser.ToListAsync();
+        
+      
+            if (userRole != DefaultRole.Admin)
+            {
+                allUsers = await _applicationUsersServices.GetAllNonAdminUsersAsync();
+            }
+
+            allUsers = allUsers.Where(x => _userManager.IsInRoleAsync(x, "Secretariat").Result)
+                .Where(x => _userManager.IsInRoleAsync(x, "Teacher").Result)
+
+                .ToList();
+
+            var data = allUsers.Select(x => new
+            {
+                x.Id,
+                x.Name,
+                x.UserName,
+                x.FirstName,
+                x.LastName,
+                x.Email,
+                x.ImageUser,
+                x.Gender,
+                x.Job,
+                x.Birthday,
+                x.Birthplace,
+                x.Nationality,
+                x.City,
+                x.Street,
+                x.StreetNr,
+                x.ZipCode,
+                x.PhoneNumber,
+                x.EmergencyPhoneNumber,
+
+            }).ToList();
+            return Ok(data);
+        }
+
+      
+        [HttpGet("GetPerent")]
+        public async Task<IActionResult> GetPerent()
+        {
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            var allUsers = await _db.ApplicationUser.ToListAsync();
+
+
+            if (userRole != DefaultRole.Admin)
+            {
+                allUsers = await _applicationUsersServices.GetAllNonAdminUsersAsync();
+            }
+
+            allUsers = allUsers.Where(x => _userManager.IsInRoleAsync(x, "Parent").Result)
+                .ToList();
+
+            var data = allUsers.Select(x => new
+            {
+                x.Id,
+                x.Name,
+                x.UserName,
+                x.FirstName,
+                x.LastName,
+                x.Email,
+                x.ImageUser,
+                x.Gender,
+                x.Job,
+                x.Birthday,
+                x.Birthplace,
+                x.Nationality,
+                x.City,
+                x.Street,
+                x.StreetNr,
+                x.ZipCode,
+                x.PhoneNumber,
+                x.EmergencyPhoneNumber,
+
+            }).ToList();
+            return Ok(data);
+        }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(string id)
         {

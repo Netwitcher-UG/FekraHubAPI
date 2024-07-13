@@ -206,70 +206,83 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpPost]
         public async Task<IActionResult> AddUser([FromForm] Map_Account user)
         {
-            var email = user.Email;
-            var normalizedEmail = email.Normalize().ToLower();
-            var normalizedUserName = user.UserName.Normalize().ToLower();
-
-            string image = "";
-
-            if (user.ImageUser != null)
+            var img = "";
+            if (user.ImageUser != null && user.ImageUser.Length != 0)
             {
-                string folderFile = "images/users/";
-                string folder = Guid.NewGuid().ToString() + "_" + user.ImageUser.FileName;
-                image = folderFile +folder;
-                if (!System.IO.Directory.Exists(folderFile))
+                using (var memoryStream = new MemoryStream())
                 {
-                    System.IO.Directory.CreateDirectory(folderFile);
+                    await user.ImageUser.CopyToAsync(memoryStream);
+                    var imageBytes = memoryStream.ToArray();
+                    img = Convert.ToBase64String(imageBytes);
                 }
-                string serverFolder = Path.Combine(folderFile, folder);
-                using var stream = new FileStream(serverFolder, FileMode.Create);
-                    user.ImageUser.CopyTo(stream);
+            }
+            var IsEmailExists = await _userManager.FindByEmailAsync(user.Email);
+            if (IsEmailExists != null)
+            {
+                return BadRequest($"Email {user.Email} is already token.");
             }
 
             using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
             {
                 try
                 {
-                    ApplicationUser adduser = new ApplicationUser()
+                    string RoleParent = DefaultRole.Parent;
+                    if (ModelState.IsValid)
                     {
-                        UserName = user.UserName,
-                        NormalizedUserName = normalizedUserName,
-                        Email = email,
-                        FirstName = user.FirstName,
-                        LastName = user.LastName,
-                        ImageUser = image,
-                        NormalizedEmail = normalizedEmail,
-                        SecurityStamp = Guid.NewGuid().ToString("D"),
-                        PhoneNumber = user.PhoneNumber,
-                        Gender = user.Gender,
-                        EmergencyPhoneNumber = user.EmergencyPhoneNumber,
-                        Birthday = user.Birthday,
-                        Birthplace = user.Birthplace,
-                        Nationality = user.Nationality,
-                        Street = user.Street,
-                        StreetNr = user.StreetNr,
-                        ZipCode = user.ZipCode,
-                        City = user.City,
-                        Job = user.Job,
-                        Graduation = user.Graduation,
+                        var normalizedEmail = user.Email.ToUpperInvariant();
+                        var normalizedUserName = user.UserName.ToUpperInvariant();
+                        ApplicationUser appUser = new()
+                        {
+                            UserName = user.UserName,
+                            NormalizedUserName = normalizedUserName,
+                            Email = user.Email,
+                            FirstName = user.FirstName,
+                            LastName = user.LastName,
+                            ImageUser = img,
+                            NormalizedEmail = normalizedEmail,
+                            SecurityStamp = Guid.NewGuid().ToString("D"),
+                            PhoneNumber = user.PhoneNumber,
+                            Gender = user.Gender,
+                            EmergencyPhoneNumber = user.EmergencyPhoneNumber,
+                            Birthday = user.Birthday,
+                            Birthplace = user.Birthplace,
+                            Nationality = user.Nationality,
+                            Street = user.Street,
+                            StreetNr = user.StreetNr,
+                            ZipCode = user.ZipCode,
+                            City = user.City,
+                            Job = user.Job,
+                            Graduation = user.Graduation
+                        };
+
+                        IdentityResult result = await _userManager.CreateAsync(appUser, user.Password);
 
 
-                    };
-                    IdentityResult result = await _userManager.CreateAsync(adduser, user.Password);
-                    await _db.ApplicationUser.AddAsync(adduser);
-                    await _db.SaveChangesAsync();
-                    if (DefaultRole.checkRole(user.Role))
-                    {
-                        _userManager.AddToRoleAsync(adduser, user.Role).Wait();
+
+                        if (result.Succeeded)
+                        {
+                            
+                            if (DefaultRole.checkRole(user.Role))
+                            {
+                                _userManager.AddToRoleAsync(appUser, user.Role).Wait();
+                                transaction.Commit();
+                                return Ok();
+                            }
+                            else
+                            {
+                                transaction.Rollback();
+                                return BadRequest("Role Not Found");
+                            }
+
+
+                        }
+                        else
+                        {
+                            return BadRequest(result.Errors.Select(x => x.Description).FirstOrDefault());
+                        }
                     }
-                    else
-                    {
-                        transaction.Rollback();
-                        return Ok("Role Not Found");
-                    }
-                    transaction.Commit();
-                    return Ok("User Added Successfully");
-
+                    transaction.Rollback();
+                    return BadRequest(ModelState);
                 }
                 catch (Exception ex)
                 {
@@ -277,6 +290,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     return BadRequest(ex.Message);
 
                 }
+
             }
         }
         [HttpPut("{id}")]

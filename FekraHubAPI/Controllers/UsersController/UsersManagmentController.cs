@@ -86,22 +86,16 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet("GetEmployee")]
         public async Task<IActionResult> GetEmployee()
         {
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            var roleIds = new List<string> { "2", "4" };
+            var userIdsInRoles = await _db.UserRoles
+                                .Where(x => roleIds.Contains(x.RoleId))
+                                .Select(x => x.UserId)
+                                .ToListAsync();
+            var usersInRoles = await _db.ApplicationUser
+                                .Where(x => userIdsInRoles.Contains(x.Id))
+                                .ToListAsync();
 
-            var allUsers = await _db.ApplicationUser.ToListAsync();
-        
-      
-            if (userRole != DefaultRole.Admin)
-            {
-                allUsers = await _applicationUsersServices.GetAllNonAdminUsersAsync();
-            }
-
-            allUsers = allUsers.Where(x => _userManager.IsInRoleAsync(x, "Secretariat").Result)
-                .Where(x => _userManager.IsInRoleAsync(x, "Teacher").Result)
-
-                .ToList();
-
-            var data = allUsers.Select(x => new
+            var data = usersInRoles.Select(x => new
             {
                 x.Id,
                 x.Name,

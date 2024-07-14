@@ -306,7 +306,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             ApplicationUser? ThisNewUser = await _userManager.FindByEmailAsync(user.email);
                             if (ThisNewUser != null)
                             {
-                                var res = await _emailSender.SendConfirmationEmail(ThisNewUser);
+                                await _emailSender.SendConfirmationEmail(ThisNewUser);
                                 return Ok($"Success!! . Please go to your email message box and confirm your email");
                             }
 

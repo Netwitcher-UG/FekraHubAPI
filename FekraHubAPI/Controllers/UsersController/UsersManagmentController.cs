@@ -16,6 +16,7 @@ using System.Reflection.Metadata;
 using System.IO;
 using FekraHubAPI.MapModels.Users;
 using FekraHubAPI.MapModels.Response;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -33,10 +34,10 @@ namespace FekraHubAPI.Controllers.UsersController
         private  UserManager<ApplicationUser>  currentUser ;
         private readonly IRepository<ApplicationUser> _applicationUserRepository;
         private readonly ApplicationUsersServices _applicationUsersServices;
-
+        private readonly EmailSender.IEmailSender _emailSender;
         public UsersManagment(ApplicationDbContext context, UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager, IRepository<ApplicationUser> applicationUserRepository , ApplicationUsersServices applicationUsersServices  ,
-        ApplicationDbContext db)
+        ApplicationDbContext db, EmailSender.IEmailSender emailSender)
         {
 
             _userManager = userManager;
@@ -44,6 +45,7 @@ namespace FekraHubAPI.Controllers.UsersController
             _db = db;
             _applicationUserRepository = applicationUserRepository;
             _applicationUsersServices = applicationUsersServices;
+            _emailSender = emailSender;
 
 
         }
@@ -266,6 +268,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             {
                                 _userManager.AddToRoleAsync(appUser, user.Role).Wait();
                                 transaction.Commit();
+                                await _emailSender.SendConfirmationEmailWithPassword(appUser, user.Password);
                                 return Ok();
                             }
                             else

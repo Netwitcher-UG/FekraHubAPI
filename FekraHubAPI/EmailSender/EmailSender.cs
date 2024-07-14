@@ -126,6 +126,33 @@ namespace FekraHubAPI.EmailSender
                 return new BadRequestObjectResult($"Error sending email: {ex.Message}");
             }
         }
+        public async Task<IActionResult> SendConfirmationEmailWithPassword(ApplicationUser user, string password)
+        {
+            var domain = (await _schoolInfo.GetRelation()).Select(x => x.UrlDomain).First();
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmationLink = $"{domain}/confirm-user?ID={user.Id}&Token={token}";
+            var content = $@"<div style='width:100%;text-align:left;'>
+                            <h1 style='width:100%;text-align:center;'>Hello {user.UserName}</h1>
+                             <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
+                             <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
+                            <p style='font-size:14px;'>To complete the confirmation, please click the confirm button</p><br><br/>
+                            <div style='width:100%;text-align:center'> <a href='{confirmationLink}' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>confirm</a></div>
+                            <br><br/><br><br/><p style='font-size:14px;'><b>Login Details</b></p>
+                            <p style='font-size:12px;'>E-mail : <b><span>{user.Email}</span></b></p>
+                            <p style='font-size:12px;'>Password : <b>{password}</b></p>
+                            <div style='width:100%;text-align:center'><p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div> </div>
+                            ";
+            try
+            {
+                await SendEmail(user.Email ?? "", "Please Confirm Your Email", Message(content), true);
+                return new OkResult();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending email: {ex.Message}");
+                return new BadRequestObjectResult($"Error sending email: {ex.Message}");
+            }
+        }
 
         public async Task<IActionResult> SendContractEmail(int studentId, string pdfName)//
         {
@@ -368,5 +395,7 @@ namespace FekraHubAPI.EmailSender
                     ";
             await SendEmail(email ?? "", "Reset Password", Message(content), true);
         }
+
+        
     }
 }

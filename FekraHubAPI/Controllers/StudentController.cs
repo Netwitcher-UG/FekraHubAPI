@@ -57,9 +57,17 @@ namespace FekraHubAPI.Controllers
             }
         }
         [HttpGet]
-        public async Task<IActionResult> GetStudents()
+        public async Task<IActionResult> GetStudents(string? name , int? courseId)
         {
             var Allstudents = await _studentRepo.GetRelation();
+            if(name != null)
+            {
+                Allstudents = Allstudents.Where(x => x.FirstName.Contains(name));
+            }
+            if(courseId != null)
+            {
+                Allstudents = Allstudents.Where(x => x.CourseID == courseId);
+            }
             var students = Allstudents.Select(x => new
             {
                 x.Id,

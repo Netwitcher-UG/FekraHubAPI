@@ -121,8 +121,79 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
+        [HttpGet("GetTeacher")]
+        public async Task<IActionResult> GetTeacher()
+        {
+            var role =  "4" ;
+            var userIdsInRoles = await _db.UserRoles
+                                .Where(x => x.RoleId == role)
+                                .Select(x => x.UserId)
+                                .ToListAsync();
+            var usersInRoles = await _db.ApplicationUser
+                                .Where(x => userIdsInRoles.Contains(x.Id))
+                                .ToListAsync();
 
-      
+            var data = usersInRoles.Select(x => new
+            {
+                x.Id,
+                x.Name,
+                x.UserName,
+                x.FirstName,
+                x.LastName,
+                x.Email,
+                x.ImageUser,
+                x.Gender,
+                x.Job,
+                x.Birthday,
+                x.Birthplace,
+                x.Nationality,
+                x.City,
+                x.Street,
+                x.StreetNr,
+                x.ZipCode,
+                x.PhoneNumber,
+                x.EmergencyPhoneNumber,
+
+            }).ToList();
+            return Ok(data);
+        }
+        [HttpGet("GetSecretary")]
+        public async Task<IActionResult> GetSecretary()
+        {
+            var role = "2";
+            var userIdsInRoles = await _db.UserRoles
+                                .Where(x => x.RoleId == role)
+                                .Select(x => x.UserId)
+                                .ToListAsync();
+            var usersInRoles = await _db.ApplicationUser
+                                .Where(x => userIdsInRoles.Contains(x.Id))
+                                .ToListAsync();
+
+            var data = usersInRoles.Select(x => new
+            {
+                x.Id,
+                x.Name,
+                x.UserName,
+                x.FirstName,
+                x.LastName,
+                x.Email,
+                x.ImageUser,
+                x.Gender,
+                x.Job,
+                x.Birthday,
+                x.Birthplace,
+                x.Nationality,
+                x.City,
+                x.Street,
+                x.StreetNr,
+                x.ZipCode,
+                x.PhoneNumber,
+                x.EmergencyPhoneNumber,
+
+            }).ToList();
+            return Ok(data);
+        }
+
         [HttpGet("GetPerent")]
         public async Task<IActionResult> GetPerent()
         {

@@ -37,6 +37,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
             var result = await courses.Select(sa => new
             {
+                id = sa.Id,
                 name = sa.Name,
                 price = sa.Price,
                 lessons = sa.Lessons,

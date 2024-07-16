@@ -1,7 +1,8 @@
-﻿﻿using AutoMapper;
+﻿using AutoMapper;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
+using FekraHubAPI.MapModels;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -57,10 +58,12 @@ namespace FekraHubAPI.Controllers
             }
         }
         [HttpGet]
-        public async Task<IActionResult> GetStudents(string? search , int? courseId)
+        public async Task<IActionResult> GetStudents(string? search , int? courseId, [FromQuery] PaginationParameters paginationParameters)
         {
             var Allstudents = await _studentRepo.GetRelation();
-            if(search != null)
+
+
+            if (search != null)
             {
                 Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
             }
@@ -68,7 +71,13 @@ namespace FekraHubAPI.Controllers
             {
                 Allstudents = Allstudents.Where(x => x.CourseID == courseId);
             }
-            var students = Allstudents.Select(x => new
+
+
+            var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
+           
+
+
+            var students = studentsAll.Data.Select(x => new
             {
                 x.Id,
                 x.FirstName,

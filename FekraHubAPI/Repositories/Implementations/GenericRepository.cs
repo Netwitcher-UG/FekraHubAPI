@@ -10,6 +10,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Linq;
+using FekraHubAPI.MapModels;
+
+
 
 namespace FekraHubAPI.Repositories.Implementations
 {
@@ -29,6 +33,8 @@ namespace FekraHubAPI.Repositories.Implementations
         {
             return await _dbSet.ToListAsync();
         }
+
+     
 
         public async Task<T> GetById(int id)
         {
@@ -124,6 +130,16 @@ namespace FekraHubAPI.Repositories.Implementations
             return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
 
-        
+        public async Task<PagedResponse<T>> GetPagedDataAsync(IQueryable<T> source, PaginationParameters paginationParameters)
+        {
+            var count = await source.CountAsync();
+            var items = await source.Skip((paginationParameters.PageNumber - 1) * paginationParameters.PageSize)
+                                    .Take(paginationParameters.PageSize)
+                                    .ToListAsync();
+
+            return new PagedResponse<T>(items, count, paginationParameters.PageNumber, paginationParameters.PageSize);
+        }
+
+
     }
 }

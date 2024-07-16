@@ -71,6 +71,7 @@ namespace FekraHubAPI.Controllers
         public async Task<ActionResult<IEnumerable<Report>>> GetReports(
             [FromQuery] string? teacherId,
             [FromQuery] int? studentId,
+            [FromQuery] int? reportId,
             [FromQuery] DateTime? startDate,
             [FromQuery] DateTime? endDate,
             [FromQuery] int? year,
@@ -91,6 +92,10 @@ namespace FekraHubAPI.Controllers
             if (studentId.HasValue)
             {
                 query = query.Where(x => x.StudentId == studentId);
+            }
+            if (reportId.HasValue)
+            {
+                query = query.Where(x => x.Id == reportId);
             }
             if (startDate.HasValue && endDate.HasValue)
             {

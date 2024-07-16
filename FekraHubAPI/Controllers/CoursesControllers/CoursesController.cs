@@ -44,8 +44,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 capacity = sa.Capacity,
                 startDate = sa.StartDate,
                 endDate = sa.EndDate,
-                Room = new { sa.Room.Id, sa.Room.Name }
-
+                Room = new { sa.Room.Id, sa.Room.Name },
+                 User = new { sa.User.Id, sa.User.Name }
 
             }).ToListAsync();
         

@@ -1,4 +1,5 @@
 using FekraHubAPI.Data.Models;
+using FekraHubAPI.MapModels;
 using System.Linq.Expressions;
 using System.Security.Claims;
 
@@ -7,6 +8,7 @@ namespace FekraHubAPI.Repositories.Interfaces
     public interface IRepository<T> where T : class
     {
         Task<IEnumerable<T>> GetAll();
+    
         Task<T> GetById(int id);
         Task Add(T entity);
         Task Update(T entity);
@@ -21,6 +23,8 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task<bool> IsTeacher(ApplicationUser user);
         Task<T> GetUser(string id);
         string GetUserIDFromToken(ClaimsPrincipal User);
-       
+        Task<PagedResponse<T>> GetPagedDataAsync(IQueryable<T> source, PaginationParameters paginationParameters);
+
+
     }
 }

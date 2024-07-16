@@ -17,6 +17,7 @@ using System.IO;
 using FekraHubAPI.MapModels.Users;
 using FekraHubAPI.MapModels.Response;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using FekraHubAPI.MapModels;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -48,6 +49,12 @@ namespace FekraHubAPI.Controllers.UsersController
             _emailSender = emailSender;
 
 
+        }
+        [HttpGet("PaginationParameters")]
+        public async Task<IActionResult> PaginationParameters([FromQuery] PaginationParameters paginationParameters)
+        {
+            var pagedProducts = await _applicationUserRepository.GetPagedDataAsync(await _applicationUserRepository.GetRelation(), paginationParameters);
+            return Ok(pagedProducts);
         }
 
         [HttpGet]
@@ -122,7 +129,45 @@ namespace FekraHubAPI.Controllers.UsersController
             return Ok(data);
         }
 
-      
+        [HttpGet("GetTeacher")]
+        public async Task<IActionResult> GetTeacher()
+        {
+            var roleIds = new List<string> { "4" };
+            var userIdsInRoles = await _db.UserRoles
+                                .Where(x => roleIds.Contains(x.RoleId))
+                                .Select(x => x.UserId)
+                                .ToListAsync();
+            var usersInRoles = await _db.ApplicationUser
+                                .Where(x => userIdsInRoles.Contains(x.Id))
+                                .ToListAsync();
+
+            var data = usersInRoles.Select(x => new
+            {
+                x.Id,
+                x.Name,
+                x.UserName,
+                x.FirstName,
+                x.LastName,
+                x.Email,
+                x.ImageUser,
+                x.Gender,
+                x.Job,
+                x.Birthday,
+                x.Birthplace,
+                x.Nationality,
+                x.City,
+                x.Street,
+                x.StreetNr,
+                x.ZipCode,
+                x.PhoneNumber,
+                x.EmergencyPhoneNumber,
+
+            }).ToList();
+            return Ok(data);
+        }
+
+
+
         [HttpGet("GetPerent")]
         public async Task<IActionResult> GetPerent()
         {

@@ -20,20 +20,30 @@ namespace FekraHubAPI.Controllers.CoursesControllers
     {
         private readonly IRepository<Course> _courseRepository;
         private readonly IRepository<Student> _studentRepository;
+        private readonly IRepository<ApplicationUser> _teacherRepository;
         private readonly IMapper _mapper;
 
-        public CoursesController(IRepository<Course> courseRepository, IRepository<Student> studentRepository, IMapper mapper)
+        public CoursesController(IRepository<Course> courseRepository,
+              IRepository<ApplicationUser> teacherRepository,
+            IRepository<Student> studentRepository, IMapper mapper)
         {
             _courseRepository = courseRepository;
             _studentRepository = studentRepository;
+            _teacherRepository = teacherRepository;
             _mapper = mapper;
         }
 
         // GET: api/Course
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Map_Course>>> GetCourses()
+        public async Task<ActionResult<IEnumerable<Map_Course>>> GetCourses(string? search)
         {
+
             IQueryable<Course> courses = await _courseRepository.GetRelation();
+         
+                if (search != null)
+                {
+                courses = courses.Where(x => x.Name.Contains(search) );
+                }
 
             var result = await courses.Select(sa => new
             {
@@ -44,7 +54,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 capacity = sa.Capacity,
                 startDate = sa.StartDate,
                 endDate = sa.EndDate,
-                Room = new { sa.Room.Id, sa.Room.Name }
+                Room = new { sa.Room.Id, sa.Room.Name },
+                Teacher = sa.Teacher.Select(z => new
+                {
+                    z.Id,
+                    z.FirstName,
+                    z.LastName
+                })
+
 
 
             }).ToListAsync();
@@ -67,32 +84,63 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         // POST: api/Course
         [HttpPost]
-        public async Task<ActionResult<Map_Course>> PostCourse([FromForm] Map_Course courseMdl)
+        public async Task<ActionResult<Course>> PostCourse([FromForm] string[] TeacherId, [FromForm] Map_Course courseMdl)
         {
+            var x = (await _teacherRepository.GetRelation()).Where(n => TeacherId.Contains(n.Id)).ToList();
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var courseEntity = _mapper.Map<Course>(courseMdl);
+
+
+            var courseEntity = new Course
+            {
+                Name        = courseMdl.Name,
+                Price      = courseMdl.Price,
+                Lessons    = courseMdl.Lessons,
+                Capacity   = courseMdl.Capacity,
+                StartDate  = courseMdl.StartDate,
+                EndDate    = courseMdl.EndDate,
+                RoomId     = courseMdl.RoomId,
+                Teacher = new List<ApplicationUser>()
+            };
+
+            courseEntity.Teacher = x;
+
             await _courseRepository.Add(courseEntity);
+
+      
+
 
             return CreatedAtAction("GetCourses", new { id = courseEntity.Id }, courseEntity);
         }
 
         // PUT: api/Course/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse(int id, [FromForm] Map_Course courseMdl)
+        public async Task<IActionResult> PutCourse(int id, [FromForm] string[] TeacherId, [FromForm] Map_Course courseMdl)
         {
+            var Teacher = (await _teacherRepository.GetRelation()).Where(n => TeacherId.Contains(n.Id)).ToList();
+
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var courseEntity = await _courseRepository.GetById(id);
+
+            var courseEntity = (await _courseRepository.GetRelation()).Where(n => n.Id == id)
+              .Include(e => e.Teacher).First();
+
             if (courseEntity == null)
             {
                 return NotFound();
             }
+
+            courseEntity.Teacher.Clear();
+
+
+            courseEntity.Teacher = Teacher;
 
             _mapper.Map(courseMdl, courseEntity);
             await _courseRepository.Update(courseEntity);

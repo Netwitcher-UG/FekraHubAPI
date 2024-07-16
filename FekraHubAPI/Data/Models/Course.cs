@@ -18,9 +18,9 @@ namespace FekraHubAPI.Data.Models
         public DateTime EndDate { get; set; }
 
 
-        [ForeignKey("UserId")]
-        public virtual ApplicationUser User { get; set; }
-        public string? UserId { get; set; }
+        //[ForeignKey("UserId")]
+        //public virtual ApplicationUser User { get; set; }
+        //public string? UserId { get; set; }
 
         [ForeignKey("RoomId")]
         public virtual Room Room { get; set; }
@@ -33,7 +33,7 @@ namespace FekraHubAPI.Data.Models
 
         public ICollection<Upload> Upload { get; set; }
    
-        public ICollection<TeacherCourse> Teacher { get; set; }
+        public ICollection<ApplicationUser> Teacher { get; set; }
 
     }
 }

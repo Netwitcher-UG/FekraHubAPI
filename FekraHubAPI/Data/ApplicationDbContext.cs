@@ -41,6 +41,15 @@ namespace FekraHubAPI.Data
           j => j.HasOne<Event>().WithMany().HasForeignKey("EventID")
           );
 
+            builder.Entity<ApplicationUser>()
+       .HasMany(u => u.Course)
+       .WithMany(c => c.Teacher)
+       .UsingEntity<Dictionary<string, object>>(
+           "TeacherCourse",
+           j => j.HasOne<Course>().WithMany().HasForeignKey("CourseID"),
+           j => j.HasOne<ApplicationUser>().WithMany().HasForeignKey("TeacherID")
+           );
+
 
 
             //Delete This code before publishing the application and add new migration
@@ -101,7 +110,7 @@ namespace FekraHubAPI.Data
 
         public DbSet<UploadType> UploadsType { get; set; }
         public DbSet<WorkContract> WorkContracts { get; set; }
-        public DbSet<TeacherCourse> TeacherCourse { get; set; }
+      
 
         public DbSet<Location> Location { get; set; }
 

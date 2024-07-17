@@ -51,6 +51,14 @@ builder.Services.AddCors(options =>
                .AllowCredentials();
     });
 });
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(80); // HTTP
+    options.ListenAnyIP(443, listenOptions =>
+    {
+        listenOptions.UseHttps("certs/aspnetapp.pfx", "FekraHubApi-NW");
+    });
+});
 //Adding Authentication 
 builder.Services.AddAuthentication(options =>
 {

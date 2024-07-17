@@ -133,9 +133,8 @@ namespace FekraHubAPI.Repositories.Implementations
         public async Task<PagedResponse<T>> GetPagedDataAsync(IQueryable<T> source, PaginationParameters paginationParameters)
         {
             var count = await source.CountAsync();
-            var items = await source.Skip((paginationParameters.PageNumber - 1) * paginationParameters.PageSize)
-                                    .Take(paginationParameters.PageSize)
-                                    .ToListAsync();
+            var items =  source.Skip((paginationParameters.PageNumber - 1) * paginationParameters.PageSize)
+                                    .Take(paginationParameters.PageSize);
 
             return new PagedResponse<T>(items, count, paginationParameters.PageNumber, paginationParameters.PageSize);
         }

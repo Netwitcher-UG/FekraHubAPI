@@ -67,6 +67,37 @@ namespace FekraHubAPI.Controllers
             }).ToList();
             return Ok(result);
         }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetReport(int id)
+        {
+            var report = (await _reportRepo.GetRelation()).Where(x => x.Id == id);
+            if (report == null)
+            {
+                return BadRequest($"no report has an ID {id}");
+            }
+            return Ok(report.Select(x => new
+            {
+                x.Id,
+                x.data,
+                x.CreationDate,
+                TeacherId = x.UserId,
+                TeacherFirstName = x.User.FirstName,
+                TeacherLastName = x.User.LastName,
+                TeacherEmail = x.User.Email,
+                Student = new
+                {
+                    x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    x.Student.Birthday,
+                    x.Student.Nationality,
+                    x.Student.Note,
+                    x.Student.ParentID,
+                    course = new { x.Student.CourseID, x.Student.Course.Name }
+                },
+                x.Improved
+            }).FirstOrDefault());
+        }
         [HttpGet("Filter")]
         public async Task<ActionResult<IEnumerable<Report>>> GetReports(
             [FromQuery] string? teacherId,

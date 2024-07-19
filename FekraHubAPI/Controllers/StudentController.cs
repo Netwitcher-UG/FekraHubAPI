@@ -101,7 +101,7 @@ namespace FekraHubAPI.Controllers
                 },
                 parent = x.User == null ? null : new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
             }).ToList();
-            return Ok(students);
+            return Ok(new {  studentsAll.TotalCount,studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
         }
         [HttpGet("ByParent")]
         //[Authorize]

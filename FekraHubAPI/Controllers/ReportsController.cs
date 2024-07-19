@@ -40,9 +40,37 @@ namespace FekraHubAPI.Controllers
             return Ok(keys);
         }
         [HttpGet("All")]
-        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] bool? Improved)
+        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved)
         {
-            IQueryable<Report> query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == Improved);
+            IQueryable<Report> query;
+            
+            if (Improved == null) 
+            {
+                query = await _reportRepo.GetRelation();
+            }
+            else
+            {
+                bool? isImproved = null;
+                if (Improved.ToLower() == "null")
+                {
+                    isImproved = null;
+                }
+                else if (Improved.ToLower() == "true")
+                {
+                    isImproved = true;
+                }
+                else if (Improved.ToLower() == "false")
+                {
+                    isImproved = false;
+                }
+                else
+                {
+                    return BadRequest("Invalid value for 'Improved'. Use 'true', 'false', 'null' or leave it empty.");
+                }
+                query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == isImproved);
+            }
+            
+            
             var result = query.Select(x => new
             {
                 x.Id,
@@ -108,10 +136,10 @@ namespace FekraHubAPI.Controllers
             [FromQuery] int? year,
             [FromQuery] int? month,
             [FromQuery] DateTime? dateTime,
-            [FromQuery] bool? Improved
+            [FromQuery] string? Improved
             )
         {
-            IQueryable<Report> query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == Improved);
+            IQueryable<Report> query = await _reportRepo.GetRelation();
             if (query == null)
             {
                 return NotFound("No reports found.");
@@ -144,7 +172,27 @@ namespace FekraHubAPI.Controllers
             {
                 query = query.Where(sa => sa.CreationDate == dateTime);
             }
-
+            if (!string.IsNullOrEmpty(Improved))
+            {
+                bool? isImproved = null;
+                if (Improved.ToLower() == "null")
+                {
+                    isImproved = null;
+                }
+                else if (Improved.ToLower() == "true")
+                {
+                    isImproved = true;
+                }
+                else if (Improved.ToLower() == "false")
+                {
+                    isImproved = false;
+                }
+                else
+                {
+                    return BadRequest("Invalid value for 'Improved'. Use 'true', 'false', 'null' or leave it empty.");
+                }
+                query = query.Where(sa => sa.Improved == isImproved);
+            }
             if (!query.Any())
             {
                 return NotFound("No reports found.");
@@ -177,7 +225,7 @@ namespace FekraHubAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateReports(List<Map_Report> map_Report)
+        public async Task<IActionResult> CreateReports(List<Map_Report_Post> map_Report)
         {
             if (!ModelState.IsValid)
             {
@@ -195,26 +243,25 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest($"There is a report for the student with Id: {reports[0].StudentId} on this date {reports[0].CreationDate.Month}/{reports[0].CreationDate.Year}");
             }
-            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = _reportRepo.GetUserIDFromToken(User);
 
-            //if (string.IsNullOrEmpty(userId))
-            //{
-            //    return Unauthorized("User ID not found in token.");
-            //}
-            //UserId = userId;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
             List<Report> AllReports = map_Report.Select(map => new Report
             {
                 CreationDate = map.CreationDate,
                 StudentId = map.StudentId,
                 data = map.data,
                 Improved = null,
-                UserId = map.UserId//
+                UserId = userId
             }).ToList();
             try
             {
                 await _reportRepo.ManyAdd(AllReports);
                 await _emailSender.SendToSecretaryNewReportsForStudents();
-                return Ok(AllReports.Select(x =>  new { x.Id, x.CreationDate, x.data, x.Improved,x.UserId,x.StudentId}).ToList());
+                return Ok(AllReports.Select(x =>  new { x.Id, x.data, x.CreationDate, x.Improved,x.UserId,x.StudentId}).ToList());
             }
             catch (Exception ex)
             {

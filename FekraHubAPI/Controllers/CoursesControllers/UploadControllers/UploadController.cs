@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using FekraHubAPI.Constract;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
@@ -28,9 +30,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         private readonly IRepository<UploadType> _uploadTypeRepository;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _env;
-        public UploadController(IRepository<Course> courseRepository, IRepository<Upload> uploadRepository,
 
-            ApplicationDbContext context,
+        private readonly ILogger<UploadController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
+        public UploadController(IRepository<Course> courseRepository, IRepository<Upload> uploadRepository
+            , ILogger<UploadController> logger
+
+            ,ApplicationDbContext context,
             IRepository<UploadType> uploadTypeRepository, IMapper mapper, IWebHostEnvironment env)
         {
             _courseRepository = courseRepository;
@@ -40,6 +48,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             _mapper = mapper;
             _env = env;
             _context = context;
+            _logger = logger;
         }
 
 
@@ -48,69 +57,97 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Upload>>> GetUploadTypes()
         {
-
-            IQueryable<Upload> query = (await _uploadRepository.GetRelation());
-            var result = query.Select(x => new
+            try
             {
-                x.Id,
-                x.file,
-                TypeUPload = x.UploadType.TypeTitle
+                IQueryable<Upload> query = (await _uploadRepository.GetRelation());
+                var result = query.Select(x => new
+                {
+                    x.Id,
+                    x.file,
+                    TypeUPload = x.UploadType.TypeTitle
 
-            }).ToList();
+                }).ToList();
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UploadController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
         }
 
 
         [HttpPost]
         public async Task<IActionResult> UploadFiles([FromForm] int courseId, [FromForm] int UploadTypeId, [FromForm] List<IFormFile> files)
         {
+            try
+            {
+                return await SaveFile(courseId, files, UploadTypeId);
 
-            return await SaveFile(courseId, files, UploadTypeId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UploadController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+
         }
 
 
         private async Task<IActionResult> SaveFile(int courseId, List<IFormFile> files, int TypeId)
         {
-            var course = await _courseRepository.GetById(courseId);
-            if (course == null)
+            try
             {
-                return NotFound("Course not found.");
-            }
-
-
-            foreach (var file in files)
-            {
-                if (file.Length > 0)
+                var course = await _courseRepository.GetById(courseId);
+                if (course == null)
                 {
-
-
-                    byte[] fileBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        await file.CopyToAsync(ms);
-                        fileBytes = ms.ToArray();
-                    }
-
-                    var upload = new Upload
-                    {
-                        UploadTypeid = TypeId,
-                        file = fileBytes,
-                        Courses = new List<Course>()
-                    };
-                    var existingCourse = await _courseRepository.GetById(courseId);
-                    if (existingCourse == null)
-                    {
-                        return NotFound("Course not found.");
-                    }
-                    upload.Courses.Add(existingCourse);
-
-                    await _uploadRepository.Add(upload);
-
+                    return NotFound("Course not found.");
                 }
+
+
+                foreach (var file in files)
+                {
+                    if (file.Length > 0)
+                    {
+
+
+                        byte[] fileBytes;
+                        using (var ms = new MemoryStream())
+                        {
+                            await file.CopyToAsync(ms);
+                            fileBytes = ms.ToArray();
+                        }
+
+                        var upload = new Upload
+                        {
+                            UploadTypeid = TypeId,
+                            file = fileBytes,
+                            Courses = new List<Course>()
+                        };
+                        var existingCourse = await _courseRepository.GetById(courseId);
+                        if (existingCourse == null)
+                        {
+                            return NotFound("Course not found.");
+                        }
+                        upload.Courses.Add(existingCourse);
+
+                        await _uploadRepository.Add(upload);
+
+                    }
+                }
+
+                return Ok("Files uploaded successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UploadController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
-            return Ok("Files uploaded successfully.");
+
         }
 
 
@@ -119,17 +156,26 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUploadFile(int id)
         {
-
-            var upload = await _uploadRepository.GetById(id);
-            if (upload == null)
+            try
             {
-                return NotFound();
+                var upload = await _uploadRepository.GetById(id);
+                if (upload == null)
+                {
+                    return NotFound();
+                }
+
+
+                await _uploadRepository.Delete(id);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UploadController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
 
-            await _uploadRepository.Delete(id);
-
-            return NoContent();
         }
 
 

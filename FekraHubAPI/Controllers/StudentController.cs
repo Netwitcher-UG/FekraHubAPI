@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FekraHubAPI.Constract;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
@@ -25,8 +26,12 @@ namespace FekraHubAPI.Controllers
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
+
+        private readonly ILogger<StudentController> _logger;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
         public StudentController(IRepository<StudentContract> studentContractRepo, IContractMaker contractMaker,
-            IRepository<Student> studentRepo, IRepository<Course> courseRepo, IEmailSender emailSender, IMapper mapper, UserManager<ApplicationUser> userManager)
+            IRepository<Student> studentRepo, IRepository<Course> courseRepo, IEmailSender emailSender, IMapper mapper, ILogger<StudentController> logger, UserManager<ApplicationUser> userManager)
         {
             _studentContractRepo = studentContractRepo;
             _contractMaker = contractMaker;
@@ -35,6 +40,7 @@ namespace FekraHubAPI.Controllers
             _emailSender = emailSender;
             _mapper = mapper;
             _userManager = userManager;
+            _logger = logger;
         }
 
         [HttpGet("CoursesCapacity")]
@@ -54,102 +60,127 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "StudentController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
         }
         [HttpGet]
         public async Task<IActionResult> GetStudents(string? search , int? courseId, [FromQuery] PaginationParameters paginationParameters)
         {
-            var Allstudents = await _studentRepo.GetRelation();
-
-
-            if (search != null)
+            try
             {
-                Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
-            }
-            if(courseId != null)
-            {
-                Allstudents = Allstudents.Where(x => x.CourseID == courseId);
-            }
+                var Allstudents = await _studentRepo.GetRelation();
 
 
-            var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
-           
-
-
-            var students = studentsAll.Data.Select(x => new
-            {
-                x.Id,
-                x.FirstName,
-                x.LastName,
-                x.Birthday,
-                x.Nationality,
-                x.Note,
-                x.Gender,
-                city = x.City ?? "Like parent",
-                Street = x.Street ?? "Like parent",
-                StreetNr = x.StreetNr ?? "Like parent",
-                ZipCode = x.ZipCode ?? "Like parent",
-                course = x.Course == null ? null : new
+                if (search != null)
                 {
-                    x.CourseID,
-                    x.Course.Name,
-                    x.Course.Capacity,
-                    startDate = x.Course.StartDate.Date,
-                    EndDate = x.Course.EndDate.Date,
-                    x.Course.Price
-                },
-                parent = new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
-            }).ToList();
-            return Ok(students);
+                    Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
+                }
+                if (courseId != null)
+                {
+                    Allstudents = Allstudents.Where(x => x.CourseID == courseId);
+                }
+
+
+                var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
+
+
+
+                var students = studentsAll.Data.Select(x => new
+                {
+                    x.Id,
+                    x.FirstName,
+                    x.LastName,
+                    x.Birthday,
+                    x.Nationality,
+                    x.Note,
+                    x.Gender,
+                    city = x.City ?? "Like parent",
+                    Street = x.Street ?? "Like parent",
+                    StreetNr = x.StreetNr ?? "Like parent",
+                    ZipCode = x.ZipCode ?? "Like parent",
+                    course = x.Course == null ? null : new
+                    {
+                        x.CourseID,
+                        x.Course.Name,
+                        x.Course.Capacity,
+                        startDate = x.Course.StartDate.Date,
+                        EndDate = x.Course.EndDate.Date,
+                        x.Course.Price
+                    },
+                    parent = new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
+                }).ToList();
+                return Ok(students);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "StudentController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
         }
         [HttpGet("ByParent")]
         //[Authorize]
         public async Task<IActionResult> GetStudentsByParent(string parentId)//
         {
-            //var parentId =_courseRepo.GetUserIDFromToken(User);
-
-            //if (string.IsNullOrEmpty(parentId))
-            //{
-            //    return Unauthorized("Parent ID not found in token.");
-            //}
-
-            var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId);
-
-            var result = students.Select(z => new
+            try
             {
-                z.Id,
-                z.FirstName,
-                z.LastName,
-                z.Birthday,
-                z.Nationality,
-                z.Note,
-                z.Gender,
-                city = z.City ?? "Like parent",
-                Street = z.Street ?? "Like parent",
-                StreetNr = z.StreetNr ?? "Like parent",
-                ZipCode = z.ZipCode ?? "Like parent",
-                course = z.Course == null ? null : new 
-                { z.Course.Id, z.Course.Name, z.Course.Capacity,startDate = z.Course.StartDate.Date,
-                    EndDate = z.Course.EndDate.Date, z.Course.Price }
-            }).ToList();
+                //var parentId =_courseRepo.GetUserIDFromToken(User);
+
+                //if (string.IsNullOrEmpty(parentId))
+                //{
+                //    return Unauthorized("Parent ID not found in token.");
+                //}
+
+                var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId);
+
+                var result = students.Select(z => new
+                {
+                    z.Id,
+                    z.FirstName,
+                    z.LastName,
+                    z.Birthday,
+                    z.Nationality,
+                    z.Note,
+                    z.Gender,
+                    city = z.City ?? "Like parent",
+                    Street = z.Street ?? "Like parent",
+                    StreetNr = z.StreetNr ?? "Like parent",
+                    ZipCode = z.ZipCode ?? "Like parent",
+                    course = z.Course == null ? null : new
+                    {
+                        z.Course.Id,
+                        z.Course.Name,
+                        z.Course.Capacity,
+                        startDate = z.Course.StartDate.Date,
+                        EndDate = z.Course.EndDate.Date,
+                        z.Course.Price
+                    }
+                }).ToList();
 
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "StudentController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
         }
         [HttpPost]
         //[Authorize]
         public async Task<IActionResult> GetContract([FromForm] Map_Student student)
         {
-            var par = _userManager.Users.FirstOrDefault();
-            student.ParentID = par.Id;
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             try
             {
+                var par = _userManager.Users.FirstOrDefault();
+                student.ParentID = par.Id;
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
                 //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 //if (string.IsNullOrEmpty(userId))
@@ -164,23 +195,25 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "StudentController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating new student record {ex}");
             }
         }
         [HttpPost("AcceptedContract")]
         public async Task<IActionResult> AcceptedContract([FromForm] Map_Student student)
         {
-            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            //if (string.IsNullOrEmpty(userId))
-            //{
-            //    return Unauthorized("User ID not found in token.");
-            //}
-            //student.ParentID = userId;
-            var par = _userManager.Users.FirstOrDefault();
-            student.ParentID = par.Id;
             try
             {
+                //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                //if (string.IsNullOrEmpty(userId))
+                //{
+                //    return Unauthorized("User ID not found in token.");
+                //}
+                //student.ParentID = userId;
+                var par = _userManager.Users.FirstOrDefault();
+                student.ParentID = par.Id;
+
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
@@ -202,6 +235,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "StudentController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -227,6 +261,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "StudentController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -255,6 +290,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "StudentController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -268,6 +304,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "StudentController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }

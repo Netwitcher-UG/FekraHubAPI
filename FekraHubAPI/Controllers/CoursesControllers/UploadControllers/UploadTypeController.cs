@@ -1,9 +1,11 @@
 using AutoMapper;
+using FekraHubAPI.Constract;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
@@ -15,19 +17,33 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
     {
         private readonly IRepository<UploadType> _uploadTypeRepository;
         private readonly IMapper _mapper;
-        public UploadTypeController(IRepository<UploadType> uploadTypeRepository, IMapper mapper)
+
+        private readonly ILogger<UploadTypeController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
+        public UploadTypeController(IRepository<UploadType> uploadTypeRepository, IMapper mapper, ILogger<UploadTypeController> logger)
         {
             _uploadTypeRepository = uploadTypeRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // GET: api/UploadTypes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_UploadType>>> GetUploadTypes()
         {
-            var uploadType = await _uploadTypeRepository.GetAll();
+            try
+            {
+                var uploadType = await _uploadTypeRepository.GetAll();
+                return Ok(uploadType);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UploadTypeController", ex.Message));
+                return BadRequest(ex.Message);
+            }
 
-            return Ok(uploadType);
         }
 
 
@@ -36,12 +52,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_UploadType>> GetUploadType(int id)
         {
-            var uploadType = await _uploadTypeRepository.GetById(id);
-            if (uploadType == null)
+            try
             {
-                return NotFound();
+                var uploadType = await _uploadTypeRepository.GetById(id);
+                if (uploadType == null)
+                {
+                    return NotFound();
+                }
+                return Ok(uploadType);
             }
-            return Ok(uploadType);
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UploadTypeController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+
         }
 
 
@@ -50,34 +76,53 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUploadType(int id, [FromForm] Map_UploadType uploadTypeMdl)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var uploadTypeEntity = await _uploadTypeRepository.GetById(id);
+                if (uploadTypeEntity == null)
+                {
+                    return NotFound();
+                }
+
+                _mapper.Map(uploadTypeMdl, uploadTypeEntity);
+                await _uploadTypeRepository.Update(uploadTypeEntity);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UploadTypeController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
-            var uploadTypeEntity = await _uploadTypeRepository.GetById(id);
-            if (uploadTypeEntity == null)
-            {
-                return NotFound();
-            }
 
-            _mapper.Map(uploadTypeMdl, uploadTypeEntity);
-            await _uploadTypeRepository.Update(uploadTypeEntity);
-
-            return NoContent();
         }
         // POST: api/UploadTypes
         [HttpPost]
         public async Task<ActionResult<UploadType>> PostUploadType([FromForm] Map_UploadType uploadType)
         {
-
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                var uploadTypeEntity = _mapper.Map<UploadType>(uploadType);
+                await _uploadTypeRepository.Add(uploadTypeEntity);
+                return CreatedAtAction("GetUploadType", new { id = uploadTypeEntity.Id }, uploadTypeEntity);
             }
-            var uploadTypeEntity = _mapper.Map<UploadType>(uploadType);
-            await _uploadTypeRepository.Add(uploadTypeEntity);
-            return CreatedAtAction("GetUploadType", new { id = uploadTypeEntity.Id }, uploadTypeEntity);
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UploadTypeController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+
 
         }
 
@@ -86,15 +131,25 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUploadType(int id)
         {
-            var uploadType = await _uploadTypeRepository.GetById(id);
-            if (uploadType == null)
+            try
             {
-                return NotFound();
+                var uploadType = await _uploadTypeRepository.GetById(id);
+                if (uploadType == null)
+                {
+                    return NotFound();
+                }
+
+                await _uploadTypeRepository.Delete(id);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UploadTypeController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
-            await _uploadTypeRepository.Delete(id);
 
-            return NoContent();
         }
 
     }

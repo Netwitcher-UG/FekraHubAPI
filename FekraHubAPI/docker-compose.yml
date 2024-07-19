@@ -1,29 +1,22 @@
-version: '3.4'
+version: '3.8'  # Ensure you are using a valid version
 
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      SA_PASSWORD: "FekraHubApi-NW"
-      ACCEPT_EULA: "Y"
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqlserverdata:/var/opt/mssql
-
   webapi:
-    image: fekra
+    image: fekrahubapi
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
-      - "8081:443"
+      - "8081:80"  # Change the host port to 8081
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       - sqlserver
-    environment:
-      ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__develpConn: "Server=sqlserver,1433;Database=FekraHubDb;User Id=sa;Password=FekraHubApi-NW;TrustServerCertificate=True;"
 
-volumes:
-  sqlserverdata:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "FekraHub2024-nw"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"

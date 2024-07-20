@@ -40,8 +40,8 @@ namespace FekraHubAPI.Extentions
                     Description = "adasdsad",
                     Contact = new OpenApiContact()
                     {
-                        Name = "al Mohamady",
-                        Email = "ahmed@gmail.com",
+                        Name = "fekrahub",
+                        Email = "info@fekrahub.com",
                         Url = new Uri("https://mydomain.com")
                     }
                 });

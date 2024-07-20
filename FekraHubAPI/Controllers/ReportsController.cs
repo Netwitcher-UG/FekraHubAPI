@@ -46,7 +46,7 @@ namespace FekraHubAPI.Controllers
             
             if (Improved == null) 
             {
-                query = await _reportRepo.GetRelation();
+                query = await _reportRepo.GetRelation(); 
             }
             else
             {

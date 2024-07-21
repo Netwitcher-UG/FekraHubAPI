@@ -23,11 +23,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         // GET: api/Locations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Map_location>>> GetLocations()
+        public async Task<ActionResult<IEnumerable<Map_location>>> GetLocations(string? search)
+
         {
             var locations = await _locationRepository.GetAll();
+            if (search != null) 
+            {
+                locations = locations.Where(x => x.Name.Contains(search) || x.Street.Contains(search) || x.StreetNr.Contains(search)
+                || x.ZipCode.Contains(search) || x.City.Contains(search));
+            }
           
-            return Ok(locations);
+            return Ok(locations.Select(x => new {x.Id,x.Name,x.City,x.Street,x.StreetNr,x.ZipCode }));
         }
 
 
@@ -41,7 +47,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return NotFound();
             }
-            return Ok(location);
+            return Ok(new { location.Id,location.Name, location.City, location.Street, location.StreetNr, location.ZipCode });
         }
 
 

@@ -393,7 +393,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-
+appsettings.json
+docker-compose.yml
 # JetBrains Rider
 *.sln.iml
 /FekraHubAPI/FekraHubAPI/bin/*

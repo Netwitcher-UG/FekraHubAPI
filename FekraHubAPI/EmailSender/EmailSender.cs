@@ -74,7 +74,7 @@ namespace FekraHubAPI.EmailSender
             //mailMessage.AlternateViews.Add(htmlView);
             return client.SendMailAsync(mailMessage);
         }
-        
+
 
         private string Message(string contentHtml)
         {
@@ -244,7 +244,7 @@ namespace FekraHubAPI.EmailSender
                 .ToList();
             List<ApplicationUser> notParent = users
                 .Where(user => NotParentsId.Contains(user.Id))
-                .ToList(); 
+                .ToList();
 
             var students = await _studentRepo.GetAll();
             foreach (var user in parent)
@@ -306,8 +306,8 @@ namespace FekraHubAPI.EmailSender
                        <br></br><div style='width:100%;text-align:center'> <a href='www.google.com' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>files page</a>
                         <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div>
                      </div>";
-                    await SendEmail(parent.Email ?? "", "New Files", Message(content), true);
-                }
+                await SendEmail(parent.Email ?? "", "New Files", Message(content), true);
+            }
 
         }
 
@@ -333,11 +333,32 @@ namespace FekraHubAPI.EmailSender
             }
 
         }
+        public async Task SendToSecretaryUpdateReportsForStudents()
+        {
+            var SecretariesId = await _context.UserRoles
+                            .Where(x => x.RoleId == "2")
+                            .Select(x => x.UserId)
+                            .ToListAsync();
+            var Secretaries = await _userManager.Users
+                         .Where(user => SecretariesId.Contains(user.Id))
+                         .ToListAsync();
+            foreach (var Secretary in Secretaries)
+            {
+                var content = @$"<div style='width:100%;text-align:left;'>
+                        <h1 style='width:100%;text-align:center;'>Hello {Secretary.FirstName} {Secretary.LastName}</h1><hr></hr><br></br>
+                        <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your students</p>
+                         <p style='font-size:14px;'><b>old reports has been updated .</b></p>
+                           <div style='width:100%;text-align:center'>
+                        <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div>
+                     </div>";
+                await SendEmail(Secretary.Email, "", Message(content), true, null, null);
+            }
 
+        }
         public async Task SendToParentsNewReportsForStudents(List<Student> students)
         {
             var parents = await _userManager.Users.ToListAsync();
-             
+
             foreach (var student in students)
             {
                 var parent = parents.Where(x => x.Id == student.ParentID).FirstOrDefault();
@@ -361,7 +382,7 @@ namespace FekraHubAPI.EmailSender
             }
         }
 
-        public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId,string teacherId)
+        public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId, string teacherId)
         {
             var student = await _studentRepo.GetById(studentId);
             if (await _studentRepo.IsTeacherIDExists(teacherId))
@@ -396,6 +417,6 @@ namespace FekraHubAPI.EmailSender
             await SendEmail(email ?? "", "Reset Password", Message(content), true);
         }
 
-        
+
     }
 }

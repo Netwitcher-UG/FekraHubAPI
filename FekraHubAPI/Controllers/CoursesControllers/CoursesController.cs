@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -22,15 +23,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         private readonly IRepository<Student> _studentRepository;
         private readonly IRepository<ApplicationUser> _teacherRepository;
         private readonly IMapper _mapper;
-
+        private readonly IRepository<Room> _roomRepo;
         public CoursesController(IRepository<Course> courseRepository,
               IRepository<ApplicationUser> teacherRepository,
-            IRepository<Student> studentRepository, IMapper mapper)
+            IRepository<Student> studentRepository, IMapper mapper, IRepository<Room> roomRepo)
         {
             _courseRepository = courseRepository;
             _studentRepository = studentRepository;
             _teacherRepository = teacherRepository;
             _mapper = mapper;
+            _roomRepo = roomRepo;
         }
 
         // GET: api/Course
@@ -54,8 +56,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 capacity = sa.Capacity,
                 startDate = sa.StartDate,
                 endDate = sa.EndDate,
-                Room = new { sa.Room.Id, sa.Room.Name },
-                Teacher = sa.Teacher.Select(z => new
+                Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
+                Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
                 {
                     z.Id,
                     z.FirstName,
@@ -74,25 +76,56 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Course>> GetCourse(int id)
         {
-            var course = await _courseRepository.GetById(id);
-            if (course == null)
+            IQueryable<Course> courses = (await _courseRepository.GetRelation()).Where(x=> x.Id == id);
+            if (courses == null)
             {
                 return NotFound();
             }
-                  return Ok(course);
+            return Ok(courses.Select(sa => new
+            {
+                id = sa.Id,
+                name = sa.Name,
+                price = sa.Price,
+                lessons = sa.Lessons,
+                capacity = sa.Capacity,
+                startDate = sa.StartDate,
+                endDate = sa.EndDate,
+                Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
+                Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
+                {
+                    z.Id,
+                    z.FirstName,
+                    z.LastName
+                })
+
+
+
+            }).FirstOrDefault());
         }
 
         // POST: api/Course
         [HttpPost]
         public async Task<ActionResult<Course>> PostCourse([FromForm] string[] TeacherId, [FromForm] Map_Course courseMdl)
         {
-            var x = (await _teacherRepository.GetRelation()).Where(n => TeacherId.Contains(n.Id)).ToList();
+            if (TeacherId == null || TeacherId.Length == 0)
+            {
+                return BadRequest("The teacherId is required!!");
+            }
+            var teachers = (await _teacherRepository.GetRelation()).Where(n => TeacherId.Contains(n.Id)).ToList();
+            if (!teachers.Any()) 
+            {
+                return BadRequest("The teacherId does not exist");
+            }
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-
+            var room = await _roomRepo.GetById(courseMdl.RoomId);
+            if (room == null)
+            {
+                return BadRequest("The RoomId does not exist");
+            }
 
             var courseEntity = new Course
             {
@@ -105,15 +138,25 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 RoomId     = courseMdl.RoomId,
                 Teacher = new List<ApplicationUser>()
             };
-
-            courseEntity.Teacher = x;
-
+            courseEntity.Teacher = teachers;
             await _courseRepository.Add(courseEntity);
-
-      
-
-
-            return CreatedAtAction("GetCourses", new { id = courseEntity.Id }, courseEntity);
+            return Ok(new
+            {
+                id = courseEntity.Id,
+                name = courseEntity.Name,
+                price = courseEntity.Price,
+                lessons = courseEntity.Lessons,
+                capacity = courseEntity.Capacity,
+                startDate = courseEntity.StartDate,
+                endDate = courseEntity.EndDate,
+                Room = courseEntity.Room == null ? null : new { room.Id, room.Name },
+                Teacher = courseEntity.Teacher == null ? null : courseEntity.Teacher.Select(z => new
+                {
+                    z.Id,
+                    z.FirstName,
+                    z.LastName
+                })
+            });
         }
 
         // PUT: api/Course/5

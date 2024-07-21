@@ -413,7 +413,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPatch("[action]")]
+        [HttpPatch("UpdateReport")]
         public async Task<IActionResult> UpdateReport(int ReportId)
         {
             var report = await _reportRepo.GetById(ReportId);

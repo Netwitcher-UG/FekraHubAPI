@@ -237,7 +237,28 @@ namespace FekraHubAPI.Controllers.UsersController
                     signingCredentials: sc
                     );
                 var Token = new JwtSecurityTokenHandler().WriteToken(token);
-               
+
+                var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
+                if( userToken == null) 
+                {
+                    userToken = new Tokens
+                    {
+                        Email = user.Email,
+                        Token = Token,
+                        ExpiryDate = token.ValidTo,
+                        UserId = user.Id,
+                    };
+                    _db.Token.Add(userToken);
+                }
+                else
+                {
+                    userToken.Token = Token;
+                    userToken.ExpiryDate = token.ValidTo;
+                    _db.Token.Update(userToken);
+                }
+                await _db.SaveChangesAsync();
+
+
                 return Ok(new {UserData = new { user.FirstName, user.LastName, user.Email }, Token, token.ValidTo });
             }
             return BadRequest(ModelState);
@@ -406,7 +427,15 @@ namespace FekraHubAPI.Controllers.UsersController
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user != null)
                 {
-                    return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
+                    var isTokenExists = await _db.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
+                    if (isTokenExists != null && isTokenExists.Token == token)
+                    {
+                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
+                    }
+                    else
+                    {
+                        return Unauthorized("Invalid token");
+                    }
                 }
                 else
                 {
@@ -416,6 +445,27 @@ namespace FekraHubAPI.Controllers.UsersController
             catch (SecurityTokenException)
             {
                 return Unauthorized("Invalid token");
+            }
+        }
+        [HttpPost("[action]")]
+        public async Task<IActionResult> Logout()
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var tokenData = await _db.Token.Where(x => x.UserId == userId).FirstOrDefaultAsync();
+                if (tokenData == null) 
+                {
+                    return Unauthorized();
+                }
+                tokenData.Token = "";
+                _db.Token.Update(tokenData);
+                await _db.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex) 
+            { 
+                return BadRequest(ex.Message);
             }
         }
     }

@@ -276,6 +276,10 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest("This report not found");
             }
+            if (report.Improved == false) 
+            {
+                return BadRequest("This report needs to updates first");
+            }
             report.Improved = true;
             try
             {
@@ -314,7 +318,7 @@ namespace FekraHubAPI.Controllers
         public async Task<IActionResult> AcceptAllReport(List<int> ReportIds)
         {
             var AllReports = await _reportRepo.GetRelation();
-            var reports = AllReports.Where(x => ReportIds.Contains(x.Id));
+            var reports = AllReports.Where(x => ReportIds.Contains(x.Id) && x.Improved == null);
             if (!reports.Any())
             {
                 return BadRequest("This reports not found");
@@ -327,6 +331,38 @@ namespace FekraHubAPI.Controllers
                 List<Student> students = reports.Select(x => x.Student).ToList();
                 await _emailSender.SendToParentsNewReportsForStudents(students);
                 return Ok(reports.Select(x => new { x.Id, x.CreationDate, x.data, x.StudentId, x.UserId, x.Improved }));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+        [HttpPatch("[action]")]
+        public async Task<IActionResult> UpdateReport(int ReportId)
+        {
+            var report = await _reportRepo.GetById(ReportId);
+            if (report == null)
+            {
+                return BadRequest("This report not found");
+            }
+            if (report.Improved != false)
+            {
+                if(report.Improved == null)
+                {
+                    return BadRequest("This report needs to not approved first");
+                }
+                else
+                {
+                    return BadRequest("This report has already been approved");
+                }
+            }
+            report.Improved = null;
+            try
+            {
+                await _reportRepo.Update(report);
+                var student = await _studentRepo.GetById(report.StudentId ?? 0);
+                await _emailSender.SendToSecretaryUpdateReportsForStudents();
+                return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId, report.Improved });
             }
             catch (Exception ex)
             {

@@ -333,7 +333,28 @@ namespace FekraHubAPI.EmailSender
             }
 
         }
+        public async Task SendToSecretaryUpdateReportsForStudents()
+        {
+            var SecretariesId = await _context.UserRoles
+                            .Where(x => x.RoleId == "2")
+                            .Select(x => x.UserId)
+                            .ToListAsync();
+            var Secretaries = await _userManager.Users
+                         .Where(user => SecretariesId.Contains(user.Id))
+                         .ToListAsync();
+            foreach (var Secretary in Secretaries)
+            {
+                var content = @$"<div style='width:100%;text-align:left;'>
+                        <h1 style='width:100%;text-align:center;'>Hello {Secretary.FirstName} {Secretary.LastName}</h1><hr></hr><br></br>
+                        <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your students</p>
+                         <p style='font-size:14px;'><b>old reports has been updated .</b></p>
+                           <div style='width:100%;text-align:center'>
+                        <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div>
+                     </div>";
+                await SendEmail(Secretary.Email, "", Message(content), true, null, null);
+            }
 
+        }
         public async Task SendToParentsNewReportsForStudents(List<Student> students)
         {
             var parents = await _userManager.Users.ToListAsync();

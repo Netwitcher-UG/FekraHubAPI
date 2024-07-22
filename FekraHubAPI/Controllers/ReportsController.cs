@@ -24,7 +24,7 @@ namespace FekraHubAPI.Controllers
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
         public ReportsController(IRepository<Report> reportRepo, IRepository<SchoolInfo> schoolInfo,
-            IRepository<Student> studentRepo, IEmailSender emailSender,IMapper mapper)
+            IRepository<Student> studentRepo, IEmailSender emailSender, IMapper mapper)
         {
             _reportRepo = reportRepo;
             _schoolInfo = schoolInfo;
@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers
             _emailSender = emailSender;
             _mapper = mapper;
         }
-        
+
         [HttpGet("Keys")]
         public async Task<IActionResult> GetReportKeys()
         {
@@ -43,8 +43,8 @@ namespace FekraHubAPI.Controllers
         public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved)
         {
             IQueryable<Report> query;
-            
-            if (Improved == null) 
+
+            if (Improved == null)
             {
                 query = await _reportRepo.GetRelation();
             }
@@ -69,8 +69,8 @@ namespace FekraHubAPI.Controllers
                 }
                 query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == isImproved);
             }
-            
-            
+
+
             var result = query.Select(x => new
             {
                 x.Id,
@@ -261,7 +261,7 @@ namespace FekraHubAPI.Controllers
             {
                 await _reportRepo.ManyAdd(AllReports);
                 await _emailSender.SendToSecretaryNewReportsForStudents();
-                return Ok(AllReports.Select(x =>  new { x.Id, x.data, x.CreationDate, x.Improved,x.UserId,x.StudentId}).ToList());
+                return Ok(AllReports.Select(x => new { x.Id, x.data, x.CreationDate, x.Improved, x.UserId, x.StudentId }).ToList());
             }
             catch (Exception ex)
             {
@@ -276,7 +276,7 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest("This report not found");
             }
-            if (report.Improved == false) 
+            if (report.Improved == false)
             {
                 return BadRequest("This report needs to updates first");
             }
@@ -286,7 +286,7 @@ namespace FekraHubAPI.Controllers
                 await _reportRepo.Update(report);
                 var student = await _studentRepo.GetById(report.StudentId ?? 0);
                 await _emailSender.SendToParentsNewReportsForStudents([student]);
-                return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId,report.Improved});
+                return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId, report.Improved });
             }
             catch (Exception ex)
             {
@@ -305,7 +305,7 @@ namespace FekraHubAPI.Controllers
             try
             {
                 await _reportRepo.Update(report);
-                await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0,report.UserId ?? "");
+                await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0, report.UserId ?? "");
                 return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId, report.Improved });
             }
             catch (Exception ex)
@@ -313,7 +313,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        
+
         [HttpPatch("AcceptAllReport")]
         public async Task<IActionResult> AcceptAllReport(List<int> ReportIds)
         {
@@ -337,7 +337,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPatch("[action]")]
+        [HttpPatch("UpdateReport")]
         public async Task<IActionResult> UpdateReport(int ReportId)
         {
             var report = await _reportRepo.GetById(ReportId);
@@ -347,7 +347,7 @@ namespace FekraHubAPI.Controllers
             }
             if (report.Improved != false)
             {
-                if(report.Improved == null)
+                if (report.Improved == null)
                 {
                     return BadRequest("This report needs to not approved first");
                 }

@@ -36,12 +36,12 @@ namespace FekraHubAPI.Extentions
                 o.SwaggerDoc("v1", new OpenApiInfo()
                 {
                     Version = "v1",
-                    Title = "test api",
-                    Description = "adasdsad",
+                    Title = "FEKRA HUB API",
+                    Description = "fekra hub school",
                     Contact = new OpenApiContact()
                     {
-                        Name = "al Mohamady",
-                        Email = "ahmed@gmail.com",
+                        Name = "fekrahub",
+                        Email = "info@fekrahub.com",
                         Url = new Uri("https://mydomain.com")
                     }
                 });

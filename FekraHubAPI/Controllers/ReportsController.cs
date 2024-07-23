@@ -40,7 +40,7 @@ namespace FekraHubAPI.Controllers
             return Ok(keys);
         }
         [HttpGet("All")]
-        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved)
+        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved, int? CourseId)
         {
             IQueryable<Report> query;
 
@@ -69,13 +69,17 @@ namespace FekraHubAPI.Controllers
                 }
                 query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == isImproved);
             }
-
-
+            if (CourseId.HasValue)
+            {
+                query = query.Where(x => x.Student.CourseID == CourseId);
+            }
             var result = query.Select(x => new
             {
                 x.Id,
                 x.data,
                 x.CreationDate,
+                x.CreationDate.Year,
+                x.CreationDate.Month,
                 TeacherId = x.UserId,
                 TeacherFirstName = x.User.FirstName,
                 TeacherLastName = x.User.LastName,
@@ -108,6 +112,8 @@ namespace FekraHubAPI.Controllers
                 x.Id,
                 x.data,
                 x.CreationDate,
+                x.CreationDate.Year,
+                x.CreationDate.Month,
                 TeacherId = x.UserId,
                 TeacherFirstName = x.User.FirstName,
                 TeacherLastName = x.User.LastName,
@@ -128,6 +134,7 @@ namespace FekraHubAPI.Controllers
         }
         [HttpGet("Filter")]
         public async Task<ActionResult<IEnumerable<Report>>> GetReports(
+            [FromQuery] int? CourseId,
             [FromQuery] string? teacherId,
             [FromQuery] int? studentId,
             [FromQuery] int? reportId,
@@ -143,6 +150,10 @@ namespace FekraHubAPI.Controllers
             if (query == null)
             {
                 return NotFound("No reports found.");
+            }
+            if (CourseId.HasValue)
+            {
+                query = query.Where(x => x.Student.CourseID == CourseId);
             }
             if (!string.IsNullOrEmpty(teacherId))
             {
@@ -202,6 +213,8 @@ namespace FekraHubAPI.Controllers
                 x.Id,
                 x.data,
                 x.CreationDate,
+                x.CreationDate.Year,
+                x.CreationDate.Month,
                 TeacherId = x.UserId,
                 TeacherFirstName = x.User.FirstName,
                 TeacherLastName = x.User.LastName,
@@ -261,7 +274,16 @@ namespace FekraHubAPI.Controllers
             {
                 await _reportRepo.ManyAdd(AllReports);
                 await _emailSender.SendToSecretaryNewReportsForStudents();
-                return Ok(AllReports.Select(x => new { x.Id, x.data, x.CreationDate, x.Improved, x.UserId, x.StudentId }).ToList());
+                return Ok(AllReports.Select(x => new {
+                    x.Id,
+                    x.data,
+                    x.CreationDate,
+                    x.CreationDate.Year,
+                    x.CreationDate.Month,
+                    x.Improved,
+                    x.UserId,
+                    x.StudentId
+                }).ToList());
             }
             catch (Exception ex)
             {
@@ -286,7 +308,17 @@ namespace FekraHubAPI.Controllers
                 await _reportRepo.Update(report);
                 var student = await _studentRepo.GetById(report.StudentId ?? 0);
                 await _emailSender.SendToParentsNewReportsForStudents([student]);
-                return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId, report.Improved });
+                return Ok(new
+                {
+                    report.Id,
+                    report.CreationDate,
+                    report.CreationDate.Year,
+                    report.CreationDate.Month,
+                    report.data,
+                    report.StudentId,
+                    report.UserId,
+                    report.Improved
+                });
             }
             catch (Exception ex)
             {
@@ -306,7 +338,17 @@ namespace FekraHubAPI.Controllers
             {
                 await _reportRepo.Update(report);
                 await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0, report.UserId ?? "");
-                return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId, report.Improved });
+                return Ok(new
+                {
+                    report.Id,
+                    report.CreationDate,
+                    report.CreationDate.Year,
+                    report.CreationDate.Month,
+                    report.data,
+                    report.StudentId,
+                    report.UserId,
+                    report.Improved
+                });
             }
             catch (Exception ex)
             {
@@ -330,14 +372,23 @@ namespace FekraHubAPI.Controllers
 
                 List<Student> students = reports.Select(x => x.Student).ToList();
                 await _emailSender.SendToParentsNewReportsForStudents(students);
-                return Ok(reports.Select(x => new { x.Id, x.CreationDate, x.data, x.StudentId, x.UserId, x.Improved }));
+                return Ok(reports.Select(x => new {
+                    x.Id,
+                    x.CreationDate,
+                    x.CreationDate.Year,
+                    x.CreationDate.Month,
+                    x.data,
+                    x.StudentId,
+                    x.UserId,
+                    x.Improved
+                }));
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPatch("UpdateReport")]
+        [HttpPatch("[action]")]
         public async Task<IActionResult> UpdateReport(int ReportId)
         {
             var report = await _reportRepo.GetById(ReportId);
@@ -362,7 +413,17 @@ namespace FekraHubAPI.Controllers
                 await _reportRepo.Update(report);
                 var student = await _studentRepo.GetById(report.StudentId ?? 0);
                 await _emailSender.SendToSecretaryUpdateReportsForStudents();
-                return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId, report.Improved });
+                return Ok(new
+                {
+                    report.Id,
+                    report.CreationDate,
+                    report.CreationDate.Year,
+                    report.CreationDate.Month,
+                    report.data,
+                    report.StudentId,
+                    report.UserId,
+                    report.Improved
+                });
             }
             catch (Exception ex)
             {

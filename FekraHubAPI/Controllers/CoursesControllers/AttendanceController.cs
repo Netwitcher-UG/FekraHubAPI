@@ -105,7 +105,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("AllStudent")]
         public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetAllStudentAttendance()
         {
-            IQueryable<StudentAttendance> query = await _studentAttendanceRepo.GetRelation();
+            IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation()).OrderByDescending(x => x.date);
             try
             {
                 if (query.Any())
@@ -178,6 +178,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     query = query.Where(sa => sa.date == dateTime);
                 }
+                query = query.OrderByDescending(d => d.date);
                 if (query.Any())
                 {
                     var result = await query.Select(sa => new 
@@ -203,7 +204,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("AllTeacher")]
         public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetAllTeacherAttendance()
         {
-            IQueryable<TeacherAttendance> query = await _teacherAttendanceRepo.GetRelation();
+            IQueryable<TeacherAttendance> query = (await _teacherAttendanceRepo.GetRelation()).OrderByDescending(x => x.date);
             try
             {
                 if (query.Any())
@@ -277,6 +278,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     query = query.Where(sa => sa.date == dateTime);
                 }
+                query = query.OrderByDescending(ta => ta.date);
                 if (query.Any())
                 {
                     var result = await query.Select(sa => new

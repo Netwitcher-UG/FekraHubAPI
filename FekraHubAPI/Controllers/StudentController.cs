@@ -71,12 +71,8 @@ namespace FekraHubAPI.Controllers
             {
                 Allstudents = Allstudents.Where(x => x.CourseID == courseId);
             }
-
-
+            Allstudents = Allstudents.OrderByDescending(x => x.Id);
             var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
-           
-
-
             var students = studentsAll.Data.Select(x => new
             {
                 x.Id,
@@ -114,7 +110,7 @@ namespace FekraHubAPI.Controllers
             //    return Unauthorized("Parent ID not found in token.");
             //}
 
-            var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId);
+            var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId).OrderByDescending(x => x.Id);
 
             var result = students.Select(z => new
             {
@@ -211,7 +207,7 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var contracts = await _studentContractRepo.GetRelation();
+                var contracts = (await _studentContractRepo.GetRelation()).OrderByDescending(x => x.Id);
                 var result = contracts.Select(x => new {
                     x.Id,
                     x.StudentID,

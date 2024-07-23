@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
+using FekraHubAPI.MapModels;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -40,13 +41,13 @@ namespace FekraHubAPI.Controllers
             return Ok(keys);
         }
         [HttpGet("All")]
-        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved, int? CourseId)
+        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved, [FromQuery] int? CourseId, [FromQuery] PaginationParameters paginationParameters)
         {
             IQueryable<Report> query;
             
             if (Improved == null) 
             {
-                query = await _reportRepo.GetRelation();
+                query = (await _reportRepo.GetRelation()).OrderByDescending(report => report.CreationDate);
             }
             else
             {
@@ -67,13 +68,18 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest("Invalid value for 'Improved'. Use 'true', 'false', 'null' or leave it empty.");
                 }
-                query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == isImproved);
+                query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == isImproved).OrderByDescending(report => report.CreationDate);
             }
             if (CourseId.HasValue)
             {
                 query = query.Where(x => x.Student.CourseID == CourseId);
             }
-            var result = query.Select(x => new
+            if (!query.Any())
+            {
+                return NotFound("No reports found.");
+            }
+            var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
+            var result = res.Data.Select(x => new
             {
                 x.Id,
                 x.data,
@@ -143,10 +149,11 @@ namespace FekraHubAPI.Controllers
             [FromQuery] int? year,
             [FromQuery] int? month,
             [FromQuery] DateTime? dateTime,
-            [FromQuery] string? Improved
+            [FromQuery] string? Improved,
+            [FromQuery] PaginationParameters paginationParameters
             )
         {
-            IQueryable<Report> query = await _reportRepo.GetRelation();
+            IQueryable<Report> query = (await _reportRepo.GetRelation()).OrderByDescending(report => report.CreationDate);
             if (query == null)
             {
                 return NotFound("No reports found.");
@@ -208,7 +215,8 @@ namespace FekraHubAPI.Controllers
             {
                 return NotFound("No reports found.");
             }
-            var result = query.Select(x => new
+            var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
+            var result = res.Data.Select(x => new
             {
                 x.Id,
                 x.data,
@@ -244,13 +252,17 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var mapDates = new HashSet<(int Year, int Month, int StudentId)>(
-                map_Report.Select(x => (x.CreationDate.Year, x.CreationDate.Month, x.StudentId))
-            );
+            var DateNow = DateTime.Now;
+            var studentIds = new HashSet<int>(map_Report.Select(x => x.StudentId));
 
-            var reports = (await _reportRepo.GetAll())
-                .Where(d => mapDates.Contains((d.CreationDate.Year, d.CreationDate.Month, d.StudentId ?? 0)))
-                .ToList();
+            var firstDayOfMonth = new DateTime(DateNow.Year, DateNow.Month, 1);
+            var firstDayOfNextMonth = firstDayOfMonth.AddMonths(1);
+
+            var reports = (await _reportRepo.GetRelation())
+                .Where(report => report.CreationDate >= firstDayOfMonth &&
+                                 report.CreationDate < firstDayOfNextMonth &&
+                                 studentIds.Contains(report.StudentId ?? 0))
+                .ToList(); ;
 
             if (reports.Any())
             {
@@ -264,7 +276,7 @@ namespace FekraHubAPI.Controllers
             }
             List<Report> AllReports = map_Report.Select(map => new Report
             {
-                CreationDate = map.CreationDate,
+                CreationDate = DateNow,
                 StudentId = map.StudentId,
                 data = map.data,
                 Improved = null,

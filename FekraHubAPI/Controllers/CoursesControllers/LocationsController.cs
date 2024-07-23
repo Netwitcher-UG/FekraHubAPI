@@ -26,19 +26,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         public async Task<ActionResult<IEnumerable<Map_location>>> GetLocations(string? search)
 
         {
-            var locations = await _locationRepository.GetAll();
-            if (search != null) 
+            var locations = await _locationRepository.GetRelation();
+            if (search != null)
             {
                 locations = locations.Where(x => x.Name.Contains(search) || x.Street.Contains(search) || x.StreetNr.Contains(search)
-                || x.ZipCode.Contains(search) || x.City.Contains(search));
+                || x.ZipCode.Contains(search) || x.City.Contains(search)).OrderByDescending(x => x.Id);
             }
-          
-            return Ok(locations.Select(x => new {x.Id,x.Name,x.City,x.Street,x.StreetNr,x.ZipCode }));
+            else
+            {
+                locations = locations.OrderByDescending(x => x.Id);
+            }
+            return Ok(locations.Select(x => new { x.Id, x.Name, x.City, x.Street, x.StreetNr, x.ZipCode, Room = x.room.Select(z => new { z.Id, z.Name }) }));
         }
 
 
         // GET: api/Locations/5
-   
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_location>> GetLocation(int id)
         {
@@ -47,7 +50,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return NotFound();
             }
-            return Ok(new { location.Id,location.Name, location.City, location.Street, location.StreetNr, location.ZipCode });
+            return Ok(new { location.Id, location.Name, location.City, location.Street, location.StreetNr, location.ZipCode });
         }
 
 

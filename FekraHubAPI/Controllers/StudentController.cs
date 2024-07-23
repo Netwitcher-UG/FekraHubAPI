@@ -49,7 +49,7 @@ namespace FekraHubAPI.Controllers
                 {
                     course.Capacity -= allStudentsInCourses.Count(c => c.CourseID == course.Id);
                 }
-                var courseInfo = courses.Select(x => new { x.Id, x.Name, x.Capacity,x.StartDate,x.EndDate,x.Lessons,x.Price }).ToList();
+                var courseInfo = courses.Select(x => new { x.Id, x.Name, x.Capacity, x.StartDate, x.EndDate, x.Lessons, x.Price }).ToList();
                 return Ok(courseInfo);
             }
             catch (Exception ex)
@@ -58,7 +58,7 @@ namespace FekraHubAPI.Controllers
             }
         }
         [HttpGet]
-        public async Task<IActionResult> GetStudents(string? search , int? courseId, [FromQuery] PaginationParameters paginationParameters)
+        public async Task<IActionResult> GetStudents(string? search, int? courseId, [FromQuery] PaginationParameters paginationParameters)
         {
             var Allstudents = await _studentRepo.GetRelation();
 
@@ -67,16 +67,12 @@ namespace FekraHubAPI.Controllers
             {
                 Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
             }
-            if(courseId != null)
+            if (courseId != null)
             {
                 Allstudents = Allstudents.Where(x => x.CourseID == courseId);
             }
-
-
+            Allstudents = Allstudents.OrderByDescending(x => x.Id);
             var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
-           
-
-
             var students = studentsAll.Data.Select(x => new
             {
                 x.Id,
@@ -101,7 +97,7 @@ namespace FekraHubAPI.Controllers
                 },
                 parent = x.User == null ? null : new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
             }).ToList();
-            return Ok(new {  studentsAll.TotalCount,studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
+            return Ok(new { studentsAll.TotalCount, studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
         }
         [HttpGet("ByParent")]
         //[Authorize]
@@ -114,7 +110,7 @@ namespace FekraHubAPI.Controllers
             //    return Unauthorized("Parent ID not found in token.");
             //}
 
-            var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId);
+            var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId).OrderByDescending(x => x.Id);
 
             var result = students.Select(z => new
             {
@@ -129,9 +125,15 @@ namespace FekraHubAPI.Controllers
                 Street = z.Street ?? "Like parent",
                 StreetNr = z.StreetNr ?? "Like parent",
                 ZipCode = z.ZipCode ?? "Like parent",
-                course = z.Course == null ? null : new 
-                { z.Course.Id, z.Course.Name, z.Course.Capacity,startDate = z.Course.StartDate.Date,
-                    EndDate = z.Course.EndDate.Date, z.Course.Price }
+                course = z.Course == null ? null : new
+                {
+                    z.Course.Id,
+                    z.Course.Name,
+                    z.Course.Capacity,
+                    startDate = z.Course.StartDate.Date,
+                    EndDate = z.Course.EndDate.Date,
+                    z.Course.Price
+                }
             }).ToList();
 
 
@@ -211,7 +213,7 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var contracts = await _studentContractRepo.GetRelation();
+                var contracts = (await _studentContractRepo.GetRelation()).OrderByDescending(x => x.Id);
                 var result = contracts.Select(x => new {
                     x.Id,
                     x.StudentID,

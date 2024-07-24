@@ -80,30 +80,37 @@ namespace FekraHubAPI.Controllers
                 return NotFound("No reports found.");
             }
             var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
-            var result = res.Data.Select(x => new
+            var result = new
             {
-                x.Id,
-                x.data,
-                x.CreationDate,
-                x.CreationDate.Year,
-                x.CreationDate.Month,
-                TeacherId = x.UserId,
-                TeacherFirstName = x.User.FirstName,
-                TeacherLastName = x.User.LastName,
-                TeacherEmail = x.User.Email,
-                Student = new
+                res.CurrentPage,
+                res.PageSize,
+                res.TotalCount,
+                res.TotalPages,
+                Data = res.Data.Select(x => new
                 {
-                    x.Student.Id,
-                    x.Student.FirstName,
-                    x.Student.LastName,
-                    x.Student.Birthday,
-                    x.Student.Nationality,
-                    x.Student.Note,
-                    x.Student.ParentID,
-                    course = new { x.Student.CourseID, x.Student.Course.Name }
-                },
-                x.Improved
-            }).ToList();
+                    x.Id,
+                    x.data,
+                    x.CreationDate,
+                    x.CreationDate.Year,
+                    x.CreationDate.Month,
+                    TeacherId = x.UserId,
+                    TeacherFirstName = x.User.FirstName,
+                    TeacherLastName = x.User.LastName,
+                    TeacherEmail = x.User.Email,
+                    Student = new
+                    {
+                        x.Student.Id,
+                        x.Student.FirstName,
+                        x.Student.LastName,
+                        x.Student.Birthday,
+                        x.Student.Nationality,
+                        x.Student.Note,
+                        x.Student.ParentID,
+                        course = new { x.Student.CourseID, x.Student.Course.Name }
+                    },
+                    x.Improved
+                })
+            };
             return Ok(result);
         }
         [HttpGet("{id}")]
@@ -217,30 +224,37 @@ namespace FekraHubAPI.Controllers
                 return NotFound("No reports found.");
             }
             var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
-            var result = res.Data.Select(x => new
+            var result = new
             {
-                x.Id,
-                x.data,
-                x.CreationDate,
-                x.CreationDate.Year,
-                x.CreationDate.Month,
-                TeacherId = x.UserId,
-                TeacherFirstName = x.User.FirstName,
-                TeacherLastName = x.User.LastName,
-                TeacherEmail = x.User.Email,
-                Student = new
+                res.CurrentPage,
+                res.PageSize,
+                res.TotalCount,
+                res.TotalPages,
+                Data = res.Data.Select(x => new
                 {
-                    x.Student.Id,
-                    x.Student.FirstName,
-                    x.Student.LastName,
-                    x.Student.Birthday,
-                    x.Student.Nationality,
-                    x.Student.Note,
-                    x.Student.ParentID,
-                    course = new { x.Student.CourseID, x.Student.Course.Name }
-                },
-                x.Improved
-            }).ToList();
+                    x.Id,
+                    x.data,
+                    x.CreationDate,
+                    x.CreationDate.Year,
+                    x.CreationDate.Month,
+                    TeacherId = x.UserId,
+                    TeacherFirstName = x.User.FirstName,
+                    TeacherLastName = x.User.LastName,
+                    TeacherEmail = x.User.Email,
+                    Student = new
+                    {
+                        x.Student.Id,
+                        x.Student.FirstName,
+                        x.Student.LastName,
+                        x.Student.Birthday,
+                        x.Student.Nationality,
+                        x.Student.Note,
+                        x.Student.ParentID,
+                        course = new { x.Student.CourseID, x.Student.Course.Name }
+                    },
+                    x.Improved
+                })
+            };
 
             return Ok(result);
 

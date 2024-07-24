@@ -4,6 +4,7 @@ using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
+using FekraHubAPI.ExportReports;
 using FekraHubAPI.Extentions;
 using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
@@ -35,7 +36,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(op =>
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddDefaultTokenProviders().AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<ApplicationUsersServices>();
-
+builder.Services.AddTransient<IExportPDF, ExportPDF>();
 builder.Services.AddTransient<IContractMaker, ContractMaker>();
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {

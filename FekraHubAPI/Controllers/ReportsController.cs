@@ -1,15 +1,14 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
+using FekraHubAPI.ExportReports;
 using FekraHubAPI.MapModels;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Linq.Expressions;
+
 
 
 namespace FekraHubAPI.Controllers
@@ -24,14 +23,16 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<SchoolInfo> _schoolInfo;
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
+        private readonly IExportPDF _exportPDF;
         public ReportsController(IRepository<Report> reportRepo, IRepository<SchoolInfo> schoolInfo,
-            IRepository<Student> studentRepo, IEmailSender emailSender,IMapper mapper)
+            IRepository<Student> studentRepo, IEmailSender emailSender,IMapper mapper, IExportPDF exportPDF)
         {
             _reportRepo = reportRepo;
             _schoolInfo = schoolInfo;
             _studentRepo = studentRepo;
             _emailSender = emailSender;
             _mapper = mapper;
+            _exportPDF = exportPDF;
         }
         
         [HttpGet("Keys")]
@@ -439,5 +440,29 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [HttpPost("ExportReport")]
+        public async Task<IActionResult> ExportReport(int reportId)
+        {
+            var report = await _reportRepo.GetById(reportId);
+            if (report == null)
+            {
+                return BadRequest("no report found");
+            }
+            if (report.Improved != true)
+            {
+                return BadRequest("this report was not approved");
+            }
+            var reportByte = await _exportPDF.ExportReport(reportId);
+            return Ok(reportByte);
+
+        }
+        //[AllowAnonymous]
+        //[HttpPost("test")]
+        //public async Task<IActionResult> DownloadReport(int id)
+        //{
+        //    var x = await _exportPDF.ExportReport(id);
+            
+        //    return File(x, "application/pdf", "report.pdf");
+        //}
     }
 }

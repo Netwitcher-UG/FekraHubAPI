@@ -1,14 +1,13 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
+using FekraHubAPI.MapModels;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Linq.Expressions;
+
 
 
 namespace FekraHubAPI.Controllers
@@ -40,13 +39,13 @@ namespace FekraHubAPI.Controllers
             return Ok(keys);
         }
         [HttpGet("All")]
-        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved, int? CourseId)
+        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved, [FromQuery] int? CourseId, [FromQuery] PaginationParameters paginationParameters)
         {
             IQueryable<Report> query;
 
             if (Improved == null)
             {
-                query = await _reportRepo.GetRelation();
+                query = (await _reportRepo.GetRelation()).OrderByDescending(report => report.CreationDate);
             }
             else
             {
@@ -67,36 +66,48 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest("Invalid value for 'Improved'. Use 'true', 'false', 'null' or leave it empty.");
                 }
-                query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == isImproved);
+                query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == isImproved).OrderByDescending(report => report.CreationDate);
             }
             if (CourseId.HasValue)
             {
                 query = query.Where(x => x.Student.CourseID == CourseId);
             }
-            var result = query.Select(x => new
+            if (!query.Any())
             {
-                x.Id,
-                x.data,
-                x.CreationDate,
-                x.CreationDate.Year,
-                x.CreationDate.Month,
-                TeacherId = x.UserId,
-                TeacherFirstName = x.User.FirstName,
-                TeacherLastName = x.User.LastName,
-                TeacherEmail = x.User.Email,
-                Student = new
+                return NotFound("No reports found.");
+            }
+            var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
+            var result = new
+            {
+                res.CurrentPage,
+                res.PageSize,
+                res.TotalCount,
+                res.TotalPages,
+                Data = res.Data.Select(x => new
                 {
-                    x.Student.Id,
-                    x.Student.FirstName,
-                    x.Student.LastName,
-                    x.Student.Birthday,
-                    x.Student.Nationality,
-                    x.Student.Note,
-                    x.Student.ParentID,
-                    course = new { x.Student.CourseID, x.Student.Course.Name }
-                },
-                x.Improved
-            }).ToList();
+                    x.Id,
+                    x.data,
+                    x.CreationDate,
+                    x.CreationDate.Year,
+                    x.CreationDate.Month,
+                    TeacherId = x.UserId,
+                    TeacherFirstName = x.User.FirstName,
+                    TeacherLastName = x.User.LastName,
+                    TeacherEmail = x.User.Email,
+                    Student = new
+                    {
+                        x.Student.Id,
+                        x.Student.FirstName,
+                        x.Student.LastName,
+                        x.Student.Birthday,
+                        x.Student.Nationality,
+                        x.Student.Note,
+                        x.Student.ParentID,
+                        course = new { x.Student.CourseID, x.Student.Course.Name }
+                    },
+                    x.Improved
+                })
+            };
             return Ok(result);
         }
         [HttpGet("{id}")]
@@ -143,10 +154,11 @@ namespace FekraHubAPI.Controllers
             [FromQuery] int? year,
             [FromQuery] int? month,
             [FromQuery] DateTime? dateTime,
-            [FromQuery] string? Improved
+            [FromQuery] string? Improved,
+            [FromQuery] PaginationParameters paginationParameters
             )
         {
-            IQueryable<Report> query = await _reportRepo.GetRelation();
+            IQueryable<Report> query = (await _reportRepo.GetRelation()).OrderByDescending(report => report.CreationDate);
             if (query == null)
             {
                 return NotFound("No reports found.");
@@ -208,30 +220,38 @@ namespace FekraHubAPI.Controllers
             {
                 return NotFound("No reports found.");
             }
-            var result = query.Select(x => new
+            var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
+            var result = new
             {
-                x.Id,
-                x.data,
-                x.CreationDate,
-                x.CreationDate.Year,
-                x.CreationDate.Month,
-                TeacherId = x.UserId,
-                TeacherFirstName = x.User.FirstName,
-                TeacherLastName = x.User.LastName,
-                TeacherEmail = x.User.Email,
-                Student = new
+                res.CurrentPage,
+                res.PageSize,
+                res.TotalCount,
+                res.TotalPages,
+                Data = res.Data.Select(x => new
                 {
-                    x.Student.Id,
-                    x.Student.FirstName,
-                    x.Student.LastName,
-                    x.Student.Birthday,
-                    x.Student.Nationality,
-                    x.Student.Note,
-                    x.Student.ParentID,
-                    course = new { x.Student.CourseID, x.Student.Course.Name }
-                },
-                x.Improved
-            }).ToList();
+                    x.Id,
+                    x.data,
+                    x.CreationDate,
+                    x.CreationDate.Year,
+                    x.CreationDate.Month,
+                    TeacherId = x.UserId,
+                    TeacherFirstName = x.User.FirstName,
+                    TeacherLastName = x.User.LastName,
+                    TeacherEmail = x.User.Email,
+                    Student = new
+                    {
+                        x.Student.Id,
+                        x.Student.FirstName,
+                        x.Student.LastName,
+                        x.Student.Birthday,
+                        x.Student.Nationality,
+                        x.Student.Note,
+                        x.Student.ParentID,
+                        course = new { x.Student.CourseID, x.Student.Course.Name }
+                    },
+                    x.Improved
+                })
+            };
 
             return Ok(result);
 
@@ -244,13 +264,17 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var mapDates = new HashSet<(int Year, int Month, int StudentId)>(
-                map_Report.Select(x => (x.CreationDate.Year, x.CreationDate.Month, x.StudentId))
-            );
+            var DateNow = DateTime.Now;
+            var studentIds = new HashSet<int>(map_Report.Select(x => x.StudentId));
 
-            var reports = (await _reportRepo.GetAll())
-                .Where(d => mapDates.Contains((d.CreationDate.Year, d.CreationDate.Month, d.StudentId ?? 0)))
-                .ToList();
+            var firstDayOfMonth = new DateTime(DateNow.Year, DateNow.Month, 1);
+            var firstDayOfNextMonth = firstDayOfMonth.AddMonths(1);
+
+            var reports = (await _reportRepo.GetRelation())
+                .Where(report => report.CreationDate >= firstDayOfMonth &&
+                                 report.CreationDate < firstDayOfNextMonth &&
+                                 studentIds.Contains(report.StudentId ?? 0))
+                .ToList(); ;
 
             if (reports.Any())
             {
@@ -264,7 +288,7 @@ namespace FekraHubAPI.Controllers
             }
             List<Report> AllReports = map_Report.Select(map => new Report
             {
-                CreationDate = map.CreationDate,
+                CreationDate = DateNow,
                 StudentId = map.StudentId,
                 data = map.data,
                 Improved = null,
@@ -430,5 +454,29 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        //[HttpPost("ExportReport")]
+        //public async Task<IActionResult> ExportReport(int reportId)
+        //{
+        //    var report = await _reportRepo.GetById(reportId);
+        //    if (report == null)
+        //    {
+        //        return BadRequest("no report found");
+        //    }
+        //    if (report.Improved != true)
+        //    {
+        //        return BadRequest("this report was not approved");
+        //    }
+        //    var reportByte = await _exportPDF.ExportReport(reportId);
+        //    return Ok(reportByte);
+
+        //}
+        //[AllowAnonymous]
+        //[HttpPost("test")]
+        //public async Task<IActionResult> DownloadReport(int id)
+        //{
+        //    var x = await _exportPDF.ExportReport(id);
+
+        //    return File(x, "application/pdf", "report.pdf");
+        //}
     }
 }

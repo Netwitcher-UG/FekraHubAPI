@@ -457,18 +457,25 @@ namespace FekraHubAPI.Controllers
         [HttpGet("ExportReport")]
         public async Task<ActionResult<string>> ExportReport(int reportId)
         {
-            var report = await _reportRepo.GetById(reportId);
-            if (report == null)
+            try
             {
-                return BadRequest("no report found");
+                var report = await _reportRepo.GetById(reportId);
+                if (report == null)
+                {
+                    return BadRequest("no report found");
+                }
+                if (report.Improved != true)
+                {
+                    return BadRequest("this report was not approved");
+                }
+                string reportBase64 = await _exportPDF.ExportReport(reportId);
+
+                return Ok(reportBase64);
             }
-            if (report.Improved != true)
+            catch (Exception ex) 
             {
-                return BadRequest("this report was not approved");
+                return BadRequest(ex.Message);
             }
-            string reportBase64 = await _exportPDF.ExportReport(reportId);
-            
-            return Ok(reportBase64);
 
         }
         //[AllowAnonymous]

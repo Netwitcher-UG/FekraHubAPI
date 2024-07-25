@@ -454,8 +454,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPost("ExportReport")]
-        public async Task<IActionResult> ExportReport(int reportId)
+        [HttpGet("ExportReport")]
+        public async Task<ActionResult<string>> ExportReport(int reportId)
         {
             var report = await _reportRepo.GetById(reportId);
             if (report == null)
@@ -466,7 +466,7 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest("this report was not approved");
             }
-            var reportBase64 = await _exportPDF.ExportReport(reportId);
+            string reportBase64 = await _exportPDF.ExportReport(reportId);
             
             return Ok(reportBase64);
 

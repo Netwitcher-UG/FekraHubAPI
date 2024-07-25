@@ -690,13 +690,13 @@ namespace FekraHubAPI.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("Token");
                 });
@@ -1397,9 +1397,7 @@ namespace FekraHubAPI.Migrations
                 {
                     b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
                         .WithOne("Token")
-                        .HasForeignKey("FekraHubAPI.Data.Models.Tokens", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("FekraHubAPI.Data.Models.Tokens", "UserId");
 
                     b.Navigation("User");
                 });

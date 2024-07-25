@@ -28,7 +28,7 @@ using static System.Net.WebRequestMethods;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
-using System.Net; 
+using System.Net;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -46,9 +46,9 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly ApplicationDbContext _db;
         private readonly IConfiguration _configuration;
         private readonly EmailSender.IEmailSender _emailSender;
-        public AccountController(ApplicationDbContext context  , UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager , EmailSender.IEmailSender emailSender
-            , IConfiguration configuration 
+        public AccountController(ApplicationDbContext context, UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager, EmailSender.IEmailSender emailSender
+            , IConfiguration configuration
             , IRepository<SchoolInfo> schoolInfoRepo,
             ApplicationDbContext db)
         {
@@ -73,12 +73,12 @@ namespace FekraHubAPI.Controllers.UsersController
             return Ok(user);
         }
         [HttpPut]
-        public async Task<IActionResult> UpdateAccount( [FromForm] Map_Account accountUpdate)
+        public async Task<IActionResult> UpdateAccount([FromForm] Map_Account accountUpdate)
         {
             var getCurrentAccount = await GetCurrentUserAsync();
             var account = await _db.ApplicationUser.FindAsync(getCurrentAccount.Id);
-            
-            
+
+
             if (accountUpdate.ImageUser != null)
             {
                 using var stream = new MemoryStream();
@@ -86,7 +86,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 account.ImageUser = stream.ToString();
 
             }
-            
+
             var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
             var normalizedUserName = accountUpdate.UserName.Normalize().ToLower();
 
@@ -127,7 +127,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var encodedToken = WebUtility.UrlEncode(token);
                 // var callbackUrl = Url.Action("GetResetPassword", "Account", new { email = user.Email, token = token }, protocol: HttpContext.Request.Scheme);
 
-                var domain = (await _schoolInfoRepo.GetRelation()).Select(x=>x.UrlDomain).First();
+                var domain = (await _schoolInfoRepo.GetRelation()).Select(x => x.UrlDomain).First();
                 var restPaswordLink = "/reset-password";
                 var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={encodedToken}";
 
@@ -239,7 +239,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var Token = new JwtSecurityTokenHandler().WriteToken(token);
 
                 var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
-                if( userToken == null) 
+                if (userToken == null)
                 {
                     userToken = new Tokens
                     {
@@ -259,7 +259,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 await _db.SaveChangesAsync();
 
 
-                return Ok(new {UserData = new { user.FirstName, user.LastName, user.Email }, Token, token.ValidTo });
+                return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, Token, token.ValidTo });
             }
             return BadRequest(ModelState);
         }
@@ -305,7 +305,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             PhoneNumber = user.phoneNumber,
                             Gender = user.gender,
                             EmergencyPhoneNumber = user.emergencyPhoneNumber,
-                            Birthday = user.birthday ,
+                            Birthday = user.birthday,
                             Birthplace = user.birthplace,
                             Nationality = user.nationality,
                             Street = user.street,
@@ -331,7 +331,7 @@ namespace FekraHubAPI.Controllers.UsersController
                                 return Ok($"Success!! . Please go to your email message box and confirm your email");
                             }
 
-                           
+
                         }
                         else
                         {
@@ -359,7 +359,7 @@ namespace FekraHubAPI.Controllers.UsersController
         public async Task<IActionResult> ResendConfirmEmail(string Email)
         {
             var user = await _userManager.FindByEmailAsync(Email);
-            if (user != null) 
+            if (user != null)
             {
                 await _emailSender.SendConfirmationEmail(user);
 
@@ -393,10 +393,10 @@ namespace FekraHubAPI.Controllers.UsersController
                     return BadRequest();
                 }
             }
-            
+
             return BadRequest("The User isn't registered.");
         }
-        
+
         [HttpPost("[action]")]
         public async Task<IActionResult> ValidateToken()
         {
@@ -454,7 +454,7 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var tokenData = await _db.Token.Where(x => x.UserId == userId).FirstOrDefaultAsync();
-                if (tokenData == null) 
+                if (tokenData == null)
                 {
                     return Unauthorized();
                 }
@@ -463,8 +463,8 @@ namespace FekraHubAPI.Controllers.UsersController
                 await _db.SaveChangesAsync();
                 return Ok();
             }
-            catch (Exception ex) 
-            { 
+            catch (Exception ex)
+            {
                 return BadRequest(ex.Message);
             }
         }

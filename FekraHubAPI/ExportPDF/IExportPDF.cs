@@ -5,6 +5,6 @@ namespace FekraHubAPI.ExportReports
 {
     public interface IExportPDF
     {
-        Task<byte[]> ExportReport(int reportId);
+        Task<string> ExportReport(int reportId);
     }
 }

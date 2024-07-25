@@ -19,14 +19,14 @@ namespace FekraHubAPI.ExportReports
             _schoolInfoRepo = schoolInfoRepo;
             _reportRepo = reportRepo;
         }
-        public async Task<byte[]> ExportReport(int reportId)
+        public async Task<string> ExportReport(int reportId)
         {
             HtmlToPdf HtmlToPdf = new HtmlToPdf();
             var reportPage = ReportHtmlPage(reportId);
             PdfDocument Pdf =  HtmlToPdf.ConvertHtmlString(await reportPage);
             byte[] pdfBytes = Pdf.Save();
             Pdf.Close();
-            return pdfBytes;
+            return Convert.ToBase64String(pdfBytes);
         }
         private async Task<string> ReportHtmlPage(int id)
         {

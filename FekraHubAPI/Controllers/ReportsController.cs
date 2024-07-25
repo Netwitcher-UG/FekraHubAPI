@@ -466,8 +466,9 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest("this report was not approved");
             }
-            var reportByte = await _exportPDF.ExportReport(reportId);
-            return Ok(reportByte);
+            var reportBase64 = await _exportPDF.ExportReport(reportId);
+            
+            return Ok(reportBase64);
 
         }
         //[AllowAnonymous]

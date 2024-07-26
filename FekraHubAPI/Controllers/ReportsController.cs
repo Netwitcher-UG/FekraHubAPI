@@ -471,13 +471,13 @@ namespace FekraHubAPI.Controllers
             return Ok(reportBase64);
 
         }
-        [AllowAnonymous]
-        [HttpPost("test")]
-        public async Task<IActionResult> DownloadReport(int id)
-        {
-            var x = await _exportPDF.ExportReport(id);
-
-            return File(x, "application/pdf", "report.pdf");
-        }
+        //[AllowAnonymous]
+        //[HttpPost("test")]
+        //public async Task<IActionResult> DownloadReport(int id)
+        //{
+        //    var x = await _exportPDF.ExportReport(id);
+        //    byte[] bytes = Convert.FromBase64String(x);
+        //    return File(x, "application/pdf", "report.pdf");
+        //}
     }
 }

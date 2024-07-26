@@ -19,7 +19,7 @@ namespace FekraHubAPI.ExportReports
             _reportRepo = reportRepo;
             _converter = converter;
         }
-        public async Task<byte[]> ExportReport(int reportId)
+        public async Task<string> ExportReport(int reportId)
         {
             var globalSettings = new GlobalSettings
             {
@@ -46,7 +46,7 @@ namespace FekraHubAPI.ExportReports
                 Objects = { objectSettings }
             };
             byte[] x = _converter.Convert(document);
-            return x; 
+            return Convert.ToBase64String(x); 
         }
         private async Task<string> ReportHtmlPage(int id)
         {

@@ -1,9 +1,11 @@
 using AutoMapper;
+using FekraHubAPI.Constract;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
@@ -21,44 +23,58 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         private readonly IRepository<CourseSchedule> _ScheduleRepository;
 
         private readonly IMapper _mapper;
+
+        private readonly ILogger<EventsController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
         public EventsController(IRepository<Event> eventRepository
            , IMapper mapper,
-            IRepository<CourseSchedule> ScheduleRepository)
+            IRepository<CourseSchedule> ScheduleRepository
+             , ILogger<EventsController> logger)
         {
             _eventRepository = eventRepository;
             _mapper = mapper;
             _ScheduleRepository = ScheduleRepository;
-
+            _logger = logger;
         }
 
         // GET: api/Event
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents()
         {
-
-            IQueryable<Event> eventE = (await _eventRepository.GetRelation());
-
-            var result = eventE.Select(x => new
+            try
             {
-                x.Id,
-                x.EventName,
-                x.Date,
-                x.EventType.TypeTitle,
-                CourseSchedule = x.CourseSchedule.Select(z => new
+                IQueryable<Event> eventE = (await _eventRepository.GetRelation());
+
+                var result = eventE.Select(x => new
                 {
-                    z.Id,
-                    z.DayOfWeek,
-                    z.StartTime,
-                    z.EndTime,
-                    courseName = z.Course.Name,
-                    courseID = z.Course.Id
+                    x.Id,
+                    x.EventName,
+                    x.Date,
+                    x.EventType.TypeTitle,
+                    CourseSchedule = x.CourseSchedule.Select(z => new
+                    {
+                        z.Id,
+                        z.DayOfWeek,
+                        z.StartTime,
+                        z.EndTime,
+                        courseName = z.Course.Name,
+                        courseID = z.Course.Id
 
-                })
+                    })
 
 
-            }).ToList();
+                }).ToList();
 
-            return Ok(result);
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "EventsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -67,12 +83,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Event>> GetEvent(int id)
         {
-            var eventE = await _eventRepository.GetById(id);
-            if (eventE == null)
+            try
             {
-                return NotFound();
+
+                var eventE = await _eventRepository.GetById(id);
+                if (eventE == null)
+                {
+                    return NotFound();
+                }
+                return Ok(eventE);
+
             }
-            return Ok(eventE);
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "EventsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -81,74 +107,88 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEvent(int id, [FromForm] int[] scheduleId, [FromForm] Map_Event eventMdl)
         {
-            var schedule = (await _ScheduleRepository.GetRelation()).Where(n => scheduleId.Contains(n.Id)).ToList();
-
-
-
-
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+
+                var schedule = (await _ScheduleRepository.GetRelation()).Where(n => scheduleId.Contains(n.Id)).ToList();
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+
+                var eventEntity = (await _eventRepository.GetRelation()).Where(n => n.Id == id)
+                   .Include(e => e.CourseSchedule).First();
+
+                if (eventEntity == null)
+                {
+                    return NotFound();
+                }
+                eventEntity.CourseSchedule.Clear();
+
+
+                eventEntity.CourseSchedule = schedule;
+
+
+                _mapper.Map(eventMdl, eventEntity);
+                await _eventRepository.Update(eventEntity);
+
+                return NoContent();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "EventsController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
-
-            var eventEntity = (await _eventRepository.GetRelation()).Where(n => n.Id == id)
-               .Include(e => e.CourseSchedule).First();
-
-            if (eventEntity == null)
-            {
-                return NotFound();
-            }
-            eventEntity.CourseSchedule.Clear();
-
-
-            eventEntity.CourseSchedule = schedule;
-
-
-            _mapper.Map(eventMdl, eventEntity);
-            await _eventRepository.Update(eventEntity);
-
-
-
-
-
-            return NoContent();
         }
         // POST: api/Event
 
         [HttpPost]
         public async Task<ActionResult<Event>> PostEvent([FromForm] int[] scheduleId, [FromForm] Map_Event eventMdl)
         {
-            var x = (await _ScheduleRepository.GetRelation()).Where(n => scheduleId.Contains(n.Id)).ToList();
-
-            //var schedule = await _ScheduleRepository.GetById(scheduleId);
-            //if (schedule == null)
-            //{
-            //    return NotFound("Course schedule not found or does not belong to the course.");
-            //}
-
-
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                var x = (await _ScheduleRepository.GetRelation()).Where(n => scheduleId.Contains(n.Id)).ToList();
+
+                //var schedule = await _ScheduleRepository.GetById(scheduleId);
+                //if (schedule == null)
+                //{
+                //    return NotFound("Course schedule not found or does not belong to the course.");
+                //}
+
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+
+                var eventEntity = new Event
+                {
+                    EventName = eventMdl.EventName,
+                    Date = eventMdl.Date,
+                    TypeID = eventMdl.TypeID,
+
+                    CourseSchedule = new List<CourseSchedule>()
+                };
+
+
+                eventEntity.CourseSchedule = x;
+
+                await _eventRepository.Add(eventEntity);
+
+                return CreatedAtAction("GetEvent", new { id = eventEntity.Id }, eventEntity);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "EventsController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
-
-            var eventEntity = new Event
-            {
-                EventName = eventMdl.EventName,
-                Date = eventMdl.Date,
-                TypeID = eventMdl.TypeID,
-
-                CourseSchedule = new List<CourseSchedule>()
-            };
-
-
-            eventEntity.CourseSchedule = x;
-
-            await _eventRepository.Add(eventEntity);
-
-            return CreatedAtAction("GetEvent", new { id = eventEntity.Id }, eventEntity);
 
         }
 
@@ -157,15 +197,24 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEvent(int id)
         {
-            var eventType = await _eventRepository.GetById(id);
-            if (eventType == null)
+            try
             {
-                return NotFound();
+                var eventType = await _eventRepository.GetById(id);
+                if (eventType == null)
+                {
+                    return NotFound();
+                }
+
+                await _eventRepository.Delete(id);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "EventsController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
-            await _eventRepository.Delete(id);
-
-            return NoContent();
         }
     }
 }

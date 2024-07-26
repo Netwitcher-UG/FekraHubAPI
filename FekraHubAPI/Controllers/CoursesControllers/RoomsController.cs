@@ -1,9 +1,11 @@
 using AutoMapper;
+using FekraHubAPI.Constract;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Reflection.Emit;
@@ -18,43 +20,67 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         private readonly IRepository<Room> _roomRepository;
         private readonly IMapper _mapper;
 
-        public RoomsController(IRepository<Room> roomRepository, IMapper mapper)
+        private readonly ILogger<RoomsController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
+        public RoomsController(IRepository<Room> roomRepository, IMapper mapper, ILogger<RoomsController> logger)
         {
             _roomRepository = roomRepository;
             _mapper = mapper;
+            _logger = logger;
+
         }
 
         // GET: api/Rooms
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Room>>> GetRooms()
         {
-         
-            IQueryable<Room> rooms = (await _roomRepository.GetRelation());
-            var result = rooms.Select(x => new
+            try
             {
-                x.Id,
-                x.Name,
-                locationName = x.Location.Name,
-                locationStreet = x.Location.Street, 
-                locationStreetNr = x.Location.StreetNr, 
-                locationZipCode = x.Location.ZipCode, 
-                locationCity = x.Location.City, 
+                IQueryable<Room> rooms = (await _roomRepository.GetRelation());
+                var result = rooms.Select(x => new
+                {
+                    x.Id,
+                    x.Name,
+                    locationName = x.Location.Name,
+                    locationStreet = x.Location.Street,
+                    locationStreetNr = x.Location.StreetNr,
+                    locationZipCode = x.Location.ZipCode,
+                    locationCity = x.Location.City,
 
 
-            }).ToList();
-            return Ok(result);
+                }).ToList();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "RoomsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+
         }
 
         // GET: api/Rooms/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Room>> GetRoom(int id)
         {
-            var room = await _roomRepository.GetById(id);
-            if (room == null)
+            try
             {
-                return NotFound();
+                var room = await _roomRepository.GetById(id);
+                if (room == null)
+                {
+                    return NotFound();
+                }
+                return Ok(room);
             }
-            return Ok(room);
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "RoomsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
         }
 
         // PUT: api/Rooms/5
@@ -62,21 +88,30 @@ namespace FekraHubAPI.Controllers.CoursesControllers
    
         public async Task<IActionResult> PutRoom(int id, [FromForm] Map_Room room)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var roomEntity = await _roomRepository.GetById(id);
+                if (roomEntity == null)
+                {
+                    return NotFound();
+                }
+
+                _mapper.Map(room, roomEntity);
+                await _roomRepository.Update(roomEntity);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "RoomsController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
-            var roomEntity = await _roomRepository.GetById(id);
-            if (roomEntity == null)
-            {
-                return NotFound();
-            }
-
-            _mapper.Map(room, roomEntity);
-            await _roomRepository.Update(roomEntity);
-
-            return NoContent();
         }
 
         // POST: api/Rooms
@@ -85,24 +120,42 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpPost]
         public async Task<ActionResult<Room>> PostRoom([FromForm] Map_Room room)
         {
-            var roomEntity = _mapper.Map<Room>(room);
-            await _roomRepository.Add(roomEntity);
-            return CreatedAtAction("GetRoom", new { id = roomEntity.Id }, roomEntity);
+            try
+            {
+                var roomEntity = _mapper.Map<Room>(room);
+                await _roomRepository.Add(roomEntity);
+                return CreatedAtAction("GetRoom", new { id = roomEntity.Id }, roomEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "RoomsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
         }
 
         // DELETE: api/Rooms/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoom(int id)
         {
-            var room = await _roomRepository.GetById(id);
-            if (room == null)
+            try
             {
-                return NotFound();
+                var room = await _roomRepository.GetById(id);
+                if (room == null)
+                {
+                    return NotFound();
+                }
+
+                await _roomRepository.Delete(id);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "RoomsController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
-            await _roomRepository.Delete(id);
-
-            return NoContent();
         }
     }
 }

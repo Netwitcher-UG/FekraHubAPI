@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FekraHubAPI.Constract;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -22,7 +23,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public AttendanceController(IRepository<TeacherAttendance> teacherAttendanceRepo, IRepository<StudentAttendance> studentAttendanceRepo, IRepository<Course> coursRepo, IRepository<AttendanceStatus> attendanceStatusRepo, IRepository<Student> studentRepo, IMapper mapper  , UserManager<ApplicationUser> userManager)
+        private readonly ILogger<AttendanceController> _logger;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
+        public AttendanceController(IRepository<TeacherAttendance> teacherAttendanceRepo, IRepository<StudentAttendance> studentAttendanceRepo,
+            IRepository<Course> coursRepo, IRepository<AttendanceStatus> attendanceStatusRepo
+            , ILogger<AttendanceController> logger , IRepository<Student> studentRepo, IMapper mapper  ,
+            UserManager<ApplicationUser> userManager)
         {
             _teacherAttendanceRepo = teacherAttendanceRepo;
             _studentAttendanceRepo = studentAttendanceRepo;
@@ -31,6 +38,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _attendanceStatusRepo = attendanceStatusRepo;
             _mapper = mapper;
             _userManager = userManager;
+            _logger = logger;
+
         }
 
 
@@ -48,6 +57,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -55,30 +65,40 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpPost("AttendanceStatus")]
         public async Task<IActionResult> AddAttendanceStatus([FromForm] string status)
         {
-            if (status == null)
-            {
-                return BadRequest("Please enter a status");
-            }
-            var statuses = await _attendanceStatusRepo.GetRelation();
-            var Status = await statuses.Where(s => s.Title.ToLower() == status.ToLower()).SingleOrDefaultAsync();
-            if (Status != null)
-            {
-                return BadRequest("This status is already exists");
-            }
-            AttendanceStatus attendanceStatus = new AttendanceStatus()
-            {
-                Title = status,
-            };
             try
             {
-                await _attendanceStatusRepo.Add(attendanceStatus);
-                return Ok(attendanceStatus);
+                if (status == null)
+                {
+                    return BadRequest("Please enter a status");
+                }
+                var statuses = await _attendanceStatusRepo.GetRelation();
+                var Status = await statuses.Where(s => s.Title.ToLower() == status.ToLower()).SingleOrDefaultAsync();
+                if (Status != null)
+                {
+                    return BadRequest("This status is already exists");
+                }
+                AttendanceStatus attendanceStatus = new AttendanceStatus()
+                {
+                    Title = status,
+                };
+                try
+                {
+                    await _attendanceStatusRepo.Add(attendanceStatus);
+                    return Ok(attendanceStatus);
 
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
+                    return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                }
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
+
         }
 
         [HttpDelete("AttendanceStatus/{id}")]
@@ -99,6 +119,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -127,6 +148,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -197,6 +219,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -225,6 +248,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -296,6 +320,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -321,6 +346,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -362,6 +388,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -390,6 +417,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -422,6 +450,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -452,6 +481,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AttendanceController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }

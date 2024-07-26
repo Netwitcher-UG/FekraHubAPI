@@ -1,9 +1,12 @@
 using AutoMapper;
+using FekraHubAPI.Constract;
+using FekraHubAPI.Controllers.AuthorizationController;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
@@ -15,31 +18,49 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
     {
            private readonly IRepository<CourseSchedule> _courseScheduleRepository;
         private readonly IMapper _mapper;
-        public CourseScheduleController(IRepository<CourseSchedule> courseScheduleRepository, IMapper mapper)
+        private readonly ILogger<CourseScheduleController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
+        public CourseScheduleController(IRepository<CourseSchedule> courseScheduleRepository
+            , IMapper mapper
+            , ILogger<CourseScheduleController> logger
+            )
         {
             _courseScheduleRepository = courseScheduleRepository;
             _mapper = mapper;
+            _logger = logger;
+
         }
+
 
         // GET: api/CourseSchedule
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_CourseSchedule>>> GetCourseSchedules()
         {
-     
-            IQueryable<CourseSchedule> courseSched = (await _courseScheduleRepository.GetRelation());
-            var result = courseSched.Select(z => new
+            try
             {
+                IQueryable<CourseSchedule> courseSched = (await _courseScheduleRepository.GetRelation());
+                var result = courseSched.Select(z => new
+                {
              
-                    z.Id,
-                    z.DayOfWeek,
-                    z.StartTime,
-                    z.EndTime,
-                    courseName = z.Course.Name,
-                    courseID = z.Course.Id
+                        z.Id,
+                        z.DayOfWeek,
+                        z.StartTime,
+                        z.EndTime,
+                        courseName = z.Course.Name,
+                        courseID = z.Course.Id
 
-            }).ToList();
+                }).ToList();
 
-            return Ok(result);
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "CourseScheduleController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -48,12 +69,21 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_CourseSchedule>> GetCourseSchedule(int id)
         {
-            var courseSched = await _courseScheduleRepository.GetById(id);
-            if (courseSched == null)
+            try
             {
-                return NotFound();
+                var courseSched = await _courseScheduleRepository.GetById(id);
+                if (courseSched == null)
+                {
+                    return NotFound();
+                }
+                return Ok(courseSched);
             }
-            return Ok(courseSched);
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "CourseScheduleController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
         }
 
 
@@ -62,44 +92,60 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCourseSchedule(int id, [FromForm] Map_CourseSchedule courseSchedMdl)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-            var courseScheduleEntity = await _courseScheduleRepository.GetById(id);
-            if (courseScheduleEntity == null)
+                var courseScheduleEntity = await _courseScheduleRepository.GetById(id);
+                if (courseScheduleEntity == null)
+                {
+                    return NotFound();
+                }
+
+                _mapper.Map(courseSchedMdl, courseScheduleEntity);
+                await _courseScheduleRepository.Update(courseScheduleEntity);
+
+                return NoContent();
+
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "CourseScheduleController", ex.Message));
+                return BadRequest(ex.Message);
             }
-
-            _mapper.Map(courseSchedMdl, courseScheduleEntity);
-            await _courseScheduleRepository.Update(courseScheduleEntity);
-
-            return NoContent();
         }
         // POST: api/CourseSchedule
         [HttpPost]
         public async Task<ActionResult<CourseSchedule>> PostCourseSchedule([FromForm] Map_CourseSchedule courseSchedMdl)
         {
-
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var courseSchedule = new CourseSchedule
+                {
+                    DayOfWeek = courseSchedMdl.DayOfWeek,
+                    StartTime = TimeSpan.Parse(courseSchedMdl.StartTime),
+                    EndTime = TimeSpan.Parse(courseSchedMdl.EndTime),
+                    CourseID = courseSchedMdl.CourseID
+                };
+
+                var courseScheduleEntity = _mapper.Map<CourseSchedule>(courseSchedule);
+                await _courseScheduleRepository.Add(courseScheduleEntity);
+                return CreatedAtAction("GetCourseSchedule", new { id = courseScheduleEntity.Id }, courseScheduleEntity);
+
             }
-
-            var courseSchedule = new CourseSchedule
+            catch (Exception ex)
             {
-                DayOfWeek = courseSchedMdl.DayOfWeek,
-                StartTime = TimeSpan.Parse(courseSchedMdl.StartTime),
-                EndTime = TimeSpan.Parse(courseSchedMdl.EndTime),
-                CourseID = courseSchedMdl.CourseID
-            };
-
-            var courseScheduleEntity = _mapper.Map<CourseSchedule>(courseSchedule);
-            await _courseScheduleRepository.Add(courseScheduleEntity);
-            return CreatedAtAction("GetCourseSchedule", new { id = courseScheduleEntity.Id }, courseScheduleEntity);
-
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "CourseScheduleController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -107,15 +153,24 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCourseSchedule(int id)
         {
-            var eventType = await _courseScheduleRepository.GetById(id);
-            if (eventType == null)
+            try
             {
-                return NotFound();
+                 var eventType = await _courseScheduleRepository.GetById(id);
+                if (eventType == null)
+                {
+                    return NotFound();
+                }
+
+                await _courseScheduleRepository.Delete(id);
+
+                return NoContent();
+
             }
-
-            await _courseScheduleRepository.Delete(id);
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "CourseScheduleController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using FekraHubAPI.Constract;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -23,21 +25,36 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<SchoolInfo> _schoolInfo;
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
+
+        private readonly ILogger<ReportsController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
         public ReportsController(IRepository<Report> reportRepo, IRepository<SchoolInfo> schoolInfo,
-            IRepository<Student> studentRepo, IEmailSender emailSender,IMapper mapper)
+            IRepository<Student> studentRepo, IEmailSender emailSender,IMapper mapper, ILogger<ReportsController> logger)
         {
             _reportRepo = reportRepo;
             _schoolInfo = schoolInfo;
             _studentRepo = studentRepo;
             _emailSender = emailSender;
             _mapper = mapper;
+            _logger = logger;
         }
         
         [HttpGet("Keys")]
         public async Task<IActionResult> GetReportKeys()
         {
-            var keys = (await _schoolInfo.GetRelation()).Select(x => x.StudentsReportsKeys).SingleOrDefault();
-            return Ok(keys);
+            try
+            {
+                var keys = (await _schoolInfo.GetRelation()).Select(x => x.StudentsReportsKeys).SingleOrDefault();
+                return Ok(keys);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "ReportsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
         }
         [HttpGet("All")]
         public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved)
@@ -220,24 +237,31 @@ namespace FekraHubAPI.Controllers
                 x.Improved
             }).ToList();
 
-            return Ok(result);
-
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "ReportsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateReports(List<Map_Report_Post> map_Report)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
-            var mapDates = new HashSet<(int Year, int Month, int StudentId)>(
-                map_Report.Select(x => (x.CreationDate.Year, x.CreationDate.Month, x.StudentId))
-            );
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                var mapDates = new HashSet<(int Year, int Month, int StudentId)>(
+                    map_Report.Select(x => (x.CreationDate.Year, x.CreationDate.Month, x.StudentId))
+                );
 
-            var reports = (await _reportRepo.GetAll())
-                .Where(d => mapDates.Contains((d.CreationDate.Year, d.CreationDate.Month, d.StudentId ?? 0)))
-                .ToList();
+                var reports = (await _reportRepo.GetAll())
+                    .Where(d => mapDates.Contains((d.CreationDate.Year, d.CreationDate.Month, d.StudentId ?? 0)))
+                    .ToList();
 
             if (reports.Any())
             {
@@ -265,20 +289,23 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "ReportsController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
+
         }
         [HttpPatch("AcceptReport")]
         public async Task<IActionResult> AcceptReport(int ReportId)
         {
-            var report = await _reportRepo.GetById(ReportId);
+            try
+            {
+                var report = await _reportRepo.GetById(ReportId);
             if (report == null)
             {
                 return BadRequest("This report not found");
             }
             report.Improved = true;
-            try
-            {
+
                 await _reportRepo.Update(report);
                 var student = await _studentRepo.GetById(report.StudentId ?? 0);
                 await _emailSender.SendToParentsNewReportsForStudents([student]);
@@ -286,26 +313,29 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "ReportsController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
         [HttpPatch("UnAcceptReport")]
         public async Task<IActionResult> UnAcceptReport(int ReportId)
         {
-            var report = await _reportRepo.GetById(ReportId);
+            try
+            {
+                var report = await _reportRepo.GetById(ReportId);
             if (report == null)
             {
                 return BadRequest("This report not found");
             }
             report.Improved = false;
-            try
-            {
+
                 await _reportRepo.Update(report);
                 await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0,report.UserId ?? "");
                 return Ok(new { report.Id, report.CreationDate, report.data, report.StudentId, report.UserId, report.Improved });
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "ReportsController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -313,14 +343,15 @@ namespace FekraHubAPI.Controllers
         [HttpPatch("AcceptAllReport")]
         public async Task<IActionResult> AcceptAllReport(List<int> ReportIds)
         {
-            var AllReports = await _reportRepo.GetRelation();
-            var reports = AllReports.Where(x => ReportIds.Contains(x.Id));
-            if (!reports.Any())
-            {
-                return BadRequest("This reports not found");
-            }
             try
             {
+                var AllReports = await _reportRepo.GetRelation();
+                var reports = AllReports.Where(x => ReportIds.Contains(x.Id));
+                if (!reports.Any())
+                {
+                    return BadRequest("This reports not found");
+                }
+
                 await reports.ForEachAsync(report => report.Improved = true);
                 await _reportRepo.ManyUpdate(reports);
 
@@ -330,6 +361,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "ReportsController", ex.Message));
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }

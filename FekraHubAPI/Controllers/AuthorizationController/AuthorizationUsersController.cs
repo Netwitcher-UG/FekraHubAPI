@@ -1,4 +1,6 @@
 ﻿using FekraHubAPI.Constract;
+using FekraHubAPI.Controllers.UsersController;
+using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.Repositories.Interfaces;
 using FekraHubAPI.Seeds;
@@ -19,11 +21,18 @@ namespace FekraHubAPI.Controllers.AuthorizationController
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        public AuthorizationUsersController(UserManager<ApplicationUser> userManager , RoleManager<IdentityRole> roleManager) 
+        private readonly ILogger<AuthorizationUsersController> _logger;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
+        public AuthorizationUsersController(UserManager<ApplicationUser> userManager 
+            , RoleManager<IdentityRole> roleManager
+            ,ApplicationDbContext db, ILogger<AuthorizationUsersController> logger
+
+            )
         {
             _userManager = userManager;
             _roleManager = roleManager;
-
+            _logger = logger;
 
         }
 
@@ -31,31 +40,49 @@ namespace FekraHubAPI.Controllers.AuthorizationController
         [HttpPost("[action]")]
         public async Task<IActionResult> AssignPermissionToRole([FromQuery][Required] string RoleName, [FromQuery][Required] string PermissionName)
         {
-            var role = await _roleManager.FindByNameAsync(RoleName);
-            var roleClaims = await _roleManager.GetClaimsAsync(role);
-            bool claimExists = roleClaims.Any(c => c.Type == PermissionName && c.Value == PermissionName);
 
-            var isTrue = PermissionsEnum.CheckPermissionExist(PermissionName);
-            // check permission is exist 
-            if (PermissionsEnum.CheckPermissionExist(PermissionName) && !claimExists)
+            try
             {
-                await _roleManager.AddClaimAsync(role, new Claim(PermissionName , PermissionName));
-                return Ok("Permission Assigned Successfully");
+                var role = await _roleManager.FindByNameAsync(RoleName);
+                var roleClaims = await _roleManager.GetClaimsAsync(role);
+                bool claimExists = roleClaims.Any(c => c.Type == PermissionName && c.Value == PermissionName);
+
+                var isTrue = PermissionsEnum.CheckPermissionExist(PermissionName);
+                // check permission is exist 
+                if (PermissionsEnum.CheckPermissionExist(PermissionName) && !claimExists)
+                {
+                    await _roleManager.AddClaimAsync(role, new Claim(PermissionName , PermissionName));
+                    return Ok("Permission Assigned Successfully");
+                }
+                return BadRequest("Error In Assign");
             }
-            return BadRequest("Error In Assign");
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AuthorizationUsersController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         } 
         [HttpPost("[action]")]
         public async Task<IActionResult> RemovePermissionToRole([FromQuery][Required] string RoleName, [FromQuery][Required] string PermissionName)
         {
-            var role = await _roleManager.FindByNameAsync(RoleName);
-            var roleClaims = await _roleManager.GetClaimsAsync(role);
-            // check permission is exist 
-            if (PermissionsEnum.CheckPermissionExist(PermissionName))
+            try
             {
-                await _roleManager.RemoveClaimAsync(role, new Claim(PermissionName, PermissionName));
-                return Ok("Permission Removed Successfully");
+                var role = await _roleManager.FindByNameAsync(RoleName);
+                var roleClaims = await _roleManager.GetClaimsAsync(role);
+                // check permission is exist 
+                if (PermissionsEnum.CheckPermissionExist(PermissionName))
+                {
+                    await _roleManager.RemoveClaimAsync(role, new Claim(PermissionName, PermissionName));
+                    return Ok("Permission Removed Successfully");
+                }
+                return BadRequest("Error In Assign");
+
             }
-            return BadRequest("Error In Assign");
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "AuthorizationUsersController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
 
     }

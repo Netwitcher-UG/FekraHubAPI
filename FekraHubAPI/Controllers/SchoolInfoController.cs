@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using FekraHubAPI.Constract;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -16,64 +18,106 @@ namespace FekraHubAPI.Controllers
     {
         private readonly IRepository<SchoolInfo> _schoolInfoRepo;
         private readonly IMapper _mapper;
-        public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo,IMapper mapper)
+
+
+        private readonly ILogger<SchoolInfoController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
+
+        public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo,IMapper mapper, ILogger<SchoolInfoController> logger)
         {
             _schoolInfoRepo = schoolInfoRepo;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetSchoolInfo()
         {
-            var schoolInfo = (await _schoolInfoRepo.GetAll()).FirstOrDefault();
-            if(schoolInfo == null)
+            try
             {
-                return NotFound();
+                var schoolInfo = (await _schoolInfoRepo.GetAll()).FirstOrDefault();
+                if (schoolInfo == null)
+                {
+                    return NotFound();
+                }
+                return Ok(schoolInfo);
             }
-            return Ok(schoolInfo);
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
         
         [HttpPost]
         public async Task<IActionResult> InsertSchoolInfo([FromForm] Map_SchoolInfo SchoolInfo)
         {
-            var schoolInfos = await _schoolInfoRepo.GetAll();
-            if (schoolInfos.Any())
+            try
             {
-                return BadRequest("School Information was added earlier");
+                var schoolInfos = await _schoolInfoRepo.GetAll();
+                if (schoolInfos.Any())
+                {
+                    return BadRequest("School Information was added earlier");
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(SchoolInfo);
+                }
+                var schoolInfo = _mapper.Map<SchoolInfo>(SchoolInfo);
+                await _schoolInfoRepo.Add(schoolInfo);
+                return Ok(schoolInfo);
             }
-            if(!ModelState.IsValid)
+            catch (Exception ex)
             {
-                return BadRequest(SchoolInfo);
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
             }
-            var schoolInfo = _mapper.Map<SchoolInfo>(SchoolInfo);
-            await _schoolInfoRepo.Add(schoolInfo);
-            return Ok(schoolInfo);
+
         }
         [HttpPut]
         public async Task<IActionResult> UpdateSchoolInfo([FromForm] Map_SchoolInfo schoolInfo)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(schoolInfo);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(schoolInfo);
+                }
+                var schoolInfos = (await _schoolInfoRepo.GetRelation()).FirstOrDefault();
+                if (schoolInfos == null)
+                {
+                    return BadRequest("No school Information added");
+                }
+                _mapper.Map(schoolInfo, schoolInfos);
+                await _schoolInfoRepo.Update(schoolInfos);
+                return Ok(schoolInfo);
             }
-            var schoolInfos = (await _schoolInfoRepo.GetRelation()).FirstOrDefault();
-            if (schoolInfos == null)
+            catch (Exception ex)
             {
-                return BadRequest("No school Information added");
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
             }
-            _mapper.Map(schoolInfo, schoolInfos);
-            await _schoolInfoRepo.Update(schoolInfos);
-            return Ok(schoolInfo);
+
         }
         [HttpDelete]
         public async Task<IActionResult> DeleteSchoolInfo()
         {
-            var schoolInfos = await _schoolInfoRepo.GetAll();
-            foreach(var schoolInfo in schoolInfos)
+            try
             {
-                await _schoolInfoRepo.Delete(schoolInfo.Id);
+                var schoolInfos = await _schoolInfoRepo.GetAll();
+                foreach (var schoolInfo in schoolInfos)
+                {
+                    await _schoolInfoRepo.Delete(schoolInfo.Id);
+                }
+                return Ok("Done");
             }
-            return Ok("Done");
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
         }
     }
 }

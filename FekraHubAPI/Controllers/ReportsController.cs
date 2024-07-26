@@ -483,7 +483,7 @@ namespace FekraHubAPI.Controllers
         //public async Task<IActionResult> DownloadReport(int id)
         //{
         //    var x = await _exportPDF.ExportReport(id);
-            
+
         //    return File(x, "application/pdf", "report.pdf");
         //}
     }

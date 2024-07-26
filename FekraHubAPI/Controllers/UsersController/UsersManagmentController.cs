@@ -316,7 +316,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var user = await _userManager.FindByIdAsync(id);
                 if (user == null)
                 {
-                    _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UsersManagment", ex.Message));
+                   // _logger.LogError(HandleLogFile.handleErrLogFile(await GetCurrentUserAsync(), "UsersManagment", ex.Message));
 
                     return NotFound($"user not exists!");
                 }

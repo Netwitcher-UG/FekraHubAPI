@@ -413,32 +413,26 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [HttpPatch("UpdateReport")]
-        public async Task<IActionResult> UpdateReport(int ReportId)
+        [HttpPatch("[action]")]
+        public async Task<IActionResult> UpdateReport(int ReportId, string data)
         {
             var report = await _reportRepo.GetById(ReportId);
             if (report == null)
             {
                 return BadRequest("This report not found");
             }
-            if (report.Improved != false)
+            if (report.Improved == true)
             {
-                if(report.Improved == null)
-                {
-                    return BadRequest("This report needs to not approved first");
-                }
-                else
-                {
-                    return BadRequest("This report has already been approved");
-                }
+                return BadRequest("This report has already been approved");
             }
             report.Improved = null;
+            report.data = data;
             try
             {
                 await _reportRepo.Update(report);
-                var student = await _studentRepo.GetById(report.StudentId ?? 0);
                 await _emailSender.SendToSecretaryUpdateReportsForStudents();
-                return Ok(new {
+                return Ok(new
+                {
                     report.Id,
                     report.CreationDate,
                     report.CreationDate.Year,

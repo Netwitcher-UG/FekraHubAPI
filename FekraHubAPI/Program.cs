@@ -1,4 +1,6 @@
 using AutoMapper;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using FekraHubAPI.Constract;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data;
@@ -19,6 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Data;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using IEmailSender = FekraHubAPI.EmailSender.IEmailSender;
@@ -38,6 +41,27 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<ApplicationUsersServices>();
 builder.Services.AddTransient<IExportPDF, ExportPDF>();
 builder.Services.AddTransient<IContractMaker, ContractMaker>();
+builder.Services.AddSingleton (typeof(IConverter),new SynchronizedConverter(new PdfTools() ));
+string libPath;
+if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+{
+    libPath = Path.Combine(AppContext.BaseDirectory, "libs", "windows", "libwkhtmltox.dll");
+}
+else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+{
+    libPath = Path.Combine(AppContext.BaseDirectory, "libs", "linux", "libwkhtmltox.so");
+}
+else
+{
+    throw new PlatformNotSupportedException("Unsupported OS platform.");
+}
+
+if (!File.Exists(libPath))
+{
+    throw new FileNotFoundException("Library not found.", libPath);
+}
+
+NativeLibrary.Load(libPath);
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromDays(7);

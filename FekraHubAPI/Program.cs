@@ -25,6 +25,7 @@ using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using IEmailSender = FekraHubAPI.EmailSender.IEmailSender;
+using FekraHubAPI.Filters;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -69,18 +70,23 @@ else
 {
     throw new PlatformNotSupportedException("Unsupported OS platform.");
 }
-
 if (!File.Exists(libPath))
 {
     throw new FileNotFoundException("Library not found.", libPath);
 }
-
 NativeLibrary.Load(libPath);
+
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<BrowserOnlyFilter>();
+});
+
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenAnyIP(80); // HTTP
     options.ListenAnyIP(443);
 });
+
 //Adding Authentication 
 builder.Services.AddAuthentication(options =>
 {

@@ -414,9 +414,9 @@ namespace FekraHubAPI.Controllers
             }
         }
         [HttpPatch("[action]")]
-        public async Task<IActionResult> UpdateReport(int ReportId, string data)
+        public async Task<IActionResult> UpdateReport(Map_Report_update map_Report_Update)
         {
-            var report = await _reportRepo.GetById(ReportId);
+            var report = await _reportRepo.GetById(map_Report_Update.Id);
             if (report == null)
             {
                 return BadRequest("This report not found");
@@ -426,7 +426,7 @@ namespace FekraHubAPI.Controllers
                 return BadRequest("This report has already been approved");
             }
             report.Improved = null;
-            report.data = data;
+            report.data = map_Report_Update.Data;
             try
             {
                 await _reportRepo.Update(report);

@@ -8,6 +8,7 @@ using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.ExportReports;
 using FekraHubAPI.Extentions;
+using FekraHubAPI.Filters;
 using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -55,13 +56,16 @@ else
 {
     throw new PlatformNotSupportedException("Unsupported OS platform.");
 }
-
 if (!File.Exists(libPath))
 {
     throw new FileNotFoundException("Library not found.", libPath);
 }
-
 NativeLibrary.Load(libPath);
+
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<BrowserOnlyFilter>();
+});
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromDays(7);

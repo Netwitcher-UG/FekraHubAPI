@@ -6,6 +6,6 @@ namespace FekraHubAPI.ContractMaker
     {
         Task ConverterHtmlToPdf(Student student);
         Task<byte[]> GetContractPdf(int studentId);
-        Task<List<string>> ContractHtml(Student student,string parentId);
+        Task<string> ContractHtml(Student student);
     }
 }

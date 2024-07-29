@@ -132,8 +132,8 @@ namespace FekraHubAPI.Controllers
 
             return Ok(result);
         }
+        [AllowAnonymous]
         [HttpPost]
-        //[Authorize]
         public async Task<IActionResult> GetContract([FromForm] Map_Student student)
         {
             if (!ModelState.IsValid)
@@ -162,8 +162,10 @@ namespace FekraHubAPI.Controllers
                     Street = student.Street ?? "Like parent",
                     StreetNr = student.StreetNr ?? "Like parent",
                     ZipCode = student.ZipCode ?? "Like parent",
+                    CourseID = student.CourseID ,
+                    ParentID = parentId,
                 };
-                List<string> contract = await _contractMaker.ContractHtml(studentEntity, parentId);
+                var contract = await _contractMaker.ContractHtml(studentEntity);
                 return Ok(contract);
             }
             catch (Exception ex)
@@ -282,6 +284,21 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        //[AllowAnonymous]
+        //[HttpGet("testing/contract")]
+        //public async Task<IActionResult> TestingContract()
+        //{
+        //    try
+        //    {
+        //        var studentEntity = (await _studentRepo.GetRelation()).FirstOrDefault();
+        //        byte[] contract = await _contractMaker.ContractHtml(studentEntity);
+        //        return File(contract, "application/pdf", "contract.pdf");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        //    }
+        //}
 
     }
 }

@@ -1,9 +1,10 @@
 ﻿using FekraHubAPI.Data.Models;
 using FekraHubAPI.Repositories.Interfaces;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using SelectPdf;
-using System.Drawing;
+
+using DinkToPdf;
+using DinkToPdf.Contracts;
+using System.Runtime.ConstrainedExecution;
+using System;
 
 namespace FekraHubAPI.ContractMaker
 {
@@ -13,33 +14,55 @@ namespace FekraHubAPI.ContractMaker
         private readonly IRepository<ApplicationUser> _Usersrepo;
         private readonly IRepository<Student> _studentrepo;
         private readonly IRepository<SchoolInfo> _schoolInforepo;
+        private readonly IConverter _converter;
         public ContractMaker(IRepository<StudentContract> repo, IRepository<Student> studentrepo,
-            IRepository<ApplicationUser> Usersrepo, IRepository<SchoolInfo> schoolInforepo)
+            IRepository<ApplicationUser> Usersrepo, IRepository<SchoolInfo> schoolInforepo, IConverter converter)
         {
             _repo = repo;
             _studentrepo = studentrepo;
             _Usersrepo = Usersrepo;
             _schoolInforepo = schoolInforepo;
+            _converter = converter;
+        }
+        private async Task<byte[]> PdfFile(Student student)
+        {
+            var globalSettings = new GlobalSettings
+            {
+                ColorMode = ColorMode.Color,
+                Orientation = Orientation.Portrait,
+                PaperSize = PaperKind.A4,
+                Margins = new MarginSettings { Top = 0, Bottom = 0, Right = 0, Left = 0 },
+                DocumentTitle = "Generated PDF"
+            };
+            var objectSettings1 = new ObjectSettings
+            {
+                PagesCount = true,
+                HtmlContent = (await ContractHtmlPage(student))[0],
+                WebSettings = { DefaultEncoding = "utf-8", PrintMediaType = true, LoadImages = true },
+            };
+            var objectSettings2 = new ObjectSettings
+            {
+                PagesCount = true,
+                HtmlContent = (await ContractHtmlPage(student))[1],
+                WebSettings = { DefaultEncoding = "utf-8", PrintMediaType = true, LoadImages = true },
+            };
+            var document = new HtmlToPdfDocument()
+            {
+                GlobalSettings = globalSettings,
+                Objects = { objectSettings1,objectSettings2 }
+            };
+            byte[] pdfFile = _converter.Convert(document);
+            return pdfFile;
         }
         public async Task ConverterHtmlToPdf(Student student)
         {
             try
             {
-                HtmlToPdf HtmlToPdf = new HtmlToPdf();
-                var contractPages = await ContractHtmlPage(student, student.ParentID);
-                PdfDocument finalPdf = new PdfDocument();
-                foreach (var contractPage in contractPages)
-                {
-                    PdfDocument pdfDocument = HtmlToPdf.ConvertHtmlString(contractPage);
-                    finalPdf.Append(pdfDocument);
-
-                }
-                byte[] pdf = finalPdf.Save();
-                finalPdf.Close();
+                byte[] pdfFile = await PdfFile(student);
                 StudentContract studentContract = new()
                 {
                     StudentID = student.Id,
-                    File = pdf,
+                    File = pdfFile,
                     CreationDate = DateTime.Now
                 };
                 await _repo.Add(studentContract);
@@ -64,33 +87,34 @@ namespace FekraHubAPI.ContractMaker
             var contract = AllContracts.Where(c => c.StudentID == studentId).First();
             return contract.File;
         }
-        public async Task<List<string>> ContractHtml(Student student, string parentId)//
+        public async Task<string> ContractHtml(Student student)
         {
-            return await ContractHtmlPage(student, parentId);
+            byte[] x = await PdfFile(student);
+            return Convert.ToBase64String(x);
         }
-
-        private async Task<List<string>> ContractHtmlPage(Student student, string parentId)//
+        
+        private async Task<List<string>> ContractHtmlPage(Student student)
         {
             var schoolInfo = (await _schoolInforepo.GetRelation()).SingleOrDefault();
-            var parent = await _Usersrepo.GetUser(parentId);
+            var parent = await _Usersrepo.GetUser(student.ParentID);
             List<string> contractPages = schoolInfo.ContractPages;
 
             contractPages[0] = contractPages[0]
-                .Replace("{student.FirstName}", student.FirstName)
-                .Replace("{student.LastName}", student.LastName)
+                .Replace("{student.FirstName}", student.FirstName ?? "")
+                .Replace("{student.LastName}", student.LastName ?? "")
                 .Replace("{student.Birthday.Date.ToString('yyyy-MM-dd')}", student.Birthday.Date.ToString("yyyy-MM-dd"))
-                .Replace("{student.Nationality}", student.Nationality)
-                .Replace("{parent.FirstName}", parent.FirstName)
-                .Replace("{parent.LastName}", parent.LastName)
-                .Replace("{parent.Street}", parent.Street)
-                .Replace("{parent.StreetNr}", parent.StreetNr)
-                .Replace("{parent.ZipCode}", parent.ZipCode)
-                .Replace("{parent.EmergencyPhoneNumber}", parent.EmergencyPhoneNumber)
-                .Replace("{parent.PhoneNumber}", parent.PhoneNumber)
-                .Replace("{parent.Email}", parent.Email);
+                .Replace("{student.Nationality}", student.Nationality ?? "")
+                .Replace("{parent.FirstName}", parent.FirstName ?? "")
+                .Replace("{parent.LastName}", parent.LastName ?? "")
+                .Replace("{parent.Street}", parent.Street ?? "")
+                .Replace("{parent.StreetNr}", parent.StreetNr ?? "")
+                .Replace("{parent.ZipCode}", parent.ZipCode ?? "")
+                .Replace("{parent.EmergencyPhoneNumber}", parent.EmergencyPhoneNumber ?? "")
+                .Replace("{parent.PhoneNumber}", parent.PhoneNumber ?? "")
+                .Replace("{parent.Email}", parent.Email ?? "");
             for (var i = 0; i < contractPages.Count(); i++)
             {
-                contractPages[i] = contractPages[i].Replace("{fekrahublogo}", schoolInfo.LogoBase64);
+                contractPages[i] = contractPages[i].Replace("{fekrahublogo}", schoolInfo.LogoBase64 ?? "");
             }
             return contractPages;
         }

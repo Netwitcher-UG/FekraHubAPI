@@ -46,15 +46,30 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
         // GET: api/UploadTypes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Upload>>> GetUploadTypes()
+        public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search)
         {
 
+
+
             IQueryable<Upload> query = (await _uploadRepository.GetRelation());
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(x => x.Courses.Any(z => z.Name.Contains(search)));
+            }
+
+
             var result = query.Select(x => new
             {
                 x.Id,
+                TypeUPload = x.UploadType.TypeTitle,
+                Courses = x.Courses == null ? null: x.Courses.Select(z => new
+                {
+                    z.Id,
+                    z.Name,
+
+                }),
                 x.file,
-                TypeUPload = x.UploadType.TypeTitle
 
             }).ToList();
 
@@ -96,6 +111,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                     {
                         UploadTypeid = TypeId,
                         file = fileBytes,
+                        FileName = file.Name,
                         Courses = new List<Course>()
                     };
                     var existingCourse = await _courseRepository.GetById(courseId);

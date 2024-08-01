@@ -10,7 +10,7 @@ namespace FekraHubAPI.Data.Models
         
         public byte[] file { get; set; }
 
-     
+        public string FileName { get; set; }
 
         [ForeignKey("UploadTypeid")]
         public virtual UploadType UploadType { get; set; }

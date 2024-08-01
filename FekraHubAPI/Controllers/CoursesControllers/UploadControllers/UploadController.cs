@@ -69,6 +69,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                     z.Name,
 
                 }),
+                x.FileName,
                 x.file,
 
             }).ToList();

@@ -110,6 +110,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                     {
                         UploadTypeid = TypeId,
                         file = fileBytes,
+                        FileName = file.Name,
                         Courses = new List<Course>()
                     };
                     var existingCourse = await _courseRepository.GetById(courseId);

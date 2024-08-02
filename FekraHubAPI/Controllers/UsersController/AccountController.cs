@@ -190,6 +190,8 @@ namespace FekraHubAPI.Controllers.UsersController
                     new Response { Status = "Error", Message = $"Could not change password , please try again." });
 
         }
+        
+
         [AllowAnonymous]
         [HttpPost("[action]")]
         public async Task<IActionResult> LogIn([FromForm] Map_Login login)
@@ -204,62 +206,64 @@ namespace FekraHubAPI.Controllers.UsersController
 
                 if (!user.ActiveUser)
                 {
-                    return BadRequest("You Must Active You Account");
+                    return BadRequest("You must activate your account");
                 }
                 if (!user.EmailConfirmed)
                 {
-                    return BadRequest("You Must Confirm You Account");
+                    return BadRequest("You must confirm your account");
                 }
-                var claims = new List<Claim>();
-                //claims.Add(new Claim("name", "value"));
-                claims.Add(new Claim(ClaimTypes.Name, user.UserName));
-                claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
-                claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+
+                var claims = new List<Claim>
+                {
+                    new Claim("name", user.UserName),
+                    new Claim("id", user.Id),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
+
                 var roles = await _userManager.GetRolesAsync(user);
                 foreach (var role in roles)
                 {
-                    claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
-                    var roleUser = await _roleManager.FindByNameAsync(role.ToString());
+                    claims.Add(new Claim("role", role));
+                    var roleUser = await _roleManager.FindByNameAsync(role);
                     var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
                     foreach (var roleClaim in roleClaims)
                     {
                         claims.Add(new Claim("Permissions", roleClaim.Value));
                     }
                 }
-                //signingCredentials
+
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
-                var sc = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
                 var token = new JwtSecurityToken(
                     claims: claims,
                     issuer: _configuration["JWT:Issuer"],
                     audience: _configuration["JWT:Audience"],
                     expires: DateTime.Now.AddMonths(1),
-                    signingCredentials: sc
-                    );
-                var Token = new JwtSecurityTokenHandler().WriteToken(token);
+                    signingCredentials: signingCredentials
+                );
+
+                var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
                 var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
-                if( userToken == null) 
+                if (userToken == null)
                 {
                     userToken = new Tokens
                     {
-                        Email = user.Email,
-                        Token = Token,
-                        ExpiryDate = token.ValidTo,
                         UserId = user.Id,
+                        Token = tokenString
                     };
                     _db.Token.Add(userToken);
                 }
                 else
                 {
-                    userToken.Token = Token;
-                    userToken.ExpiryDate = token.ValidTo;
+                    userToken.Token = tokenString;
                     _db.Token.Update(userToken);
                 }
                 await _db.SaveChangesAsync();
 
-
-                return Ok(new {UserData = new { user.FirstName, user.LastName, user.Email }, Token, token.ValidTo });
+               
+                return Ok(new {UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(), tokenString, token.ValidTo });
             }
             return BadRequest(ModelState);
         }

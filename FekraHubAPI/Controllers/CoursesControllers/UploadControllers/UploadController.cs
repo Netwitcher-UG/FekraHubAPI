@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
@@ -48,9 +48,6 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search)
         {
-
-
-
             IQueryable<Upload> query = (await _uploadRepository.GetRelation());
 
             if (!string.IsNullOrEmpty(search))
@@ -70,9 +67,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
                 }),
                 x.FileName,
-                File = Convert.ToBase64String( x.file),
-
             }).ToList();
+
+            return Ok(result);
+        }
+        [HttpGet("[action]")]
+        public async Task<ActionResult<IEnumerable<Upload>>> DownloadUploadFile(int Id)
+        {
+            var query = await _uploadRepository.GetById(Id);
+
+            var result = Convert.ToBase64String(query.file);
 
             return Ok(result);
         }
@@ -111,7 +115,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                     {
                         UploadTypeid = TypeId,
                         file = fileBytes,
-                        FileName = file.Name,
+                        FileName = file.FileName,
                         Courses = new List<Course>()
                     };
                     var existingCourse = await _courseRepository.GetById(courseId);

@@ -99,11 +99,17 @@ using (var scope = builder.Services.BuildServiceProvider().CreateScope())
     {
         foreach (var permission in AllPermissions)
         {
-            options.AddPolicy(permission.ToString(),
-            policy => policy.RequireClaim(permission.ToString(), permission.ToString()));
+            options.AddPolicy(permission.ToString(), policy =>
+                policy.RequireAssertion(context =>
+                    context.User.HasClaim(c => c.Type == "Permissions" &&
+                                               c.Value.Contains(permission.ToString()))
+                )
+            );
         }
     });
 }
+
+
 // Add services to the container.
 builder.Services.AddTransient(typeof(IRepository<>), typeof(GenericRepository<>));
 // Add services to the container.

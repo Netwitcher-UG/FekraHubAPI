@@ -24,7 +24,7 @@ namespace FekraHubAPI.Controllers.UsersController
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Admin , Secretariat")]
     public class UsersManagment : ControllerBase
     {
         private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _db;
-        private  UserManager<ApplicationUser>  currentUser ;
+       // private  UserManager<ApplicationUser>  currentUser ;
         private readonly IRepository<ApplicationUser> _applicationUserRepository;
         private readonly ApplicationUsersServices _applicationUsersServices;
         private readonly EmailSender.IEmailSender _emailSender;
@@ -50,6 +50,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
 
         }
+       
         [HttpGet("PaginationParameters")]
         public async Task<IActionResult> PaginationParameters([FromQuery] PaginationParameters paginationParameters)
         {
@@ -57,6 +58,7 @@ namespace FekraHubAPI.Controllers.UsersController
             return Ok(pagedProducts);
         }
 
+        [Authorize(Policy = "GetUsers")]
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
@@ -128,6 +130,8 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
+        
+        [Authorize(Policy = "GetUsers")]
         [HttpGet("GetTeacher")]
         public async Task<IActionResult> GetTeacher()
         {
@@ -241,6 +245,8 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
+        
+        [Authorize(Policy = "GetUsers")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(string id)
         {
@@ -283,6 +289,7 @@ namespace FekraHubAPI.Controllers.UsersController
             };
             return Ok(data);
         }
+        [Authorize(Policy = "AddUsers")]
         [HttpPost]
         public async Task<IActionResult> AddUser([FromForm] Map_Account user)
         {

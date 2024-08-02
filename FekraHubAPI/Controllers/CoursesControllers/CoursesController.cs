@@ -36,6 +36,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         // GET: api/Course
+        [Authorize(Policy = "GetTeachersCourse")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Course>>> GetCourses(string? search)
         {
@@ -160,6 +161,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         // PUT: api/Course/5
+        [Authorize(Policy = "UpdateTeachersCourse")]        
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCourse(int id, [FromForm] string[] TeacherId, [FromForm] Map_Course courseMdl)
         {

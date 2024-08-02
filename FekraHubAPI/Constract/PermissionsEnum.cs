@@ -13,23 +13,24 @@ namespace FekraHubAPI.Constract
             GetUsers,
             AddUsers,
             GetStudentsCourse,
-            UpdateStudentsCourse,
+            UpdateStudentsCourse,   // later
             GetTeachersCourse,
             UpdateTeachersCourse,
             GetContracts,
-            ManageEvents,
+            ManageEvents,  
             GetEvents,
             GetStudentsAttendance,
-            UpdateStudentsAttendance,
+            UpdateStudentsAttendance, 
             GetTeachersAttendance,
             UpdateTeachersAttendance,
-            InsertUpdateStudentsReports,
+            InsertUpdateStudentsReports, 
             GetStudentsReports,
             ApproveReports,
             ManagePayrolls,
             ManageBooks,
-            DeleteSchoolData,
-            ResetData
+            DeleteSchoolData, // 
+            ResetData , //
+            //ManageWorkContract
 
         }
         

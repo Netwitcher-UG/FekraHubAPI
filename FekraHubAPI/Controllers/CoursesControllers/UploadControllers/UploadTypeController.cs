@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
-    [Authorize]
+    [Authorize(Policy = "ManageBooks")]
     [Route("api/[controller]")]
     [ApiController]
     public class UploadTypeController : ControllerBase

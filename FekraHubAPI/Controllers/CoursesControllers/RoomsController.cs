@@ -10,7 +10,7 @@ using System.Reflection.Emit;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class RoomsController : ControllerBase

@@ -26,6 +26,7 @@ namespace FekraHubAPI.Controllers
             _mapper = mapper;
         }
 
+        [Authorize(Policy = "ManagePayrolls")]
         [HttpPost]
         public async Task<IActionResult> PostpayRoll([FromForm] string UserID, List<IFormFile> files)
         {
@@ -72,6 +73,7 @@ namespace FekraHubAPI.Controllers
             return Ok();
 
         }
+        [Authorize(Policy = "ManagePayrolls")]
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeletePayRoll(int id)

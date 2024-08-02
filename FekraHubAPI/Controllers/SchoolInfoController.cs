@@ -9,7 +9,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.Controllers
 {
-    [Authorize]
+    [Authorize (Roles ="Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class SchoolInfoController : ControllerBase

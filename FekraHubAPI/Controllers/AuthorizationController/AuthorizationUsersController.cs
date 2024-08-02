@@ -58,6 +58,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
             }
             return BadRequest("Error In Assign");
         }
+        [AllowAnonymous]
         [HttpPost("[action]")]
         public async Task<IActionResult> RolePermissions()
         {

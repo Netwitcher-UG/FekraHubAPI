@@ -41,6 +41,7 @@ namespace FekraHubAPI.Controllers
             var keys = (await _schoolInfo.GetRelation()).Select(x => x.StudentsReportsKeys).SingleOrDefault();
             return Ok(keys);
         }
+        [Authorize(Policy = "GetStudentsReports")]
         [HttpGet("All")]
         public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved, [FromQuery] int? CourseId, [FromQuery] PaginationParameters paginationParameters)
         {
@@ -113,6 +114,9 @@ namespace FekraHubAPI.Controllers
             };
             return Ok(result);
         }
+
+        [Authorize(Policy = "GetStudentsReports")]
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetReport(int id)
         {
@@ -146,6 +150,8 @@ namespace FekraHubAPI.Controllers
                 x.Improved
             }).FirstOrDefault());
         }
+        [Authorize(Policy = "GetStudentsReports")]
+
         [HttpGet("Filter")]
         public async Task<ActionResult<IEnumerable<Report>>> GetReports(
             [FromQuery] int? CourseId,
@@ -260,6 +266,7 @@ namespace FekraHubAPI.Controllers
 
         }
 
+        [Authorize(Policy = "InsertUpdateStudentsReports")]
         [HttpPost]
         public async Task<IActionResult> CreateReports(List<Map_Report_Post> map_Report)
         {
@@ -317,6 +324,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [Authorize(Policy = "ApproveReports")]
+
         [HttpPatch("AcceptReport")]
         public async Task<IActionResult> AcceptReport(int ReportId)
         {
@@ -351,6 +360,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [Authorize(Policy = "ApproveReports")]
+
         [HttpPatch("UnAcceptReport")]
         public async Task<IActionResult> UnAcceptReport(int ReportId)
         {
@@ -380,7 +391,9 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        
+
+        [Authorize(Policy = "ApproveReports")]
+
         [HttpPatch("AcceptAllReport")]
         public async Task<IActionResult> AcceptAllReport(List<int> ReportIds)
         {
@@ -413,6 +426,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+
+        [Authorize(Policy = "InsertUpdateStudentsReports")]
         [HttpPatch("[action]")]
         public async Task<IActionResult> UpdateReport(Map_Report_update map_Report_Update)
         {
@@ -447,6 +462,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [Authorize(Roles = "Admin")]
+
         [HttpPost("ExportReport")]
         public async Task<IActionResult> ExportReport(int reportId)
         {

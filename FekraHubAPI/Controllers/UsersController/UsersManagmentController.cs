@@ -24,7 +24,7 @@ namespace FekraHubAPI.Controllers.UsersController
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin , Secretariat")]
+    [Authorize]
     public class UsersManagment : ControllerBase
     {
         private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
@@ -93,6 +93,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
+        [Authorize(Roles = "Admin")]
 
         [HttpGet("GetEmployee")]
         public async Task<IActionResult> GetEmployee()
@@ -168,6 +169,8 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
+        [Authorize(Roles = "Admin")]
+
         [HttpGet("GetSecretary")]
         public async Task<IActionResult> GetSecretary()
         {
@@ -204,6 +207,8 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
+
+        [Authorize(Roles = "Admin")]
 
         [HttpGet("GetPerent")]
         public async Task<IActionResult> GetPerent()
@@ -381,6 +386,8 @@ namespace FekraHubAPI.Controllers.UsersController
 
             }
         }
+        [Authorize(Roles = "Admin")]
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(string id, [FromForm] Map_Account accountUpdate)
         {
@@ -444,6 +451,8 @@ namespace FekraHubAPI.Controllers.UsersController
             return Ok(account);
         }
 
+        [Authorize(Roles = "Admin")]
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
@@ -461,7 +470,7 @@ namespace FekraHubAPI.Controllers.UsersController
             await _db.SaveChangesAsync();
             return Ok("User Deleted");
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> ResetPasswordUser([Required] string id)

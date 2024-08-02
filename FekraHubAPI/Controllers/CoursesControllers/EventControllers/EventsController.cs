@@ -32,6 +32,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         }
 
         // GET: api/Event
+        [Authorize(Policy = "GetEvents")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents()
         {
@@ -64,6 +65,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
         // GET: api/Event/5
 
+        [Authorize(Policy = "GetEvents")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Event>> GetEvent(int id)
         {
@@ -77,6 +79,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
 
         // PUT: api/Event/5
+
+        [Authorize(Policy = "ManageEvents")]
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEvent(int id, [FromForm] int[] scheduleId, [FromForm] Map_Event eventMdl)
@@ -115,7 +119,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             return NoContent();
         }
         // POST: api/Event
-
+        [Authorize(Policy = "ManageEvents")]
         [HttpPost]
         public async Task<ActionResult<Event>> PostEvent([FromForm] int[] scheduleId, [FromForm] Map_Event eventMdl)
         {
@@ -154,6 +158,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
 
         // DELETE: api/Event/5
+        [Authorize(Policy = "ManageEvents")]
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEvent(int id)
         {

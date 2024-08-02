@@ -37,6 +37,7 @@ namespace FekraHubAPI.Controllers
             _userManager = userManager;
         }
 
+        [Authorize(Roles = "Parent")]
         [HttpGet("CoursesCapacity")]
         public async Task<IActionResult> GetCoursesWithCapacity()
         {
@@ -57,6 +58,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
         }
+
+        [Authorize(Roles = "Admin , Secretariat",  Policy = "GetStudentsCourse")]
         [HttpGet]
         public async Task<IActionResult> GetStudents(string? search , int? courseId, [FromQuery] PaginationParameters paginationParameters)
         {
@@ -99,6 +102,8 @@ namespace FekraHubAPI.Controllers
             }).ToList();
             return Ok(new {  studentsAll.TotalCount,studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
         }
+        [Authorize(Roles = "Parent")]
+
         [HttpGet("ByParent")]
         public async Task<IActionResult> GetStudentsByParent()
         {
@@ -132,7 +137,8 @@ namespace FekraHubAPI.Controllers
 
             return Ok(result);
         }
-        [AllowAnonymous]
+        [Authorize(Roles = "Parent")]
+
         [HttpPost]
         public async Task<IActionResult> GetContract([FromForm] Map_Student student)
         {
@@ -173,6 +179,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating new student record {ex}");
             }
         }
+        [Authorize(Roles = "Parent")]
+
         [HttpPost("AcceptedContract")]
         public async Task<IActionResult> AcceptedContract([FromForm] Map_Student student)
         {
@@ -218,7 +226,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-
+        [Authorize(Roles = "Admin , Secretariat", Policy = "GetContracts")]
         [HttpGet("Contracts")]
         public async Task<IActionResult> GetContracts()
         {
@@ -243,6 +251,8 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [Authorize(Roles = "Parent")]
+
         [HttpGet("SonsContractsForParent")]
         public async Task<IActionResult> GetSonsOfParentContracts()
         {
@@ -271,6 +281,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [AllowAnonymous]
         [HttpGet("testing/sendEmails/foreach")]
         public async Task<IActionResult> Testing()
         {

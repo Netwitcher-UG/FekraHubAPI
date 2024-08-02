@@ -33,6 +33,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _userManager = userManager;
         }
 
+        [Authorize(Roles = "Admin ,Teacher , Secretariat")]
 
         [HttpGet("AttendanceStatus")]
         public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetAttendanceStatus()
@@ -51,6 +52,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [Authorize(Roles = "Admin ,Teacher , Secretariat")]
 
         [HttpPost("AttendanceStatus")]
         public async Task<IActionResult> AddAttendanceStatus([FromForm] string status)
@@ -80,6 +82,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [Authorize(Roles = "Admin ,Teacher , Secretariat")]
 
         [HttpDelete("AttendanceStatus/{id}")]
         public async Task<IActionResult> DeleteAttendanceStatus( int id)
@@ -102,6 +105,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+        [Authorize(Policy = "GetStudentsAttendance")]
         [HttpGet("AllStudent")]
         public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetAllStudentAttendance()
         {
@@ -134,6 +138,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         //Get url/Attendance/Student/get?startDate=2024-05-24&endDate=2024-11-01 | date to date
         //Get url/Attendance/Student/get?year=2024 | by year
         //Get url/Attendance/Student/get?month=05 | by month
+        
+        [Authorize(Policy = "GetStudentsAttendance")]
         [HttpGet("StudentFilter")]
         public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetStudentAttendance(
             [FromQuery] int? coursId,
@@ -201,6 +207,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+        [Authorize(Policy = "GetTeachersAttendance")]
+
         [HttpGet("AllTeacher")]
         public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetAllTeacherAttendance()
         {
@@ -234,6 +242,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         //Get url/Attendance/Teacher/get?startDate=2024-05-24&endDate=2024-11-01 | date to date
         //Get url/Attendance/Teacher/get?year=2024 | by year
         //Get url/Attendance/Teacher/get?month=05 | by month
+        [Authorize(Policy = "GetTeachersAttendance")]
         [HttpGet("TeacherFilter")]
         public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendance(
             [FromQuery] int? coursId,
@@ -301,7 +310,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        
+        [Authorize(Roles = "Admin ,Teacher ")]
         [HttpPost("Student")]
         public async Task<IActionResult> AddStudentAttendance([FromForm] Map_StudentAttendance studentAttendance)
         {
@@ -326,7 +335,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        
+        [Authorize(Roles ="Admin , Teacher")]
         [HttpPost("AllStudentAttendance")]
         public async Task<IActionResult> AddAllStudentAttendance([FromForm] DateTime dateTime, [FromForm] int courseID,
             [FromForm] int statusID)
@@ -367,7 +376,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-       
+        [Authorize(Policy = "UpdateTeachersAttendance")]
+
         [HttpPost("Teacher")]
         public async Task<IActionResult> AddTeacherAttendance([FromForm] Map_TeacherAttendance teacherAttendance)
         {
@@ -395,6 +405,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [Authorize(Policy = "UpdateStudentsAttendance")]
 
         [HttpPatch("Student")]
         public async Task<IActionResult> UpdateStudentAttendance([FromForm] int id, [FromForm] int statusId)
@@ -427,7 +438,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-
+        [Authorize(Policy = "UpdateStudentsAttendance")]
         [HttpPatch("Teacher")]
         public async Task<IActionResult> UpdateTeacherAttendance([FromForm] int id, [FromForm] int statusId)
         {

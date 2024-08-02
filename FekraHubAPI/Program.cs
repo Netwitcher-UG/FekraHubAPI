@@ -80,6 +80,11 @@ builder.Services.AddCors(options =>
                .AllowCredentials();
     });
 });
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(80); // HTTP
+    options.ListenAnyIP(443);
+});
 //Adding Authentication 
 builder.Services.AddAuthentication(options =>
 {
@@ -150,4 +155,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+app.Run("http://0.0.0.0:80");

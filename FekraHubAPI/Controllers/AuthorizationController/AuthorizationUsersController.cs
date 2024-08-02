@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
@@ -56,6 +57,26 @@ namespace FekraHubAPI.Controllers.AuthorizationController
                 return Ok("Permission Removed Successfully");
             }
             return BadRequest("Error In Assign");
+        }
+        [HttpPost("[action]")]
+        public async Task<IActionResult> RolePermissions()
+        {
+            var rolesWithPermissions = new Dictionary<string, List<string>>();
+
+            var roles = await _roleManager.Roles.ToListAsync();
+            foreach (var role in roles)
+            {
+                var roleClaims = await _roleManager.GetClaimsAsync(role);
+                if (!rolesWithPermissions.ContainsKey(role.Name))
+                {
+                    rolesWithPermissions[role.Name] = new List<string>();
+                }
+                foreach (var roleClaim in roleClaims)
+                {
+                    rolesWithPermissions[role.Name].Add(roleClaim.Value);
+                }
+            }
+            return Ok(rolesWithPermissions);
         }
 
     }

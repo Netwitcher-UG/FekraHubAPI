@@ -46,10 +46,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
         // GET: api/UploadTypes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Upload>>> GetUploadTypes(string? search)
+        public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search)
         {
 
-           
+
 
             IQueryable<Upload> query = (await _uploadRepository.GetRelation());
 
@@ -63,13 +63,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             {
                 x.Id,
                 TypeUPload = x.UploadType.TypeTitle,
-                Courses = x.Courses.Select(z => new
+                Courses = x.Courses == null ? null : x.Courses.Select(z => new
                 {
                     z.Id,
                     z.Name,
 
                 }),
-                x.file,
+                x.FileName,
+                File = Convert.ToBase64String( x.file),
 
             }).ToList();
 

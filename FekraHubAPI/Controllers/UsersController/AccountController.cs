@@ -427,7 +427,11 @@ namespace FekraHubAPI.Controllers.UsersController
             try
             {
                 var principal = new JwtSecurityTokenHandler().ValidateToken(token, tokenValidationParameters, out var validatedToken);
-                var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userId = principal.FindFirstValue("id");
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("Invalid token: Missing user ID");
+                }
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user != null)
                 {

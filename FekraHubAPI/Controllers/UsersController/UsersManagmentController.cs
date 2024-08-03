@@ -486,6 +486,8 @@ namespace FekraHubAPI.Controllers.UsersController
                     return Ok();
 
                 }
+                return StatusCode(StatusCodes.Status400BadRequest,
+                   new Response { Status = "Error", Message = resetPassResult.ToString()});
                 var forgotPasswordLink = Url.Action(nameof(ResetPassword), "Authentication", new { token, email = user.Email }, Request.Scheme);
                 /*var message = new Message(new string[] { user.Email! }, "Forgot Password Link", forgotPasswordLink!);
                 _emailService.SendEmail(message);

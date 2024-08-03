@@ -250,6 +250,8 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     userToken = new Tokens
                     {
+                        Email = user.Email,
+                        ExpiryDate = DateTime.Now.AddMonths(1),
                         UserId = user.Id,
                         Token = tokenString
                     };

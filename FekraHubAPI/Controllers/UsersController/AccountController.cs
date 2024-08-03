@@ -263,7 +263,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 await _db.SaveChangesAsync();
 
                
-                return Ok(new {UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(), tokenString, token.ValidTo });
+                return Ok(new {UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(),token = tokenString, token.ValidTo });
             }
             return BadRequest(ModelState);
         }

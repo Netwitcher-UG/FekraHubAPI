@@ -75,6 +75,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         public async Task<ActionResult<IEnumerable<Upload>>> DownloadUploadFile(int Id)
         {
             var query = await _uploadRepository.GetById(Id);
+            if(query == null)
+            {
+                return BadRequest("file not found");
+            }
 
             var result = Convert.ToBase64String(query.file);
 

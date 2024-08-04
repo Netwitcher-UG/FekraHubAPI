@@ -472,13 +472,21 @@ namespace FekraHubAPI.Controllers.UsersController
         [Authorize(Policy = "ResetPasswordUser")]
         [HttpPost]
         [Route("[action]")]
-        public async Task<IActionResult> ResetPasswordUser([Required] string id)
+        public async Task<IActionResult> ResetPasswordUser([Required] string id , [Required] string newPassword)
         {
             var user = await _userManager.FindByIdAsync(id);
 
             if (user != null)
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var resetPassResult = await _userManager.ResetPasswordAsync(user, token, newPassword);
+                if (resetPassResult.Succeeded)
+                {
+                    return Ok();
+
+                }
+                return StatusCode(StatusCodes.Status400BadRequest,
+                   new Response { Status = "Error", Message = resetPassResult.ToString()});
                 var forgotPasswordLink = Url.Action(nameof(ResetPassword), "Authentication", new { token, email = user.Email }, Request.Scheme);
                 /*var message = new Message(new string[] { user.Email! }, "Forgot Password Link", forgotPasswordLink!);
                 _emailService.SendEmail(message);
@@ -486,7 +494,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 return StatusCode(StatusCodes.Status2000K,
                 new Response { Status = "Success", Message = $"User created & Email Sent to {user.Email} SuccessFully" });
                 */
-                return Ok(token);
+                //return Ok(token);
 
             }
             return StatusCode(StatusCodes.Status400BadRequest,

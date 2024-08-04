@@ -40,15 +40,33 @@ namespace FekraHubAPI.Seeds
             var i = 1 ;
             foreach (var Permission in AllPermissions)
             {
-                builder.Entity<IdentityRoleClaim<string>>().HasData(
-                new IdentityRoleClaim<string>()
+
+                if (Permission.ToString() == "ManageChildren")
                 {
-                    Id = i,
-                    RoleId = "1",
-                    ClaimType = Permission.ToString(),
-                    ClaimValue = Permission.ToString()
-                });
+                    builder.Entity<IdentityRoleClaim<string>>().HasData(
+                        new IdentityRoleClaim<string>()
+                        {
+                            Id = i,
+                            RoleId = "3",
+                            ClaimType = Permission.ToString(),
+                            ClaimValue = Permission.ToString()
+                        });
+                }
+                else
+                {
+                    builder.Entity<IdentityRoleClaim<string>>().HasData(
+                        new IdentityRoleClaim<string>()
+                        {
+                            Id = i,
+                            RoleId = "1",
+                            ClaimType = Permission.ToString(),
+                            ClaimValue = Permission.ToString()
+                        });
+                }
+
                 i++;
+                
+                
             }
             /* modules = Enum.GetValues(typeof(Helper.PermissionModuleNameSecretariat));
              foreach (var module in modules)

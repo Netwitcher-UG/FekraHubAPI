@@ -14,7 +14,6 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CoursesController : ControllerBase
@@ -36,7 +35,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         // GET: api/Course
-        [Authorize(Policy = "GetTeachersCourse")]
+        [Authorize(Policy = "GetCourse")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Course>>> GetCourses(string? search)
         {
@@ -73,7 +72,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             return Ok(result);
         }
 
-        // GET: api/Course/5
+        [Authorize(Policy = "GetCourse")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Course>> GetCourse(int id)
         {
@@ -104,7 +103,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }).FirstOrDefault());
         }
 
-        // POST: api/Course
+        [Authorize(Policy = "AddCourse")]
         [HttpPost]
         public async Task<ActionResult<Course>> PostCourse([FromForm] string[] TeacherId, [FromForm] Map_Course courseMdl)
         {
@@ -161,7 +160,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         // PUT: api/Course/5
-        [Authorize(Policy = "UpdateTeachersCourse")]        
+        [Authorize(Policy = "putCourse")]        
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCourse(int id, [FromForm] string[] TeacherId, [FromForm] Map_Course courseMdl)
         {
@@ -193,7 +192,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             return NoContent();
         }
 
-        // DELETE: api/Course/5
+        [Authorize(Policy = "DeleteCourse")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCourse(int id)
         {
@@ -207,7 +206,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             return NoContent();
         }
 
-
+        [Authorize(Policy = "ManageStudentsToCourses")]
         [HttpPost("AssignStudentsToCourse")]
         public async Task<IActionResult> AssignStudentsToCourse( int courseID, [FromBody] List<int> studentIds)
         {

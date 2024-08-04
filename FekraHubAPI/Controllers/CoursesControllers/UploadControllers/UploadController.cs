@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
 
@@ -44,7 +43,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
 
 
-        // GET: api/UploadTypes
+        [Authorize(Policy = "ManageFile")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search)
         {
@@ -71,6 +70,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
             return Ok(result);
         }
+        [Authorize(Policy = "ManageFile")]
         [HttpGet("[action]")]
         public async Task<ActionResult<IEnumerable<Upload>>> DownloadUploadFile(int Id)
         {
@@ -84,7 +84,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             return Ok(result);
         }
 
-
+        [Authorize(Policy = "ManageFile")]
         [HttpPost]
         public async Task<IActionResult> UploadFiles([FromForm] int courseId, [FromForm] int UploadTypeId, [FromForm] List<IFormFile> files)
         {
@@ -138,7 +138,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
 
 
-        // DELETE: api/UploadTypes/5
+        [Authorize(Policy = "DeleteFile")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUploadFile(int id)
         {

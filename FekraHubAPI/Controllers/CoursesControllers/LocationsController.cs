@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
-    [Authorize(Roles = "Admin")]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class LocationsController : ControllerBase
@@ -21,7 +21,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _mapper = mapper;
         }
 
-        // GET: api/Locations
+        [Authorize(Policy = "ManageLocations")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_location>>> GetLocations(string? search)
 
@@ -41,7 +41,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
 
         // GET: api/Locations/5
-   
+        [Authorize(Policy = "ManageLocations")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_location>> GetLocation(int id)
         {
@@ -76,6 +76,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             return NoContent();
         }
         // POST: api/Locations
+        [Authorize(Policy = "ManageLocations")]
         [HttpPost]
         public async Task<ActionResult<Location>> PostLocation([FromForm] Map_location location)
         {
@@ -92,6 +93,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
 
         // DELETE: api/Locations/5
+        [Authorize(Policy = "ManageLocations")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLocation(int id)
         {

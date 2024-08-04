@@ -14,8 +14,8 @@ namespace FekraHubAPI.Constract
             AddUsers,
             GetStudentsCourse,
             UpdateStudentsCourse,   // later
-            GetTeachersCourse,
-            UpdateTeachersCourse,
+            GetTeachersCourse,//
+            UpdateTeachersCourse,//
             GetContracts,
             ManageEvents,  
             GetEvents,
@@ -30,7 +30,34 @@ namespace FekraHubAPI.Constract
             ManageBooks,
             DeleteSchoolData, // 
             ResetData , //
-            //ManageWorkContract
+            //============
+            ManagePermissions,
+            ManageCourseSchedule,
+            ManageEventTypes,
+            ManageFile,
+            DeleteFile,
+            ManageAttendanceStatus,
+            AddStudentAttendance,
+            GetCourse,
+            AddCourse,
+            putCourse,
+            DeleteCourse,
+            ManageStudentsToCourses,
+            ManageLocations,
+            ManageRoom,
+            ManageExcelMigration,
+            GetEmployee,
+            GetSecretary,
+            GetTeacher,
+            GetParent,
+            UpdateUser,
+            DeleteUser,
+            ResetPasswordUser,
+            ManageWorkContract,
+            ExportReport,
+            ManageSchoolInfo,
+            ManageChildren
+
 
         }
         

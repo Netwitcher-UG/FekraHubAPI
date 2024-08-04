@@ -10,7 +10,7 @@ using System.Reflection.Emit;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
-    [Authorize(Roles = "Admin")]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class RoomsController : ControllerBase
@@ -24,7 +24,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _mapper = mapper;
         }
 
-        // GET: api/Rooms
+        [Authorize(Policy = "ManageRoom")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Room>>> GetRooms()
         {
@@ -46,6 +46,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         // GET: api/Rooms/5
+        [Authorize(Policy = "ManageRoom")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Room>> GetRoom(int id)
         {
@@ -58,6 +59,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         // PUT: api/Rooms/5
+        [Authorize(Policy = "ManageRoom")]
         [HttpPut("{id}")]
    
         public async Task<IActionResult> PutRoom(int id, [FromForm] Map_Room room)
@@ -81,7 +83,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         // POST: api/Rooms
 
-
+        [Authorize(Policy = "ManageRoom")]
         [HttpPost]
         public async Task<ActionResult<Room>> PostRoom([FromForm] Map_Room room)
         {
@@ -91,6 +93,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         // DELETE: api/Rooms/5
+        [Authorize(Policy = "ManageRoom")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoom(int id)
         {

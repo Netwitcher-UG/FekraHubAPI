@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using OfficeOpenXml;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FekraHubAPI.Controllers.Excel_Migration
 {
@@ -33,7 +34,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
         }
 
-
+        [Authorize(Policy = "ManageExcelMigration")]
         [HttpPost("UploadData")]
         public async Task<IActionResult> UploadData([Required] IFormFile file)
         {

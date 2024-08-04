@@ -9,7 +9,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.Controllers
 {
-    [Authorize (Roles ="Admin")]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class SchoolInfoController : ControllerBase
@@ -21,7 +21,7 @@ namespace FekraHubAPI.Controllers
             _schoolInfoRepo = schoolInfoRepo;
             _mapper = mapper;
         }
-
+        [Authorize(Policy = "ManageSchoolInfo")]
         [HttpGet]
         public async Task<IActionResult> GetSchoolInfo()
         {
@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers
             }
             return Ok(schoolInfo);
         }
-        
+        [Authorize(Policy = "ManageSchoolInfo")]
         [HttpPost]
         public async Task<IActionResult> InsertSchoolInfo([FromForm] Map_SchoolInfo SchoolInfo)
         {
@@ -49,6 +49,7 @@ namespace FekraHubAPI.Controllers
             await _schoolInfoRepo.Add(schoolInfo);
             return Ok(schoolInfo);
         }
+        [Authorize(Policy = "ManageSchoolInfo")]
         [HttpPut]
         public async Task<IActionResult> UpdateSchoolInfo([FromForm] Map_SchoolInfo schoolInfo)
         {
@@ -65,6 +66,7 @@ namespace FekraHubAPI.Controllers
             await _schoolInfoRepo.Update(schoolInfos);
             return Ok(schoolInfo);
         }
+        [Authorize(Policy = "ManageSchoolInfo")]
         [HttpDelete]
         public async Task<IActionResult> DeleteSchoolInfo()
         {

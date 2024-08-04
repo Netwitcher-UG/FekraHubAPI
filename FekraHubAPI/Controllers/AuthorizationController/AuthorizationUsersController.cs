@@ -15,7 +15,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles =DefaultRole.Admin)]
+    
     public class AuthorizationUsersController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -28,7 +28,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
 
         }
 
-
+        [Authorize(Policy = "ManagePermissions")]
         [HttpPost("[action]")]
         public async Task<IActionResult> AssignPermissionToRole([FromQuery][Required] string RoleName, [FromQuery][Required] string PermissionName)
         {
@@ -44,7 +44,8 @@ namespace FekraHubAPI.Controllers.AuthorizationController
                 return Ok("Permission Assigned Successfully");
             }
             return BadRequest("Error In Assign");
-        } 
+        }
+        [Authorize(Policy = "ManagePermissions")]
         [HttpPost("[action]")]
         public async Task<IActionResult> RemovePermissionToRole([FromQuery][Required] string RoleName, [FromQuery][Required] string PermissionName)
         {

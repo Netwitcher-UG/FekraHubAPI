@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FekraHubAPI.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class PayRollsController : ControllerBase

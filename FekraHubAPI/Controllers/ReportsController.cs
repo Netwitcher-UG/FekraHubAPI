@@ -13,7 +13,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ReportsController : ControllerBase
@@ -34,7 +33,7 @@ namespace FekraHubAPI.Controllers
             _mapper = mapper;
             _exportPDF = exportPDF;
         }
-        
+        [Authorize(Policy = "InsertUpdateStudentsReports")]
         [HttpGet("Keys")]
         public async Task<IActionResult> GetReportKeys()
         {
@@ -462,7 +461,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "ExportReport")]
 
         [HttpPost("ExportReport")]
         public async Task<IActionResult> ExportReport(int reportId)

@@ -13,7 +13,6 @@ using System.Security.Claims;
 
 namespace FekraHubAPI.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class StudentController : ControllerBase
@@ -37,7 +36,7 @@ namespace FekraHubAPI.Controllers
             _userManager = userManager;
         }
 
-        [Authorize(Roles = "Parent")]
+        [Authorize(Policy = "ManageChildren")]
         [HttpGet("CoursesCapacity")]
         public async Task<IActionResult> GetCoursesWithCapacity()
         {
@@ -59,7 +58,7 @@ namespace FekraHubAPI.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin , Secretariat",  Policy = "GetStudentsCourse")]
+        [Authorize( Policy = "GetStudentsCourse")]
         [HttpGet]
         public async Task<IActionResult> GetStudents(string? search , int? courseId, [FromQuery] PaginationParameters paginationParameters)
         {
@@ -102,7 +101,7 @@ namespace FekraHubAPI.Controllers
             }).ToList();
             return Ok(new {  studentsAll.TotalCount,studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
         }
-        [Authorize(Roles = "Parent")]
+        [Authorize(Policy = "ManageChildren")]
 
         [HttpGet("ByParent")]
         public async Task<IActionResult> GetStudentsByParent()
@@ -137,7 +136,7 @@ namespace FekraHubAPI.Controllers
 
             return Ok(result);
         }
-        [Authorize(Roles = "Parent")]
+        [Authorize(Policy = "ManageChildren")]
 
         [HttpPost]
         public async Task<IActionResult> GetContract([FromForm] Map_Student student)
@@ -179,7 +178,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating new student record {ex}");
             }
         }
-        [Authorize(Roles = "Parent")]
+        [Authorize(Policy = "ManageChildren")]
 
         [HttpPost("AcceptedContract")]
         public async Task<IActionResult> AcceptedContract([FromForm] Map_Student student)
@@ -226,7 +225,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Roles = "Admin , Secretariat", Policy = "GetContracts")]
+        [Authorize(Policy = "GetContracts")]
         [HttpGet("Contracts")]
         public async Task<IActionResult> GetContracts()
         {
@@ -251,7 +250,7 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Roles = "Parent")]
+        [Authorize(Policy = "ManageChildren")]
 
         [HttpGet("SonsContractsForParent")]
         public async Task<IActionResult> GetSonsOfParentContracts()

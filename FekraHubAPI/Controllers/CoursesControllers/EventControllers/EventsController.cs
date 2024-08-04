@@ -12,7 +12,6 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class EventsController : ControllerBase

@@ -13,7 +13,6 @@ using System.Security.Claims;
 
 namespace FekraHubAPI.Controllers.WorkContractControllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class WorkContractController : ControllerBase
@@ -30,6 +29,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             _workContractRepository = workContractRepository;
             _mapper = mapper;
         }
+        [Authorize(Policy = "ManageWorkContract")]
         [HttpGet("{workContractID}")]
         public async Task<IActionResult> GetWorkContract(int workContractID)
         {
@@ -50,6 +50,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 return BadRequest(ex.Message);
             }
         }
+        [Authorize(Policy = "ManageWorkContract")]
         [HttpGet("[action]")]
 
         public async Task<IActionResult> GetMyWorkContract()
@@ -67,6 +68,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 return BadRequest(ex.Message);
             }
         }
+        [Authorize(Policy = "ManageWorkContract")]
         [HttpPost]
         public async Task<ActionResult> UploadWorkContract([FromQuery][Required] List<IFormFile> files
             , [FromQuery][Required] string UserID
@@ -109,7 +111,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
 
             return Ok();
         }
-
+        [Authorize(Policy = "ManageWorkContract")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteWorkContract(int id)
         {
@@ -122,7 +124,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             await _workContractRepository.Delete(id);
             return Ok();
         }
-
+        [Authorize(Policy = "ManageWorkContract")]
         [HttpGet("[action]/{userID}")]
         public async Task<IActionResult> GetByUserID(string userID)
         {

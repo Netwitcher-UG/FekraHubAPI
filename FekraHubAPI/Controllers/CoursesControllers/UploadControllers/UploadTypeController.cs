@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
-    [Authorize(Policy = "ManageBooks")]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class UploadTypeController : ControllerBase
@@ -22,6 +22,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         }
 
         // GET: api/UploadTypes
+        [Authorize(Policy = "ManageBooks")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_UploadType>>> GetUploadTypes()
         {
@@ -32,7 +33,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
 
         // GET: api/UploadTypes/5
-
+        [Authorize(Policy = "ManageBooks")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_UploadType>> GetUploadType(int id)
         {
@@ -46,7 +47,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
 
         // PUT: api/UploadTypes/5
-
+        [Authorize(Policy = "ManageBooks")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUploadType(int id, [FromForm] Map_UploadType uploadTypeMdl)
         {
@@ -67,6 +68,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             return NoContent();
         }
         // POST: api/UploadTypes
+        [Authorize(Policy = "ManageBooks")]
         [HttpPost]
         public async Task<ActionResult<UploadType>> PostUploadType([FromForm] Map_UploadType uploadType)
         {
@@ -83,6 +85,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
 
         // DELETE: api/UploadTypes/5
+        [Authorize(Policy = "ManageBooks")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUploadType(int id)
         {

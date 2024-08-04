@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 {
-    [Authorize(Roles = "Admin")]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class EventTypeController : ControllerBase
@@ -21,7 +21,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             _mapper = mapper;
         }
 
-        // GET: api/EventType
+        [Authorize(Policy = "ManageEventTypes")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_EventType>>> GetEventTypes()
         {
@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
 
         // GET: api/EventType/5
-
+        [Authorize(Policy = "ManageEventTypes")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_EventType>> GetEventType(int id)
         {
@@ -46,7 +46,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
 
         // PUT: api/EventType/5
-
+        [Authorize(Policy = "ManageEventTypes")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEventType(int id, [FromForm] Map_EventType eventTypeMdl)
         {
@@ -66,7 +66,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
             return NoContent();
         }
-        // POST: api/EventType
+        [Authorize(Policy = "ManageEventTypes")]
         [HttpPost]
         public async Task<ActionResult<EventType>> PostEventType([FromForm] Map_EventType eventType)
         {
@@ -82,7 +82,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         }
 
 
-        // DELETE: api/EventType/5
+        [Authorize(Policy = "ManageEventTypes")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEventType(int id)
         {

@@ -50,7 +50,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
 
         }
-       
+        [Authorize(Policy = "GetUsers")]
         [HttpGet("PaginationParameters")]
         public async Task<IActionResult> PaginationParameters([FromQuery] PaginationParameters paginationParameters)
         {
@@ -93,7 +93,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "GetEmployee")]
 
         [HttpGet("GetEmployee")]
         public async Task<IActionResult> GetEmployee()
@@ -132,7 +132,7 @@ namespace FekraHubAPI.Controllers.UsersController
             return Ok(data);
         }
         
-        [Authorize(Policy = "GetUsers")]
+        [Authorize(Policy = "GetTeacher")]
         [HttpGet("GetTeacher")]
         public async Task<IActionResult> GetTeacher()
         {
@@ -169,8 +169,8 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
-        [Authorize(Roles = "Admin")]
 
+        [Authorize(Policy = "GetSecretary")]
         [HttpGet("GetSecretary")]
         public async Task<IActionResult> GetSecretary()
         {
@@ -208,8 +208,7 @@ namespace FekraHubAPI.Controllers.UsersController
             return Ok(data);
         }
 
-        [Authorize(Roles = "Admin")]
-
+        [Authorize(Policy = "GetParent")]
         [HttpGet("GetPerent")]
         public async Task<IActionResult> GetPerent()
         {
@@ -386,7 +385,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
             }
         }
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "UpdateUser")]
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(string id, [FromForm] Map_Account accountUpdate)
@@ -451,7 +450,7 @@ namespace FekraHubAPI.Controllers.UsersController
             return Ok(account);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "DeleteUser")]
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(string id)
@@ -470,7 +469,7 @@ namespace FekraHubAPI.Controllers.UsersController
             await _db.SaveChangesAsync();
             return Ok("User Deleted");
         }
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "ResetPasswordUser")]
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> ResetPasswordUser([Required] string id)

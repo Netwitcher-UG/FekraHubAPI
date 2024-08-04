@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AttendanceController : ControllerBase
@@ -33,8 +32,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _userManager = userManager;
         }
 
-        [Authorize(Roles = "Admin ,Teacher , Secretariat")]
 
+        [Authorize(Policy = "ManageAttendanceStatus")]
         [HttpGet("AttendanceStatus")]
         public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetAttendanceStatus()
         {
@@ -52,8 +51,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Roles = "Admin ,Teacher , Secretariat")]
 
+        [Authorize(Policy = "ManageAttendanceStatus")]
         [HttpPost("AttendanceStatus")]
         public async Task<IActionResult> AddAttendanceStatus([FromForm] string status)
         {
@@ -82,8 +81,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Roles = "Admin ,Teacher , Secretariat")]
 
+        [Authorize(Policy = "ManageAttendanceStatus")]
         [HttpDelete("AttendanceStatus/{id}")]
         public async Task<IActionResult> DeleteAttendanceStatus( int id)
         {
@@ -310,7 +309,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Roles = "Admin ,Teacher ")]
+        [Authorize(Policy = "AddStudentAttendance")]
         [HttpPost("Student")]
         public async Task<IActionResult> AddStudentAttendance([FromForm] Map_StudentAttendance studentAttendance)
         {

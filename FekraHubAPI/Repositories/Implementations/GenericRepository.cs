@@ -127,7 +127,7 @@ namespace FekraHubAPI.Repositories.Implementations
 
         public string GetUserIDFromToken(ClaimsPrincipal User)
         {
-            return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return User.FindFirst("id")?.Value;
         }
 
         public async Task<PagedResponse<T>> GetPagedDataAsync(IQueryable<T> source, PaginationParameters paginationParameters)

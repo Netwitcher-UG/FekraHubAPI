@@ -11,7 +11,7 @@ namespace FekraHubAPI.MapModels.Courses
         public string Gender { get; set; }
         public DateTime Birthday { get; set; }
         public string Nationality { get; set; }
-        public string Note { get; set; }
+        public string? Note { get; set; }
         public string? Street { get; set; }
         public string? StreetNr { get; set; }
         public string? ZipCode { get; set; }

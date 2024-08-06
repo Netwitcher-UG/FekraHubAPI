@@ -200,7 +200,7 @@ namespace FekraHubAPI.Controllers
                     FirstName = student.FirstName,
                     LastName = student.LastName,
                     Nationality = student.Nationality,
-                    Note = student.Note,
+                    Note = student.Note ?? "",
                     Gender = student.Gender,
                     Birthday = student.Birthday,
                     City = student.City,

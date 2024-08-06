@@ -33,7 +33,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _mapper = mapper;
             _roomRepo = roomRepo;
         }
-
+        [Authorize]
+        [HttpGet("GetCoursesName")]
+        public async Task<IActionResult> GetCoursesName()
+        {
+            IQueryable<Course> courses = await _courseRepository.GetRelation();
+            if (courses == null) 
+            {
+                return NotFound();
+            }
+            return Ok(courses.Select(x => new { x.Id,x.Name }));
+        }
         // GET: api/Course
         [Authorize(Policy = "GetCourse")]
         [HttpGet]

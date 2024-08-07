@@ -40,7 +40,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             IQueryable<Course> courses = await _courseRepository.GetRelation();
             if (courses == null) 
             {
-                return NotFound();
+                return NotFound("no course found");
             }
             return Ok(courses.Select(x => new { x.Id,x.Name }));
         }

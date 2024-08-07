@@ -20,7 +20,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _locationRepository = locationRepository;
             _mapper = mapper;
         }
-
+        [Authorize]
+        [HttpGet("GetLocationsNames")]
+        public async Task<IActionResult> GetLocationsNames()
+        {
+            var locations = await _locationRepository.GetRelation();
+            if (locations == null) 
+            {
+                return NotFound("no locations found");
+            }
+            return Ok(locations.Select(x => new {x.Id,x.Name}));
+        }
         [Authorize(Policy = "ManageLocations")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_location>>> GetLocations(string? search)

@@ -6,6 +6,7 @@ using FekraHubAPI.MapModels;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,8 +24,10 @@ namespace FekraHubAPI.Controllers
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
         private readonly IExportPDF _exportPDF;
+        private readonly UserManager<ApplicationUser> _Users;
         public ReportsController(IRepository<Report> reportRepo, IRepository<SchoolInfo> schoolInfo,
-            IRepository<Student> studentRepo, IEmailSender emailSender,IMapper mapper, IExportPDF exportPDF)
+            IRepository<Student> studentRepo, IEmailSender emailSender, IMapper mapper, IExportPDF exportPDF
+            , UserManager<ApplicationUser> Users)
         {
             _reportRepo = reportRepo;
             _schoolInfo = schoolInfo;
@@ -32,6 +35,7 @@ namespace FekraHubAPI.Controllers
             _emailSender = emailSender;
             _mapper = mapper;
             _exportPDF = exportPDF;
+            _Users = Users;
         }
         [Authorize(Policy = "InsertUpdateStudentsReports")]
         [HttpGet("Keys")]
@@ -45,10 +49,14 @@ namespace FekraHubAPI.Controllers
         public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved, [FromQuery] int? CourseId, [FromQuery] PaginationParameters paginationParameters)
         {
             IQueryable<Report> query;
-            
-            if (Improved == null) 
+
+            if (Improved == null)
             {
                 query = (await _reportRepo.GetRelation()).OrderByDescending(report => report.CreationDate);
+                if (!query.Any())
+                {
+                    return NotFound("No reports found.");
+                }
             }
             else
             {
@@ -120,7 +128,7 @@ namespace FekraHubAPI.Controllers
         public async Task<IActionResult> GetReport(int id)
         {
             var report = (await _reportRepo.GetRelation()).Where(x => x.Id == id);
-            if (report == null)
+            if (!report.Any())
             {
                 return BadRequest($"no report has an ID {id}");
             }
@@ -167,7 +175,7 @@ namespace FekraHubAPI.Controllers
             )
         {
             IQueryable<Report> query = (await _reportRepo.GetRelation()).OrderByDescending(report => report.CreationDate);
-            if (query == null)
+            if (!query.Any())
             {
                 return NotFound("No reports found.");
             }
@@ -265,6 +273,103 @@ namespace FekraHubAPI.Controllers
 
         }
 
+        [Authorize(Policy = "ManageChildren")]
+        [HttpGet("[action]")]
+        public async Task<ActionResult<IEnumerable<Report>>> GetReportsByStudent([FromQuery] int studentId)
+        {
+            var ParentId = _reportRepo.GetUserIDFromToken(User);
+            var student = await _studentRepo.GetById(studentId);
+            if (student == null)
+            {
+                return NotFound("Student not found");
+            }
+            if (student.ParentID != ParentId)
+            {
+                return BadRequest("This student is not the User's child");
+            }
+            IQueryable<Report> query = (await _reportRepo.GetRelation())
+                .Where(x => x.StudentId == studentId && x.Improved == true)
+                .OrderByDescending(report => report.CreationDate);
+            if (query == null)
+            {
+                return NotFound("No reports found.");
+            }
+
+            var result = query.Select(x => new
+            {
+                x.Id,
+                x.data,
+                x.CreationDate,
+                x.CreationDate.Year,
+                x.CreationDate.Month,
+                TeacherId = x.UserId,
+                TeacherFirstName = x.User.FirstName,
+                TeacherLastName = x.User.LastName,
+                TeacherEmail = x.User.Email,
+                Student = new
+                {
+                    x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    x.Student.Birthday,
+                    x.Student.Nationality,
+                    x.Student.Note,
+                    x.Student.ParentID,
+                    course = new { x.Student.CourseID, x.Student.Course.Name }
+                },
+
+            });
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "ManageChildren")]
+
+        [HttpGet("[action]/{id}")]
+        public async Task<IActionResult> GetOneReport(int id)
+        {
+            var report = (await _reportRepo.GetRelation())
+                .Where(x => x.Id == id && x.Improved == true);
+            if (!report.Any())
+            {
+                return BadRequest($"no report has an ID {id}");
+            }
+            var ParentId = _reportRepo.GetUserIDFromToken(User);
+            var student = await _studentRepo.GetById(report.First().StudentId ?? 0);
+            if (student == null)
+            {
+                return NotFound("Student not found");
+            }
+            if (student.ParentID != ParentId)
+            {
+                return BadRequest("This student is not the User's child");
+            }
+
+            return Ok(report.Select(x => new
+            {
+                x.Id,
+                x.data,
+                x.CreationDate,
+                x.CreationDate.Year,
+                x.CreationDate.Month,
+                TeacherId = x.UserId,
+                TeacherFirstName = x.User.FirstName,
+                TeacherLastName = x.User.LastName,
+                TeacherEmail = x.User.Email,
+                Student = new
+                {
+                    x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    x.Student.Birthday,
+                    x.Student.Nationality,
+                    x.Student.Note,
+                    x.Student.ParentID,
+                    course = new { x.Student.CourseID, x.Student.Course.Name }
+                },
+
+            }).FirstOrDefault());
+        }
+
         [Authorize(Policy = "InsertUpdateStudentsReports")]
         [HttpPost]
         public async Task<IActionResult> CreateReports(List<Map_Report_Post> map_Report)
@@ -307,7 +412,7 @@ namespace FekraHubAPI.Controllers
             {
                 await _reportRepo.ManyAdd(AllReports);
                 await _emailSender.SendToSecretaryNewReportsForStudents();
-                return Ok(AllReports.Select(x =>  new {
+                return Ok(AllReports.Select(x => new {
                     x.Id,
                     x.data,
                     x.CreationDate,
@@ -333,7 +438,7 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest("This report not found");
             }
-            if (report.Improved == false) 
+            if (report.Improved == false)
             {
                 return BadRequest("This report needs to updates first");
             }
@@ -343,7 +448,8 @@ namespace FekraHubAPI.Controllers
                 await _reportRepo.Update(report);
                 var student = await _studentRepo.GetById(report.StudentId ?? 0);
                 await _emailSender.SendToParentsNewReportsForStudents([student]);
-                return Ok(new { 
+                return Ok(new
+                {
                     report.Id,
                     report.CreationDate,
                     report.CreationDate.Year,
@@ -373,8 +479,9 @@ namespace FekraHubAPI.Controllers
             try
             {
                 await _reportRepo.Update(report);
-                await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0,report.UserId ?? "");
-                return Ok(new {
+                await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0, report.UserId ?? "");
+                return Ok(new
+                {
                     report.Id,
                     report.CreationDate,
                     report.CreationDate.Year,
@@ -445,7 +552,8 @@ namespace FekraHubAPI.Controllers
             {
                 await _reportRepo.Update(report);
                 await _emailSender.SendToSecretaryUpdateReportsForStudents();
-                return Ok(new {
+                return Ok(new
+                {
                     report.Id,
                     report.CreationDate,
                     report.CreationDate.Year,
@@ -476,7 +584,7 @@ namespace FekraHubAPI.Controllers
                 return BadRequest("this report was not approved");
             }
             var reportBase64 = await _exportPDF.ExportReport(reportId);
-            
+
             return Ok(reportBase64);
 
         }

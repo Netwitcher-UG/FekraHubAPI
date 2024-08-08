@@ -64,8 +64,8 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet]
         public async Task<IActionResult> GetAccount()
         {
-            var getCurrentAccount = await GetCurrentUserAsync();
-            var user = await _db.ApplicationUser.FindAsync(getCurrentAccount.Id);
+            var UserId = _schoolInfoRepo.GetUserIDFromToken(User);
+            var user = await _db.ApplicationUser.FindAsync(UserId);
             if (user == null)
             {
                 return NotFound($"user not exists!");

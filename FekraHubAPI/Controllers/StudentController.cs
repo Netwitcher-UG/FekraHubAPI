@@ -180,6 +180,50 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize(Policy = "ManageChildren")]
 
+        [HttpGet("GetStudentByParent")]
+        public async Task<IActionResult> GetStudentByParent(int id)
+        {
+            var parentId = _courseRepo.GetUserIDFromToken(User);
+
+            if (string.IsNullOrEmpty(parentId))
+            {
+                return Unauthorized("Parent not found.");
+            }
+
+            var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId && x.Id == id);
+            if (!students.Any())
+            {
+                return NotFound("This student is not found");
+            }
+            var result = students.Select(z => new
+            {
+                z.Id,
+                z.FirstName,
+                z.LastName,
+                z.Birthday,
+                z.Nationality,
+                z.Note,
+                z.Gender,
+                city = z.City ?? "Like parent",
+                Street = z.Street ?? "Like parent",
+                StreetNr = z.StreetNr ?? "Like parent",
+                ZipCode = z.ZipCode ?? "Like parent",
+                course = z.Course == null ? null : new
+                {
+                    z.Course.Id,
+                    z.Course.Name,
+                    z.Course.Capacity,
+                    startDate = z.Course.StartDate.Date,
+                    EndDate = z.Course.EndDate.Date,
+                    z.Course.Price
+                }
+            }).First();
+
+
+            return Ok(result);
+        }
+        [Authorize(Policy = "ManageChildren")]
+
         [HttpPost("AcceptedContract")]
         public async Task<IActionResult> AcceptedContract([FromForm] Map_Student student)
         {

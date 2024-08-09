@@ -210,7 +210,8 @@ namespace FekraHubAPI.Controllers.UsersController
                 }
                 if (!user.EmailConfirmed)
                 {
-                    return BadRequest("You must confirm your account");
+                    await _emailSender.SendConfirmationEmail(user);
+                    return BadRequest("Your account not confirmed . The confirm link has been sent to your email");
                 }
 
                 var claims = new List<Claim>

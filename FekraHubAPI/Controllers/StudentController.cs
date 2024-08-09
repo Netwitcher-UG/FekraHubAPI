@@ -227,7 +227,7 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize(Policy = "ManageChildren")]
 
-        [HttpGet("GetStudentByParent")]
+        [HttpGet("GetStudentByParent/{id}")]
         public async Task<IActionResult> GetStudentByParent(int id)
         {
             var parentId = _courseRepo.GetUserIDFromToken(User);

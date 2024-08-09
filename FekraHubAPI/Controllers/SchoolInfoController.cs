@@ -77,5 +77,14 @@ namespace FekraHubAPI.Controllers
             }
             return Ok("Done");
         }
+        //[AllowAnonymous]
+        //[HttpPut("updateTESTING")]
+        //public async Task<IActionResult> UpdateFeildsSchoolInfo(string domain)
+        //{
+        //    var schoolInfo = (await _schoolInfoRepo.GetRelation()).First();
+        //    schoolInfo.UrlDomain = domain;
+        //    await _schoolInfoRepo.Update(schoolInfo);
+        //    return Ok(schoolInfo.UrlDomain);
+        //}
     }
 }

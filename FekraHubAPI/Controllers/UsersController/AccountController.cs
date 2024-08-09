@@ -211,7 +211,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 if (!user.EmailConfirmed)
                 {
                     await _emailSender.SendConfirmationEmail(user);
-                    return StatusCode(407, "Your account not confirmed . The confirm link has been sent to your email");
+                    return StatusCode(409, "Your account not confirmed . The confirm link has been sent to your email");
                 }
 
                 var claims = new List<Claim>

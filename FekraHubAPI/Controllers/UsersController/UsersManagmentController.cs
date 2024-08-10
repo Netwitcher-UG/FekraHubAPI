@@ -321,10 +321,10 @@ namespace FekraHubAPI.Controllers.UsersController
                     if (ModelState.IsValid)
                     {
                         var normalizedEmail = user.Email.ToUpperInvariant();
-                        var normalizedUserName = user.UserName.ToUpperInvariant();
+                        var normalizedUserName = user.Email.ToUpperInvariant();
                         ApplicationUser appUser = new()
                         {
-                            UserName = user.UserName,
+                            UserName = user.Email,
                             NormalizedUserName = normalizedUserName,
                             Email = user.Email,
                             FirstName = user.FirstName,
@@ -425,7 +425,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
             var normalizedUserName = accountUpdate.UserName.Normalize().ToLower();
 
-            account.UserName = accountUpdate.UserName;
+            account.UserName = accountUpdate.Email;
             account.Email = accountUpdate.Email;
             account.NormalizedUserName = normalizedUserName;
             account.NormalizedEmail = normalizedEmail;

@@ -298,10 +298,10 @@ namespace FekraHubAPI.Controllers.UsersController
                     if (ModelState.IsValid)
                     {
                         var normalizedEmail = user.email.ToUpperInvariant();
-                        var normalizedUserName = user.userName.ToUpperInvariant();
+                        var normalizedUserName = user.email.ToUpperInvariant();
                         ApplicationUser appUser = new()
                         {
-                            UserName = user.userName,
+                            UserName = user.email,
                             Email = user.email,
                             NormalizedUserName = normalizedUserName,
                             FirstName = user.firstName,

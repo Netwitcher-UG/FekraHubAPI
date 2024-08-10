@@ -6,8 +6,6 @@ namespace FekraHubAPI.MapModels.Users
     public class Map_RegisterParent
     {
 
-        [Required]
-        public string userName { get; set; }
 
         [Required]
         public string password { get; set; }

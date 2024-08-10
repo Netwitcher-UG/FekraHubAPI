@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _db;
-       // private  UserManager<ApplicationUser>  currentUser ;
+        // private  UserManager<ApplicationUser>  currentUser ;
         private readonly IRepository<ApplicationUser> _applicationUserRepository;
         private readonly ApplicationUsersServices _applicationUsersServices;
         private readonly EmailSender.IEmailSender _emailSender;
@@ -62,7 +62,7 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-            var userRole = User.FindFirstValue(ClaimTypes.Role); 
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
 
             var allUsers = await _db.ApplicationUser.ToListAsync();
 
@@ -131,7 +131,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
-        
+
         [Authorize(Policy = "GetTeacher")]
         [HttpGet("GetTeacher")]
         public async Task<IActionResult> GetTeacher()
@@ -249,7 +249,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
-        
+
         [Authorize(Policy = "GetUsers")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(string id)
@@ -321,10 +321,10 @@ namespace FekraHubAPI.Controllers.UsersController
                     if (ModelState.IsValid)
                     {
                         var normalizedEmail = user.Email.ToUpperInvariant();
-                        var normalizedUserName = user.UserName.ToUpperInvariant();
+                        var normalizedUserName = user.Email.ToUpperInvariant();
                         ApplicationUser appUser = new()
                         {
-                            UserName = user.UserName,
+                            UserName = user.Email,
                             NormalizedUserName = normalizedUserName,
                             Email = user.Email,
                             FirstName = user.FirstName,
@@ -352,7 +352,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
                         if (result.Succeeded)
                         {
-                            
+
                             if (DefaultRole.checkRole(user.Role))
                             {
                                 _userManager.AddToRoleAsync(appUser, user.Role).Wait();
@@ -425,7 +425,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
             var normalizedUserName = accountUpdate.UserName.Normalize().ToLower();
 
-            account.UserName = accountUpdate.UserName;
+            account.UserName = accountUpdate.Email;
             account.Email = accountUpdate.Email;
             account.NormalizedUserName = normalizedUserName;
             account.NormalizedEmail = normalizedEmail;

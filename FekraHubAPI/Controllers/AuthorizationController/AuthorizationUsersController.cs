@@ -45,6 +45,15 @@ namespace FekraHubAPI.Controllers.AuthorizationController
                 var roleClaims = await _roleManager.GetClaimsAsync(role);
                 rolesWithPermissions[role.Name] = roleClaims.Select(claim => claim.Value).ToList();
             }
+            return Ok(rolesWithPermissions);
+        }
+        [Authorize(Policy = "ManagePermissions")]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> AllRolesAndPermissions()
+        {
+            var roles = await _roleManager.Roles
+                .Where(x => x.Name != "Parent")
+                .ToListAsync();
 
             var parentRole = await _roleManager.Roles
                 .FirstOrDefaultAsync(x => x.Name == "Parent");
@@ -62,7 +71,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
 
                 return Ok(new
                 {
-                    RolePermissions = rolesWithPermissions,
+                    AllRoles = roles.Select(x => x.Name),
                     AllPermissions = permissions
                 });
             }

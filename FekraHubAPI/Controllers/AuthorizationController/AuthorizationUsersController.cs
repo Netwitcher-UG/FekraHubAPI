@@ -31,7 +31,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
 
         }
         [Authorize(Policy = "ManagePermissions")]
-        [HttpPost("[action]")]
+        [HttpGet("[action]")]
         public async Task<IActionResult> SchoolPermissions()
         {
             var roles = await _roleManager.Roles
@@ -48,7 +48,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
             return Ok( rolesWithPermissions);
         }
         [Authorize(Policy = "ManagePermissions")]
-        [HttpPost("[action]")]
+        [HttpGet("[action]")]
         public async Task<IActionResult> AllRolesAndPermissions()
         {
             var roles = await _roleManager.Roles

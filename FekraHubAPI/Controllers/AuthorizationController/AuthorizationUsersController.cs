@@ -80,7 +80,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
         }
         [Authorize(Policy = "ManagePermissions")]
         [HttpPost("[action]")]
-        public async Task<IActionResult> AssignPermissionToRole([FromQuery] string RoleName, [FromQuery] List<string> PermissionsName)
+        public async Task<IActionResult> AssignPermissionToRole([FromForm] string RoleName, [FromForm] List<string> PermissionsName)
         {
             if (string.IsNullOrEmpty(RoleName) || PermissionsName == null || !PermissionsName.Any())
             {

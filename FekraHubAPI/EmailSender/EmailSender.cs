@@ -79,26 +79,28 @@ namespace FekraHubAPI.EmailSender
         private string Message(string contentHtml)
         {
             var schoolName = _context.SchoolInfos.First().SchoolName;
-            string ConstantsMessage = @$"<div class='container' style='width: 100%;background-color: rgb(242, 242, 242);text-align: center;padding: 20px 0;margin: 0;'>
-                <div class='message' style=' width: 300px;margin: 0 auto;'>
-                    <table style='width:90%;margin: 0 auto;'>
-                        <tr>
-                            <td style='text-align:left;'>
-                                <h3>{schoolName}</h3>
-                            </td>
-                            <td style='text-align:right;'>
-                                <img style='width:40px;' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHv6N2GNpRENY0a68wIGbZC-_BNshBPI2xtVxfp5kMq5QLz9i1YECNXh1Klk8um8LXybQ&usqp=CAU' alt='Logo'/>
-                            </td>
-                        </tr>
-                    </table>
-                    <div class='content' style='background-color:rgb(255, 255, 255);padding:20px;'>
-                    {contentHtml}
-                    </div>
-                    <footer>
-                        <p>© 2024 NetWitcher. All rights reserved.</p>
-                    </footer>
-                </div>
-            </div>";
+            string ConstantsMessage = @$"<div class='container' style='width:100%;background-color:rgb(242, 242, 242);text-align:center;padding:20px 0;margin:0;'>
+         <div class='message' style='width:300px;margin: 0 auto;'>
+             <table style='width:90%;margin: 0 auto;'>
+                 <tr>
+                     <td style='text-align:left;'>
+                         <h3>{schoolName}</h3>
+                     </td>
+                     <td style='text-align:right;'>
+                         <img style='width:40px;' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHv6N2GNpRENY0a68wIGbZC-_BNshBPI2xtVxfp5kMq5QLz9i1YECNXh1Klk8um8LXybQ&usqp=CAU' alt='Logo' width='50px'/>
+                     </td>
+                 </tr>
+             </table>
+             <div class='content' style='background-color:rgb(255, 255, 255);padding:20px;text-align:center;width:260px;margin:auto;'>
+             
+             {contentHtml}
+             </div>
+             <footer>
+                 <p>© 2024 NetWitcher. All rights reserved.</p>
+             </footer>
+         </div>
+     </div>
+     ";
             return ConstantsMessage;
         }
         public async Task<IActionResult> SendConfirmationEmail(ApplicationUser user)
@@ -108,13 +110,13 @@ namespace FekraHubAPI.EmailSender
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = $"{domain}/confirm-user?ID={user.Id}&Token={token}";
             var content = $@"<div style='width:100%;text-align:left;'>
-                            <h1 style='width:100%;text-align:center;'>Hello {user.UserName}</h1>
-                             <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
-                             <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
-                            <p style='font-size:14px;'>To complete the confirmation, please click the confirm button</p><br><br/>
-                            <div style='width:100%;text-align:center'> <a href='{confirmationLink}' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>confirm</a>
-                            <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div> </div>
-                            ";
+                     <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1>
+                      <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
+                      <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
+                     <p style='font-size:14px;'>To complete the confirmation, please click the confirm button</p><br><br/>
+                     <div style='width:100%;text-align:center'> <a href='{confirmationLink}'style='display: inline-block; text-decoration: none; color: white; padding: 10px 25px; border: none; border-radius: 4px; font-size: 20px; background-color: rgb(83, 136, 247); text-align: center;'>confirm</a>
+                     <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div> </div>
+                     ";
             try
             {
                 await SendEmail(user.Email ?? "", "Please Confirm Your Email", Message(content), true);

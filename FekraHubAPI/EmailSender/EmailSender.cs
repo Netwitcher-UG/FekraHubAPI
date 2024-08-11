@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Net;
-using System.Net.Mail;
-using System.Net.Mime;
+using MailKit.Net.Smtp;
+using MimeKit;
+
 namespace FekraHubAPI.EmailSender
 {
     public class EmailSender : IEmailSender
@@ -34,45 +34,49 @@ namespace FekraHubAPI.EmailSender
             _courseRepo = courseRepo;
         }
 
-        private async Task<Task> SendEmail(string toEmail, string subject, string body, bool isBodyHTML, byte[]? pdf = null, string? pdfName = null)
+        private async Task SendEmail(string toEmail, string subject, string body, bool isBodyHTML, byte[]? pdf = null, string? pdfName = null)
         {
             var schoolInfo = await _context.SchoolInfos.FirstAsync();
             string MailServer = schoolInfo.EmailServer;
             int Port = schoolInfo.EmailPortNumber;
             string FromEmail = schoolInfo.FromEmail;
             string Password = schoolInfo.Password;
-            var client = new SmtpClient(MailServer, Port)
-            {
-                Credentials = new NetworkCredential(FromEmail, Password),
-                EnableSsl = true,
-            };
-            MailMessage mailMessage = new MailMessage
-            {
-                From = new MailAddress(FromEmail),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = isBodyHTML,
 
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(schoolInfo.SchoolName, FromEmail));
+            message.To.Add(new MailboxAddress("", toEmail));
+            message.Subject = subject;
+            
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = isBodyHTML ? body : null,
+                TextBody = !isBodyHTML ? body : null
             };
-            mailMessage.To.Add(toEmail);
 
-            mailMessage.Headers.Add("Disposition-Notification-To", FromEmail);
             if (pdf != null)
             {
-                Attachment pdfAttachment = new Attachment(new MemoryStream(pdf), pdfName ?? "pdf.pdf", "application/pdf");
-                mailMessage.Attachments.Add(pdfAttachment);
+                bodyBuilder.Attachments.Add(pdfName ?? "pdf.pdf", pdf, new ContentType("application", "pdf"));
             }
-            //byte[] bytes = Convert.FromBase64String(schoolInfo.LogoBase64);
-            //MemoryStream ms = new MemoryStream(bytes);
-            //LinkedResource inlineLogo = new LinkedResource(ms, "image/png")
-            //{
-            //    ContentId = "MyImage",
-            //    TransferEncoding = TransferEncoding.Base64
-            //};
-            //AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
-            //htmlView.LinkedResources.Add(inlineLogo);
-            //mailMessage.AlternateViews.Add(htmlView);
-            return client.SendMailAsync(mailMessage);
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using (var client = new SmtpClient())
+            {
+                
+                try
+                {
+                    await client.ConnectAsync(MailServer, Port, MailKit.Security.SecureSocketOptions.Auto);
+                    await client.AuthenticateAsync(FromEmail, Password);
+
+                    await client.SendAsync(message);
+                    await client.DisconnectAsync(true);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send email: {ex.Message}");
+                    throw;
+                }
+            }
         }
 
 
@@ -87,7 +91,7 @@ namespace FekraHubAPI.EmailSender
                                 <h3>{schoolName}</h3>
                             </td>
                             <td style='text-align:right;'>
-                                <img style='width:40px;' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHv6N2GNpRENY0a68wIGbZC-_BNshBPI2xtVxfp5kMq5QLz9i1YECNXh1Klk8um8LXybQ&usqp=CAU' alt='Logo' width='50px'/>
+                                <img style='width:40px;' src='https://api.fekrahub.com/api/SchoolInfo/SchoolLogo' alt='Logo' width='50px'/>
                             </td>
                         </tr>
                     </table>

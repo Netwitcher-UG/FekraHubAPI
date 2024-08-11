@@ -77,5 +77,13 @@ namespace FekraHubAPI.Controllers
             }
             return Ok("Done");
         }
+        [AllowAnonymous]
+        [HttpGet("SchoolLogo")]
+        public async Task<IActionResult> SchoolLogo()
+        {
+            var logoBase64 = (await _schoolInfoRepo.GetRelation()).First().LogoBase64;
+            var imageBytes = Convert.FromBase64String(logoBase64);
+            return File(imageBytes, "image/jpeg");
+        }
     }
 }

@@ -134,7 +134,7 @@ namespace FekraHubAPI.EmailSender
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = $"{domain}/confirm-user?ID={user.Id}&Token={token}";
             var content = $@"<div style='width:100%;text-align:left;'>
-                            <h1 style='width:100%;text-align:center;'>Hello {user.UserName}</h1>
+                            <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1>
                              <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
                              <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
                             <p style='font-size:14px;'>To complete the confirmation, please click the confirm button</p><br><br/>

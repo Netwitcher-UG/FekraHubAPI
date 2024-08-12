@@ -334,7 +334,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Roles ="Admin , Teacher")]
+        [Authorize(Policy = "AddStudentAttendance")]
         [HttpPost("AllStudentAttendance")]
         public async Task<IActionResult> AddAllStudentAttendance([FromForm] DateTime dateTime, [FromForm] int courseID,
             [FromForm] int statusID)
@@ -437,7 +437,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Policy = "UpdateStudentsAttendance")]
+        [Authorize(Policy = "UpdateTeachersAttendance")]
         [HttpPatch("Teacher")]
         public async Task<IActionResult> UpdateTeacherAttendance([FromForm] int id, [FromForm] int statusId)
         {

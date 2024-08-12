@@ -84,27 +84,27 @@ namespace FekraHubAPI.EmailSender
         {
             var schoolName = _context.SchoolInfos.First().SchoolName;
             string ConstantsMessage = @$"<div class='container' style='width:100%;background-color:rgb(242, 242, 242);text-align:center;padding:20px 0;margin:0;'>
-         <div class='message' style='width:300px;margin: 0 auto;'>
-             <table style='width:90%;margin: 0 auto;'>
-                 <tr>
-                     <td style='text-align:left;'>
-                         <h3>{schoolName}</h3>
-                     </td>
-                     <td style='text-align:right;'>
-                         <img style='width:40px;' src='https://api.fekrahub.com/api/SchoolInfo/SchoolLogo' alt='Logo' width='50px'/>
-                     </td>
-                 </tr>
-             </table>
-             <div class='content' style='background-color:rgb(255, 255, 255);padding:20px;text-align:center;width:260px;margin:auto;'>
-             
-             {contentHtml}
-             </div>
-             <footer>
-                 <p>© 2024 NetWitcher. All rights reserved.</p>
-             </footer>
-         </div>
-     </div>
-     ";
+                <div class='message' style='width:300px;margin: 0 auto;'>
+                    <table style='width:90%;margin: 0 auto;'>
+                        <tr>
+                            <td style='text-align:left;'>
+                                <h1>{schoolName}</h1>
+                            </td>
+                            <td style='text-align:right;'>
+                                <img src='https://api.fekrahub.com/api/SchoolInfo/SchoolLogo' alt='Logo' width='80px'/>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class='content' style='background-color:rgb(255, 255, 255);padding:20px;text-align:center;width:260px;margin:auto;'>
+                    
+                    {contentHtml}
+                    </div>
+                    <footer>
+                        <p>© 2024 NetWitcher. All rights reserved.</p>
+                    </footer>
+                </div>
+            </div>
+            ";
             return ConstantsMessage;
         }
         public async Task<IActionResult> SendConfirmationEmail(ApplicationUser user)
@@ -113,14 +113,14 @@ namespace FekraHubAPI.EmailSender
             var domain = (await _schoolInfo.GetRelation()).Select(x => x.UrlDomain).First();
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = $"{domain}/confirm-user?ID={user.Id}&Token={token}";
-            var content = $@"<div style='width:100%;text-align:left;'>
-                     <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1>
-                      <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
-                      <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
-                     <p style='font-size:14px;'>To complete the confirmation, please click the confirm button</p><br><br/>
-                     <div style='width:100%;text-align:center'> <a href='{confirmationLink}'style='display: inline-block; text-decoration: none; color: white; padding: 10px 25px; border: none; border-radius: 4px; font-size: 20px; background-color: rgb(83, 136, 247); text-align: center;'>confirm</a>
-                     <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div> </div>
-                     ";
+            var content = $@"<div style='width:100%;text-align:center;'>
+                            <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1>
+                             <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
+                             <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
+                            <p style='font-size:14px;'>To complete the confirmation, please click the confirm button</p><br><br/>
+                            <div style='width:100%;text-align:center'> <a href='{confirmationLink}'style='display: inline-block; text-decoration: none; color: white; padding: 10px 25px; border: none; border-radius: 4px; font-size: 20px; background-color: rgb(83, 136, 247); text-align: center;'><h3>confirm</h3></a>
+                            <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div> </div>
+                            ";
             try
             {
                 await SendEmail(user.Email ?? "", "Please Confirm Your Email", Message(content), true);
@@ -137,7 +137,7 @@ namespace FekraHubAPI.EmailSender
             var domain = (await _schoolInfo.GetRelation()).Select(x => x.UrlDomain).First();
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = $"{domain}/confirm-user?ID={user.Id}&Token={token}";
-            var content = $@"<div style='width:100%;text-align:left;'>
+            var content = $@"<div style='width:100%;text-align:center;'>
                             <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1>
                              <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
                              <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
@@ -170,7 +170,7 @@ namespace FekraHubAPI.EmailSender
             }
             var contracts = await _studentContract.GetAll();
             byte[] contract = contracts.Where(x => x.StudentID == studentId).Select(x => x.File).First();
-            var content = @$"<div style='width:100%;text-align:left;'>
+            var content = @$"<div style='width:100%;text-align:center;'>
                         <h1 style='width:100%;text-align:center;'>Hello {parent.FirstName} {parent.LastName}</h1><hr></hr><br></br>
                          <p style='font-size:13px;'>Your son <b>{student.FirstName} {student.LastName}</b> has been registered successfully.</p>
                          <p style='font-size:13px;'>A copy of the contract has been sent to you. <br></br>
@@ -193,7 +193,7 @@ namespace FekraHubAPI.EmailSender
         {
             var AdminId = await _context.UserRoles.Where(x => x.RoleId == "1").Select(x => x.UserId).FirstOrDefaultAsync();
             var admin = await _userManager.Users.Where(x => x.Id == AdminId).FirstOrDefaultAsync();
-            var content = @$"<div style='width:100%;text-align:left;'>
+            var content = @$"<div style='width:100%;text-align:center;'>
                         <h1 style='width:100%;text-align:center;'>Hello {admin.FirstName} {admin.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your school</p>
                          <p style='font-size:14px;'><b>A new family has been added .</b></p>
@@ -264,7 +264,7 @@ namespace FekraHubAPI.EmailSender
                         childrenNames += "<p 'font-size:14px;'>" + child.FirstName + " " + child.LastName + "</p>";
                     }
 
-                    var content = @$"<div style='width:100%;text-align:left;'>
+                    var content = @$"<div style='width:100%;text-align:center;'>
                             <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1><hr></hr><br></br>
                             <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your children</p>
                             <p><b>Children Name :</b></p>
@@ -279,7 +279,7 @@ namespace FekraHubAPI.EmailSender
             }
             foreach (var user in notParent)
             {
-                var content = @$"<div style='width:100%;text-align:left;'>
+                var content = @$"<div style='width:100%;text-align:center;'>
                         <h1 style='width:100%;text-align:center;'>Hello {user.FirstName} {user.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your students</p>
                          <p style='font-size:14px;'><b>A new event has been added .</b></p>
@@ -303,7 +303,7 @@ namespace FekraHubAPI.EmailSender
                     continue;
                 }
 
-                var content = @$"<div style='width:100%;text-align:left;'>
+                var content = @$"<div style='width:100%;text-align:center;'>
                         <h1 style='width:100%;text-align:center;'>Hello {parent.FirstName} {parent.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your children</p>
                          <p><b>Name : {student.FirstName} {student.LastName}</b></p>
@@ -328,7 +328,7 @@ namespace FekraHubAPI.EmailSender
                          .ToListAsync();
             foreach (var Secretary in Secretaries)
             {
-                var content = @$"<div style='width:100%;text-align:left;'>
+                var content = @$"<div style='width:100%;text-align:center;'>
                         <h1 style='width:100%;text-align:center;'>Hello {Secretary.FirstName} {Secretary.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your students</p>
                          <p style='font-size:14px;'><b>New reports has been added .</b></p>
@@ -350,7 +350,7 @@ namespace FekraHubAPI.EmailSender
                          .ToListAsync();
             foreach (var Secretary in Secretaries)
             {
-                var content = @$"<div style='width:100%;text-align:left;'>
+                var content = @$"<div style='width:100%;text-align:center;'>
                         <h1 style='width:100%;text-align:center;'>Hello {Secretary.FirstName} {Secretary.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your students</p>
                          <p style='font-size:14px;'><b>old reports has been updated .</b></p>
@@ -372,7 +372,7 @@ namespace FekraHubAPI.EmailSender
                 {
                     continue;
                 }
-                var content = @$"<div style='width:100%;text-align:left;'>
+                var content = @$"<div style='width:100%;text-align:center;'>
                         <h1 style='width:100%;text-align:center;'>Hello {parent.FirstName} {parent.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your children</p>
                         <p><b>Name : {student.FirstName} {student.LastName}</b></p>
@@ -394,7 +394,7 @@ namespace FekraHubAPI.EmailSender
             if (await _studentRepo.IsTeacherIDExists(teacherId))
             {
                 var teacher = await _userManager.FindByIdAsync(teacherId);
-                var content = @$"<div style='width:100%;text-align:left;'>
+                var content = @$"<div style='width:100%;text-align:center;'>
                         <h1 style='width:100%;text-align:center;'>Hello {teacher.FirstName} {teacher.LastName}</h1><hr></hr><br></br>
                         <p style='font-size:14px;'>Fekra Hub would like to tell you some new information about your students</p>
                         <p><b>Student Name : {student.FirstName} {student.LastName}</b></p>

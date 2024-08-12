@@ -22,6 +22,7 @@ namespace FekraHubAPI.MapModels
         public string FromEmail { get; set; }
         public string Password { get; set; }
         public List<string> ContractPages { get; set; }
+        public string PrivacyPolicy { get; set; }
 
         public void Mapping(Profile profile)
         {

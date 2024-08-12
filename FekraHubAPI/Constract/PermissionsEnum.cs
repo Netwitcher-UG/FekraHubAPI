@@ -56,7 +56,8 @@ namespace FekraHubAPI.Constract
             ManageWorkContract,
             ExportReport,
             ManageSchoolInfo,
-            ManageChildren
+            ManageChildren,
+            ShowParent
 
 
         }

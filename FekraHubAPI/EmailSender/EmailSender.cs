@@ -118,7 +118,7 @@ namespace FekraHubAPI.EmailSender
                              <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
                              <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
                             <p style='font-size:14px;'>To complete the confirmation, please click the confirm button</p><br><br/>
-                            <div style='width:100%;text-align:center'> <a href='{confirmationLink}'style='display: inline-block; text-decoration: none; color: white; padding: 10px 25px; border: none; border-radius: 4px; font-size: 20px; background-color: rgb(83, 136, 247); text-align: center;'><h3>confirm</h3></a>
+                            <div style='width:100%;text-align:center'> <a href='{confirmationLink}'style='display: inline-block; text-decoration: none; color: white; padding: 2px 25px; border: none; border-radius: 4px;  background-color: rgb(83, 136, 247); text-align: center;'><h3>confirm</h3></a>
                             <p style='font-size:12px;margin-top:60px'>Thank you for your time. </p></div> </div>
                             ";
             try
@@ -142,7 +142,7 @@ namespace FekraHubAPI.EmailSender
                              <p style='font-size:14px;'>Welcome to FekraHup!, Thank you For Confirming your Account,</p>
                              <p style='font-size:14px;'>The activation button is valid for <b> 7 Days</b>. Please activate the email before this period expires</p>
                             <p style='font-size:14px;'>To complete the confirmation, please click the confirm button</p><br><br/>
-                            <div style='width:100%;text-align:center'> <a href='{confirmationLink}' style='text-decoration: none;color: white;padding: 10px 25px;border: none;border-radius: 4px;font-size: 20px;background-color: rgb(83, 136, 247);'>confirm</a></div>
+                            <div style='width:100%;text-align:center'> <a href='{confirmationLink}' style='text-decoration: none;color: white;padding: 2px 25px;border: none;border-radius: 4px;background-color: rgb(83, 136, 247);'><h3>confirm<h3></a></div>
                             <br><br/><br><br/><p style='font-size:14px;'><b>Login Details</b></p>
                             <p style='font-size:12px;'>E-mail : <b><span>{user.Email}</span></b></p>
                             <p style='font-size:12px;'>Password : <b>{password}</b></p>

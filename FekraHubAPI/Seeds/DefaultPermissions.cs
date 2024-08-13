@@ -36,7 +36,9 @@ namespace FekraHubAPI.Seeds
         }
         public static  async Task SeedRoleAdminClaimsAsync(ModelBuilder builder)
         {
-            var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
+
+
+         var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
             var i = 1 ;
             foreach (var Permission in AllPermissions)
             {
@@ -53,7 +55,38 @@ namespace FekraHubAPI.Seeds
                         });
                 }
                 else
+
                 {
+                    List<string> per2 =["GetStudentsReports", "ApproveReports", "GetUsers", "AddCourse" ,
+                        "GetEmployee","GetParent","AddStudentAttendance", "GetCourse"];
+                    if ( per2.Contains(Permission.ToString()))
+                    {
+                        builder.Entity<IdentityRoleClaim<string>>().HasData(
+                     new IdentityRoleClaim<string>()
+                     {
+                         Id = i,
+                         RoleId = "2",
+                         ClaimType = Permission.ToString(),
+                         ClaimValue = Permission.ToString()
+                     });
+                        i++;
+                    }
+
+                    List<string> per4 = ["GetStudentsReports","AddUsers","InsertUpdateStudentsReports"];
+
+                    if (per4.Contains(Permission.ToString()))
+                    {
+                        builder.Entity<IdentityRoleClaim<string>>().HasData(
+                     new IdentityRoleClaim<string>()
+                     {
+                         Id = i,
+                         RoleId = "4",
+                         ClaimType = Permission.ToString(),
+                         ClaimValue = Permission.ToString()
+                     });
+                        i++;
+                    }
+
                     builder.Entity<IdentityRoleClaim<string>>().HasData(
                         new IdentityRoleClaim<string>()
                         {

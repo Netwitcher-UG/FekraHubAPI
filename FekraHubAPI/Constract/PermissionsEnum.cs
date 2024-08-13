@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
 namespace FekraHubAPI.Constract
@@ -57,7 +57,8 @@ namespace FekraHubAPI.Constract
             ExportReport,
             ManageSchoolInfo,
             ManageChildren,
-            ShowParent
+            ShowParent,
+            ManageInvoice,
 
 
         }

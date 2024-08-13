@@ -12,14 +12,18 @@ namespace FekraHubAPI.Data
     //DbContext
     {
 
-
+     
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options 
-            ): base(options)
+            ) : base(options)
         {
+
+         
         }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            //ClearAndSeedRoleAdminClaimsAsync();
+
             SeedRoles(builder);
             //SeedAdminUser(builder);
 
@@ -75,10 +79,18 @@ namespace FekraHubAPI.Data
                     PrivacyPolicy = "PrivacyPolicy"
                 });
         }
+        //private  void ClearAndSeedRoleAdminClaimsAsync(UserManager<IdentityUser> userManager)
+        //{
 
+        //    var existingClaims = userManager.RoleClaims.ToList();
+        //    userManager.RoleClaims.RemoveRange(existingClaims);
+        //    userManager.SaveChangesAsync();
+
+        //}
         private  static void SeedRoles(ModelBuilder builder)
         {
             DefaultRole.SeedRoleAsync(builder);
+
             DefaultPermissions.SeedPermissionsAsync(builder);
             DefaultPermissions.SeedRoleAdminClaimsAsync(builder);
         }
@@ -114,7 +126,7 @@ namespace FekraHubAPI.Data
       
 
         public DbSet<Location> Location { get; set; }
-
+        public DbSet<Invoice> Invoices { get; set; }
         public DbSet<ApplicationUser> ApplicationUser { get; set; }
         public DbSet<Tokens> Token { get; set; }
     }

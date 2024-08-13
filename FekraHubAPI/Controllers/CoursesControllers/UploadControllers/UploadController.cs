@@ -20,25 +20,21 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
     public class UploadController : ControllerBase
     {
 
-        private readonly ApplicationDbContext _context;
+        
         private readonly IRepository<Course> _courseRepository;
         private readonly IRepository<Upload> _uploadRepository;
 
         private readonly IRepository<UploadType> _uploadTypeRepository;
         private readonly IMapper _mapper;
-        private readonly IWebHostEnvironment _env;
         public UploadController(IRepository<Course> courseRepository, IRepository<Upload> uploadRepository,
-
-            ApplicationDbContext context,
-            IRepository<UploadType> uploadTypeRepository, IMapper mapper, IWebHostEnvironment env)
+            IRepository<UploadType> uploadTypeRepository, IMapper mapper)
         {
             _courseRepository = courseRepository;
             _uploadRepository = uploadRepository;
 
             _uploadTypeRepository = uploadTypeRepository;
             _mapper = mapper;
-            _env = env;
-            _context = context;
+         
         }
 
 
@@ -121,12 +117,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         FileName = file.FileName,
                         Courses = new List<Course>()
                     };
-                    var existingCourse = await _courseRepository.GetById(courseId);
-                    if (existingCourse == null)
-                    {
-                        return NotFound("Course not found.");
-                    }
-                    upload.Courses.Add(existingCourse);
+            
+                    upload.Courses.Add(course);
 
                     await _uploadRepository.Add(upload);
 

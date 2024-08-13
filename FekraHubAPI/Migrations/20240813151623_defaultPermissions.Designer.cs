@@ -4,6 +4,7 @@ using FekraHubAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FekraHubAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240813151623_defaultPermissions")]
+    partial class defaultPermissions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1055,413 +1058,413 @@ namespace FekraHubAPI.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 70,
+                            Id = 1,
                             ClaimType = "GetUsers",
                             ClaimValue = "GetUsers",
                             RoleId = "2"
                         },
                         new
                         {
-                            Id = 71,
+                            Id = 2,
                             ClaimType = "GetUsers",
                             ClaimValue = "GetUsers",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 72,
+                            Id = 3,
                             ClaimType = "AddUsers",
                             ClaimValue = "AddUsers",
                             RoleId = "4"
                         },
                         new
                         {
-                            Id = 73,
+                            Id = 4,
                             ClaimType = "AddUsers",
                             ClaimValue = "AddUsers",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 74,
+                            Id = 5,
                             ClaimType = "GetStudentsCourse",
                             ClaimValue = "GetStudentsCourse",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 75,
+                            Id = 6,
                             ClaimType = "UpdateStudentsCourse",
                             ClaimValue = "UpdateStudentsCourse",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 76,
+                            Id = 7,
                             ClaimType = "GetTeachersCourse",
                             ClaimValue = "GetTeachersCourse",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 77,
+                            Id = 8,
                             ClaimType = "UpdateTeachersCourse",
                             ClaimValue = "UpdateTeachersCourse",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 78,
+                            Id = 9,
                             ClaimType = "GetContracts",
                             ClaimValue = "GetContracts",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 79,
+                            Id = 10,
                             ClaimType = "ManageEvents",
                             ClaimValue = "ManageEvents",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 80,
+                            Id = 11,
                             ClaimType = "GetEvents",
                             ClaimValue = "GetEvents",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 81,
+                            Id = 12,
                             ClaimType = "GetStudentsAttendance",
                             ClaimValue = "GetStudentsAttendance",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 82,
+                            Id = 13,
                             ClaimType = "UpdateStudentsAttendance",
                             ClaimValue = "UpdateStudentsAttendance",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 83,
+                            Id = 14,
                             ClaimType = "GetTeachersAttendance",
                             ClaimValue = "GetTeachersAttendance",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 84,
+                            Id = 15,
                             ClaimType = "UpdateTeachersAttendance",
                             ClaimValue = "UpdateTeachersAttendance",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 85,
+                            Id = 16,
                             ClaimType = "InsertUpdateStudentsReports",
                             ClaimValue = "InsertUpdateStudentsReports",
                             RoleId = "4"
                         },
                         new
                         {
-                            Id = 86,
+                            Id = 17,
                             ClaimType = "InsertUpdateStudentsReports",
                             ClaimValue = "InsertUpdateStudentsReports",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 87,
+                            Id = 18,
                             ClaimType = "GetStudentsReports",
                             ClaimValue = "GetStudentsReports",
                             RoleId = "2"
                         },
                         new
                         {
-                            Id = 88,
+                            Id = 19,
                             ClaimType = "GetStudentsReports",
                             ClaimValue = "GetStudentsReports",
                             RoleId = "4"
                         },
                         new
                         {
-                            Id = 89,
+                            Id = 20,
                             ClaimType = "GetStudentsReports",
                             ClaimValue = "GetStudentsReports",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 90,
+                            Id = 21,
                             ClaimType = "ApproveReports",
                             ClaimValue = "ApproveReports",
                             RoleId = "2"
                         },
                         new
                         {
-                            Id = 91,
+                            Id = 22,
                             ClaimType = "ApproveReports",
                             ClaimValue = "ApproveReports",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 92,
+                            Id = 23,
                             ClaimType = "ManagePayrolls",
                             ClaimValue = "ManagePayrolls",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 93,
+                            Id = 24,
                             ClaimType = "ManageBooks",
                             ClaimValue = "ManageBooks",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 94,
+                            Id = 25,
                             ClaimType = "DeleteSchoolData",
                             ClaimValue = "DeleteSchoolData",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 95,
+                            Id = 26,
                             ClaimType = "ResetData",
                             ClaimValue = "ResetData",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 96,
+                            Id = 27,
                             ClaimType = "ManagePermissions",
                             ClaimValue = "ManagePermissions",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 97,
+                            Id = 28,
                             ClaimType = "ManageCourseSchedule",
                             ClaimValue = "ManageCourseSchedule",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 98,
+                            Id = 29,
                             ClaimType = "ManageEventTypes",
                             ClaimValue = "ManageEventTypes",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 99,
+                            Id = 30,
                             ClaimType = "ManageFile",
                             ClaimValue = "ManageFile",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 100,
+                            Id = 31,
                             ClaimType = "DeleteFile",
                             ClaimValue = "DeleteFile",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 101,
+                            Id = 32,
                             ClaimType = "ManageAttendanceStatus",
                             ClaimValue = "ManageAttendanceStatus",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 102,
+                            Id = 33,
                             ClaimType = "AddStudentAttendance",
                             ClaimValue = "AddStudentAttendance",
                             RoleId = "2"
                         },
                         new
                         {
-                            Id = 103,
+                            Id = 34,
                             ClaimType = "AddStudentAttendance",
                             ClaimValue = "AddStudentAttendance",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 104,
+                            Id = 35,
                             ClaimType = "GetCourse",
                             ClaimValue = "GetCourse",
                             RoleId = "2"
                         },
                         new
                         {
-                            Id = 105,
+                            Id = 36,
                             ClaimType = "GetCourse",
                             ClaimValue = "GetCourse",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 106,
+                            Id = 37,
                             ClaimType = "AddCourse",
                             ClaimValue = "AddCourse",
                             RoleId = "2"
                         },
                         new
                         {
-                            Id = 107,
+                            Id = 38,
                             ClaimType = "AddCourse",
                             ClaimValue = "AddCourse",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 108,
+                            Id = 39,
                             ClaimType = "putCourse",
                             ClaimValue = "putCourse",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 109,
+                            Id = 40,
                             ClaimType = "DeleteCourse",
                             ClaimValue = "DeleteCourse",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 110,
+                            Id = 41,
                             ClaimType = "ManageStudentsToCourses",
                             ClaimValue = "ManageStudentsToCourses",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 111,
+                            Id = 42,
                             ClaimType = "ManageLocations",
                             ClaimValue = "ManageLocations",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 112,
+                            Id = 43,
                             ClaimType = "ManageRoom",
                             ClaimValue = "ManageRoom",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 113,
+                            Id = 44,
                             ClaimType = "ManageExcelMigration",
                             ClaimValue = "ManageExcelMigration",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 114,
+                            Id = 45,
                             ClaimType = "GetEmployee",
                             ClaimValue = "GetEmployee",
                             RoleId = "2"
                         },
                         new
                         {
-                            Id = 115,
+                            Id = 46,
                             ClaimType = "GetEmployee",
                             ClaimValue = "GetEmployee",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 116,
+                            Id = 47,
                             ClaimType = "GetSecretary",
                             ClaimValue = "GetSecretary",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 117,
+                            Id = 48,
                             ClaimType = "GetTeacher",
                             ClaimValue = "GetTeacher",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 118,
+                            Id = 49,
                             ClaimType = "GetParent",
                             ClaimValue = "GetParent",
                             RoleId = "2"
                         },
                         new
                         {
-                            Id = 119,
+                            Id = 50,
                             ClaimType = "GetParent",
                             ClaimValue = "GetParent",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 120,
+                            Id = 51,
                             ClaimType = "UpdateUser",
                             ClaimValue = "UpdateUser",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 121,
+                            Id = 52,
                             ClaimType = "DeleteUser",
                             ClaimValue = "DeleteUser",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 122,
+                            Id = 53,
                             ClaimType = "ResetPasswordUser",
                             ClaimValue = "ResetPasswordUser",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 123,
+                            Id = 54,
                             ClaimType = "ManageWorkContract",
                             ClaimValue = "ManageWorkContract",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 124,
+                            Id = 55,
                             ClaimType = "ExportReport",
                             ClaimValue = "ExportReport",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 125,
+                            Id = 56,
                             ClaimType = "ManageSchoolInfo",
                             ClaimValue = "ManageSchoolInfo",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 126,
+                            Id = 57,
                             ClaimType = "ManageChildren",
                             ClaimValue = "ManageChildren",
                             RoleId = "3"
                         },
                         new
                         {
-                            Id = 127,
+                            Id = 58,
                             ClaimType = "ShowParent",
                             ClaimValue = "ShowParent",
                             RoleId = "1"
                         },
                         new
                         {
-                            Id = 128,
+                            Id = 59,
                             ClaimType = "ManageInvoice",
                             ClaimValue = "ManageInvoice",
                             RoleId = "1"

@@ -36,71 +36,93 @@ namespace FekraHubAPI.Seeds
         }
         public static  async Task SeedRoleAdminClaimsAsync(ModelBuilder builder)
         {
-
-
-         var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
-            var i = 1 ;
+            List<string> per2 = new()
+                    {
+                        "GetStudentsReports",
+                        "ApproveReports",
+                        "GetUsers",
+                        "AddCourse",
+                        "GetEmployee",
+                        "GetParent",
+                        "AddStudentAttendance",
+                        "GetCourse"
+                    };
+            List<string> per4 = new()
+                    {
+                        "GetStudentsReports",
+                        "AddUsers",
+                        "InsertUpdateStudentsReports"
+                    };
+            List<IdentityRoleClaim<string>> identityRoleClaims = new();
+            var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
+            var i = 70;
             foreach (var Permission in AllPermissions)
             {
 
                 if (Permission.ToString() == "ManageChildren")
                 {
-                    builder.Entity<IdentityRoleClaim<string>>().HasData(
-                        new IdentityRoleClaim<string>()
-                        {
-                            Id = i,
-                            RoleId = "3",
-                            ClaimType = Permission.ToString(),
-                            ClaimValue = Permission.ToString()
-                        });
+
+                    var x3 = new IdentityRoleClaim<string>()
+                    {
+                        Id = i,
+                        RoleId = "3",
+                        ClaimType = Permission.ToString(),
+                        ClaimValue = Permission.ToString()
+                    };
+                    identityRoleClaims.Add(x3);
+                    i++;
                 }
                 else
 
                 {
-                    List<string> per2 =["GetStudentsReports", "ApproveReports", "GetUsers", "AddCourse" ,
-                        "GetEmployee","GetParent","AddStudentAttendance", "GetCourse"];
+                    
                     if ( per2.Contains(Permission.ToString()))
                     {
-                        builder.Entity<IdentityRoleClaim<string>>().HasData(
-                     new IdentityRoleClaim<string>()
+                        
+                     var x2 = new IdentityRoleClaim<string>()
                      {
                          Id = i,
                          RoleId = "2",
                          ClaimType = Permission.ToString(),
                          ClaimValue = Permission.ToString()
-                     });
+                     };
+                        identityRoleClaims.Add(x2);
                         i++;
                     }
 
-                    List<string> per4 = ["GetStudentsReports","AddUsers","InsertUpdateStudentsReports"];
+                    
 
                     if (per4.Contains(Permission.ToString()))
                     {
-                        builder.Entity<IdentityRoleClaim<string>>().HasData(
-                     new IdentityRoleClaim<string>()
+                        
+                     var x4 = new IdentityRoleClaim<string>()
                      {
                          Id = i,
                          RoleId = "4",
                          ClaimType = Permission.ToString(),
                          ClaimValue = Permission.ToString()
-                     });
+                     };
+                        identityRoleClaims.Add(x4);
                         i++;
                     }
 
-                    builder.Entity<IdentityRoleClaim<string>>().HasData(
-                        new IdentityRoleClaim<string>()
-                        {
-                            Id = i,
-                            RoleId = "1",
-                            ClaimType = Permission.ToString(),
-                            ClaimValue = Permission.ToString()
-                        });
+
+                    var x1 = new IdentityRoleClaim<string>()
+                    {
+                        Id = i,
+                        RoleId = "1",
+                        ClaimType = Permission.ToString(),
+                        ClaimValue = Permission.ToString()
+                    };
+                    identityRoleClaims.Add(x1);
+                    i++;
                 }
 
-                i++;
-                
-                
+               
+
+
             }
+            builder.Entity<IdentityRoleClaim<string>>().HasData(identityRoleClaims);
             /* modules = Enum.GetValues(typeof(Helper.PermissionModuleNameSecretariat));
              foreach (var module in modules)
              {

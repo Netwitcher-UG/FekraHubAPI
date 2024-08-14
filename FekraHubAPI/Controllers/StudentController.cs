@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace FekraHubAPI.Controllers
@@ -49,7 +50,7 @@ namespace FekraHubAPI.Controllers
                 {
                     course.Capacity -= allStudentsInCourses.Count(c => c.CourseID == course.Id);
                 }
-                var courseInfo = courses.Where(x => x.Capacity > 0).Select(x => new { x.Id, x.Name, x.Capacity,x.StartDate,x.EndDate,x.Lessons,x.Price }).ToList();
+                var courseInfo = courses.Where(x => x.Capacity > 0).Select(x => new { x.Id, x.Name, x.Capacity, x.StartDate, x.EndDate, x.Lessons, x.Price }).ToList();
                 return Ok(courseInfo);
             }
             catch (Exception ex)
@@ -58,9 +59,9 @@ namespace FekraHubAPI.Controllers
             }
         }
 
-        [Authorize( Policy = "GetStudentsCourse")]
+        [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet]
-        public async Task<IActionResult> GetStudents(string? search , int? courseId, [FromQuery] PaginationParameters paginationParameters)
+        public async Task<IActionResult> GetStudents(string? search, int? courseId, [FromQuery] PaginationParameters paginationParameters)
         {
             var Allstudents = await _studentRepo.GetRelation();
 
@@ -69,7 +70,7 @@ namespace FekraHubAPI.Controllers
             {
                 Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
             }
-            if(courseId != null)
+            if (courseId != null)
             {
                 Allstudents = Allstudents.Where(x => x.CourseID == courseId);
             }
@@ -99,14 +100,14 @@ namespace FekraHubAPI.Controllers
                 },
                 parent = x.User == null ? null : new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
             }).ToList();
-            return Ok(new {  studentsAll.TotalCount,studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
+            return Ok(new { studentsAll.TotalCount, studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
         }
         [Authorize(Policy = "ManageChildren")]
 
         [HttpGet("ByParent")]
         public async Task<IActionResult> GetStudentsByParent()
         {
-            var parentId =_courseRepo.GetUserIDFromToken(User);
+            var parentId = _courseRepo.GetUserIDFromToken(User);
 
             if (string.IsNullOrEmpty(parentId))
             {
@@ -128,14 +129,14 @@ namespace FekraHubAPI.Controllers
                 Street = z.Street ?? "Like parent",
                 StreetNr = z.StreetNr ?? "Like parent",
                 ZipCode = z.ZipCode ?? "Like parent",
-                course = z.Course == null ? null : new 
+                course = z.Course == null ? null : new
                 {
                     z.Course.Id,
                     z.Course.Name,
                     z.Course.Capacity,
                     startDate = z.Course.StartDate.Date,
                     EndDate = z.Course.EndDate.Date,
-                    z.Course.Price ,
+                    z.Course.Price,
                     Teacher = z.Course.Teacher.Select(x => new
                     {
                         x.Id,
@@ -144,22 +145,22 @@ namespace FekraHubAPI.Controllers
 
                     })
                 },
-                Room = z.Course == null ? null : new 
+                Room = z.Course == null ? null : new
                 {
-                    z.Course.Room.Id ,
+                    z.Course.Room.Id,
                     z.Course.Room.Name
                 },
                 Location = z.Course == null ? null : new
                 {
-                    z.Course.Room.Location.Id ,
+                    z.Course.Room.Location.Id,
                     z.Course.Room.Location.Name,
                     z.Course.Room.Location.City,
                     z.Course.Room.Location.Street,
                     z.Course.Room.Location.ZipCode,
                     z.Course.Room.Location.StreetNr
                 }
-                
-                    
+
+
             }).ToList();
 
 
@@ -196,7 +197,7 @@ namespace FekraHubAPI.Controllers
                     Street = student.Street ?? "Like parent",
                     StreetNr = student.StreetNr ?? "Like parent",
                     ZipCode = student.ZipCode ?? "Like parent",
-                    CourseID = student.CourseID ,
+                    CourseID = student.CourseID,
                     ParentID = parentId,
                 };
                 var contract = await _contractMaker.ContractHtml(studentEntity);
@@ -302,7 +303,7 @@ namespace FekraHubAPI.Controllers
                     City = student.City,
                     Street = student.Street,
                     StreetNr = student.StreetNr,
-                    ZipCode = student.ZipCode ,
+                    ZipCode = student.ZipCode,
                     ParentID = userId,
                     CourseID = student.CourseID,
                 };
@@ -359,9 +360,8 @@ namespace FekraHubAPI.Controllers
                 {
                     return Unauthorized("User not found.");
                 }
-                var parentId = userId;
                 var allContracts = await _studentContractRepo.GetRelation();
-                var contracts = allContracts.Where(x => x.Student.ParentID == parentId).Select(x => new {
+                var contracts = allContracts.Where(x => x.Student.ParentID == userId).Select(x => new {
                     x.Id,
                     studentId = x.Student.Id,
                     x.Student.FirstName,
@@ -375,6 +375,49 @@ namespace FekraHubAPI.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
+        }
+        [Authorize(Policy = "ManageChildren")]
+
+        [HttpGet("SonContractsForParent")]
+        public async Task<IActionResult> GetSonOfParentContracts([Required] int studentId)
+        {
+            try
+            {
+                var userId = _courseRepo.GetUserIDFromToken(User);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("User not found.");
+                }
+                var parentId = userId;
+                var allContracts = await _studentContractRepo.GetRelation();
+                var contracts = allContracts.Where(x => x.Student.ParentID == parentId && x.StudentID == studentId).Select(x => new {
+                    x.Id,
+                    studentId = x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    x.CreationDate,
+
+                }).ToList();
+                return Ok(contracts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+        [Authorize(Policy = "ManageChildren")]
+        [HttpGet("[action]")]
+        public async Task<ActionResult<IEnumerable<Upload>>> DownloadContractFile(int contractId)
+        {
+            var query = await _studentContractRepo.GetById(contractId);
+            if (query == null)
+            {
+                return BadRequest("file not found");
+            }
+            var result = Convert.ToBase64String(query.File);
+
+            return Ok(result);
         }
         [AllowAnonymous]
         [HttpGet("testing/sendEmails/foreach")]

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using FekraHubAPI.MapModels.Courses;
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.Controllers
 {
@@ -62,10 +63,14 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("[action]")]
-        public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoicesStudent(int studentId)
+        public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoicesStudent([Required] int studentId)
         {
             IQueryable<Invoice> query = (await _invoiceRepository.GetRelation());
             var student = await _studentRepository.GetById(studentId);
+            if (student == null)
+            {
+                return BadRequest("Student not found");
+            }
             var userId = _invoiceRepository.GetUserIDFromToken(User);
             if (userId != student.ParentID)
             {
@@ -80,8 +85,13 @@ namespace FekraHubAPI.Controllers
                 x.Id,
                 x.FileName,
                 x.Date,
-                x.Student.FirstName,
-                x.Student.LastName
+                Student = x.Student == null ? null : new
+                {
+                    x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName
+                }
+
 
             }).ToList();
 

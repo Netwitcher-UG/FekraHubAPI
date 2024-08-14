@@ -244,9 +244,32 @@ namespace FekraHubAPI.Controllers
                     z.Course.Capacity,
                     startDate = z.Course.StartDate.Date,
                     EndDate = z.Course.EndDate.Date,
-                    z.Course.Price
+                    z.Course.Price,
+                    Teacher = z.Course.Teacher.Select(x => new
+                    {
+                        x.Id,
+                        x.FirstName,
+                        x.LastName
+
+                    })
+                },
+                Room = z.Course == null ? null : new
+                {
+                    z.Course.Room.Id,
+                    z.Course.Room.Name
+                },
+                Location = z.Course == null ? null : new
+                {
+                    z.Course.Room.Location.Id,
+                    z.Course.Room.Location.Name,
+                    z.Course.Room.Location.City,
+                    z.Course.Room.Location.Street,
+                    z.Course.Room.Location.ZipCode,
+                    z.Course.Room.Location.StreetNr
                 }
-            }).First();
+
+
+            }).ToList();
 
 
             return Ok(result);

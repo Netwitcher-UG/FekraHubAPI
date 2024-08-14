@@ -67,9 +67,9 @@ namespace FekraHubAPI.ContractMaker
                 };
                 await _repo.Add(studentContract);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                if (await _studentrepo.IDExists(student.Id)) 
+                if (await _studentrepo.IDExists(student.Id))
                 {
                     await _studentrepo.Delete(student.Id);
                 }
@@ -78,7 +78,7 @@ namespace FekraHubAPI.ContractMaker
                     await _repo.Delete(student.Id);
                 }
             }
-            
+
 
         }
         public async Task<byte[]> GetContractPdf(int studentId)
@@ -92,12 +92,20 @@ namespace FekraHubAPI.ContractMaker
             byte[] x = await PdfFile(student);
             return Convert.ToBase64String(x);
         }
-        
+
         private async Task<List<string>> ContractHtmlPage(Student student)
         {
             var schoolInfo = (await _schoolInforepo.GetRelation()).SingleOrDefault();
-            var parent = await _Usersrepo.GetUser(student.ParentID);
-            List<string> contractPages = schoolInfo.ContractPages;
+            if (schoolInfo == null)
+            {
+                return new List<string>();
+            }
+            var parent = await _Usersrepo.GetUser(student.ParentID ?? "");
+            if (parent == null)
+            {
+                return new List<string>();
+            }
+            List<string> contractPages = schoolInfo.ContractPages.Select(x => x.ConPage).ToList();
 
             contractPages[0] = contractPages[0]
                 .Replace("{student.FirstName}", student.FirstName ?? "")
@@ -119,4 +127,5 @@ namespace FekraHubAPI.ContractMaker
             return contractPages;
         }
     }
+
 }

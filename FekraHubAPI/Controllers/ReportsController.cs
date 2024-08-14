@@ -41,7 +41,8 @@ namespace FekraHubAPI.Controllers
         [HttpGet("Keys")]
         public async Task<IActionResult> GetReportKeys()
         {
-            var keys = (await _schoolInfo.GetRelation()).Select(x => x.StudentsReportsKeys).SingleOrDefault();
+            var keys = (await _schoolInfo.GetRelation()).SingleOrDefault();
+            var key = keys.StudentsReportsKeys.Select(x => x.Keys);
             return Ok(keys);
         }
         [Authorize(Policy = "GetStudentsReports")]

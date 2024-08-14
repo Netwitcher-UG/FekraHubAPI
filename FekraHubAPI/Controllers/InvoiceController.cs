@@ -60,7 +60,7 @@ namespace FekraHubAPI.Controllers
 
             return Ok(result);
         }
-
+        [Authorize(Policy = "ManageChildren")]
         public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoicesStudent(int studentId)
         {
             IQueryable<Invoice> query = (await _invoiceRepository.GetRelation());
@@ -87,7 +87,7 @@ namespace FekraHubAPI.Controllers
             return Ok(result);
         }
 
-        [Authorize(Policy = "ManageInvoice")]
+        [Authorize(Policy = "ManageChildren")]
         [HttpGet("[action]")]
         public async Task<ActionResult<IEnumerable<Invoice>>> ReturnInvoice(int Id)
         {

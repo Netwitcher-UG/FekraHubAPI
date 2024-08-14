@@ -54,8 +54,13 @@ namespace FekraHubAPI.Controllers
                 x.Id,
                 x.FileName,
                 x.Date,
-                x.Student.FirstName,
-                x.Student.LastName
+                student = x.Student == null ? null : new
+                {
+                    x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName
+                }
+                
 
             }).ToList();
 

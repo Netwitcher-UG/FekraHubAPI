@@ -14,15 +14,17 @@ namespace FekraHubAPI.ContractMaker
         private readonly IRepository<ApplicationUser> _Usersrepo;
         private readonly IRepository<Student> _studentrepo;
         private readonly IRepository<SchoolInfo> _schoolInforepo;
+        private readonly IRepository<ContractPage> _contractPagesrepo;
         private readonly IConverter _converter;
         public ContractMaker(IRepository<StudentContract> repo, IRepository<Student> studentrepo,
-            IRepository<ApplicationUser> Usersrepo, IRepository<SchoolInfo> schoolInforepo, IConverter converter)
+            IRepository<ApplicationUser> Usersrepo, IRepository<SchoolInfo> schoolInforepo, IConverter converter, IRepository<ContractPage> contractPagesrepo)
         {
             _repo = repo;
             _studentrepo = studentrepo;
             _Usersrepo = Usersrepo;
             _schoolInforepo = schoolInforepo;
             _converter = converter;
+            _contractPagesrepo = contractPagesrepo;
         }
         private async Task<byte[]> PdfFile(Student student)
         {
@@ -105,7 +107,7 @@ namespace FekraHubAPI.ContractMaker
             {
                 return new List<string>();
             }
-            List<string> contractPages = schoolInfo.ContractPages.Select(x => x.ConPage).ToList();
+            List<string> contractPages = (await _contractPagesrepo.GetAll()).Select(x => x.ConPage).ToList();
 
             contractPages[0] = contractPages[0]
                 .Replace("{student.FirstName}", student.FirstName ?? "")

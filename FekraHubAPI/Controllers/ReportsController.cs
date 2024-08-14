@@ -20,17 +20,17 @@ namespace FekraHubAPI.Controllers
     {
         private readonly IRepository<Report> _reportRepo;
         private readonly IRepository<Student> _studentRepo;
-        private readonly IRepository<SchoolInfo> _schoolInfo;
+        private readonly IRepository<StudentsReportsKey> _studentsReportsKeyInfo;
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
         private readonly IExportPDF _exportPDF;
         private readonly UserManager<ApplicationUser> _Users;
-        public ReportsController(IRepository<Report> reportRepo, IRepository<SchoolInfo> schoolInfo,
+        public ReportsController(IRepository<Report> reportRepo, IRepository<StudentsReportsKey> studentsReportsKeyInfo,
             IRepository<Student> studentRepo, IEmailSender emailSender,IMapper mapper, IExportPDF exportPDF
             , UserManager<ApplicationUser> Users)
         {
             _reportRepo = reportRepo;
-            _schoolInfo = schoolInfo;
+            _studentsReportsKeyInfo = studentsReportsKeyInfo;
             _studentRepo = studentRepo;
             _emailSender = emailSender;
             _mapper = mapper;
@@ -41,8 +41,7 @@ namespace FekraHubAPI.Controllers
         [HttpGet("Keys")]
         public async Task<IActionResult> GetReportKeys()
         {
-            var keys = (await _schoolInfo.GetRelation()).SingleOrDefault();
-            var key = keys.StudentsReportsKeys.Select(x => x.Keys);
+            var keys = (await _studentsReportsKeyInfo.GetRelation()).Select(x => x.Keys);
             return Ok(keys);
         }
         [Authorize(Policy = "GetStudentsReports")]

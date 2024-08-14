@@ -270,7 +270,7 @@ namespace FekraHubAPI.Controllers
                 }
 
 
-            }).ToList();
+            }).FirstOrDefault();
 
 
             return Ok(result);

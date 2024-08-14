@@ -88,9 +88,9 @@ namespace FekraHubAPI.Controllers.UsersController
             }
 
             var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
-            var normalizedUserName = accountUpdate.UserName.Normalize().ToLower();
+            var normalizedUserName = accountUpdate.Email.Normalize().ToLower();
 
-            account.UserName = accountUpdate.UserName;
+            account.UserName = accountUpdate.Email;
             account.Email = accountUpdate.Email;
             account.FirstName = accountUpdate.FirstName;
             account.LastName = accountUpdate.LastName;

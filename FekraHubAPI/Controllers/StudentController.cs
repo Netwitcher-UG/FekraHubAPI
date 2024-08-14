@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace FekraHubAPI.Controllers
@@ -49,7 +50,7 @@ namespace FekraHubAPI.Controllers
                 {
                     course.Capacity -= allStudentsInCourses.Count(c => c.CourseID == course.Id);
                 }
-                var courseInfo = courses.Where(x => x.Capacity > 0).Select(x => new { x.Id, x.Name, x.Capacity,x.StartDate,x.EndDate,x.Lessons,x.Price }).ToList();
+                var courseInfo = courses.Where(x => x.Capacity > 0).Select(x => new { x.Id, x.Name, x.Capacity, x.StartDate, x.EndDate, x.Lessons, x.Price }).ToList();
                 return Ok(courseInfo);
             }
             catch (Exception ex)
@@ -58,9 +59,9 @@ namespace FekraHubAPI.Controllers
             }
         }
 
-        [Authorize( Policy = "GetStudentsCourse")]
+        [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet]
-        public async Task<IActionResult> GetStudents(string? search , int? courseId, [FromQuery] PaginationParameters paginationParameters)
+        public async Task<IActionResult> GetStudents(string? search, int? courseId, [FromQuery] PaginationParameters paginationParameters)
         {
             var Allstudents = await _studentRepo.GetRelation();
 
@@ -69,7 +70,7 @@ namespace FekraHubAPI.Controllers
             {
                 Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
             }
-            if(courseId != null)
+            if (courseId != null)
             {
                 Allstudents = Allstudents.Where(x => x.CourseID == courseId);
             }
@@ -99,14 +100,14 @@ namespace FekraHubAPI.Controllers
                 },
                 parent = x.User == null ? null : new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
             }).ToList();
-            return Ok(new {  studentsAll.TotalCount,studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
+            return Ok(new { studentsAll.TotalCount, studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
         }
         [Authorize(Policy = "ManageChildren")]
 
         [HttpGet("ByParent")]
         public async Task<IActionResult> GetStudentsByParent()
         {
-            var parentId =_courseRepo.GetUserIDFromToken(User);
+            var parentId = _courseRepo.GetUserIDFromToken(User);
 
             if (string.IsNullOrEmpty(parentId))
             {
@@ -196,7 +197,7 @@ namespace FekraHubAPI.Controllers
                     Street = student.Street ?? "Like parent",
                     StreetNr = student.StreetNr ?? "Like parent",
                     ZipCode = student.ZipCode ?? "Like parent",
-                    CourseID = student.CourseID ,
+                    CourseID = student.CourseID,
                     ParentID = parentId,
                 };
                 var contract = await _contractMaker.ContractHtml(studentEntity);
@@ -205,53 +206,6 @@ namespace FekraHubAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating new student record {ex}");
-            }
-        }
-        [Authorize(Policy = "ManageChildren")]
-
-        [HttpPost("AcceptedContract")]
-        public async Task<IActionResult> AcceptedContract([FromForm] Map_Student student)
-        {
-            var userId = _courseRepo.GetUserIDFromToken(User);
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User ID not found in token.");
-            }
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-                var studentEntity = new Student
-                {
-                    FirstName = student.FirstName,
-                    LastName = student.LastName,
-                    Nationality = student.Nationality,
-                    Note = student.Note ?? "",
-                    Gender = student.Gender,
-                    Birthday = student.Birthday,
-                    City = student.City,
-                    Street = student.Street,
-                    StreetNr = student.StreetNr,
-                    ZipCode = student.ZipCode ,
-                    ParentID = userId,
-                    CourseID = student.CourseID,
-                };
-                await _studentRepo.Add(studentEntity);
-                await _contractMaker.ConverterHtmlToPdf(studentEntity);
-                var res = await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
-                if (res is BadRequestObjectResult)
-                {
-                    await _emailSender.SendContractEmail(studentEntity.Id, "Son_Contract");
-                }
-
-                return Ok("welcomes your son to our family . A copy of the contract was sent to your email");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
         [Authorize(Policy = "ManageChildren")]
@@ -314,10 +268,59 @@ namespace FekraHubAPI.Controllers
                     z.Course.Room.Location.ZipCode,
                     z.Course.Room.Location.StreetNr
                 }
-            }).First();
+
+
+            }).ToList();
 
 
             return Ok(result);
+        }
+        [Authorize(Policy = "ManageChildren")]
+
+        [HttpPost("AcceptedContract")]
+        public async Task<IActionResult> AcceptedContract([FromForm] Map_Student student)
+        {
+            var userId = _courseRepo.GetUserIDFromToken(User);
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                var studentEntity = new Student
+                {
+                    FirstName = student.FirstName,
+                    LastName = student.LastName,
+                    Nationality = student.Nationality,
+                    Note = student.Note ?? "",
+                    Gender = student.Gender,
+                    Birthday = student.Birthday,
+                    City = student.City,
+                    Street = student.Street,
+                    StreetNr = student.StreetNr,
+                    ZipCode = student.ZipCode,
+                    ParentID = userId,
+                    CourseID = student.CourseID,
+                };
+                await _studentRepo.Add(studentEntity);
+                await _contractMaker.ConverterHtmlToPdf(studentEntity);
+                var res = await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
+                if (res is BadRequestObjectResult)
+                {
+                    await _emailSender.SendContractEmail(studentEntity.Id, "Son_Contract");
+                }
+
+                return Ok("welcomes your son to our family . A copy of the contract was sent to your email");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
         [Authorize(Policy = "GetContracts")]
         [HttpGet("Contracts")]
@@ -357,9 +360,8 @@ namespace FekraHubAPI.Controllers
                 {
                     return Unauthorized("User not found.");
                 }
-                var parentId = userId;
                 var allContracts = await _studentContractRepo.GetRelation();
-                var contracts = allContracts.Where(x => x.Student.ParentID == parentId).Select(x => new {
+                var contracts = allContracts.Where(x => x.Student.ParentID == userId).Select(x => new {
                     x.Id,
                     studentId = x.Student.Id,
                     x.Student.FirstName,
@@ -373,6 +375,49 @@ namespace FekraHubAPI.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
+        }
+        [Authorize(Policy = "ManageChildren")]
+
+        [HttpGet("SonContractsForParent")]
+        public async Task<IActionResult> GetSonOfParentContracts([Required] int studentId)
+        {
+            try
+            {
+                var userId = _courseRepo.GetUserIDFromToken(User);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("User not found.");
+                }
+                var parentId = userId;
+                var allContracts = await _studentContractRepo.GetRelation();
+                var contracts = allContracts.Where(x => x.Student.ParentID == parentId && x.StudentID == studentId).Select(x => new {
+                    x.Id,
+                    studentId = x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    x.CreationDate,
+
+                }).ToList();
+                return Ok(contracts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+        [Authorize(Policy = "ManageChildren")]
+        [HttpGet("[action]")]
+        public async Task<ActionResult<IEnumerable<Upload>>> DownloadContractFile(int contractId)
+        {
+            var query = await _studentContractRepo.GetById(contractId);
+            if (query == null)
+            {
+                return BadRequest("file not found");
+            }
+            var result = Convert.ToBase64String(query.File);
+
+            return Ok(result);
         }
         [AllowAnonymous]
         [HttpGet("testing/sendEmails/foreach")]

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FekraHubAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240812183754_PrivacyPolicy")]
+    [Migration("20240812174034_PrivacyPolicy")]
     partial class PrivacyPolicy
     {
         /// <inheritdoc />

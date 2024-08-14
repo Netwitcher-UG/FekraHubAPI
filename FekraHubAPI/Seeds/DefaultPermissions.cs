@@ -34,40 +34,95 @@ namespace FekraHubAPI.Seeds
                 i++;
             }
         }
-        public static  async Task SeedRoleAdminClaimsAsync(ModelBuilder builder)
+        public static async Task SeedRoleAdminClaimsAsync(ModelBuilder builder)
         {
+            List<string> per2 = new()
+                    {
+                        "GetStudentsReports",
+                        "ApproveReports",
+                        "GetUsers",
+                        "AddCourse",
+                        "GetEmployee",
+                        "GetParent",
+                        "AddStudentAttendance",
+                        "GetCourse"
+                    };
+            List<string> per4 = new()
+                    {
+                        "GetStudentsReports",
+                        "AddUsers",
+                        "InsertUpdateStudentsReports"
+                    };
+            List<IdentityRoleClaim<string>> identityRoleClaims = new();
             var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
-            var i = 1 ;
+            var i = 70;
             foreach (var Permission in AllPermissions)
             {
 
                 if (Permission.ToString() == "ManageChildren")
                 {
-                    builder.Entity<IdentityRoleClaim<string>>().HasData(
-                        new IdentityRoleClaim<string>()
-                        {
-                            Id = i,
-                            RoleId = "3",
-                            ClaimType = Permission.ToString(),
-                            ClaimValue = Permission.ToString()
-                        });
+
+                    var x3 = new IdentityRoleClaim<string>()
+                    {
+                        Id = i,
+                        RoleId = "3",
+                        ClaimType = Permission.ToString(),
+                        ClaimValue = Permission.ToString()
+                    };
+                    identityRoleClaims.Add(x3);
+                    i++;
                 }
                 else
+
                 {
-                    builder.Entity<IdentityRoleClaim<string>>().HasData(
-                        new IdentityRoleClaim<string>()
+
+                    if (per2.Contains(Permission.ToString()))
+                    {
+
+                        var x2 = new IdentityRoleClaim<string>()
                         {
                             Id = i,
-                            RoleId = "1",
+                            RoleId = "2",
                             ClaimType = Permission.ToString(),
                             ClaimValue = Permission.ToString()
-                        });
+                        };
+                        identityRoleClaims.Add(x2);
+                        i++;
+                    }
+
+
+
+                    if (per4.Contains(Permission.ToString()))
+                    {
+
+                        var x4 = new IdentityRoleClaim<string>()
+                        {
+                            Id = i,
+                            RoleId = "4",
+                            ClaimType = Permission.ToString(),
+                            ClaimValue = Permission.ToString()
+                        };
+                        identityRoleClaims.Add(x4);
+                        i++;
+                    }
+
+
+                    var x1 = new IdentityRoleClaim<string>()
+                    {
+                        Id = i,
+                        RoleId = "1",
+                        ClaimType = Permission.ToString(),
+                        ClaimValue = Permission.ToString()
+                    };
+                    identityRoleClaims.Add(x1);
+                    i++;
                 }
 
-                i++;
-                
-                
+
+
+
             }
+            builder.Entity<IdentityRoleClaim<string>>().HasData(identityRoleClaims);
             /* modules = Enum.GetValues(typeof(Helper.PermissionModuleNameSecretariat));
              foreach (var module in modules)
              {
@@ -124,6 +179,6 @@ namespace FekraHubAPI.Seeds
              }
              */
         }
-       
+
     }
 }

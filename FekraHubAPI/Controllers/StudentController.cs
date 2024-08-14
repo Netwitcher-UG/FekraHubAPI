@@ -308,7 +308,7 @@ namespace FekraHubAPI.Controllers
                 };
                 await _studentRepo.Add(studentEntity);
                 await _contractMaker.ConverterHtmlToPdf(studentEntity);
-                var res = await _emailSender.SendContractEmail(studentEntity.Id, "Son_Contract");
+                var res = await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
                 if (res is BadRequestObjectResult)
                 {
                     await _emailSender.SendContractEmail(studentEntity.Id, "Son_Contract");

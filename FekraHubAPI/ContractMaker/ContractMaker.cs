@@ -96,8 +96,16 @@ namespace FekraHubAPI.ContractMaker
         private async Task<List<string>> ContractHtmlPage(Student student)
         {
             var schoolInfo = (await _schoolInforepo.GetRelation()).SingleOrDefault();
-            var parent = await _Usersrepo.GetUser(student.ParentID);
-            List<string> contractPages = schoolInfo.ContractPages;
+            if (schoolInfo == null) 
+            {
+                return new List<string>();
+            }
+            var parent = await _Usersrepo.GetUser(student.ParentID ?? "");
+            if(parent == null)
+            {
+                return new List<string>();
+            }
+            List<string> contractPages = schoolInfo.ContractPages.Select(x => x.ConPage).ToList();
 
             contractPages[0] = contractPages[0]
                 .Replace("{student.FirstName}", student.FirstName ?? "")
@@ -117,6 +125,7 @@ namespace FekraHubAPI.ContractMaker
                 contractPages[i] = contractPages[i].Replace("{fekrahublogo}", schoolInfo.LogoBase64 ?? "");
             }
             return contractPages;
+                }
         }
-    }
+    
 }

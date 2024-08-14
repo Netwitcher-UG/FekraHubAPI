@@ -115,7 +115,7 @@ namespace FekraHubAPI.Controllers
         [HttpGet("[action]")]
         public async Task<ActionResult<IEnumerable<Invoice>>> ReturnInvoice(int Id)
         {
-            var query = await _invoiceRepository.GetById(Id);
+            var query = (await _invoiceRepository.GetRelation()).Where(x => x.Id == Id).FirstOrDefault();
             if (query == null)
             {
                 return BadRequest("file not found");

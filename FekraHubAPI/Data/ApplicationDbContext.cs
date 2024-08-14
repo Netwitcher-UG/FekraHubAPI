@@ -141,7 +141,7 @@ namespace FekraHubAPI.Data
       
 
         public DbSet<Location> Location { get; set; }
-
+        public DbSet<Invoice> Invoices { get; set; }
         public DbSet<ApplicationUser> ApplicationUser { get; set; }
         public DbSet<Tokens> Token { get; set; }
         public DbSet<ContractPage> contractPages { get; set; }

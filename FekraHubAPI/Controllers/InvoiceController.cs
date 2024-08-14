@@ -65,37 +65,45 @@ namespace FekraHubAPI.Controllers
         [HttpGet("[action]")]
         public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoicesStudent([Required] int studentId)
         {
-            IQueryable<Invoice> query = (await _invoiceRepository.GetRelation());
-            var student = await _studentRepository.GetById(studentId);
-            if (student == null)
+            try
             {
-                return BadRequest("Student not found");
-            }
-            var userId = _invoiceRepository.GetUserIDFromToken(User);
-            if (userId != student.ParentID)
-            {
-                return NotFound("This is not your child's information.");
-            }
-
-            query = query.Where(x => x.Studentid == studentId);
-
-
-            var result = query.Select(x => new
-            {
-                x.Id,
-                x.FileName,
-                x.Date,
-                Student = x.Student == null ? null : new
+                var student = await _studentRepository.GetById(studentId);
+                if (student == null)
                 {
-                    x.Student.Id,
-                    x.Student.FirstName,
-                    x.Student.LastName
+                    return BadRequest("Student not found");
                 }
+                var userId = _invoiceRepository.GetUserIDFromToken(User);
+                if (userId != student.ParentID)
+                {
+                    return NotFound("This is not your child's information.");
+                }
+                IQueryable<Invoice> query = (await _invoiceRepository.GetRelation()).Where(x => x.Studentid == studentId);
+                if (!query.Any())
+                {
+                    return NotFound("No invoices found");
+                }
+                var result = query.Select(x => new
+                {
+                    x.Id,
+                    x.FileName,
+                    x.Date,
+                    Student = x.Student == null ? null : new
+                    {
+                        x.Student.Id,
+                        x.Student.FirstName,
+                        x.Student.LastName
+                    }
 
 
-            }).ToList();
+                }).ToList();
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
         }
 
         [Authorize(Policy = "ManageChildren")]

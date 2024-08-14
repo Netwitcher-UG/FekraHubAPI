@@ -115,21 +115,28 @@ namespace FekraHubAPI.Controllers
         [HttpGet("[action]")]
         public async Task<ActionResult<IEnumerable<Invoice>>> ReturnInvoice(int Id)
         {
-            var query = (await _invoiceRepository.GetRelation()).Where(x => x.Id == Id).FirstOrDefault();
-            if (query == null)
+            try
             {
-                return BadRequest("file not found");
-            }
+                var query = (await _invoiceRepository.GetRelation()).Where(x => x.Id == Id);
+                if (query == null)
+                {
+                    return BadRequest("file not found");
+                }
 
-            var userId = _invoiceRepository.GetUserIDFromToken(User);
-            if (userId != query.Student.ParentID)
+                var userId = _invoiceRepository.GetUserIDFromToken(User);
+                if (userId != query.Select(x => x.Student.ParentID).FirstOrDefault())
+                {
+                    return NotFound("This is not your child's information.");
+                }
+
+                var result = Convert.ToBase64String(query.First().file);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
             {
-                return NotFound("This is not your child's information.");
+                return BadRequest(ex.Message);
             }
-
-            var result = Convert.ToBase64String(query.file);
-
-            return Ok(result);
         }
 
         [Authorize(Policy = "ManageInvoice")]

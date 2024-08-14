@@ -17,21 +17,21 @@ namespace FekraHubAPI.Controllers
     {
 
 
-      
+
         private readonly IRepository<Invoice> _invoiceRepository;
         private readonly IRepository<Student> _studentRepository;
-      
+
         private readonly IMapper _mapper;
-   
+
         public InvoiceController(IRepository<Student> studentRepository,
             IRepository<Invoice> invoiceRepository,
-              
+
         IMapper mapper)
         {
             _invoiceRepository = invoiceRepository;
             _studentRepository = studentRepository;
             _mapper = mapper;
-        
+
         }
 
 
@@ -45,7 +45,7 @@ namespace FekraHubAPI.Controllers
             if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(x => x.Student.FirstName.Contains(search) || x.Student.LastName.Contains(search));
-              
+
             }
 
 
@@ -54,8 +54,13 @@ namespace FekraHubAPI.Controllers
                 x.Id,
                 x.FileName,
                 x.Date,
-                x.Student.FirstName,
-                x.Student.LastName
+                student = x.Student == null ? null : new
+                {
+                    x.Student.Id,
+                    x.Student.FirstName,
+                    x.Student.LastName
+                }
+
 
             }).ToList();
 
@@ -63,10 +68,10 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("[action]")]
-        public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoicesStudent([Required]int studentId)
+        public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoicesStudent([Required] int studentId)
         {
-            try 
-            { 
+            try
+            {
                 var student = await _studentRepository.GetById(studentId);
                 if (student == null)
                 {
@@ -78,7 +83,7 @@ namespace FekraHubAPI.Controllers
                     return NotFound("This is not your child's information.");
                 }
                 IQueryable<Invoice> query = (await _invoiceRepository.GetRelation()).Where(x => x.Studentid == studentId);
-                if(!query.Any())
+                if (!query.Any())
                 {
                     return NotFound("No invoices found");
                 }
@@ -87,13 +92,13 @@ namespace FekraHubAPI.Controllers
                     x.Id,
                     x.FileName,
                     x.Date,
-                    Student = x.Student == null ? null : new 
+                    Student = x.Student == null ? null : new
                     {
                         x.Student.Id,
                         x.Student.FirstName,
                         x.Student.LastName
                     }
-                
+
 
                 }).ToList();
 
@@ -103,28 +108,35 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest(ex.Message);
             }
-            
+
         }
 
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("[action]")]
         public async Task<ActionResult<IEnumerable<Invoice>>> ReturnInvoice(int Id)
         {
-            var query = await _invoiceRepository.GetById(Id);
-            if (query == null)
+            try
             {
-                return BadRequest("file not found");
-            }
+                var query = (await _invoiceRepository.GetRelation()).Where(x => x.Id == Id);
+                if (query == null)
+                {
+                    return BadRequest("file not found");
+                }
 
-            var userId = _invoiceRepository.GetUserIDFromToken(User);
-            if (userId != query.Student.ParentID)
+                var userId = _invoiceRepository.GetUserIDFromToken(User);
+                if (userId != query.Select(x => x.Student.ParentID).FirstOrDefault())
+                {
+                    return NotFound("This is not your child's information.");
+                }
+
+                var result = Convert.ToBase64String(query.First().file);
+
+                return Ok(result);
+            }
+            catch(Exception ex)
             {
-                return NotFound("This is not your child's information.");
+                return BadRequest(ex.Message);
             }
-
-            var result = Convert.ToBase64String(query.file);
-
-            return Ok(result);
         }
 
         [Authorize(Policy = "ManageInvoice")]
@@ -138,36 +150,36 @@ namespace FekraHubAPI.Controllers
                 return NotFound("student not found.");
             }
 
-           
+
 
             if (invoiceFile.Length > 0)
+            {
+
+                byte[] fileBytes;
+                using (var ms = new MemoryStream())
                 {
-
-                    byte[] fileBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        await invoiceFile.CopyToAsync(ms);
-                        fileBytes = ms.ToArray();
-                    }
-
-                    var upload = new Invoice
-                    {
-                        file = fileBytes,
-                        Date = DateTime.Now,
-                         FileName = invoiceFile.FileName,
-                        Studentid = studentId
-                    };
-
-                
-                    await _invoiceRepository.Add(upload);
-
+                    await invoiceFile.CopyToAsync(ms);
+                    fileBytes = ms.ToArray();
                 }
-           
+
+                var upload = new Invoice
+                {
+                    file = fileBytes,
+                    Date = DateTime.Now,
+                    FileName = invoiceFile.FileName,
+                    Studentid = studentId
+                };
+
+
+                await _invoiceRepository.Add(upload);
+
+            }
+
             return Ok("invoice File uploaded successfully.");
         }
 
 
-       
+
 
 
 

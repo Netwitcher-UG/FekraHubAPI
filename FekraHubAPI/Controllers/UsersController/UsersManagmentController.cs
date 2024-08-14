@@ -423,7 +423,7 @@ namespace FekraHubAPI.Controllers.UsersController
             // await _applicationUserRepository.Update(account);
 
             var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
-            var normalizedUserName = accountUpdate.UserName.Normalize().ToLower();
+            var normalizedUserName = accountUpdate.Email.Normalize().ToLower();
 
             account.UserName = accountUpdate.Email;
             account.Email = accountUpdate.Email;

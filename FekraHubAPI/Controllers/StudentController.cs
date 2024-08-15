@@ -374,7 +374,7 @@ namespace FekraHubAPI.Controllers
                 var res = await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
                 if (res is BadRequestObjectResult)
                 {
-                    await _emailSender.SendContractEmail(studentEntity.Id, "Son_Contract");
+                    await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
                 }
 
                 return Ok("welcomes your son to our family . A copy of the contract was sent to your email");
@@ -401,6 +401,31 @@ namespace FekraHubAPI.Controllers
                     ParentLastName = x.Student.User.LastName,
                     x.CreationDate,
                 
+                }).ToList();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+        [Authorize(Policy = "GetContracts")]
+        [HttpGet("GetContractsByStudent")]
+        public async Task<IActionResult> GetContractsByStudent([Required] int studentId)
+        {
+            try
+            {
+                var contracts = (await _studentContractRepo.GetRelation()).Where(x => x.StudentID == studentId).OrderByDescending(x => x.Id);
+                var result = contracts.Select(x => new {
+                    x.Id,
+                    x.StudentID,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    ParentId = x.Student.ParentID,
+                    ParentFirstName = x.Student.User.FirstName,
+                    ParentLastName = x.Student.User.LastName,
+                    x.CreationDate,
+
                 }).ToList();
                 return Ok(result);
             }

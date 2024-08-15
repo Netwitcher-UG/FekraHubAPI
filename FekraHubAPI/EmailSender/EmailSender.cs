@@ -71,10 +71,34 @@ namespace FekraHubAPI.EmailSender
                     await client.SendAsync(message);
                     await client.DisconnectAsync(true);
                 }
+                catch (SmtpCommandException ex) when (ex.ErrorCode == SmtpErrorCode.RecipientNotAccepted)
+                {
+                    if (!string.IsNullOrEmpty("abog5461@gmail.com"))
+                    {
+                        var notificationMessage = new MimeMessage();
+                        notificationMessage.From.Add(new MailboxAddress(schoolInfo.SchoolName, FromEmail));
+                        notificationMessage.To.Add(new MailboxAddress("", "abog5461@gmail.com"));
+                        notificationMessage.Subject = "Failed to deliver email";
+                        notificationMessage.Body = new TextPart("plain")
+                        {
+                            Text = $"Failed to send email to {toEmail}. The email address may be invalid."
+                        };
+
+                        try
+                        {
+                            await client.SendAsync(notificationMessage);
+                        }
+                        catch (Exception innerEx)
+                        {
+                            //Console.WriteLine($"Failed to send notification email: {innerEx.Message}");
+                        }
+                    }
+
+                    // Console.WriteLine($"Failed to send email to {toEmail}: {ex.Message}");
+                }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed to send email: {ex.Message}");
-                    throw;
+                    //Console.WriteLine($"Failed to send email: {ex.Message}");
                 }
             }
         }

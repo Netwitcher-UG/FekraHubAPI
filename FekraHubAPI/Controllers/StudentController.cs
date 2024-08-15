@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
@@ -57,6 +57,68 @@ namespace FekraHubAPI.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
             }
+        }
+
+        [Authorize(Policy = "GetStudentsCourse")]
+
+        [HttpGet("GetStudent/{id}")]
+        public async Task<IActionResult> GetStudent(int id)
+        {
+           
+            var students = (await _studentRepo.GetRelation()).Where(x => x.Id == id);
+            if (!students.Any())
+            {
+                return NotFound("This student is not found");
+            }
+            var result = students.Select(z => new
+            {
+                z.Id,
+                z.FirstName,
+                z.LastName,
+                z.Birthday,
+                z.Nationality,
+                z.Note,
+                z.Gender,
+                city = z.City ?? "Like parent",
+                Street = z.Street ?? "Like parent",
+                StreetNr = z.StreetNr ?? "Like parent",
+                ZipCode = z.ZipCode ?? "Like parent",
+                course = z.Course == null ? null : new
+                {
+                    z.Course.Id,
+                    z.Course.Name,
+                    z.Course.Capacity,
+                    startDate = z.Course.StartDate.Date,
+                    EndDate = z.Course.EndDate.Date,
+                    z.Course.Price,
+                    Teacher = z.Course.Teacher.Select(x => new
+                    {
+                        x.Id,
+                        x.FirstName,
+                        x.LastName
+
+                    })
+                },
+                Room = z.Course == null ? null : new
+                {
+                    z.Course.Room.Id,
+                    z.Course.Room.Name
+                },
+                Location = z.Course == null ? null : new
+                {
+                    z.Course.Room.Location.Id,
+                    z.Course.Room.Location.Name,
+                    z.Course.Room.Location.City,
+                    z.Course.Room.Location.Street,
+                    z.Course.Room.Location.ZipCode,
+                    z.Course.Room.Location.StreetNr
+                }
+
+
+            }).FirstOrDefault();
+
+
+            return Ok(result);
         }
 
         [Authorize(Policy = "GetStudentsCourse")]
@@ -338,7 +400,7 @@ namespace FekraHubAPI.Controllers
                     ParentFirstName = x.Student.User.FirstName,
                     ParentLastName = x.Student.User.LastName,
                     x.CreationDate,
-                    x.File
+                
                 }).ToList();
                 return Ok(result);
             }
@@ -347,6 +409,20 @@ namespace FekraHubAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+        [Authorize(Policy = "GetContracts")]
+        [HttpGet("DownloadContractFileForAdmin")]
+        public async Task<ActionResult<IEnumerable<Upload>>> DownloadContractFileForAdmin(int contractId)
+        {
+            var query = await _studentContractRepo.GetById(contractId);
+            if (query == null)
+            {
+                return BadRequest("file not found");
+            }
+            var result = Convert.ToBase64String(query.File);
+
+            return Ok(result);
+        }
+
         [Authorize(Policy = "ManageChildren")]
 
         [HttpGet("SonsContractsForParent")]
@@ -367,7 +443,7 @@ namespace FekraHubAPI.Controllers
                     x.Student.FirstName,
                     x.Student.LastName,
                     x.CreationDate,
-                    x.File
+                  
                 }).ToList();
                 return Ok(contracts);
             }

@@ -9,9 +9,6 @@ namespace FekraHubAPI.MapModels.Users
         public string Role { get; set; }
 
         [Required]
-        public string UserName { get; set; }
-
-        [Required]
         public string Password { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }

@@ -36,7 +36,10 @@ namespace FekraHubAPI.EmailSender
 
         private async Task SendEmail(string toEmail, string subject, string body, bool isBodyHTML, byte[]? pdf = null, string? pdfName = null)
         {
-            var schoolInfo = await _context.SchoolInfos.FirstAsync();
+
+            var schoolInfo = await _context.SchoolInfos
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .FirstAsync();
             string MailServer = schoolInfo.EmailServer;
             int Port = schoolInfo.EmailPortNumber;
             string FromEmail = schoolInfo.FromEmail;

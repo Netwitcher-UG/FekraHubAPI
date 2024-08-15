@@ -287,6 +287,29 @@ namespace FekraHubAPI.Controllers
             {
                 return NotFound("This student is not found");
             }
+            var reportNew = students.Select(x => x.Report).Where(x => x.Any(x => x.CreationDate >= DateTime.Now.AddDays(-30))).Select(x => x.Select(z => new
+            {
+                z.Id,
+                z.data,
+                z.CreationDate,
+                TeacherId = z.UserId,
+                TeacherFirstName = z.User.FirstName,
+                TeacherLastName = z.User.LastName,
+            }));
+            var uploadNew = students.SelectMany(x => x.Course.Upload)
+                .OrderByDescending(x => x.Id).Select(x => new
+                {
+                    x.Id,
+                    x.FileName,
+                    x.UploadType.TypeTitle
+                }).FirstOrDefault();
+
+            var invoiceNew = students.Select(x => x.parentInvoices)
+                .Where(x => x.Any(x => x.Timestamp >= DateTime.Now.AddDays(-30))).Select(x => x.Select(z => new
+                {
+                    z.Id,
+                    z.Timestamp,
+                }));
             var result = students.Select(z => new
             {
                 z.Id,
@@ -329,6 +352,12 @@ namespace FekraHubAPI.Controllers
                     z.Course.Room.Location.Street,
                     z.Course.Room.Location.ZipCode,
                     z.Course.Room.Location.StreetNr
+                },
+                News = new
+                {
+                    Report = reportNew == null ? null : reportNew,
+                    WorkSheet = uploadNew == null ? null : uploadNew,
+                    Invoice = invoiceNew == null ? null : invoiceNew
                 }
 
 
@@ -519,6 +548,45 @@ namespace FekraHubAPI.Controllers
             var result = Convert.ToBase64String(query.File);
 
             return Ok(result);
+        }
+
+        [Authorize(Policy = "ManageChildren")]
+        [HttpPost("UpdateSonDataFromProfile")]
+        public async Task<IActionResult> UpdateSonDataFromProfile(
+            [FromForm] int studentId,
+            [FromForm] string Nationality,
+            [FromForm] string? Street,
+            [FromForm] string? StreetNr,
+            [FromForm] string? ZipCode,
+            [FromForm] string? City
+            )
+        {
+            try
+            {
+                var userId = _courseRepo.GetUserIDFromToken(User);
+                var student = await _studentRepo.GetById(studentId);
+                if (student.ParentID != userId || student == null)
+                {
+                    if (string.IsNullOrEmpty(userId))
+                    {
+                        return Unauthorized("User not found.");
+                    }
+                    return BadRequest("Invalid student ID");
+                };
+                student.Nationality = Nationality;
+                student.Street = Street;
+                student.StreetNr = StreetNr;
+                student.ZipCode = ZipCode;
+                student.City = City;
+
+                await _studentRepo.Update(student);
+
+                return Ok("Student Data is updated");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
         [AllowAnonymous]
         [HttpGet("testing/sendEmails/foreach")]

@@ -293,22 +293,23 @@ namespace FekraHubAPI.Controllers
                 z.data,
                 z.CreationDate,
                 TeacherId = z.UserId,
-                TeacherFirstName = z.User.FirstName,
-                TeacherLastName = z.User.LastName,
+                TeacherFirstName =z.User == null ? null : z.User.FirstName,
+                TeacherLastName = z.User == null ? null : z.User.LastName,
             }));
-            var uploadNew = students.SelectMany(x => x.Course.Upload)
-                .OrderByDescending(x => x.Id).Select(x => new
+            var uploadNew = students.Select(x => x.Course.Upload)
+                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x => x.Select(x => new
                 {
                     x.Id,
                     x.FileName,
                     x.UploadType.TypeTitle
-                }).FirstOrDefault();
+                }));
 
-            var invoiceNew = students.Select(x => x.parentInvoices)
-                .Where(x => x.Any(x => x.Timestamp >= DateTime.Now.AddDays(-30))).Select(x => x.Select(z => new
+            var invoiceNew = students.Select(x => x.Invoices)
+                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x => x.Select(z => new
                 {
                     z.Id,
-                    z.Timestamp,
+                    z.FileName,
+                    z.Date,
                 }));
             var result = students.Select(z => new
             {

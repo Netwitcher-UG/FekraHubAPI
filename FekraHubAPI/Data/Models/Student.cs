@@ -26,7 +26,7 @@ namespace FekraHubAPI.Data.Models
         public virtual ApplicationUser User { get; set; }
         public string? ParentID { get; set; }
 
-          [ForeignKey("CourseID")]
+        [ForeignKey("CourseID")]
         public virtual Course Course { get; set; }
         public int? CourseID { get; set; }
 
@@ -34,7 +34,7 @@ namespace FekraHubAPI.Data.Models
 
         public ICollection<StudentAttendance> StudentAttendance { get; set; }
         public ICollection<Report> Report { get; set; }
-        public ICollection<ParentInvoice> parentInvoices { get; set; }
+        public ICollection<Invoice> Invoices { get; set; }
 
 
 

@@ -13,13 +13,17 @@ namespace FekraHubAPI.Data
     {
 
 
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options 
-            ): base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
+            ) : base(options)
         {
+
+
         }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            //ClearAndSeedRoleAdminClaimsAsync();
+
             SeedRoles(builder);
             //SeedAdminUser(builder);
 
@@ -100,17 +104,24 @@ namespace FekraHubAPI.Data
                 i++;
             }
             builder.Entity<StudentsReportsKey>().HasData(StudentsReportsKeys);
-
         }
+        //private  void ClearAndSeedRoleAdminClaimsAsync(UserManager<IdentityUser> userManager)
+        //{
 
-        private  static void SeedRoles(ModelBuilder builder)
+        //    var existingClaims = userManager.RoleClaims.ToList();
+        //    userManager.RoleClaims.RemoveRange(existingClaims);
+        //    userManager.SaveChangesAsync();
+
+        //}
+        private static void SeedRoles(ModelBuilder builder)
         {
             DefaultRole.SeedRoleAsync(builder);
+
             DefaultPermissions.SeedPermissionsAsync(builder);
             DefaultPermissions.SeedRoleAdminClaimsAsync(builder);
         }
 
-        private static void SeedAdminUser(ModelBuilder builder )
+        private static void SeedAdminUser(ModelBuilder builder)
         {
             DefaultUser.SeedAdminAsync(builder);
 
@@ -119,15 +130,14 @@ namespace FekraHubAPI.Data
         public DbSet<SchoolInfo> SchoolInfos { get; set; }
         public DbSet<AspNetPermissions> AspNetPermissions { get; set; }
         public DbSet<Course> Courses { get; set; }
-        
+
 
         public DbSet<AttendanceStatus> AttendanceStatuses { get; set; }
-  
+
         public DbSet<Event> Events { get; set; }
         public DbSet<CourseSchedule> CourseSchedules { get; set; }
         public DbSet<EventType> EventsTypes { get; set; }
         public DbSet<StudentContract> StudentContract { get; set; }
-        public DbSet<ParentInvoice> ParentInvoices { get; set; }
         public DbSet<PayRoll> PayRoll { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<Room> Rooms { get; set; }
@@ -138,7 +148,7 @@ namespace FekraHubAPI.Data
 
         public DbSet<UploadType> UploadsType { get; set; }
         public DbSet<WorkContract> WorkContracts { get; set; }
-      
+
 
         public DbSet<Location> Location { get; set; }
         public DbSet<Invoice> Invoices { get; set; }

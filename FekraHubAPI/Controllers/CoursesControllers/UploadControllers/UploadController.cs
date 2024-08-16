@@ -68,6 +68,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
                     }),
                     x.FileName,
+                    x.Date
                 }).ToList();
 
                 return Ok(result);
@@ -142,6 +143,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
                     }),
                     x.FileName,
+                    x.Date
                 }).ToList();
 
                 return Ok(result);
@@ -221,6 +223,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         UploadTypeid = TypeId,
                         file = fileBytes,
                         FileName = file.FileName,
+                        Date = DateTime.Now,
                         Courses = new List<Course>()
                     };
 

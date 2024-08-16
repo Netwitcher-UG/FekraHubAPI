@@ -7,10 +7,11 @@ namespace FekraHubAPI.Data.Models
     {
         [Key]
         public int Id { get; set; }
-        
+
         public byte[] file { get; set; }
 
         public string FileName { get; set; }
+        public DateTime Date { get; set; } = DateTime.Now;
 
         [ForeignKey("UploadTypeid")]
         public virtual UploadType UploadType { get; set; }

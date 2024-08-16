@@ -293,8 +293,8 @@ namespace FekraHubAPI.Controllers
                 z.data,
                 z.CreationDate,
                 TeacherId = z.UserId,
-                TeacherFirstName = z.User.FirstName,
-                TeacherLastName = z.User.LastName,
+                TeacherFirstName = z.User == null ? null : z.User.FirstName,
+                TeacherLastName = z.User == null ? null : z.User.LastName,
             }));
             var uploadNew = students.Select(x => x.Course.Upload)
                 .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x => x.Select(x=> new

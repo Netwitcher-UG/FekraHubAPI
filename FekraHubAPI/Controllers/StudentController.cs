@@ -55,7 +55,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from the database");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error retrieving data from the database : {ex}");
             }
         }
 
@@ -296,19 +296,20 @@ namespace FekraHubAPI.Controllers
                 TeacherFirstName = z.User.FirstName,
                 TeacherLastName = z.User.LastName,
             }));
-            var uploadNew = students.SelectMany(x => x.Course.Upload)
-                .OrderByDescending(x => x.Id).Select(x=> new
+            var uploadNew = students.Select(x => x.Course.Upload)
+                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x => x.Select(x=> new
                 {
                     x.Id,
                     x.FileName,
                     x.UploadType.TypeTitle
-                }).FirstOrDefault();
+                }));
            
-            var invoiceNew = students.Select(x => x.parentInvoices)
-                .Where(x => x.Any(x => x.Timestamp >= DateTime.Now.AddDays(-30))).Select(x=>x.Select(z=> new
+            var invoiceNew = students.Select(x => x.Invoices)
+                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x=>x.Select(z=> new
                 {
                     z.Id,
-                    z.Timestamp,
+                    z.FileName,
+                    z.Date,
                 }));
             var result = students.Select(z => new
             {

@@ -138,7 +138,6 @@ namespace FekraHubAPI.Data
         public DbSet<CourseSchedule> CourseSchedules { get; set; }
         public DbSet<EventType> EventsTypes { get; set; }
         public DbSet<StudentContract> StudentContract { get; set; }
-        public DbSet<ParentInvoice> ParentInvoices { get; set; }
         public DbSet<PayRoll> PayRoll { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<Room> Rooms { get; set; }

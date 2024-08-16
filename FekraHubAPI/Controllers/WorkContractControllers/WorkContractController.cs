@@ -60,7 +60,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 var authId = _workContractRepository.GetUserIDFromToken(User);
                 var WorkContractEntity = await _workContractRepository.GetAll();
                 var WorkContractUser = WorkContractEntity.Where(i => i.TeacherID == authId);
-                var data = WorkContractUser.Select(x => new { x.Id, x.TeacherID, x.File }).ToList();
+                var data = WorkContractUser.Select(x => new { x.Id, x.TeacherID,x.FileName, x.File }).ToList();
                 return Ok(data);
             }
             catch (Exception ex)
@@ -101,6 +101,8 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                     var UploadWorkContract = new WorkContract
                     {
                         File = fileWorkContract,
+                        Timestamp = DateTime.Now,
+                        FileName = file.FileName,
                         TeacherID = UserID,
 
                     };
@@ -130,7 +132,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         {
             var WorkContractEntity = await _workContractRepository.GetAll();
             var WorkContractUser =   WorkContractEntity.Where(i => i.TeacherID == userID);
-            var data = WorkContractUser.Select(x => new { x.Id , x.TeacherID , x.File }).ToList();
+            var data = WorkContractUser.Select(x => new { x.Id , x.TeacherID,x.FileName , x.File }).ToList();
 
             return Ok(data);
         }

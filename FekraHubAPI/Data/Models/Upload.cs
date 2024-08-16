@@ -11,6 +11,7 @@ namespace FekraHubAPI.Data.Models
         public byte[] file { get; set; }
 
         public string FileName { get; set; }
+        public DateTime Date { get; set; } = DateTime.Now;
 
         [ForeignKey("UploadTypeid")]
         public virtual UploadType UploadType { get; set; }

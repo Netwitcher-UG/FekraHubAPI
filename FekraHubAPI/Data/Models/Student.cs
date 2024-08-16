@@ -34,7 +34,7 @@ namespace FekraHubAPI.Data.Models
 
         public ICollection<StudentAttendance> StudentAttendance { get; set; }
         public ICollection<Report> Report { get; set; }
-        public ICollection<ParentInvoice> parentInvoices { get; set; }
+        public ICollection<Invoice> Invoices { get; set; }
 
 
 

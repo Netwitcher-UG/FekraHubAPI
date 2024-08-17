@@ -70,30 +70,40 @@ namespace FekraHubAPI.Controllers
             {
                 return NotFound("This student is not found");
             }
-            var reportNew = students.Select(x => x.Report).Where(x => x.Any(x => x.CreationDate >= DateTime.Now.AddDays(-30))).Select(x => x.Select(z => new
+            var reportNew = students
+                .SelectMany(x => x.Report)
+                .Where(x => x.CreationDate >= DateTime.Now.AddDays(-30))
+                .Select(z => new
             {
                 z.Id,
                 z.data,
                 z.CreationDate,
+                z.CreationDate.Year,
+                z.CreationDate.Month,
                 TeacherId = z.UserId,
                 TeacherFirstName = z.User == null ? null : z.User.FirstName,
                 TeacherLastName = z.User == null ? null : z.User.LastName,
-            }));
-            var uploadNew = students.Select(x => x.Course.Upload)
-                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x => x.Select(x => new
-                {
-                    x.Id,
-                    x.FileName,
-                    x.UploadType.TypeTitle
-                }));
-
-            var invoiceNew = students.Select(x => x.Invoices)
-                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x => x.Select(z => new
+            });
+            
+            var uploadNew = students
+                            .SelectMany(x => x.Course.Upload)
+                            .Where(upload => upload.Date >= DateTime.Now.AddDays(-30))
+                            .Select(upload => new
+                            {
+                                upload.Id,
+                                upload.FileName,
+                                upload.UploadType.TypeTitle
+                            })
+                            .ToList();
+            var invoiceNew = students
+                .SelectMany(x => x.Invoices)
+                .Where(x => x.Date >= DateTime.Now.AddDays(-30))
+                .Select(z => new
                 {
                     z.Id,
                     z.FileName,
                     z.Date,
-                }));
+                });
             var result = students.Select(z => new
             {
                 z.Id,
@@ -317,30 +327,40 @@ namespace FekraHubAPI.Controllers
             {
                 return NotFound("This student is not found");
             }
-            var reportNew = students.Select(x=>x.Report).Where(x=>x.Any(x => x.CreationDate >= DateTime.Now.AddDays(-30))).Select(x => x.Select(z => new
-            {
-                z.Id,
-                z.data,
-                z.CreationDate,
-                TeacherId = z.UserId,
-                TeacherFirstName = z.User == null ? null : z.User.FirstName,
-                TeacherLastName = z.User == null ? null : z.User.LastName,
-            }));
-            var uploadNew = students.Select(x => x.Course.Upload)
-                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x => x.Select(x=> new
+            var reportNew = students
+                .SelectMany(x => x.Report)
+                .Where(x => x.CreationDate >= DateTime.Now.AddDays(-30))
+                .Select(z => new
                 {
-                    x.Id,
-                    x.FileName,
-                    x.UploadType.TypeTitle
-                }));
-           
-            var invoiceNew = students.Select(x => x.Invoices)
-                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x=>x.Select(z=> new
+                    z.Id,
+                    z.data,
+                    z.CreationDate,
+                    z.CreationDate.Year,
+                    z.CreationDate.Month,
+                    TeacherId = z.UserId,
+                    TeacherFirstName = z.User == null ? null : z.User.FirstName,
+                    TeacherLastName = z.User == null ? null : z.User.LastName,
+                });
+
+            var uploadNew = students
+                            .SelectMany(x => x.Course.Upload)
+                            .Where(upload => upload.Date >= DateTime.Now.AddDays(-30))
+                            .Select(upload => new
+                            {
+                                upload.Id,
+                                upload.FileName,
+                                upload.UploadType.TypeTitle
+                            })
+                            .ToList();
+            var invoiceNew = students
+                .SelectMany(x => x.Invoices)
+                .Where(x => x.Date >= DateTime.Now.AddDays(-30))
+                .Select(z => new
                 {
                     z.Id,
                     z.FileName,
                     z.Date,
-                }));
+                });
             var result = students.Select(z => new
             {
                 z.Id,

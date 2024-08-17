@@ -92,6 +92,7 @@ namespace FekraHubAPI.Controllers
                             {
                                 upload.Id,
                                 upload.FileName,
+                                upload.Date,
                                 upload.UploadType.TypeTitle
                             })
                             .ToList();

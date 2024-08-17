@@ -45,7 +45,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
         [Authorize(Policy = "ManageFile")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search)
+        public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search , int? studentId)
         {
             try
             {
@@ -55,7 +55,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 {
                     query = query.Where(x => x.Courses.Any(z => z.Name.Contains(search)));
                 }
-
+                if (studentId != null)
+                {
+                    query = query.Where(x => x.Courses.Any(z => z.Student.Any(y => y.Id == studentId) ));
+                }
 
                 var result = query.Select(x => new
                 {

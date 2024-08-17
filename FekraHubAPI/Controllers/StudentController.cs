@@ -62,7 +62,7 @@ namespace FekraHubAPI.Controllers
         [Authorize(Policy = "GetStudentsCourse")]
 
         [HttpGet("GetStudent/{id}")]
-        public async Task<IActionResult> GetStudent(int id)
+        public async Task<IActionResult> GetStudent(int id)//////////////////////
         {
            
             var students = (await _studentRepo.GetRelation()).Where(x => x.Id == id);
@@ -70,6 +70,30 @@ namespace FekraHubAPI.Controllers
             {
                 return NotFound("This student is not found");
             }
+            var reportNew = students.Select(x => x.Report).Where(x => x.Any(x => x.CreationDate >= DateTime.Now.AddDays(-30))).Select(x => x.Select(z => new
+            {
+                z.Id,
+                z.data,
+                z.CreationDate,
+                TeacherId = z.UserId,
+                TeacherFirstName = z.User == null ? null : z.User.FirstName,
+                TeacherLastName = z.User == null ? null : z.User.LastName,
+            }));
+            var uploadNew = students.Select(x => x.Course.Upload)
+                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x => x.Select(x => new
+                {
+                    x.Id,
+                    x.FileName,
+                    x.UploadType.TypeTitle
+                }));
+
+            var invoiceNew = students.Select(x => x.Invoices)
+                .Where(x => x.Any(x => x.Date >= DateTime.Now.AddDays(-30))).Select(x => x.Select(z => new
+                {
+                    z.Id,
+                    z.FileName,
+                    z.Date,
+                }));
             var result = students.Select(z => new
             {
                 z.Id,
@@ -112,6 +136,12 @@ namespace FekraHubAPI.Controllers
                     z.Course.Room.Location.Street,
                     z.Course.Room.Location.ZipCode,
                     z.Course.Room.Location.StreetNr
+                },
+                News = new
+                {
+                    Report = reportNew == null ? null : reportNew,
+                    WorkSheet = uploadNew == null ? null : uploadNew,
+                    Invoice = invoiceNew == null ? null : invoiceNew
                 }
 
 

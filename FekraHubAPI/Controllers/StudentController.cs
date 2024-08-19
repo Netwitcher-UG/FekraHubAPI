@@ -62,13 +62,18 @@ namespace FekraHubAPI.Controllers
         [Authorize(Policy = "GetStudentsCourse")]
 
         [HttpGet("GetStudent/{id}")]
-        public async Task<IActionResult> GetStudent(int id)//////////////////////
+        public async Task<IActionResult> GetStudent(int id)////////////////////// Profile for admin
         {
 
             var students = (await _studentRepo.GetRelation()).Where(x => x.Id == id);
             if (!students.Any())
             {
                 return NotFound("This student is not found");
+            }
+            var parent = _userManager.Users.Where(x => x.Id == students.Single().ParentID).SingleOrDefault();
+            if (parent == null)
+            {
+                return NotFound("This student does't have registred parents");
             }
             var reportNew = students
                 .SelectMany(x => x.Report)
@@ -118,6 +123,25 @@ namespace FekraHubAPI.Controllers
                 Street = z.Street ?? "Like parent",
                 StreetNr = z.StreetNr ?? "Like parent",
                 ZipCode = z.ZipCode ?? "Like parent",
+                Parent = new
+                {
+                    parent.Id,
+                    parent.FirstName,
+                    parent.LastName,
+                    parent.Email,
+                    parent.PhoneNumber,
+                    parent.EmergencyPhoneNumber,
+                    parent.Street,
+                    parent.StreetNr,
+                    parent.ZipCode,
+                    parent.City,
+                    parent.Nationality,
+                    parent.Birthplace,
+                    parent.Birthday,
+                    parent.Gender,
+                    parent.Job,
+                    parent.Graduation
+                },
                 course = z.Course == null ? null : new
                 {
                     z.Course.Id,

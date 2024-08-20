@@ -21,12 +21,14 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<StudentContract> _studentContractRepo;
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<Course> _courseRepo;
+        private readonly IRepository<AttendanceDate> _attendanceDateRepo;
         private readonly IContractMaker _contractMaker;
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         public StudentController(IRepository<StudentContract> studentContractRepo, IContractMaker contractMaker,
-            IRepository<Student> studentRepo, IRepository<Course> courseRepo, IEmailSender emailSender, IMapper mapper, UserManager<ApplicationUser> userManager)
+            IRepository<Student> studentRepo, IRepository<Course> courseRepo, 
+            IEmailSender emailSender, IMapper mapper, UserManager<ApplicationUser> userManager, IRepository<AttendanceDate> attendanceDateRepo)
         {
             _studentContractRepo = studentContractRepo;
             _contractMaker = contractMaker;
@@ -35,6 +37,7 @@ namespace FekraHubAPI.Controllers
             _emailSender = emailSender;
             _mapper = mapper;
             _userManager = userManager;
+            _attendanceDateRepo = attendanceDateRepo;
         }
 
         [Authorize(Policy = "ManageChildren")]
@@ -188,21 +191,19 @@ namespace FekraHubAPI.Controllers
 
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet]
-        public async Task<IActionResult> GetStudents(string? search, int? courseId, [FromQuery] PaginationParameters paginationParameters)
+        public async Task<IActionResult> GetStudents(string? search,[Required] int courseId, [FromQuery] PaginationParameters paginationParameters)
         {
-            var Allstudents = await _studentRepo.GetRelation();
+            var Allstudents = (await _studentRepo.GetRelation()).Where(x => x.CourseID == courseId);
 
 
             if (search != null)
             {
                 Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
             }
-            if (courseId != null)
-            {
-                Allstudents = Allstudents.Where(x => x.CourseID == courseId);
-            }
+            
             Allstudents = Allstudents.OrderByDescending(x => x.Id);
             var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
+            var att = (await _attendanceDateRepo.GetRelation()).Where(x => x.Date.Date == DateTime.Now.Date).Select(x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id)).FirstOrDefault();
             var students = studentsAll.Data.Select(x => new
             {
                 x.Id,
@@ -223,7 +224,8 @@ namespace FekraHubAPI.Controllers
                     x.Course.Capacity,
                     startDate = x.Course.StartDate.Date,
                     EndDate = x.Course.EndDate.Date,
-                    x.Course.Price
+                    x.Course.Price,
+                    CourseAttendance = att
                 },
                 parent = x.User == null ? null : new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
             }).ToList();

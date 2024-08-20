@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
@@ -18,10 +19,19 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         private readonly IRepository<Course> _coursRepo;
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<AttendanceStatus> _attendanceStatusRepo;
+        private readonly IRepository<AttendanceDate> _attendanceDateRepo;
+        private readonly IRepository<CourseAttendance> _courseAttendanceRepo;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public AttendanceController(IRepository<TeacherAttendance> teacherAttendanceRepo, IRepository<StudentAttendance> studentAttendanceRepo, IRepository<Course> coursRepo, IRepository<AttendanceStatus> attendanceStatusRepo, IRepository<Student> studentRepo, IMapper mapper  , UserManager<ApplicationUser> userManager)
+        public AttendanceController(IRepository<TeacherAttendance> teacherAttendanceRepo,
+            IRepository<StudentAttendance> studentAttendanceRepo,
+            IRepository<Course> coursRepo,
+            IRepository<AttendanceStatus> attendanceStatusRepo,
+            IRepository<Student> studentRepo, IMapper mapper  ,
+            UserManager<ApplicationUser> userManager,
+            IRepository<AttendanceDate> attendanceDateRepo,
+            IRepository<CourseAttendance> courseAttendanceRepo)
         {
             _teacherAttendanceRepo = teacherAttendanceRepo;
             _studentAttendanceRepo = studentAttendanceRepo;
@@ -30,6 +40,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _attendanceStatusRepo = attendanceStatusRepo;
             _mapper = mapper;
             _userManager = userManager;
+            _attendanceDateRepo = attendanceDateRepo;
+            _courseAttendanceRepo = courseAttendanceRepo;
         }
 
 
@@ -104,13 +116,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+        
         [Authorize(Policy = "GetStudentsAttendance")]
-        [HttpGet("AllStudent")]
-        public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetAllStudentAttendance()
+        [HttpGet("StudentAttendance/{Id}")]
+        public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetStudentAttendance(int Id)
         {
-            IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation()).OrderByDescending(x => x.date);
+            
             try
             {
+                IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation())
+                                                    .Where(x => x.StudentID == Id)
+                                                    .OrderByDescending(x => x.date);
                 if (query.Any())
                 {
                     var result = await query.Select(sa => new
@@ -119,7 +135,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         Date = sa.date,
                         course = new { sa.Course.Id, sa.Course.Name },
                         student = new { sa.Student.Id, sa.Student.FirstName , sa.Student.LastName },
-                        AttendanceStatus = new {sa.AttendanceStatus.Id,sa.AttendanceStatus.Title}
+                        AttendanceStatus = new {sa.AttendanceStatus.Id,sa.AttendanceStatus.Title},
                     }).ToListAsync();
                     return Ok(result);
                 }
@@ -133,15 +149,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-        //GET url/Attendance/Student/get?dateTime=2024-05-24 | one date
-        //Get url/Attendance/Student/get?startDate=2024-05-24&endDate=2024-11-01 | date to date
-        //Get url/Attendance/Student/get?year=2024 | by year
-        //Get url/Attendance/Student/get?month=05 | by month
-        
+
         [Authorize(Policy = "GetStudentsAttendance")]
         [HttpGet("StudentFilter")]
         public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetStudentAttendance(
-            [FromQuery] int? coursId,
+            [FromQuery] int coursId,
             [FromQuery] DateTime? startDate,
             [FromQuery] DateTime? endDate,
             [FromQuery] int? year,
@@ -151,25 +163,24 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                IQueryable<StudentAttendance> query = await _studentAttendanceRepo.GetRelation();
-                                                        
-                if (coursId.HasValue)
+                var course = await _coursRepo.GetById(coursId);
+                if (course == null)
                 {
-                    var course = await _coursRepo.GetById(coursId.Value);
-                    if (course != null)
-                    {
-                        var start = course.StartDate;
-                        var end = course.EndDate;
-                        query = query.Where(ta => ta.date >= start && ta.date <= end);
-                    }
-                    else
-                    {
-                        return BadRequest($"No Course has this Id : {coursId.Value}");
-                    }
+                    return BadRequest($"No Course found");
+                    
                 }
-                if (startDate.HasValue && endDate.HasValue)
+                IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation()).Where(x => x.CourseID == coursId);
+                var start = course.StartDate;
+                var end = course.EndDate;
+                query = query.Where(ta => ta.date >= start && ta.date <= end).OrderByDescending(d => d.date);
+
+                if (startDate.HasValue )
                 {
-                    query = query.Where(ta => ta.date >= startDate.Value && ta.date <= endDate.Value);
+                    query = query.Where(ta => ta.date >= startDate.Value);
+                }
+                if(endDate.HasValue)
+                {
+                    query = query.Where(ta => ta.date <= endDate.Value);
                 }
                 if (year.HasValue)
                 {
@@ -181,9 +192,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 }
                 if (dateTime.HasValue)
                 {
-                    query = query.Where(sa => sa.date == dateTime);
+                    query = query.Where(sa => sa.date.Date == dateTime.Value.Date);
                 }
-                query = query.OrderByDescending(d => d.date);
                 if (query.Any())
                 {
                     var result = await query.Select(sa => new 
@@ -206,6 +216,137 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        [Authorize(Policy = "AddStudentAttendance")]
+        [HttpPost("Student")]
+        public async Task<IActionResult> AddStudentAttendance(
+            List<Map_StudentAttendance>? studentAttendance,
+             int courseId
+            )
+        {
+            try
+            {
+                if (studentAttendance != null && studentAttendance.Any())
+                {
+                    var studentsIdInCourse = (await _studentRepo.GetAll())
+                        .Where(x => x.CourseID == courseId)
+                        .Select(x => x.Id)
+                        .ToList(); 
+
+                    var studentsInList = studentAttendance
+                        .Where(sa => !studentsIdInCourse.Contains(sa.StudentID))
+                        .Select(sa => sa.StudentID)
+                        .ToList(); 
+
+                    if (studentsInList.Any())
+                    {
+                        return BadRequest("Some students do not belong to the course.");
+                    }
+                }
+
+                var course = (await _coursRepo.GetRelation()).Where(x => x.Id == courseId);
+                if (!course.Any())
+                {
+                    return BadRequest("Course not found");
+                }
+
+                var today = DateTime.Now.Date;
+                var existingDate = (await _attendanceDateRepo.GetRelation())
+                                    .Where(x => x.Date.Date == today)
+                                    .FirstOrDefault();
+                var attDateId = 0;
+                if (existingDate == null)
+                {
+                    var newAttendanceDate = new AttendanceDate
+                    {
+                        Date = today
+                    };
+
+                    await _attendanceDateRepo.Add(newAttendanceDate);
+                    attDateId = newAttendanceDate.Id;
+                }
+                else
+                {
+                    attDateId = existingDate.Id;
+                }
+
+                var CourseAttExist = await _courseAttendanceRepo.GetRelation();
+                if(CourseAttExist.Any())
+                {
+                    var IsCourseAttExist = course.SelectMany(z => z.CourseAttendance)
+                                        .Any(ca => ca.CourseId == courseId && ca.AttendanceDateId == existingDate.Id);
+                    if (IsCourseAttExist)
+                    {
+                        return BadRequest("This course has an attendance today");
+                    }
+                }
+                
+                var newAttendance = new List<StudentAttendance>();
+                if (studentAttendance.Any())
+                {
+                    foreach(var studentAtt in studentAttendance)
+                    {
+                        newAttendance.Add(
+                            new StudentAttendance
+                            {
+                                date = today,
+                                CourseID = courseId,
+                                StudentID = studentAtt.StudentID,
+                                StatusID = studentAtt.StatusID
+                            });
+                    }
+                }
+                await _studentAttendanceRepo.ManyAdd(newAttendance);
+                await _courseAttendanceRepo.Add(new CourseAttendance
+                {
+                    CourseId = courseId,
+                    AttendanceDateId = attDateId
+                });
+
+
+
+                return Ok(newAttendance.Select(x => new { x.Id, x.StudentID, x.CourseID, x.date, x.StatusID }));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+        
+        [Authorize(Policy = "UpdateStudentsAttendance")]
+
+        [HttpPatch("Student")]
+        public async Task<IActionResult> UpdateStudentAttendance([FromForm] int id, [FromForm] int statusId)
+        {
+            var allStudentAttendance = await _studentAttendanceRepo.GetRelation();
+            var studentAttendance = await allStudentAttendance
+                .Where(sa => sa.Id == id)
+                .SingleOrDefaultAsync();
+
+            if (studentAttendance == null)
+            {
+                return NotFound("Student Attendance not found.");
+            }
+
+            studentAttendance.StatusID = statusId;
+            try
+            {
+                await _studentAttendanceRepo.Update(studentAttendance);
+                return Ok(new
+                {
+                    studentAttendance.Id,
+                    studentAttendance.date,
+                    studentAttendance.CourseID,
+                    studentAttendance.StudentID,
+                    NewStatusId = studentAttendance.StatusID
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
         [Authorize(Policy = "GetTeachersAttendance")]
 
         [HttpGet("AllTeacher")]
@@ -309,72 +450,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Policy = "AddStudentAttendance")]
-        [HttpPost("Student")]
-        public async Task<IActionResult> AddStudentAttendance([FromForm] Map_StudentAttendance studentAttendance)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var attendanceTable = await _studentAttendanceRepo.GetRelation();
-            if (await attendanceTable.AnyAsync(d => d.date == studentAttendance.Date))
-            {
-                return BadRequest("This date already exists.");
-            }
-            
-            var Result =  _mapper.Map<StudentAttendance>(studentAttendance);
-            try
-            {
-                await _studentAttendanceRepo.Add(Result);
-                return Ok(new { Result.Id, Result.StudentID, Result.CourseID, Result.date,Result.StatusID });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
-        [Authorize(Policy = "AddStudentAttendance")]
-        [HttpPost("AllStudentAttendance")]
-        public async Task<IActionResult> AddAllStudentAttendance([FromForm] DateTime dateTime, [FromForm] int courseID,
-            [FromForm] int statusID)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-                var attendanceInDate = (await _studentAttendanceRepo.GetRelation()).Where(d => d.date == dateTime && d.CourseID == courseID);
-                var studentIdsToUpdate = attendanceInDate.Select(a => a.StudentID).ToList();
-                if (attendanceInDate.Any())
-                {
-                    await attendanceInDate.ForEachAsync(attendance => attendance.StatusID = statusID);
-                    await _studentAttendanceRepo.ManyUpdate(attendanceInDate);
-                }
-                var allStudents = await _studentRepo.GetRelation();
-                var studentsInCourse = allStudents.Where(s => s.CourseID == courseID && !studentIdsToUpdate.Contains(s.Id)).ToList();
-                if ( !studentsInCourse.Any())
-                {
-                    return NotFound("No students found for the specified course.");
-                }
-               
-                List<StudentAttendance> studentAttendances = studentsInCourse
-                        .Select(student => new StudentAttendance
-                        {
-                            date = dateTime,
-                            CourseID = courseID,
-                            StudentID = student.Id,
-                            StatusID = statusID
-                        }).ToList();
-                await _studentAttendanceRepo.ManyAdd(studentAttendances);
-                return Ok(studentAttendances.Select(x => new { x.Id, x.date, x.CourseID, x.StudentID, x.StatusID }));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
+        
         [Authorize(Policy = "UpdateTeachersAttendance")]
 
         [HttpPost("Teacher")]
@@ -404,39 +480,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        [Authorize(Policy = "UpdateStudentsAttendance")]
-
-        [HttpPatch("Student")]
-        public async Task<IActionResult> UpdateStudentAttendance([FromForm] int id, [FromForm] int statusId)
-        {
-            var allStudentAttendance = await _studentAttendanceRepo.GetRelation();
-            var studentAttendance = await allStudentAttendance
-                .Where(sa => sa.Id == id )
-                .SingleOrDefaultAsync();
-
-            if (studentAttendance == null)
-            {
-                return NotFound("Student Attendance not found.");
-            }
-
-            studentAttendance.StatusID = statusId;
-            try
-            {
-                await _studentAttendanceRepo.Update(studentAttendance);
-                return Ok(new
-                {
-                    studentAttendance.Id,
-                    studentAttendance.date,
-                    studentAttendance.CourseID,
-                    studentAttendance.StudentID,
-                    NewStatusId = studentAttendance.StatusID
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
+        
         [Authorize(Policy = "UpdateTeachersAttendance")]
         [HttpPatch("Teacher")]
         public async Task<IActionResult> UpdateTeacherAttendance([FromForm] int id, [FromForm] int statusId)

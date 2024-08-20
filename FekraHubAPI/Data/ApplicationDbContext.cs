@@ -54,6 +54,17 @@ namespace FekraHubAPI.Data
            j => j.HasOne<ApplicationUser>().WithMany().HasForeignKey("TeacherID")
            );
 
+            builder.Entity<CourseAttendance>()
+              .HasOne(ca => ca.Course)
+              .WithMany(c => c.CourseAttendance)
+              .HasForeignKey(ca => ca.CourseId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<CourseAttendance>()
+                .HasOne(ca => ca.AttendanceDate)
+                .WithMany(ad => ad.CourseAttendance)
+                .HasForeignKey(ca => ca.AttendanceDateId)
+                .OnDelete(DeleteBehavior.Restrict);
 
 
             //Delete This code before publishing the application and add new migration
@@ -156,5 +167,7 @@ namespace FekraHubAPI.Data
         public DbSet<Tokens> Token { get; set; }
         public DbSet<ContractPage> contractPages { get; set; }
         public DbSet<StudentsReportsKey> studentsReportsKeys { get; set; }
+        public DbSet<AttendanceDate> AttendanceDates { get; set; }
+        public DbSet<CourseAttendance> CoursesAttendances { get; set; }
     }
 }

@@ -188,9 +188,51 @@ namespace FekraHubAPI.Controllers
 
             return Ok(result);
         }
-
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet]
+        public async Task<IActionResult> GetStudents(string? search, int? courseId, [FromQuery] PaginationParameters paginationParameters)
+        {
+            var Allstudents = await _studentRepo.GetRelation();
+
+
+            if (search != null)
+            {
+                Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
+            }
+            if (courseId != null)
+            {
+                Allstudents = Allstudents.Where(x => x.CourseID == courseId);
+            }
+            Allstudents = Allstudents.OrderByDescending(x => x.Id);
+            var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
+            var students = studentsAll.Data.Select(x => new
+            {
+                x.Id,
+                x.FirstName,
+                x.LastName,
+                x.Birthday,
+                x.Nationality,
+                x.Note,
+                x.Gender,
+                city = x.City ?? "Like parent",
+                Street = x.Street ?? "Like parent",
+                StreetNr = x.StreetNr ?? "Like parent",
+                ZipCode = x.ZipCode ?? "Like parent",
+                course = x.Course == null ? null : new
+                {
+                    x.CourseID,
+                    x.Course.Name,
+                    x.Course.Capacity,
+                    startDate = x.Course.StartDate.Date,
+                    EndDate = x.Course.EndDate.Date,
+                    x.Course.Price
+                },
+                parent = x.User == null ? null : new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
+            }).ToList();
+            return Ok(new { studentsAll.TotalCount, studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
+        }
+        [Authorize(Policy = "GetStudentsCourse")]
+        [HttpGet("studentForAttendance")]
         public async Task<IActionResult> GetStudents(string? search,[Required] int courseId, [FromQuery] PaginationParameters paginationParameters)
         {
             var Allstudents = (await _studentRepo.GetRelation()).Where(x => x.CourseID == courseId);

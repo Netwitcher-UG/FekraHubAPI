@@ -21,6 +21,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         private readonly IRepository<AttendanceStatus> _attendanceStatusRepo;
         private readonly IRepository<AttendanceDate> _attendanceDateRepo;
         private readonly IRepository<CourseAttendance> _courseAttendanceRepo;
+        private readonly IRepository<CourseSchedule> _courseScheduleRepo;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
 
@@ -31,7 +32,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             IRepository<Student> studentRepo, IMapper mapper,
             UserManager<ApplicationUser> userManager,
             IRepository<AttendanceDate> attendanceDateRepo,
-            IRepository<CourseAttendance> courseAttendanceRepo)
+            IRepository<CourseAttendance> courseAttendanceRepo,
+            IRepository<CourseSchedule> courseScheduleRepo)
         {
             _teacherAttendanceRepo = teacherAttendanceRepo;
             _studentAttendanceRepo = studentAttendanceRepo;
@@ -42,6 +44,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _userManager = userManager;
             _attendanceDateRepo = attendanceDateRepo;
             _courseAttendanceRepo = courseAttendanceRepo;
+            _courseScheduleRepo = courseScheduleRepo;
         }
 
 
@@ -227,6 +230,27 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
+                // from course schedule (working days)
+                var workingDays = (await _courseScheduleRepo.GetRelation())
+                                                            .Where(x => x.CourseID == courseId)
+                                                            .Select(x => x.DayOfWeek.ToLower())
+                                                            .ToList();
+                if (workingDays.Any())
+                {
+                    return NotFound("Course working days are not recorded in the school system");
+                }
+                if (!workingDays.Contains(DateTime.Now.DayOfWeek.ToString().ToLower()))
+                {
+                    return BadRequest("Today was not registered as a working day for this course");
+                }
+                // course exist or not
+                var course = (await _coursRepo.GetRelation()).Where(x => x.Id == courseId);
+                if (!course.Any())
+                {
+                    return BadRequest("Course not found");
+                }
+
+                // student ids are in this course or not
                 if (studentAttendance != null && studentAttendance.Any())
                 {
                     var studentsIdInCourse = (await _studentRepo.GetAll())
@@ -245,12 +269,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     }
                 }
 
-                var course = (await _coursRepo.GetRelation()).Where(x => x.Id == courseId);
-                if (!course.Any())
-                {
-                    return BadRequest("Course not found");
-                }
-
+                // date now if exist in database or not  (add if not)
                 var today = DateTime.Now.Date;
                 var existingDate = (await _attendanceDateRepo.GetRelation())
                                     .Where(x => x.Date.Date == today)
@@ -270,7 +289,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     attDateId = existingDate.Id;
                 }
-
+                // course added attendance for today or not
                 var CourseAttExist = await _courseAttendanceRepo.GetRelation();
                 if (CourseAttExist.Any())
                 {
@@ -281,7 +300,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         return BadRequest("This course has an attendance today");
                     }
                 }
-
+                // finaly add student and course attendance
                 var newAttendance = new List<StudentAttendance>();
                 if (studentAttendance.Any())
                 {

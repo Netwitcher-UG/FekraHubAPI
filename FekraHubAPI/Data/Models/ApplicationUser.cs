@@ -37,6 +37,7 @@ namespace FekraHubAPI.Data.Models
         public string City { get; set; }
         public string Job { get; set; }
         public string Graduation { get; set; }
+        public DateTime RegistrationDate { get; set; } = DateTime.Now;
         public virtual Tokens Token { get; set; }
 
 

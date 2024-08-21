@@ -1,6 +1,7 @@
 using AutoMapper;
 using DinkToPdf;
 using DinkToPdf.Contracts;
+using FekraHubAPI.CleanTables;
 using FekraHubAPI.Constract;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data;
@@ -80,6 +81,7 @@ builder.Services.AddCors(options =>
                .AllowCredentials();
     });
 });
+builder.Services.AddHostedService<CleaneUsersTable>();
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenAnyIP(80); // HTTP

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 
 
@@ -41,7 +42,7 @@ namespace FekraHubAPI.Controllers
         [HttpGet("Keys")]
         public async Task<IActionResult> GetReportKeys()
         {
-            var keys = (await _studentsReportsKeyInfo.GetRelation()).Select(x => x.Keys);
+            var keys = await _studentsReportsKeyInfo.GetRelation<string>(null , null , x => x.Keys);
             return Ok(keys);
         }
         [Authorize(Policy = "GetStudentsReports")]
@@ -52,7 +53,7 @@ namespace FekraHubAPI.Controllers
             
             if (Improved == null) 
             {
-                query = (await _reportRepo.GetRelation()).OrderByDescending(report => report.CreationDate);
+                query = (await _reportRepo.GetRelation<Report>()).OrderByDescending(report => report.CreationDate);
                 if (!query.Any())
                 {
                     return NotFound("No reports found.");
@@ -77,7 +78,7 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest("Invalid value for 'Improved'. Use 'true', 'false', 'null' or leave it empty.");
                 }
-                query = (await _reportRepo.GetRelation()).Where(sa => sa.Improved == isImproved).OrderByDescending(report => report.CreationDate);
+                query = (await _reportRepo.GetRelation<Report>(sa => sa.Improved == isImproved)).OrderByDescending(report => report.CreationDate);
             }
             if (CourseId.HasValue)
             {
@@ -127,7 +128,7 @@ namespace FekraHubAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetReport(int id)
         {
-            var report = (await _reportRepo.GetRelation()).Where(x => x.Id == id);
+            var report = await _reportRepo.GetRelation<Report>(x => x.Id == id);
             if (!report.Any())
             {
                 return BadRequest($"no report has an ID {id}");
@@ -174,64 +175,23 @@ namespace FekraHubAPI.Controllers
             [FromQuery] PaginationParameters paginationParameters
             )
         {
-            IQueryable<Report> query = (await _reportRepo.GetRelation()).OrderByDescending(report => report.CreationDate);
-            if (!query.Any())
-            {
-                return NotFound("No reports found.");
-            }
-            if (CourseId.HasValue)
-            {
-                query = query.Where(x => x.Student.CourseID == CourseId);
-            }
-            if (!string.IsNullOrEmpty(teacherId))
-            {
-                query = query.Where(x => x.UserId == teacherId);
-            }
-            if (studentId.HasValue)
-            {
-                query = query.Where(x => x.StudentId == studentId);
-            }
-            if (reportId.HasValue)
-            {
-                query = query.Where(x => x.Id == reportId);
-            }
-            if (startDate.HasValue && endDate.HasValue)
-            {
-                query = query.Where(ta => ta.CreationDate >= startDate.Value && ta.CreationDate <= endDate.Value);
-            }
-            if (year.HasValue)
-            {
-                query = query.Where(ta => ta.CreationDate.Year == year.Value);
-            }
-            if (month.HasValue)
-            {
-                query = query.Where(ta => ta.CreationDate.Month == month.Value);
-            }
-            if (dateTime.HasValue)
-            {
-                query = query.Where(sa => sa.CreationDate == dateTime);
-            }
-            if (!string.IsNullOrEmpty(Improved))
-            {
-                bool? isImproved = null;
-                if (Improved.ToLower() == "null")
-                {
-                    isImproved = null;
-                }
-                else if (Improved.ToLower() == "true")
-                {
-                    isImproved = true;
-                }
-                else if (Improved.ToLower() == "false")
-                {
-                    isImproved = false;
-                }
-                else
-                {
-                    return BadRequest("Invalid value for 'Improved'. Use 'true', 'false', 'null' or leave it empty.");
-                }
-                query = query.Where(sa => sa.Improved == isImproved);
-            }
+            IQueryable<Report> query = (await _reportRepo.GetRelation<Report>(null,
+                new List<Expression<Func<Report, bool>>?>
+                    {
+                        CourseId.HasValue ? (Expression<Func<Report, bool>>)(x => x.Student.CourseID == CourseId) : null,
+                        !string.IsNullOrEmpty(teacherId) ? (Expression<Func<Report, bool>>)(x => x.UserId == teacherId) : null,
+                        studentId.HasValue ? (Expression<Func<Report, bool>>)(x => x.StudentId == studentId) : null,
+                        reportId.HasValue ? (Expression<Func<Report, bool>>)(x => x.Id == reportId) : null,
+                        startDate.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate >= startDate.Value) : null,
+                        endDate.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate <= endDate.Value) : null,
+                        year.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate.Year == year.Value) : null,
+                        month.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate.Month == month.Value) : null,
+                        dateTime.HasValue ? (Expression<Func<Report, bool>>)(sa => sa.CreationDate.Date == dateTime.Value.Date) : null,
+                        !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "null" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == null) : null,
+                        !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "true" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == true) : null,
+                        !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "false" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == false) : null,
+                    }.Where(x => x != null).Cast<Expression<Func<Report, bool>>>().ToList())).OrderByDescending(report => report.CreationDate);
+
             if (!query.Any())
             {
                 return NotFound("No reports found.");
@@ -287,8 +247,7 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest("This student is not the User's child");
             }
-            IQueryable<Report> query = (await _reportRepo.GetRelation())
-                .Where(x => x.StudentId == studentId && x.Improved == true)
+            IQueryable<Report> query = (await _reportRepo.GetRelation<Report>(x => x.StudentId == studentId && x.Improved == true))
                 .OrderByDescending(report => report.CreationDate);
             if (query == null)
             {
@@ -327,8 +286,7 @@ namespace FekraHubAPI.Controllers
         [HttpGet("[action]/{id}")]
         public async Task<IActionResult> GetOneReport(int id)
         {
-            var report = (await _reportRepo.GetRelation())
-                .Where(x => x.Id == id && x.Improved == true);
+            var report = await _reportRepo.GetRelation<Report>(x => x.Id == id && x.Improved == true);
             if (!report.Any())
             {
                 return BadRequest($"no report has an ID {id}");
@@ -384,10 +342,10 @@ namespace FekraHubAPI.Controllers
             var firstDayOfMonth = new DateTime(DateNow.Year, DateNow.Month, 1);
             var firstDayOfNextMonth = firstDayOfMonth.AddMonths(1);
 
-            var reports = (await _reportRepo.GetRelation())
-                .Where(report => report.CreationDate >= firstDayOfMonth &&
+            var reports = (await _reportRepo.GetRelation<Report>(
+                                report => report.CreationDate >= firstDayOfMonth &&
                                  report.CreationDate < firstDayOfNextMonth &&
-                                 studentIds.Contains(report.StudentId ?? 0))
+                                 studentIds.Contains(report.StudentId ?? 0)))
                 .ToList(); ;
 
             if (reports.Any())
@@ -501,8 +459,7 @@ namespace FekraHubAPI.Controllers
         [HttpPatch("AcceptAllReport")]
         public async Task<IActionResult> AcceptAllReport(List<int> ReportIds)
         {
-            var AllReports = await _reportRepo.GetRelation();
-            var reports = AllReports.Where(x => ReportIds.Contains(x.Id) && x.Improved == null);
+            var reports = await _reportRepo.GetRelation<Report>(x => ReportIds.Contains(x.Id) && x.Improved == null);
             if (!reports.Any())
             {
                 return BadRequest("This reports not found");

@@ -37,7 +37,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("GetCoursesName")]
         public async Task<IActionResult> GetCoursesName()
         {
-            IQueryable<Course> courses = await _courseRepository.GetRelation();
+            IQueryable<Course> courses = await _courseRepository.GetRelation<Course>();
             if (courses == null) 
             {
                 return NotFound("no course found");
@@ -50,12 +50,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         public async Task<ActionResult<IEnumerable<Map_Course>>> GetCourses(string? search)
         {
 
-            IQueryable<Course> courses = await _courseRepository.GetRelation();
-         
-                if (search != null)
-                {
-                courses = courses.Where(x => x.Name.Contains(search) );
-                }
+            IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(search == null ? null : x => x.Name.Contains(search));
 
             var result = await courses.Select(sa => new
             {
@@ -86,7 +81,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Course>> GetCourse(int id)
         {
-            IQueryable<Course> courses = (await _courseRepository.GetRelation()).Where(x=> x.Id == id);
+            IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(x=> x.Id == id);
             if (courses == null)
             {
                 return NotFound();
@@ -121,7 +116,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return BadRequest("The teacherId is required!!");
             }
-            var teachers = (await _teacherRepository.GetRelation()).Where(n => TeacherId.Contains(n.Id)).ToList();
+            var teachers = (await _teacherRepository.GetRelation<ApplicationUser>(n => TeacherId.Contains(n.Id))).ToList();
             if (!teachers.Any()) 
             {
                 return BadRequest("The teacherId does not exist");
@@ -174,7 +169,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCourse(int id, [FromForm] string[] TeacherId, [FromForm] Map_Course courseMdl)
         {
-            var Teacher = (await _teacherRepository.GetRelation()).Where(n => TeacherId.Contains(n.Id)).ToList();
+            var Teacher = (await _teacherRepository.GetRelation<ApplicationUser>(n => TeacherId.Contains(n.Id))).ToList();
 
 
             if (!ModelState.IsValid)
@@ -183,7 +178,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
 
 
-            var courseEntity = (await _courseRepository.GetRelation()).Where(n => n.Id == id)
+            var courseEntity =(await _courseRepository.GetRelation<Course>(n => n.Id == id))
               .Include(e => e.Teacher).First();
 
             if (courseEntity == null)
@@ -230,8 +225,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return NotFound("Course not found");
             }
-            var students =( await _studentRepository.GetRelation())
-                                           .Where(s => studentIds.Contains(s.Id));
+            var students = await _studentRepository.GetRelation<Student>(s => studentIds.Contains(s.Id));
 
             if (!students.Any())
             {

@@ -36,7 +36,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents()
         {
 
-            IQueryable<Event> eventE = (await _eventRepository.GetRelation());
+            IQueryable<Event> eventE = await _eventRepository.GetRelation<Event>();
 
             var result = eventE.Select(x => new
             {
@@ -84,7 +84,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEvent(int id, [FromForm] int[] scheduleId, [FromForm] Map_Event eventMdl)
         {
-            var schedule = (await _ScheduleRepository.GetRelation()).Where(n => scheduleId.Contains(n.Id)).ToList();
+            var schedule = (await _ScheduleRepository.GetRelation<CourseSchedule>(n => scheduleId.Contains(n.Id))).ToList();
 
 
 
@@ -95,7 +95,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             }
 
 
-            var eventEntity = (await _eventRepository.GetRelation()).Where(n => n.Id == id)
+            var eventEntity = (await _eventRepository.GetRelation<Event>(n => n.Id == id))
                .Include(e => e.CourseSchedule).First();
 
             if (eventEntity == null)
@@ -122,7 +122,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpPost]
         public async Task<ActionResult<Event>> PostEvent([FromForm] int[] scheduleId, [FromForm] Map_Event eventMdl)
         {
-            var x = (await _ScheduleRepository.GetRelation()).Where(n => scheduleId.Contains(n.Id)).ToList();
+            var x = (await _ScheduleRepository.GetRelation<CourseSchedule>(n => scheduleId.Contains(n.Id))).ToList();
 
             //var schedule = await _ScheduleRepository.GetById(scheduleId);
             //if (schedule == null)

@@ -101,7 +101,7 @@ namespace FekraHubAPI.Controllers
                 return BadRequest(schoolInfo);
             }
 
-            var schoolInfos = (await _schoolInfoRepo.GetRelation()).FirstOrDefault();
+            var schoolInfos = (await _schoolInfoRepo.GetRelation<SchoolInfo>()).FirstOrDefault();
             if (schoolInfos == null)
             {
                 return BadRequest("No school Information added");
@@ -163,8 +163,8 @@ namespace FekraHubAPI.Controllers
         [HttpGet("SchoolLogo")]
         public async Task<IActionResult> SchoolLogo()
         {
-            var logoBase64 = (await _schoolInfoRepo.GetRelation()).First().LogoBase64;
-            var imageBytes = Convert.FromBase64String(logoBase64);
+            var logoBase64 = (await _schoolInfoRepo.GetRelation<SchoolInfo>()).First().LogoBase64;
+            var imageBytes = Convert.FromBase64String(logoBase64 ?? "");
             return File(imageBytes, "image/jpeg");
         }
         //[AllowAnonymous]

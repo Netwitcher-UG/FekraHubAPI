@@ -54,7 +54,7 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet("PaginationParameters")]
         public async Task<IActionResult> PaginationParameters([FromQuery] PaginationParameters paginationParameters)
         {
-            var pagedProducts = await _applicationUserRepository.GetPagedDataAsync(await _applicationUserRepository.GetRelation(), paginationParameters);
+            var pagedProducts = await _applicationUserRepository.GetPagedDataAsync(await _applicationUserRepository.GetRelation<ApplicationUser>(), paginationParameters);
             return Ok(pagedProducts);
         }
 

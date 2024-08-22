@@ -50,8 +50,8 @@ namespace FekraHubAPI.ExportReports
         }
         private async Task<string> ReportHtmlPage(int id)
         {
-            var logo = (await _schoolInfoRepo.GetRelation()).Select(x => x.LogoBase64).FirstOrDefault();
-            var reportData = (await _reportRepo.GetRelation()).Where(x => x.Id == id).Select(x => new
+            var logo = (await _schoolInfoRepo.GetRelation<string>(null ,null ,x => x.LogoBase64 ?? "")).FirstOrDefault();
+            var reportData = (await _reportRepo.GetRelation<Report>()).Where(x => x.Id == id).Select(x => new
             {
                 x.data,
                 x.Student.FirstName,

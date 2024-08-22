@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Linq.Expressions;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
@@ -76,9 +77,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return BadRequest("Please enter a status");
             }
-            var statuses = await _attendanceStatusRepo.GetRelation();
-            var Status = await statuses.Where(s => s.Title.ToLower() == status.ToLower()).SingleOrDefaultAsync();
-            if (Status != null)
+            var statuses = (await _attendanceStatusRepo.GetRelation<AttendanceStatus>(s => s.Title.ToLower() == status.ToLower())).SingleOrDefaultAsync();
+            if (statuses != null)
             {
                 return BadRequest("This status is already exists");
             }
@@ -129,8 +129,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
             try
             {
-                IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation())
-                                                    .Where(x => x.StudentID == Id)
+                IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(
+                                                    x => x.StudentID == Id))
                                                     .OrderByDescending(x => x.date);
                 if (query.Any())
                 {
@@ -174,31 +174,19 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     return BadRequest($"No Course found");
 
                 }
-                IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation()).Where(x => x.CourseID == coursId);
-                var start = course.StartDate;
-                var end = course.EndDate;
-                query = query.Where(ta => ta.date >= start && ta.date <= end).OrderByDescending(d => d.date);
-
-                if (startDate.HasValue)
-                {
-                    query = query.Where(ta => ta.date >= startDate.Value);
-                }
-                if (endDate.HasValue)
-                {
-                    query = query.Where(ta => ta.date <= endDate.Value);
-                }
-                if (year.HasValue)
-                {
-                    query = query.Where(ta => ta.date.Year == year.Value);
-                }
-                if (month.HasValue)
-                {
-                    query = query.Where(ta => ta.date.Month == month.Value);
-                }
-                if (dateTime.HasValue)
-                {
-                    query = query.Where(sa => sa.date.Date == dateTime.Value.Date);
-                }
+                IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(null,
+                    new List<Expression<Func<StudentAttendance, bool>>?>
+                    {
+                        x => x.CourseID == coursId,
+                        ta => ta.date >= course.StartDate && ta.date <= course.EndDate,
+                        startDate.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date >= startDate.Value) : null,
+                        endDate.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date <= endDate.Value) : null,
+                        year.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date.Year == year.Value) : null,
+                        month.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date.Month == month.Value) : null,
+                        dateTime.HasValue ? (Expression<Func<StudentAttendance, bool>>)(sa => sa.date.Date == dateTime.Value.Date) : null,
+                    }.Where(x => x != null).Cast<Expression<Func<StudentAttendance, bool>>>().ToList()
+                    )).OrderByDescending(ta => ta.date);
+                
                 if (query.Any())
                 {
                     var result = await query.Select(sa => new
@@ -232,13 +220,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             try
             {
                 // course exist or not
-                var course = (await _coursRepo.GetRelation()).Where(x => x.Id == courseId);
+                var course = (await _coursRepo.GetRelation<Course>()).Where(x => x.Id == courseId);
                 if (!course.Any())
                 {
                     return BadRequest("Course not found");
                 }
                 // from course schedule (working days)
-                var workingDays = (await _courseScheduleRepo.GetRelation())
+                var workingDays = (await _courseScheduleRepo.GetRelation<CourseSchedule>())
                                                             .Where(x => x.CourseID == courseId)
                                                             .Select(x => x.DayOfWeek.ToLower())
                                                             .ToList();
@@ -271,7 +259,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 // date now if exist in database or not  (add if not)
                 var today = DateTime.Now.Date;
-                var existingDate = (await _attendanceDateRepo.GetRelation())
+                var existingDate = (await _attendanceDateRepo.GetRelation<AttendanceDate>())
                                     .Where(x => x.Date.Date == today)
                                     .FirstOrDefault();
                 var attDateId = 0;
@@ -290,7 +278,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     attDateId = existingDate.Id;
                 }
                 // course added attendance for today or not
-                var CourseAttExist = await _courseAttendanceRepo.GetRelation();
+                var CourseAttExist = await _courseAttendanceRepo.GetRelation<CourseAttendance>();
                 if (CourseAttExist.Any())
                 {
                     var IsCourseAttExist = course.SelectMany(z => z.CourseAttendance)
@@ -338,7 +326,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpPatch("Student")]
         public async Task<IActionResult> UpdateStudentAttendance([FromForm] int id, [FromForm] int statusId)
         {
-            var allStudentAttendance = await _studentAttendanceRepo.GetRelation();
+            var allStudentAttendance = await _studentAttendanceRepo.GetRelation<StudentAttendance>();
             var studentAttendance = await allStudentAttendance
                 .Where(sa => sa.Id == id)
                 .SingleOrDefaultAsync();
@@ -373,7 +361,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                var allStudentAttendance = await _studentAttendanceRepo.GetRelation();
+                var allStudentAttendance = await _studentAttendanceRepo.GetRelation<StudentAttendance>();
                 var studentAttendance = await allStudentAttendance
                     .Where(sa => sa.Id == id)
                     .SingleOrDefaultAsync();
@@ -398,7 +386,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                IQueryable<TeacherAttendance> query = (await _teacherAttendanceRepo.GetRelation())
+                IQueryable<TeacherAttendance> query = (await _teacherAttendanceRepo.GetRelation<TeacherAttendance>())
                                                     .Where(x => x.TeacherID == Id)
                                                     .OrderByDescending(x => x.date);
                 if (query.Any())
@@ -438,42 +426,37 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                IQueryable<TeacherAttendance> query = await _teacherAttendanceRepo.GetRelation();
-
+                DateTime? start = null;
+                DateTime? end = null;
+                List<string>? teacherIds = null;
                 if (coursId.HasValue)
                 {
-                    var course = await _coursRepo.GetById(coursId.Value);
+                    var course = (await _coursRepo.GetRelation<Course>(x => x.Id == coursId.Value));
                     if (course == null)
                     {
                         return BadRequest($"No Course has Id : {coursId.Value}");
                     }
-                    var teacherIds = course.Teacher.Select(x => x.Id).ToList();
+                    teacherIds = course.SelectMany(x => x.Teacher.Select(z => z.Id)).ToList();
                     if (teacherIds.Count == 0)
                     {
                         return BadRequest("No teacher records found in this course");
                     }
-                    var start = course.StartDate;
-                    var end = course.EndDate;
-                    query = query.Where(ta => ta.date >= start && ta.date <= end && teacherIds.Contains(ta.TeacherID ?? ""));
+                    start = course.Single().StartDate;
+                    end = course.Single().EndDate;
 
                 }
-                if (startDate.HasValue && endDate.HasValue)
-                {
-                    query = query.Where(ta => ta.date >= startDate.Value && ta.date <= endDate.Value);
-                }
-                if (year.HasValue)
-                {
-                    query = query.Where(ta => ta.date.Year == year.Value);
-                }
-                if (month.HasValue)
-                {
-                    query = query.Where(ta => ta.date.Month == month.Value);
-                }
-                if (dateTime.HasValue)
-                {
-                    query = query.Where(sa => sa.date == dateTime);
-                }
-                query = query.OrderByDescending(ta => ta.date);
+                IQueryable<TeacherAttendance> query = (await _teacherAttendanceRepo.GetRelation<TeacherAttendance>(null,
+                    new List<Expression<Func<TeacherAttendance, bool>>?>
+                    {
+                        coursId.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date >= start && ta.date <= end && teacherIds.Contains(ta.TeacherID ?? "")) : null,
+                        startDate.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date >= startDate.Value) : null,
+                        endDate.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date <= endDate.Value) : null,
+                        year.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Year == year.Value) : null,
+                        month.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Month == month.Value) : null,
+                        dateTime.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(sa => sa.date.Date == dateTime.Value.Date) : null,
+                    }.Where(x => x != null).Cast<Expression<Func<TeacherAttendance, bool>>>().ToList()
+                    )).OrderByDescending(ta => ta.date);
+
                 if (query.Any())
                 {
                     var result = await query.Select(sa => new
@@ -512,11 +495,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     return NotFound();
                 }
-                var workingD = await _courseScheduleRepo.GetRelation();
-                var courses = await _coursRepo.GetRelation();
+                var workingD = await _courseScheduleRepo.GetRelation<CourseSchedule>();
+                var courses = await _coursRepo.GetRelation<Course>();
                 // date now if exist in database or not  (add if not)
                 var today = DateTime.Now.Date;
-                var existingDate = (await _attendanceDateRepo.GetRelation())
+                var existingDate = (await _attendanceDateRepo.GetRelation<AttendanceDate>())
                                     .Where(x => x.Date.Date == today)
                                     .FirstOrDefault();
                 var attDateId = 0;
@@ -534,7 +517,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     attDateId = existingDate.Id;
                 }
-                var CourseAttExist = await _courseAttendanceRepo.GetRelation();
+                var CourseAttExist = await _courseAttendanceRepo.GetRelation<CourseAttendance>();
                 
                 foreach (var teacherAtt in teacherAttendance)
                 {
@@ -564,7 +547,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         return BadRequest($"The teacher with the Id {teacherAtt.TeacherID} is not belong to the course with the id {teacherAtt.CourseID}");
                     }
                 }
-                var techerAtten = (await _teacherAttendanceRepo.GetRelation())
+                var techerAtten = (await _teacherAttendanceRepo.GetRelation<TeacherAttendance>())
                     .Any(x =>x.date.Date == DateTime.Now.Date && teacherAttendance.Select(z => z.TeacherID).ToList().Contains(x.TeacherID));
                 if (techerAtten)
                 {
@@ -597,7 +580,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpPatch("Teacher")]
         public async Task<IActionResult> UpdateTeacherAttendance([FromForm] int id, [FromForm] int statusId)
         {
-            var allTeacherAttendance = await _teacherAttendanceRepo.GetRelation();
+            var allTeacherAttendance = await _teacherAttendanceRepo.GetRelation<TeacherAttendance>();
             var teacherAttendance = await allTeacherAttendance
                 .Where(sa => sa.Id == id)
                 .SingleOrDefaultAsync();

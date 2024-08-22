@@ -41,13 +41,11 @@ namespace FekraHubAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoices(string? search)
         {
-            IQueryable<Invoice> query = (await _invoiceRepository.GetRelation());
+            IQueryable<Invoice> query = (await _invoiceRepository.GetRelation<Invoice>(
+                !string.IsNullOrEmpty(search) ? x => x.Student.FirstName.Contains(search) || x.Student.LastName.Contains(search) : null
 
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(x => x.Student.FirstName.Contains(search) || x.Student.LastName.Contains(search));
+                ));
 
-            }
 
 
             var result = query.Select(x => new
@@ -80,7 +78,7 @@ namespace FekraHubAPI.Controllers
                     return BadRequest("Student not found");
                 }
                
-                IQueryable<Invoice> query = (await _invoiceRepository.GetRelation()).Where(x => x.Studentid == studentId);
+                IQueryable<Invoice> query = (await _invoiceRepository.GetRelation<Invoice>()).Where(x => x.Studentid == studentId);
                 if (!query.Any())
                 {
                     return NotFound("No invoices found");
@@ -115,7 +113,7 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var query = (await _invoiceRepository.GetRelation()).Where(x => x.Id == Id);
+                var query = (await _invoiceRepository.GetRelation<Invoice>()).Where(x => x.Id == Id);
                 if (query == null)
                 {
                     return BadRequest("file not found");
@@ -150,7 +148,7 @@ namespace FekraHubAPI.Controllers
                 {
                     return NotFound("This is not your child's information.");
                 }
-                IQueryable<Invoice> query = (await _invoiceRepository.GetRelation()).Where(x => x.Studentid == studentId);
+                IQueryable<Invoice> query = (await _invoiceRepository.GetRelation<Invoice>()).Where(x => x.Studentid == studentId);
                 if (!query.Any())
                 {
                     return NotFound("No invoices found");
@@ -185,7 +183,7 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var query = (await _invoiceRepository.GetRelation()).Where(x => x.Id == Id);
+                var query = (await _invoiceRepository.GetRelation<Invoice>()).Where(x => x.Id == Id);
                 if (query == null)
                 {
                     return BadRequest("file not found");

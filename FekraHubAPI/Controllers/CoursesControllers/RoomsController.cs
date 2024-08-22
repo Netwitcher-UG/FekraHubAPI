@@ -29,7 +29,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         public async Task<ActionResult<IEnumerable<Map_Room>>> GetRooms()
         {
          
-            IQueryable<Room> rooms = (await _roomRepository.GetRelation());
+            IQueryable<Room> rooms = (await _roomRepository.GetRelation<Room>());
             var result = rooms.Select(x => new
             {
                 x.Id,

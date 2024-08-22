@@ -11,6 +11,7 @@ using System;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
@@ -49,16 +50,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         {
             try
             {
-                IQueryable<Upload> query = (await _uploadRepository.GetRelation());
+                IQueryable<Upload> query = await _uploadRepository.GetRelation<Upload>(null,
+                    new List<Expression<Func<Upload, bool>>?>
+                    {
+                        !string.IsNullOrEmpty(search) ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Name.Contains(search))) : null,
+                        studentId != null ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Student.Any(y => y.Id == studentId))) : null
+                    }.Where(x => x != null).Cast<Expression<Func<Upload, bool>>>().ToList());
 
-                if (!string.IsNullOrEmpty(search))
-                {
-                    query = query.Where(x => x.Courses.Any(z => z.Name.Contains(search)));
-                }
-                if (studentId != null)
-                {
-                    query = query.Where(x => x.Courses.Any(z => z.Student.Any(y => y.Id == studentId) ));
-                }
+                
 
                 var result = query.Select(x => new
                 {
@@ -126,7 +125,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 }
 
                 var courseID = student.CourseID;
-                IQueryable<Upload> query = (await _uploadRepository.GetRelation()).Where(x => x.Courses.Any(z => z.Id == courseID));
+                IQueryable<Upload> query = await _uploadRepository.GetRelation<Upload>(x => x.Courses.Any(z => z.Id == courseID));
 
 
                 if (!string.IsNullOrEmpty(search))

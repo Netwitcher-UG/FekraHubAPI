@@ -64,8 +64,8 @@ namespace FekraHubAPI.Controllers.AuthorizationController
                     .Select(claim => claim.Value)
                     .ToList();
 
-                var permissions = (await _repoPermissions.GetRelation())
-                    .Where(permission => !parentClaims.Contains(permission.Value))
+                var permissions = (await _repoPermissions.GetRelation<AspNetPermissions>(
+                    permission => !parentClaims.Contains(permission.Value)))
                     .Select(permission => permission.Value)
                     .ToList();
 

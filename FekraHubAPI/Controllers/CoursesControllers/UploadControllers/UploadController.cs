@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
@@ -11,6 +11,7 @@ using System;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
@@ -21,7 +22,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
     public class UploadController : ControllerBase
     {
 
-
+        
         private readonly IRepository<Course> _courseRepository;
         private readonly IRepository<Upload> _uploadRepository;
         private readonly IRepository<Student> _studentRepository;
@@ -38,27 +39,25 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
             _uploadTypeRepository = uploadTypeRepository;
             _mapper = mapper;
-
+         
         }
 
 
 
         [Authorize(Policy = "ManageFile")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search, int? studentId)
+        public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search , int? studentId)
         {
             try
             {
-                IQueryable<Upload> query = (await _uploadRepository.GetRelation());
+                IQueryable<Upload> query = await _uploadRepository.GetRelation<Upload>(null,
+                    new List<Expression<Func<Upload, bool>>?>
+                    {
+                        !string.IsNullOrEmpty(search) ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Name.Contains(search))) : null,
+                        studentId != null ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Student.Any(y => y.Id == studentId))) : null
+                    }.Where(x => x != null).Cast<Expression<Func<Upload, bool>>>().ToList());
 
-                if (!string.IsNullOrEmpty(search))
-                {
-                    query = query.Where(x => x.Courses.Any(z => z.Name.Contains(search)));
-                }
-                if (studentId != null)
-                {
-                    query = query.Where(x => x.Courses.Any(z => z.Student.Any(y => y.Id == studentId)));
-                }
+                
 
                 var result = query.Select(x => new
                 {
@@ -75,12 +74,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 }).ToList();
 
                 return Ok(result);
-
-            }
-            catch (Exception ex)
-            {
+             
+                }
+                catch (Exception ex)
+                {
                 return BadRequest(ex.Message);
-            }
+                }
 
         }
         [Authorize(Policy = "ManageFile")]
@@ -103,12 +102,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             {
                 return BadRequest(ex.Message);
             }
-
+           
         }
 
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("GetUploadForPerant")]
-        public async Task<ActionResult<IEnumerable<Upload>>> GetUploadForPerant(string? search, [Required] int studentID)
+        public async Task<ActionResult<IEnumerable<Upload>>> GetUploadForPerant(string? search , [Required] int studentID)
         {
 
             try
@@ -126,7 +125,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 }
 
                 var courseID = student.CourseID;
-                IQueryable<Upload> query = (await _uploadRepository.GetRelation()).Where(x => x.Courses.Any(z => z.Id == courseID));
+                IQueryable<Upload> query = await _uploadRepository.GetRelation<Upload>(x => x.Courses.Any(z => z.Id == courseID));
 
 
                 if (!string.IsNullOrEmpty(search))
@@ -155,7 +154,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             {
                 return BadRequest(ex.Message);
             }
-
+          
         }
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("FileForPernt")]
@@ -177,7 +176,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             {
                 return BadRequest(ex.Message);
             }
-
+          
         }
 
 
@@ -194,7 +193,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             {
                 return BadRequest(ex.Message);
             }
-
+           
         }
 
 
@@ -229,7 +228,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         Date = DateTime.Now,
                         Courses = new List<Course>()
                     };
-
+            
                     upload.Courses.Add(course);
 
                     await _uploadRepository.Add(upload);
@@ -264,7 +263,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             {
                 return BadRequest(ex.Message);
             }
-
+          
         }
 
 

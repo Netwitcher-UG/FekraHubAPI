@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Linq;
 using FekraHubAPI.MapModels;
+using System;
 
 
 
@@ -23,10 +24,11 @@ namespace FekraHubAPI.Repositories.Implementations
         private readonly DbSet<T> _dbSet;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public GenericRepository(ApplicationDbContext context)
+        public GenericRepository(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _dbSet = _context.Set<T>();
+            _userManager = userManager;
         }
 
         public async Task<IEnumerable<T>> GetAll()
@@ -63,9 +65,35 @@ namespace FekraHubAPI.Repositories.Implementations
                 await _context.SaveChangesAsync();
             }
         }
-        public async Task<IQueryable<T>> GetRelation()
+        public async Task<IQueryable<TResult>> GetRelation<TResult>(
+                Expression<Func<T, bool>>? singlePredicate = null,
+                List<Expression<Func<T, bool>>>? predicates = null,
+                Expression<Func<T, TResult>>? selector = null)
         {
-            return await Task.FromResult(_dbSet.AsQueryable());
+            IQueryable<T> query = _dbSet.AsQueryable();
+
+            if (singlePredicate != null)
+            {
+                query = query.Where(singlePredicate);
+            }
+
+            if (predicates != null)
+            {
+                foreach (var predicate in predicates)
+                {
+                    if (predicate != null)
+                    {
+                        query = query.Where(predicate);
+                    }
+                }
+            }
+
+            if (selector != null)
+            {
+                return await Task.FromResult(query.Select(selector));
+            }
+
+            return await Task.FromResult((IQueryable<TResult>)query);
         }
         public async Task ManyAdd(List<T> entity)
         {

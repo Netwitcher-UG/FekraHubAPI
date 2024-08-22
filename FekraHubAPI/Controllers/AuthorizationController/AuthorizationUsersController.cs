@@ -16,14 +16,14 @@ namespace FekraHubAPI.Controllers.AuthorizationController
 {
     [Route("api/[controller]")]
     [ApiController]
-
+    
     public class AuthorizationUsersController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IRepository<AspNetPermissions> _repoPermissions;
-        public AuthorizationUsersController(UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager, IRepository<AspNetPermissions> repoPermissions)
+        public AuthorizationUsersController(UserManager<ApplicationUser> userManager ,
+            RoleManager<IdentityRole> roleManager, IRepository<AspNetPermissions> repoPermissions) 
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -45,7 +45,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
                 var roleClaims = await _roleManager.GetClaimsAsync(role);
                 rolesWithPermissions[role.Name] = roleClaims.Select(claim => claim.Value).ToList();
             }
-            return Ok(rolesWithPermissions);
+            return Ok( rolesWithPermissions);
         }
         [Authorize(Policy = "ManagePermissions")]
         [HttpGet("[action]")]
@@ -64,21 +64,20 @@ namespace FekraHubAPI.Controllers.AuthorizationController
                     .Select(claim => claim.Value)
                     .ToList();
 
-                var permissions = (await _repoPermissions.GetRelation())
-                    .Where(permission => !parentClaims.Contains(permission.Value))
+                var permissions = (await _repoPermissions.GetRelation<AspNetPermissions>(
+                    permission => !parentClaims.Contains(permission.Value)))
                     .Select(permission => permission.Value)
                     .ToList();
 
                 return Ok(new
                 {
-                    AllRoles = roles.Select(x => x.Name),
+                    AllRoles = roles.Select(x=> x.Name),
                     AllPermissions = permissions
                 });
             }
 
             return NotFound();
         }
-
         [Authorize(Policy = "ManagePermissions")]
         [HttpPost("[action]")]
         public async Task<IActionResult> AssignPermissionToRole([FromForm] string RoleName, [FromForm] List<string> PermissionsName)

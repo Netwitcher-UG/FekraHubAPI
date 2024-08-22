@@ -23,7 +23,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         public ClaimsPrincipal User => HttpContext?.User!;
 
         public WorkContractController(IRepository<WorkContract> workContractRepository,
-            IMapper mapper, UserManager<ApplicationUser> userManager)
+            IMapper mapper , UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
             _workContractRepository = workContractRepository;
@@ -36,12 +36,12 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             try
             {
                 var WorkContract = await _workContractRepository.GetById(workContractID);
-                if (WorkContract == null)
+                if (WorkContract == null )
                 {
                     return BadRequest("WorkContract Not Fount");
 
                 }
-                var data = new { WorkContract.Id, WorkContract.File, WorkContract.TeacherID };
+                var data = new {WorkContract.Id , WorkContract.File ,  WorkContract.TeacherID};
                 return Ok(data);
 
             }
@@ -60,7 +60,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 var authId = _workContractRepository.GetUserIDFromToken(User);
                 var WorkContractEntity = await _workContractRepository.GetAll();
                 var WorkContractUser = WorkContractEntity.Where(i => i.TeacherID == authId);
-                var data = WorkContractUser.Select(x => new { x.Id, x.TeacherID, x.FileName, x.File }).ToList();
+                var data = WorkContractUser.Select(x => new { x.Id, x.TeacherID,x.FileName, x.File }).ToList();
                 return Ok(data);
             }
             catch (Exception ex)
@@ -83,7 +83,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             var isSecretariat = await _workContractRepository.IsSecretariat(user);
 
 
-            if (!(isTeacher || isSecretariat))
+            if (! (isTeacher || isSecretariat))
             {
                 return BadRequest("User Must Have Teacher Or Secrtaria Role");
             }
@@ -106,8 +106,8 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                         TeacherID = UserID,
 
                     };
-                    var workContractEntity = _mapper.Map<WorkContract>(UploadWorkContract);
-                    await _workContractRepository.Add(workContractEntity);
+                   var workContractEntity = _mapper.Map<WorkContract>(UploadWorkContract);
+                   await _workContractRepository.Add(workContractEntity);
                 }
             }
 
@@ -131,12 +131,12 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         public async Task<IActionResult> GetByUserID(string userID)
         {
             var WorkContractEntity = await _workContractRepository.GetAll();
-            var WorkContractUser = WorkContractEntity.Where(i => i.TeacherID == userID);
-            var data = WorkContractUser.Select(x => new { x.Id, x.TeacherID, x.FileName, x.File }).ToList();
+            var WorkContractUser =   WorkContractEntity.Where(i => i.TeacherID == userID);
+            var data = WorkContractUser.Select(x => new { x.Id , x.TeacherID,x.FileName , x.File }).ToList();
 
             return Ok(data);
         }
-
+      
 
     }
 }

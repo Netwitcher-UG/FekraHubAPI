@@ -32,7 +32,7 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _db;
-        // private  UserManager<ApplicationUser>  currentUser ;
+       // private  UserManager<ApplicationUser>  currentUser ;
         private readonly IRepository<ApplicationUser> _applicationUserRepository;
         private readonly ApplicationUsersServices _applicationUsersServices;
         private readonly EmailSender.IEmailSender _emailSender;
@@ -54,7 +54,7 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet("PaginationParameters")]
         public async Task<IActionResult> PaginationParameters([FromQuery] PaginationParameters paginationParameters)
         {
-            var pagedProducts = await _applicationUserRepository.GetPagedDataAsync(await _applicationUserRepository.GetRelation(), paginationParameters);
+            var pagedProducts = await _applicationUserRepository.GetPagedDataAsync(await _applicationUserRepository.GetRelation<ApplicationUser>(), paginationParameters);
             return Ok(pagedProducts);
         }
 
@@ -62,7 +62,7 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            var userRole = User.FindFirstValue(ClaimTypes.Role); 
 
             var allUsers = await _db.ApplicationUser.ToListAsync();
 
@@ -131,7 +131,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
-
+        
         [Authorize(Policy = "GetTeacher")]
         [HttpGet("GetTeacher")]
         public async Task<IActionResult> GetTeacher()
@@ -249,7 +249,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }).ToList();
             return Ok(data);
         }
-
+        
         [Authorize(Policy = "GetUsers")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(string id)
@@ -352,7 +352,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
                         if (result.Succeeded)
                         {
-
+                            
                             if (DefaultRole.checkRole(user.Role))
                             {
                                 _userManager.AddToRoleAsync(appUser, user.Role).Wait();

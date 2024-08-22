@@ -37,7 +37,7 @@ namespace FekraHubAPI.EmailSender
         private async Task SendEmail(string toEmail, string subject, string body, bool isBodyHTML, byte[]? pdf = null, string? pdfName = null)
         {
             var schoolInfo = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new {x.EmailServer,x.EmailPortNumber,x.FromEmail,x.Password,x.SchoolName})
                 .FirstAsync();
             string MailServer = schoolInfo.EmailServer;
             int Port = schoolInfo.EmailPortNumber;
@@ -48,7 +48,7 @@ namespace FekraHubAPI.EmailSender
             message.From.Add(new MailboxAddress(schoolInfo.SchoolName, FromEmail));
             message.To.Add(new MailboxAddress("", toEmail));
             message.Subject = subject;
-
+            
             var bodyBuilder = new BodyBuilder
             {
                 HtmlBody = isBodyHTML ? body : null,
@@ -96,7 +96,7 @@ namespace FekraHubAPI.EmailSender
                         }
                     }
 
-                    // Console.WriteLine($"Failed to send email to {toEmail}: {ex.Message}");
+                   // Console.WriteLine($"Failed to send email to {toEmail}: {ex.Message}");
                 }
                 catch (Exception ex)
                 {
@@ -108,7 +108,7 @@ namespace FekraHubAPI.EmailSender
 
         private string Message(string contentHtml)
         {
-            var schoolName = _context.SchoolInfos.Select(x => x.SchoolName).Single();
+            var schoolName = _context.SchoolInfos.Select(x=>x.SchoolName).Single();
             string ConstantsMessage = @"
 <!DOCTYPE html PUBLIC ""-//W3C//DTD XHTML 1.0 Transitional//EN"" ""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"">
 <html dir=""ltr"" xmlns=""http://www.w3.org/1999/xhtml"" xmlns:o=""urn:schemas-microsoft-com:office:office"" lang=""en"">
@@ -274,10 +274,9 @@ a[x-apple-data-detectors],
         }
         public async Task<IActionResult> SendConfirmationEmail(ApplicationUser user)
         {
-            var schoolName = _context.SchoolInfos.Select(x => x.SchoolName).Single();
-            var domain = (await _schoolInfo.GetRelation()).Select(x => x.UrlDomain).First();
+            var school = _context.SchoolInfos.Select(x => new { x.SchoolName, x.UrlDomain }).Single();
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = $"{domain}/confirm-user?ID={user.Id}&Token={token}";
+            var confirmationLink = $"{school.UrlDomain}/confirm-user?ID={user.Id}&Token={token}";
             var content = $@"
 
  <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
@@ -297,7 +296,7 @@ a[x-apple-data-detectors],
                       <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {user.FirstName} {user.LastName}</h2></td>
                      </tr>
                      <tr>
-                      <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Welcome to {schoolName} ! , Thank you For Confirming your Account, &nbsp;</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">The activation button is valid for <strong>&nbsp;7 days</strong> .</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Please activate the email before this period expires​. &nbsp;</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">To complete the confirmation, please click the confirm button. &nbsp;</p></td>
+                      <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Welcome to {school.SchoolName} ! , Thank you For Confirming your Account, &nbsp;</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">The activation button is valid for <strong>&nbsp;7 days</strong> .</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Please activate the email before this period expires​. &nbsp;</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">To complete the confirmation, please click the confirm button. &nbsp;</p></td>
                      </tr>
                      <tr>
                       <td align=""center"" style=""padding:20px;Margin:0;font-size:0"">
@@ -353,10 +352,9 @@ a[x-apple-data-detectors],
         }
         public async Task<IActionResult> SendConfirmationEmailWithPassword(ApplicationUser user, string password)
         {
-            var schoolName = _context.SchoolInfos.Select(x => x.SchoolName).Single();
-            var domain = (await _schoolInfo.GetRelation()).Select(x => x.UrlDomain).First();
+            var school = _context.SchoolInfos.Select(x => new { x.SchoolName, x.UrlDomain }).Single();
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = $"{domain}/confirm-user?ID={user.Id}&Token={token}";
+            var confirmationLink = $"{school.UrlDomain}/confirm-user?ID={user.Id}&Token={token}";
             var content = $@"
 
  <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
@@ -376,7 +374,7 @@ a[x-apple-data-detectors],
                       <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {user.FirstName} {user.LastName}</h2></td>
                      </tr>
                      <tr>
-                      <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Welcome to {schoolName} ! , Thank you For Confirming your Account, &nbsp;</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">The activation button is valid for <strong>&nbsp;7 days</strong> .</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Please activate the email before this period expires​. &nbsp;</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">To complete the confirmation, please click the confirm button. &nbsp;</p></td>
+                      <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Welcome to {school.SchoolName} ! , Thank you For Confirming your Account, &nbsp;</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">The activation button is valid for <strong>&nbsp;7 days</strong> .</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Please activate the email before this period expires​. &nbsp;</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">To complete the confirmation, please click the confirm button. &nbsp;</p></td>
                      </tr>
                      <tr>
                       <td align=""center"" style=""padding:20px;Margin:0;font-size:0"">
@@ -538,8 +536,8 @@ a[x-apple-data-detectors],
         public async Task SendToAdminNewParent(ApplicationUser user)//////////////
         {
             var schoolName = _context.SchoolInfos.Select(x => x.SchoolName).Single();
-            var AdminIds = _context.UserRoles.Where(x => x.RoleId == "1").Select(x => x.UserId).ToList();
-            var admins = _userManager.Users.Where(x => AdminIds.Contains(x.Id)).ToList();
+            var AdminIds =  _context.UserRoles.Where(x => x.RoleId == "1").Select(x => x.UserId).ToList();
+            var admins =  _userManager.Users.Where(x => AdminIds.Contains( x.Id) ).ToList();
             foreach (var admin in admins)
             {
 
@@ -621,7 +619,7 @@ a[x-apple-data-detectors],
                 .ToList();
             List<ApplicationUser> notParent = users
                 .Where(user => NotParentsId.Contains(user.Id))
-                .ToList();
+                .ToList(); 
 
             var students = await _studentRepo.GetAll();
             foreach (var user in parent)
@@ -762,7 +760,7 @@ a[x-apple-data-detectors],
             var schoolName = _context.SchoolInfos.Select(x => x.SchoolName).Single();
             var parents = await _userManager.Users
                 .Where(x => students.Select(z => z.ParentID).Contains(x.Id))
-                .Select(x => new { x.Id, x.FirstName, x.LastName, x.Email })
+                .Select(x => new {x.Id,x.FirstName,x.LastName,x.Email})
                 .ToListAsync();
 
             foreach (var student in students)
@@ -833,8 +831,8 @@ a[x-apple-data-detectors],
               </table>
 
 ";
-                await SendEmail(parent.Email ?? "", "New Files", Message(content), true);
-            }
+                    await SendEmail(parent.Email ?? "", "New Files", Message(content), true);
+                }
 
         }
 
@@ -1061,7 +1059,7 @@ a[x-apple-data-detectors],
             }
         }
 
-        public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId, string teacherId)
+        public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId,string teacherId)
         {
             var schoolName = _context.SchoolInfos.Select(x => x.SchoolName).Single();
             var student = await _studentRepo.GetById(studentId);
@@ -1203,6 +1201,6 @@ a[x-apple-data-detectors],
             await SendEmail(email ?? "", "Reset Password", Message(content), true);
         }
 
-
+        
     }
 }

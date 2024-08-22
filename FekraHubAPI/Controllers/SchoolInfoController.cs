@@ -9,14 +9,14 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.Controllers
 {
-
+    
     [Route("api/[controller]")]
     [ApiController]
     public class SchoolInfoController : ControllerBase
     {
         private readonly IRepository<SchoolInfo> _schoolInfoRepo;
         private readonly IMapper _mapper;
-        public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo, IMapper mapper)
+        public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo,IMapper mapper)
         {
             _schoolInfoRepo = schoolInfoRepo;
             _mapper = mapper;
@@ -26,7 +26,7 @@ namespace FekraHubAPI.Controllers
         public async Task<IActionResult> GetSchoolInfo()
         {
             var schoolInfo = (await _schoolInfoRepo.GetAll()).FirstOrDefault();
-            if (schoolInfo == null)
+            if(schoolInfo == null)
             {
                 return NotFound();
             }
@@ -65,7 +65,7 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest("School Information was added earlier");
             }
-            if (!ModelState.IsValid)
+            if(!ModelState.IsValid)
             {
                 return BadRequest(SchoolInfo);
             }
@@ -76,7 +76,7 @@ namespace FekraHubAPI.Controllers
                     .Select(page => new ContractPage
                     {
                         ConPage = page,
-                        SchoolInfo = schoolInfo
+                        SchoolInfo = schoolInfo 
                     }).ToList();
             }
 
@@ -86,7 +86,7 @@ namespace FekraHubAPI.Controllers
                     .Select(key => new StudentsReportsKey
                     {
                         Keys = key,
-                        SchoolInfo = schoolInfo
+                        SchoolInfo = schoolInfo 
                     }).ToList();
             }
             await _schoolInfoRepo.Add(schoolInfo);
@@ -101,7 +101,7 @@ namespace FekraHubAPI.Controllers
                 return BadRequest(schoolInfo);
             }
 
-            var schoolInfos = (await _schoolInfoRepo.GetRelation()).FirstOrDefault();
+            var schoolInfos = (await _schoolInfoRepo.GetRelation<SchoolInfo>()).FirstOrDefault();
             if (schoolInfos == null)
             {
                 return BadRequest("No school Information added");
@@ -117,7 +117,7 @@ namespace FekraHubAPI.Controllers
                     .Select(page => new ContractPage
                     {
                         ConPage = page,
-                        SchoolInfoId = schoolInfos.Id
+                        SchoolInfoId = schoolInfos.Id 
                     }).ToList();
             }
 
@@ -129,7 +129,7 @@ namespace FekraHubAPI.Controllers
                     .Select(key => new StudentsReportsKey
                     {
                         Keys = key,
-                        SchoolInfoId = schoolInfos.Id
+                        SchoolInfoId = schoolInfos.Id 
                     }).ToList();
             }
 
@@ -163,8 +163,8 @@ namespace FekraHubAPI.Controllers
         [HttpGet("SchoolLogo")]
         public async Task<IActionResult> SchoolLogo()
         {
-            var logoBase64 = (await _schoolInfoRepo.GetRelation()).First().LogoBase64;
-            var imageBytes = Convert.FromBase64String(logoBase64);
+            var logoBase64 = (await _schoolInfoRepo.GetRelation<SchoolInfo>()).First().LogoBase64;
+            var imageBytes = Convert.FromBase64String(logoBase64 ?? "");
             return File(imageBytes, "image/jpeg");
         }
         //[AllowAnonymous]

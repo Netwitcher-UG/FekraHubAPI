@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 using System.Security.Claims;
 
 namespace FekraHubAPI.Controllers
@@ -27,7 +28,7 @@ namespace FekraHubAPI.Controllers
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         public StudentController(IRepository<StudentContract> studentContractRepo, IContractMaker contractMaker,
-            IRepository<Student> studentRepo, IRepository<Course> courseRepo,
+            IRepository<Student> studentRepo, IRepository<Course> courseRepo, 
             IEmailSender emailSender, IMapper mapper, UserManager<ApplicationUser> userManager, IRepository<AttendanceDate> attendanceDateRepo)
         {
             _studentContractRepo = studentContractRepo;
@@ -67,8 +68,8 @@ namespace FekraHubAPI.Controllers
         [HttpGet("GetStudent/{id}")]
         public async Task<IActionResult> GetStudent(int id)////////////////////// Profile for admin
         {
-
-            var students = (await _studentRepo.GetRelation()).Where(x => x.Id == id);
+           
+            var students = (await _studentRepo.GetRelation<Student>()).Where(x => x.Id == id);
             if (!students.Any())
             {
                 return NotFound("This student is not found");
@@ -82,17 +83,17 @@ namespace FekraHubAPI.Controllers
                 .SelectMany(x => x.Report)
                 .Where(x => x.CreationDate >= DateTime.Now.AddDays(-30))
                 .Select(z => new
-                {
-                    z.Id,
-                    z.data,
-                    z.CreationDate,
-                    z.CreationDate.Year,
-                    z.CreationDate.Month,
-                    TeacherId = z.UserId,
-                    TeacherFirstName = z.User == null ? null : z.User.FirstName,
-                    TeacherLastName = z.User == null ? null : z.User.LastName,
-                });
-
+            {
+                z.Id,
+                z.data,
+                z.CreationDate,
+                z.CreationDate.Year,
+                z.CreationDate.Month,
+                TeacherId = z.UserId,
+                TeacherFirstName = z.User == null ? null : z.User.FirstName,
+                TeacherLastName = z.User == null ? null : z.User.LastName,
+            });
+            
             var uploadNew = students
                             .SelectMany(x => x.Course.Upload)
                             .Where(upload => upload.Date >= DateTime.Now.AddDays(-30))
@@ -192,18 +193,14 @@ namespace FekraHubAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStudents(string? search, int? courseId, [FromQuery] PaginationParameters paginationParameters)
         {
-            var Allstudents = await _studentRepo.GetRelation();
+            var Allstudents = (await _studentRepo.GetRelation<Student>(null,
+                new List<Expression<Func<Student, bool>>?>
+                    {
+                        search != null ? (Expression<Func<Student, bool>>)(x => x.FirstName.Contains(search) || x.LastName.Contains(search)) : null,
+                        courseId != null ? (Expression<Func<Student, bool>>)(x => x.CourseID == courseId) : null
+                    }.Where(x => x != null).Cast<Expression<Func<Student, bool>>>().ToList()
+                )).OrderByDescending(x => x.Id);
 
-
-            if (search != null)
-            {
-                Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
-            }
-            if (courseId != null)
-            {
-                Allstudents = Allstudents.Where(x => x.CourseID == courseId);
-            }
-            Allstudents = Allstudents.OrderByDescending(x => x.Id);
             var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
             var students = studentsAll.Data.Select(x => new
             {
@@ -233,18 +230,22 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet("studentForAttendance")]
-        public async Task<IActionResult> GetStudents(string? search, [Required] int courseId)
+        public async Task<IActionResult> GetStudents(string? search,[Required] int courseId)
         {
-            var Allstudents = (await _studentRepo.GetRelation()).Where(x => x.CourseID == courseId);
+            var Allstudents = (await _studentRepo.GetRelation<Student>(null,
+                new List<Expression<Func<Student, bool>>?>
+                    {
+                        x => x.CourseID == courseId,
+                        search != null ? (Expression<Func<Student, bool>>)(x => x.FirstName.Contains(search) || x.LastName.Contains(search)) : null
+                    }.Where(x => x != null).Cast<Expression<Func<Student, bool>>>().ToList()
 
 
-            if (search != null)
-            {
-                Allstudents = Allstudents.Where(x => x.FirstName.Contains(search) || x.LastName.Contains(search));
-            }
 
-            Allstudents = Allstudents.OrderByDescending(x => x.Id);
-            var att = (await _attendanceDateRepo.GetRelation()).Where(x => x.Date.Date == DateTime.Now.Date).Select(x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id)).FirstOrDefault();
+                )).OrderByDescending(x => x.Id);
+
+            var att = (await _attendanceDateRepo.GetRelation<bool>(x => x.Date.Date == DateTime.Now.Date,null,
+                x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id)))
+                .FirstOrDefault();
             var students = Allstudents.Select(x => new
             {
                 x.Id,
@@ -287,7 +288,7 @@ namespace FekraHubAPI.Controllers
                 return Unauthorized("Parent not found.");
             }
 
-            var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId).OrderByDescending(x => x.Id);
+            var students = (await _studentRepo.GetRelation<Student>(x => x.ParentID == parentId)).OrderByDescending(x => x.Id);
 
             var result = students.Select(z => new
             {
@@ -393,7 +394,7 @@ namespace FekraHubAPI.Controllers
                 return Unauthorized("Parent not found.");
             }
 
-            var students = (await _studentRepo.GetRelation()).Where(x => x.ParentID == parentId && x.Id == id);
+            var students = await _studentRepo.GetRelation<Student>(x => x.ParentID == parentId && x.Id == id);
             if (!students.Any())
             {
                 return NotFound("This student is not found");
@@ -542,7 +543,7 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var contracts = (await _studentContractRepo.GetRelation()).OrderByDescending(x => x.Id);
+                var contracts = (await _studentContractRepo.GetRelation<StudentContract>()).OrderByDescending(x => x.Id);
                 var result = contracts.Select(x => new {
                     x.Id,
                     x.StudentID,
@@ -552,7 +553,7 @@ namespace FekraHubAPI.Controllers
                     ParentFirstName = x.Student.User.FirstName,
                     ParentLastName = x.Student.User.LastName,
                     x.CreationDate,
-
+                
                 }).ToList();
                 return Ok(result);
             }
@@ -567,7 +568,8 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var contracts = (await _studentContractRepo.GetRelation()).Where(x => x.StudentID == studentId).OrderByDescending(x => x.Id);
+                var contracts = (await _studentContractRepo.GetRelation<StudentContract>(x => x.StudentID == studentId))
+                    .OrderByDescending(x => x.Id);
                 var result = contracts.Select(x => new {
                     x.Id,
                     x.StudentID,
@@ -613,14 +615,14 @@ namespace FekraHubAPI.Controllers
                 {
                     return Unauthorized("User not found.");
                 }
-                var allContracts = await _studentContractRepo.GetRelation();
-                var contracts = allContracts.Where(x => x.Student.ParentID == userId).Select(x => new {
+                var allContracts = await _studentContractRepo.GetRelation<StudentContract>(x => x.Student.ParentID == userId);
+                var contracts = allContracts.Select(x => new {
                     x.Id,
                     studentId = x.Student.Id,
                     x.Student.FirstName,
                     x.Student.LastName,
                     x.CreationDate,
-
+                  
                 }).ToList();
                 return Ok(contracts);
             }
@@ -643,8 +645,8 @@ namespace FekraHubAPI.Controllers
                     return Unauthorized("User not found.");
                 }
                 var parentId = userId;
-                var allContracts = await _studentContractRepo.GetRelation();
-                var contracts = allContracts.Where(x => x.Student.ParentID == parentId && x.StudentID == studentId).Select(x => new {
+                var allContracts = await _studentContractRepo.GetRelation<StudentContract>(x => x.Student.ParentID == parentId && x.StudentID == studentId);
+                var contracts = allContracts.Select(x => new {
                     x.Id,
                     studentId = x.Student.Id,
                     x.Student.FirstName,
@@ -688,7 +690,7 @@ namespace FekraHubAPI.Controllers
             {
                 var userId = _courseRepo.GetUserIDFromToken(User);
                 var student = await _studentRepo.GetById(studentId);
-                if (student.ParentID != userId || student == null)
+                if(student.ParentID != userId || student == null)
                 {
                     if (string.IsNullOrEmpty(userId))
                     {

@@ -69,18 +69,18 @@ namespace FekraHubAPI.ContractMaker
                 };
                 await _repo.Add(studentContract);
             }
-            catch (Exception ex)
+            catch (Exception ex) 
             {
-                if (await _studentrepo.IDExists(student.Id))
+                if (await _studentrepo.IDExists(student.Id)) 
                 {
                     await _studentrepo.Delete(student.Id);
                 }
-                if ((await _repo.GetRelation()).Where(x => x.StudentID == student.Id).Any())
+                if ((await _repo.GetRelation<StudentContract>(x => x.StudentID == student.Id)).Any())
                 {
                     await _repo.Delete(student.Id);
                 }
             }
-
+            
 
         }
         public async Task<byte[]> GetContractPdf(int studentId)
@@ -94,16 +94,16 @@ namespace FekraHubAPI.ContractMaker
             byte[] x = await PdfFile(student);
             return Convert.ToBase64String(x);
         }
-
+        
         private async Task<List<string>> ContractHtmlPage(Student student)
         {
-            var schoolInfoLogo = (await _schoolInforepo.GetRelation()).Select(x=> x.LogoBase64).SingleOrDefault();
-            if (schoolInfoLogo == null)
+            var schoolInfoLogo = (await _schoolInforepo.GetRelation<string>(null ,null, x=>x.LogoBase64 ?? "")).SingleOrDefault();
+            if (schoolInfoLogo == null) 
             {
                 return new List<string>();
             }
             var parent = await _Usersrepo.GetUser(student.ParentID ?? "");
-            if (parent == null)
+            if(parent == null)
             {
                 return new List<string>();
             }
@@ -127,7 +127,7 @@ namespace FekraHubAPI.ContractMaker
                 contractPages[i] = contractPages[i].Replace("{fekrahublogo}", schoolInfoLogo ?? "");
             }
             return contractPages;
+                }
         }
-    }
-
+    
 }

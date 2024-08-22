@@ -24,28 +24,23 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("GetLocationsNames")]
         public async Task<IActionResult> GetLocationsNames()
         {
-            var locations = await _locationRepository.GetRelation();
-            if (locations == null)
+            var locations = await _locationRepository.GetRelation<Location>();
+            if (locations == null) 
             {
                 return NotFound("no locations found");
             }
-            return Ok(locations.Select(x => new { x.Id, x.Name }));
+            return Ok(locations.Select(x => new {x.Id,x.Name}));
         }
         [Authorize(Policy = "ManageLocations")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_location>>> GetLocations(string? search)
 
         {
-            var locations = await _locationRepository.GetRelation();
-            if (search != null) 
-            {
-                locations = locations.Where(x => x.Name.Contains(search) || x.Street.Contains(search) || x.StreetNr.Contains(search)
-                || x.ZipCode.Contains(search) || x.City.Contains(search)).OrderByDescending(x => x.Id);
-            }
-            else
-            {
-                locations = locations.OrderByDescending(x => x.Id);
-            }
+            var locations = (await _locationRepository.GetRelation<Location>(
+                search != null ? x => x.Name.Contains(search) || x.Street.Contains(search) || x.StreetNr.Contains(search)
+                || x.ZipCode.Contains(search) || x.City.Contains(search) : null
+                )).OrderByDescending(x => x.Id);
+            
             return Ok(locations.Select(x => new {x.Id,x.Name,x.City,x.Street,x.StreetNr,x.ZipCode,Room = x.room.Select(z => new { z.Id,z.Name })  }));
         }
 

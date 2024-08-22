@@ -233,7 +233,7 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet("studentForAttendance")]
-        public async Task<IActionResult> GetStudents(string? search,[Required] int courseId, [FromQuery] PaginationParameters paginationParameters)
+        public async Task<IActionResult> GetStudents(string? search,[Required] int courseId)
         {
             var Allstudents = (await _studentRepo.GetRelation()).Where(x => x.CourseID == courseId);
 
@@ -244,9 +244,8 @@ namespace FekraHubAPI.Controllers
             }
             
             Allstudents = Allstudents.OrderByDescending(x => x.Id);
-            var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
             var att = (await _attendanceDateRepo.GetRelation()).Where(x => x.Date.Date == DateTime.Now.Date).Select(x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id)).FirstOrDefault();
-            var students = studentsAll.Data.Select(x => new
+            var students = Allstudents.Select(x => new
             {
                 x.Id,
                 x.FirstName,
@@ -259,6 +258,9 @@ namespace FekraHubAPI.Controllers
                 Street = x.Street ?? "Like parent",
                 StreetNr = x.StreetNr ?? "Like parent",
                 ZipCode = x.ZipCode ?? "Like parent",
+                studentAttendance = x.StudentAttendance.Where(x => x.date.Date == DateTime.Now.Date)
+                                    .Select(x => x.AttendanceStatus.Title)
+                                    .SingleOrDefault(),
                 course = x.Course == null ? null : new
                 {
                     x.CourseID,
@@ -271,7 +273,7 @@ namespace FekraHubAPI.Controllers
                 },
                 parent = x.User == null ? null : new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
             }).ToList();
-            return Ok(new { studentsAll.TotalCount, studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students });
+            return Ok(students);
         }
         [Authorize(Policy = "ManageChildren")]
 

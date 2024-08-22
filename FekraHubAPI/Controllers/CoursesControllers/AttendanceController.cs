@@ -367,6 +367,32 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
         }
 
+        [Authorize(Policy = "UpdateStudentsAttendance")]
+        [HttpDelete("Student")]
+        public async Task<IActionResult> DeleteStudentAttendance([FromForm] int id)
+        {
+            try
+            {
+                var allStudentAttendance = await _studentAttendanceRepo.GetRelation();
+                var studentAttendance = await allStudentAttendance
+                    .Where(sa => sa.Id == id)
+                    .SingleOrDefaultAsync();
+
+                if (studentAttendance == null)
+                {
+                    return NotFound("Student Attendance not found.");
+                }
+
+
+                await _studentAttendanceRepo.Delete(id);
+                return Ok("Delete success");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
         [Authorize(Policy = "GetTeachersAttendance")]
         [HttpGet("TeacherAttendance/{Id}")]
         public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendance(string Id)

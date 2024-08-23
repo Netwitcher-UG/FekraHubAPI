@@ -62,6 +62,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 startDate = sa.StartDate,
                 endDate = sa.EndDate,
                 Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
+                Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name },
                 Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
                 {
                     z.Id,
@@ -96,6 +97,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 startDate = sa.StartDate,
                 endDate = sa.EndDate,
                 Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
+                Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name },
                 Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
                 {
                     z.Id,
@@ -155,6 +157,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 startDate = courseEntity.StartDate,
                 endDate = courseEntity.EndDate,
                 Room = courseEntity.Room == null ? null : new { room.Id, room.Name },
+                Location = courseEntity.Room == null || courseEntity.Room.Location == null ? null : new { courseEntity.Room.Location.Id, courseEntity.Room.Location.Name },
                 Teacher = courseEntity.Teacher == null ? null : courseEntity.Teacher.Select(z => new
                 {
                     z.Id,
@@ -194,21 +197,50 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _mapper.Map(courseMdl, courseEntity);
             await _courseRepository.Update(courseEntity);
 
-            return NoContent();
+            return Ok( new
+            {
+                id = courseEntity.Id,
+                name = courseEntity.Name,
+                price = courseEntity.Price,
+                lessons = courseEntity.Lessons,
+                capacity = courseEntity.Capacity,
+                startDate = courseEntity.StartDate,
+                endDate = courseEntity.EndDate,
+                Room = courseEntity.Room == null ? null : new { courseEntity.Room.Id, courseEntity.Room.Name },
+                Location = courseEntity.Room == null || courseEntity.Room.Location == null ? null : new { courseEntity.Room.Location.Id, courseEntity.Room.Location.Name },
+                Teacher = courseEntity.Teacher == null ? null : courseEntity.Teacher.Select(z => new
+                {
+                    z.Id,
+                    z.FirstName,
+                    z.LastName
+                })
+
+            });
         }
 
         [Authorize(Policy = "DeleteCourse")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCourse(int id)
         {
-            var courseEntity = await _courseRepository.GetById(id);
-            if (courseEntity == null)
+            try
             {
-                return NotFound();
+                var courseEntity = await _courseRepository.GetById(id);
+                if (courseEntity == null)
+                {
+                    return NotFound();
+                }
+                var studentExist = (await _studentRepository.GetRelation<Student>(n => n.CourseID == id)).Any();
+                if (studentExist)
+                {
+                    return BadRequest("This course contains students !!");
+                }
+                await _courseRepository.Delete(id);
+                return Ok("Delete success");
             }
-
-            await _courseRepository.Delete(id);
-            return NoContent();
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
         }
 
         [Authorize(Policy = "ManageStudentsToCourses")]

@@ -13,10 +13,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
     [ApiController]
     public class CourseScheduleController : ControllerBase
     {
-           private readonly IRepository<CourseSchedule> _courseScheduleRepository;
+        private readonly IRepository<CourseSchedule> _courseScheduleRepository;
+   
         private readonly IMapper _mapper;
-        public CourseScheduleController(IRepository<CourseSchedule> courseScheduleRepository, IMapper mapper)
+        public CourseScheduleController( IRepository<CourseSchedule> courseScheduleRepository, IMapper mapper)
         {
+         
             _courseScheduleRepository = courseScheduleRepository;
             _mapper = mapper;
         }
@@ -25,22 +27,42 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_CourseSchedule>>> GetCourseSchedules()
         {
-     
-            IQueryable<CourseSchedule> courseSched = await _courseScheduleRepository.GetRelation<CourseSchedule>();
+
+            IQueryable<CourseSchedule> courseSched = (await _courseScheduleRepository.GetRelation());
             var result = courseSched.Select(z => new
             {
-             
-                    z.Id,
-                    z.DayOfWeek,
-                    z.StartTime,
-                    z.EndTime,
-                    courseName = z.Course.Name,
-                    courseID = z.Course.Id
+
+                z.Id,
+                z.DayOfWeek,
+                z.StartTime,
+                z.EndTime,
+                courseName = z.Course.Name,
+                courseID = z.Course.Id
 
             }).ToList();
 
             return Ok(result);
         }
+
+        [HttpGet("daysOfWeek")]
+        public IActionResult GetDaysOfWeek()
+        {
+
+            var daysOfWeek = new[]
+            {
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                 "Sunday"
+            };
+
+
+            return Ok(daysOfWeek);
+        }
+
 
 
         // GET: api/CourseSchedule/5
@@ -83,22 +105,35 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         public async Task<ActionResult<CourseSchedule>> PostCourseSchedule([FromForm] Map_CourseSchedule courseSchedMdl)
         {
 
+            IQueryable<CourseSchedule> courses = (await _courseScheduleRepository.GetRelation()).Where(x => x.CourseID == courseSchedMdl.CourseID)
+                .Where(x => x.DayOfWeek == courseSchedMdl.DayOfWeek);
+
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var courseSchedule = new CourseSchedule
+            if (courses == null)
             {
-                DayOfWeek = courseSchedMdl.DayOfWeek,
-                StartTime = TimeSpan.Parse(courseSchedMdl.StartTime),
-                EndTime = TimeSpan.Parse(courseSchedMdl.EndTime),
-                CourseID = courseSchedMdl.CourseID
-            };
+                var courseSchedule = new CourseSchedule
+                {
+                    DayOfWeek = courseSchedMdl.DayOfWeek,
+                    StartTime = TimeSpan.Parse(courseSchedMdl.StartTime),
+                    EndTime = TimeSpan.Parse(courseSchedMdl.EndTime),
+                    CourseID = courseSchedMdl.CourseID
+                };
 
-            var courseScheduleEntity = _mapper.Map<CourseSchedule>(courseSchedule);
-            await _courseScheduleRepository.Add(courseScheduleEntity);
-            return CreatedAtAction("GetCourseSchedule", new { id = courseScheduleEntity.Id }, courseScheduleEntity);
+                var courseScheduleEntity = _mapper.Map<CourseSchedule>(courseSchedule);
+                await _courseScheduleRepository.Add(courseScheduleEntity);
+                return CreatedAtAction("GetCourseSchedule", new { id = courseScheduleEntity.Id }, courseScheduleEntity);
+
+            }
+            else
+            {
+                return NotFound("This day is already scheduled for this course");
+            }
+
 
         }
 

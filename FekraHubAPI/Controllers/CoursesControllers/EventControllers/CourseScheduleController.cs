@@ -28,7 +28,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         public async Task<ActionResult<IEnumerable<Map_CourseSchedule>>> GetCourseSchedules()
         {
 
-            IQueryable<CourseSchedule> courseSched = (await _courseScheduleRepository.GetRelation());
+            IQueryable<CourseSchedule> courseSched = (await _courseScheduleRepository.GetRelation<CourseSchedule>());
             var result = courseSched.Select(z => new
             {
 
@@ -105,7 +105,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         public async Task<ActionResult<CourseSchedule>> PostCourseSchedule([FromForm] Map_CourseSchedule courseSchedMdl)
         {
 
-            IQueryable<CourseSchedule> courses = (await _courseScheduleRepository.GetRelation()).Where(x => x.CourseID == courseSchedMdl.CourseID)
+            IQueryable<CourseSchedule> courses = (await _courseScheduleRepository.GetRelation<CourseSchedule>(x => x.CourseID == courseSchedMdl.CourseID))
                 .Where(x => x.DayOfWeek == courseSchedMdl.DayOfWeek);
 
 

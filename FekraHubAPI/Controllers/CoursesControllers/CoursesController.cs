@@ -38,11 +38,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         public async Task<IActionResult> GetCoursesName()
         {
             IQueryable<Course> courses = await _courseRepository.GetRelation<Course>();
-            if (courses == null)
+            if (courses == null) 
             {
                 return NotFound("no course found");
             }
-            return Ok(courses.Select(x => new { x.Id, x.Name }));
+            return Ok(courses.Select(x => new { x.Id,x.Name }));
         }
         // GET: api/Course
         [Authorize(Policy = "GetCourse")]
@@ -73,7 +73,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
 
             }).ToListAsync();
-
+        
 
             return Ok(result);
         }
@@ -82,7 +82,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Course>> GetCourse(int id)
         {
-            IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(x => x.Id == id);
+            IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(x=> x.Id == id);
             if (courses == null)
             {
                 return NotFound();
@@ -119,7 +119,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return BadRequest("The teacherId is required!!");
             }
             var teachers = (await _teacherRepository.GetRelation<ApplicationUser>(n => TeacherId.Contains(n.Id))).ToList();
-            if (!teachers.Any())
+            if (!teachers.Any()) 
             {
                 return BadRequest("The teacherId does not exist");
             }
@@ -136,13 +136,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
             var courseEntity = new Course
             {
-                Name = courseMdl.Name,
-                Price = courseMdl.Price,
-                Lessons = courseMdl.Lessons,
-                Capacity = courseMdl.Capacity,
-                StartDate = courseMdl.StartDate,
-                EndDate = courseMdl.EndDate,
-                RoomId = courseMdl.RoomId,
+                Name        = courseMdl.Name,
+                Price      = courseMdl.Price,
+                Lessons    = courseMdl.Lessons,
+                Capacity   = courseMdl.Capacity,
+                StartDate  = courseMdl.StartDate,
+                EndDate    = courseMdl.EndDate,
+                RoomId     = courseMdl.RoomId,
                 Teacher = new List<ApplicationUser>()
             };
             courseEntity.Teacher = teachers;
@@ -168,7 +168,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
 
         // PUT: api/Course/5
-        [Authorize(Policy = "putCourse")]
+        [Authorize(Policy = "putCourse")]        
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCourse(int id, [FromForm] string[] TeacherId, [FromForm] Map_Course courseMdl)
         {
@@ -181,7 +181,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
 
 
-            var courseEntity = (await _courseRepository.GetRelation<Course>(n => n.Id == id))
+            var courseEntity =(await _courseRepository.GetRelation<Course>(n => n.Id == id))
               .Include(e => e.Teacher).First();
 
             if (courseEntity == null)
@@ -197,7 +197,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _mapper.Map(courseMdl, courseEntity);
             await _courseRepository.Update(courseEntity);
 
-            return Ok(new
+            return Ok( new
             {
                 id = courseEntity.Id,
                 name = courseEntity.Name,
@@ -245,7 +245,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         [Authorize(Policy = "ManageStudentsToCourses")]
         [HttpPost("AssignStudentsToCourse")]
-        public async Task<IActionResult> AssignStudentsToCourse(int courseID, [FromBody] List<int> studentIds)
+        public async Task<IActionResult> AssignStudentsToCourse( int courseID, [FromBody] List<int> studentIds)
         {
             if (courseID <= 0 || studentIds == null || !studentIds.Any())
             {

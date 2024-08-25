@@ -37,20 +37,41 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("GetCoursesName")]
         public async Task<IActionResult> GetCoursesName()
         {
+            var userId = _courseRepository.GetUserIDFromToken(User);
+            var Teacher = await _courseRepository.IsTeacherIDExists(userId);
             IQueryable<Course> courses = await _courseRepository.GetRelation<Course>();
-            if (courses == null) 
+            if (Teacher)
             {
-                return NotFound("no course found");
+            courses = courses.Where(z => z.Teacher.Select(n => n.Id).Contains(userId));
+               
             }
-            return Ok(courses.Select(x => new { x.Id,x.Name }));
+            
+              
+                if (courses == null)
+                {
+                    return NotFound("no course found");
+                }
+                return Ok(courses.Select(x => new { x.Id, x.Name }));
+           
+
+          
         }
         // GET: api/Course
         [Authorize(Policy = "GetCourse")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Course>>> GetCourses(string? search)
         {
+            var userId = _courseRepository.GetUserIDFromToken(User);
+            var Teacher = await _courseRepository.IsTeacherIDExists(userId);
 
             IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(search == null ? null : x => x.Name.Contains(search));
+            if (Teacher)
+            {
+
+                courses = courses.Where(z => z.Teacher.Select(n => n.Id).Contains(userId) );
+
+            }
+
 
             var result = await courses.Select(sa => new
             {
@@ -73,41 +94,54 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
 
             }).ToListAsync();
-        
-
             return Ok(result);
+
+
         }
 
         [Authorize(Policy = "GetCourse")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Course>> GetCourse(int id)
         {
-            IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(x=> x.Id == id);
-            if (courses == null)
+            var userId = _courseRepository.GetUserIDFromToken(User);
+            var Teacher = await _courseRepository.IsTeacherIDExists(userId);
+            IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(x => x.Id == id);
+
+            if (Teacher)
             {
-                return NotFound();
+               courses = courses.Where(z => z.Teacher.Select(n => n.Id).Contains(userId));
+               
+
             }
-            return Ok(courses.Select(sa => new
-            {
-                id = sa.Id,
-                name = sa.Name,
-                price = sa.Price,
-                lessons = sa.Lessons,
-                capacity = sa.Capacity,
-                startDate = sa.StartDate,
-                endDate = sa.EndDate,
-                Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
-                Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name },
-                Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
+           
+                if (courses == null)
                 {
-                    z.Id,
-                    z.FirstName,
-                    z.LastName
-                })
+                    return NotFound();
+                }
+                return Ok(courses.Select(sa => new
+                {
+                    id = sa.Id,
+                    name = sa.Name,
+                    price = sa.Price,
+                    lessons = sa.Lessons,
+                    capacity = sa.Capacity,
+                    startDate = sa.StartDate,
+                    endDate = sa.EndDate,
+                    Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
+                    Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name },
+                    Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
+                    {
+                        z.Id,
+                        z.FirstName,
+                        z.LastName
+                    })
 
 
 
-            }).FirstOrDefault());
+                }).FirstOrDefault());
+            
+
+           
         }
 
         [Authorize(Policy = "AddCourse")]

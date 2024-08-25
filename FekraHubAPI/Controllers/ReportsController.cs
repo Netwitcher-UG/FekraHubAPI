@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq.Expressions;
 
 
@@ -22,13 +23,14 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<Report> _reportRepo;
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<StudentsReportsKey> _studentsReportsKeyInfo;
+        private readonly IRepository<Course> _courseRepo;
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
         private readonly IExportPDF _exportPDF;
         private readonly UserManager<ApplicationUser> _Users;
         public ReportsController(IRepository<Report> reportRepo, IRepository<StudentsReportsKey> studentsReportsKeyInfo,
             IRepository<Student> studentRepo, IEmailSender emailSender,IMapper mapper, IExportPDF exportPDF
-            , UserManager<ApplicationUser> Users)
+            , UserManager<ApplicationUser> Users, IRepository<Course> courseRepo)
         {
             _reportRepo = reportRepo;
             _studentsReportsKeyInfo = studentsReportsKeyInfo;
@@ -37,6 +39,7 @@ namespace FekraHubAPI.Controllers
             _mapper = mapper;
             _exportPDF = exportPDF;
             _Users = Users;
+            _courseRepo = courseRepo;
         }
         [Authorize(Policy = "InsertUpdateStudentsReports")]
         [HttpGet("Keys")]
@@ -47,21 +50,15 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize(Policy = "GetStudentsReports")]
         [HttpGet("All")]
-        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports([FromQuery] string? Improved, [FromQuery] int? CourseId, [FromQuery] PaginationParameters paginationParameters)
+        public async Task<ActionResult<IEnumerable<Report>>> GetAllReports(
+            [FromQuery] string? Improved,
+            [FromQuery] int? CourseId, 
+            [FromQuery] PaginationParameters paginationParameters)
         {
-            IQueryable<Report> query;
             
-            if (Improved == null) 
+            bool? isImproved = null;
+            if (Improved != null) 
             {
-                query = (await _reportRepo.GetRelation<Report>()).OrderByDescending(report => report.CreationDate);
-                if (!query.Any())
-                {
-                    return NotFound("No reports found.");
-                }
-            }
-            else
-            {
-                bool? isImproved = null;
                 if (Improved.ToLower() == "null")
                 {
                     isImproved = null;
@@ -74,21 +71,43 @@ namespace FekraHubAPI.Controllers
                 {
                     isImproved = false;
                 }
-                else
-                {
-                    return BadRequest("Invalid value for 'Improved'. Use 'true', 'false', 'null' or leave it empty.");
-                }
-                query = (await _reportRepo.GetRelation<Report>(sa => sa.Improved == isImproved)).OrderByDescending(report => report.CreationDate);
             }
-            if (CourseId.HasValue)
+            var userId = _reportRepo.GetUserIDFromToken(User);
+            var Teacher = await _reportRepo.IsTeacherIDExists(userId);
+            if (Teacher)
             {
-                query = query.Where(x => x.Student.CourseID == CourseId);
+                if (CourseId != null)
+                {
+                    var course = (await _courseRepo.GetRelation<Course>(x => x.Id == CourseId)).FirstOrDefault();
+                    if (course != null)
+                    {
+                        var teacherIds = course.Teacher.Select(x => x.Id);
+                        if (!teacherIds.Contains(userId))
+                        {
+                            return BadRequest("You are not in this course");
+                        }
+                    }
+                    else
+                    {
+                        return NotFound("Course not found");
+                    }
+
+                }
             }
+            IQueryable<Report> query = await _reportRepo.GetRelation<Report>(null,
+                new List<Expression<Func<Report, bool>>?>
+                    {
+                        Improved != null ? (Expression<Func<Report, bool>>)(ta => ta.Improved == isImproved) : null,
+                        CourseId.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.Student.CourseID == CourseId) : null,
+                        Teacher ? (Expression<Func<Report, bool>>)(x => x.UserId == userId) : null
+                }.Where(x => x != null).Cast<Expression<Func<Report, bool>>>().ToList()
+                );
             if (!query.Any())
             {
                 return NotFound("No reports found.");
             }
-            var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
+            
+            var res = await _reportRepo.GetPagedDataAsync(query.OrderByDescending(report => report.CreationDate), paginationParameters);
             var result = new
             {
                 res.CurrentPage,
@@ -128,10 +147,21 @@ namespace FekraHubAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetReport(int id)
         {
+            
             var report = await _reportRepo.GetRelation<Report>(x => x.Id == id);
             if (!report.Any())
             {
                 return BadRequest($"no report has an ID {id}");
+            }
+            var userId = _reportRepo.GetUserIDFromToken(User);
+            var Teacher = await _reportRepo.IsTeacherIDExists(userId);
+            if (Teacher)
+            {
+                report = report.Where(x => x.UserId == userId);
+                if (!report.Any())
+                {
+                    return BadRequest("This report is not for you");
+                }
             }
             return Ok(report.Select(x => new
             {
@@ -195,6 +225,16 @@ namespace FekraHubAPI.Controllers
             if (!query.Any())
             {
                 return NotFound("No reports found.");
+            }
+            var userId = _reportRepo.GetUserIDFromToken(User);
+            var Teacher = await _reportRepo.IsTeacherIDExists(userId);
+            if (Teacher)
+            {
+                query = query.Where(x => x.UserId == userId);
+                if (!query.Any())
+                {
+                    return BadRequest("No report found");
+                }
             }
             var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
             var result = new

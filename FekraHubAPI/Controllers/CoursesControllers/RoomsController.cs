@@ -113,7 +113,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
             await _roomRepository.Delete(id);
 
-            return NoContent();
+                return Ok("Delete success");
             }
             catch (Exception ex)
             {

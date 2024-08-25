@@ -113,12 +113,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             var roomExist = (await _roomRepository.GetRelation<Room>(n => n.LocationID == id)).Any();
             if (roomExist)
             {
-                return BadRequest("This room contains Courses !!");
+                return BadRequest("This Location contains Rooms !!");
             }
 
             await _locationRepository.Delete(id);
 
-            return NoContent();
+                return Ok("Delete success");
 
             }
             catch (Exception ex)

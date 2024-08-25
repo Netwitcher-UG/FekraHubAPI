@@ -16,11 +16,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
     public class RoomsController : ControllerBase
     {
         private readonly IRepository<Room> _roomRepository;
+        private readonly IRepository<Course> _CourseRepository;
         private readonly IMapper _mapper;
 
-        public RoomsController(IRepository<Room> roomRepository, IMapper mapper)
+        public RoomsController(IRepository<Room> roomRepository, IRepository<Course> CourseRepository, IMapper mapper)
         {
             _roomRepository = roomRepository;
+            _CourseRepository = CourseRepository;
             _mapper = mapper;
         }
 
@@ -97,15 +99,27 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoom(int id)
         {
+            try { 
             var room = await _roomRepository.GetById(id);
             if (room == null)
             {
                 return NotFound();
             }
+            var CourseExist = (await _CourseRepository.GetRelation<Course>(n => n.RoomId == id)).Any();
+            if (CourseExist)
+            {
+                return BadRequest("This room contains Courses !!");
+            }
 
             await _roomRepository.Delete(id);
 
-            return NoContent();
+                return Ok("Delete success");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+
         }
     }
 }

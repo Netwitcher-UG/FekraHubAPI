@@ -387,21 +387,25 @@ namespace FekraHubAPI.Controllers.UsersController
                 return BadRequest("Invalid or expired link.");
             }
             var user = await _userManager.FindByIdAsync(ID);
-            if (user != null)
+            if (user == null)
             {
-                Token = Token.Replace(" ", "+");
-                var result = await _userManager.ConfirmEmailAsync(user, Token);
-                if (result.Succeeded)
-                {
-                    return Ok();
-                }
-                else
-                {
-                    return BadRequest();
-                }
+                return BadRequest("User not found.");
+            }
+            if(user.EmailConfirmed == true)
+            {
+                return Ok();
+            }
+            Token = Token.Replace(" ", "+");
+            var result = await _userManager.ConfirmEmailAsync(user, Token);
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+            else
+            {
+                return BadRequest();
             }
             
-            return BadRequest("The User isn't registered.");
         }
         
         [HttpPost("[action]")]

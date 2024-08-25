@@ -42,7 +42,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             {
                 x.Id,
                 x.EventName,
-                x.Date,
+                x.StartDate,
+                x.EndDate,
+                x.StartTime,
+                x.EndTime,
                 x.EventType.TypeTitle,
                 CourseSchedule = x.CourseSchedule.Select(z => new
                 {
@@ -140,7 +143,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             var eventEntity = new Event
             {
                 EventName = eventMdl.EventName,
-                Date = eventMdl.Date,
+                StartDate = eventMdl.StartDate,
+                EndDate   = eventMdl.EndDate,
+                StartTime = eventMdl.StartTime,
+                EndTime  = eventMdl.EndTime,
                 TypeID = eventMdl.TypeID,
 
                 CourseSchedule = new List<CourseSchedule>()

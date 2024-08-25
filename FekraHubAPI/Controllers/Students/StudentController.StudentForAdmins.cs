@@ -43,11 +43,20 @@ namespace FekraHubAPI.Controllers.Students
         [HttpGet("GetStudent/{id}")]
         public async Task<IActionResult> GetStudent(int id)////////////////////// Profile for admin
         {
-
-            var students = (await _studentRepo.GetRelation<Student>()).Where(x => x.Id == id);
+            
+            var students = await _studentRepo.GetRelation<Student>(x => x.Id == id);
             if (!students.Any())
             {
                 return NotFound("This student is not found");
+            }
+            var userId = _studentContractRepo.GetUserIDFromToken(User);
+            var Teacher = await _studentContractRepo.IsTeacherIDExists(userId);
+            if (Teacher)
+            {
+                if (!students.Any(x => x.Course.Teacher.Select(z => z.Id).Contains(userId)))
+                {
+                    return BadRequest("This student isn't in your course");
+                }
             }
             var parent = _userManager.Users.Where(x => x.Id == students.Single().ParentID).SingleOrDefault();
             if (parent == null)
@@ -174,9 +183,39 @@ namespace FekraHubAPI.Controllers.Students
                         search != null ? (Expression<Func<Student, bool>>)(x => x.FirstName.Contains(search) || x.LastName.Contains(search)) : null,
                         courseId != null ? (Expression<Func<Student, bool>>)(x => x.CourseID == courseId) : null
                     }.Where(x => x != null).Cast<Expression<Func<Student, bool>>>().ToList()
-                )).OrderByDescending(x => x.Id);
+                ));
+            string userId = _studentContractRepo.GetUserIDFromToken(User);
+            bool Teacher = await _studentContractRepo.IsTeacherIDExists(userId);
+            if (Teacher)
+            {
+                if(courseId != null)
+                {
+                    var course = (await _courseRepo.GetRelation<Course>(x => x.Id == courseId)).FirstOrDefault();
+                    if(course != null)
+                    {
+                        var teacherIds = course.Teacher.Select(x => x.Id);
+                        if (!teacherIds.Contains(userId))
+                        {
+                            return BadRequest("You are not in this course");
+                        }
+                    }
+                    else
+                    {
+                        return NotFound("Course not found");
+                    }
 
-            var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
+                }
+                else
+                {
+                    var corsesHaveTeacher = await _courseRepo.GetRelation<int>
+                        (x => x.Teacher.Select(z => z.Id).Contains(userId), null, z => z.Id);
+                    if (corsesHaveTeacher.Any())
+                    {
+                        Allstudents = Allstudents.Where(x => corsesHaveTeacher.Contains(x.Course.Id));
+                    }
+                }
+            }
+            var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents.OrderByDescending(x => x.Id), paginationParameters);
             var students = studentsAll.Data.Select(x => new
             {
                 x.Id,
@@ -207,17 +246,35 @@ namespace FekraHubAPI.Controllers.Students
         [HttpGet("studentForAttendance")]
         public async Task<IActionResult> GetStudents(string? search, [Required] int courseId)
         {
+            string userId = _studentContractRepo.GetUserIDFromToken(User);
+            bool Teacher = await _studentContractRepo.IsTeacherIDExists(userId);
+            var course = await _courseRepo.GetRelation<Course>(x => x.Id == courseId);
+            if (course != null)
+            {
+                if (Teacher)
+                {
+                    var teacherIds = course.SelectMany(x => x.Teacher.Select(z => z.Id));
+                    if(teacherIds == null)
+                    {
+                        return BadRequest("This course does not have any teachers");
+                    }
+                    if (!teacherIds.Contains(userId))
+                    {
+                        return BadRequest("You are not in this course");
+                    }
+                }
+            }
+            else
+            {
+                return NotFound("Course not found");
+            }
             var Allstudents = (await _studentRepo.GetRelation<Student>(null,
                 new List<Expression<Func<Student, bool>>?>
                     {
                         x => x.CourseID == courseId,
                         search != null ? (Expression<Func<Student, bool>>)(x => x.FirstName.Contains(search) || x.LastName.Contains(search)) : null
                     }.Where(x => x != null).Cast<Expression<Func<Student, bool>>>().ToList()
-
-
-
                 )).OrderByDescending(x => x.Id);
-
             var att = (await _attendanceDateRepo.GetRelation<bool>(x => x.Date.Date == DateTime.Now.Date, null,
                 x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id)))
                 .FirstOrDefault();

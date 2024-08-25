@@ -20,6 +20,7 @@ namespace FekraHubAPI.Controllers.Students
         private readonly IRepository<StudentContract> _studentContractRepo;
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<Course> _courseRepo;
+        private readonly IRepository<CourseSchedule> _courseScheduleRepo;
         private readonly IRepository<AttendanceDate> _attendanceDateRepo;
         private readonly IContractMaker _contractMaker;
         private readonly IEmailSender _emailSender;
@@ -27,7 +28,10 @@ namespace FekraHubAPI.Controllers.Students
         private readonly UserManager<ApplicationUser> _userManager;
         public StudentController(IRepository<StudentContract> studentContractRepo, IContractMaker contractMaker,
             IRepository<Student> studentRepo, IRepository<Course> courseRepo,
-            IEmailSender emailSender, IMapper mapper, UserManager<ApplicationUser> userManager, IRepository<AttendanceDate> attendanceDateRepo)
+            IEmailSender emailSender, IMapper mapper,
+            UserManager<ApplicationUser> userManager, 
+            IRepository<AttendanceDate> attendanceDateRepo,
+            IRepository<CourseSchedule> courseScheduleRepo)
         {
             _studentContractRepo = studentContractRepo;
             _contractMaker = contractMaker;
@@ -37,6 +41,7 @@ namespace FekraHubAPI.Controllers.Students
             _mapper = mapper;
             _userManager = userManager;
             _attendanceDateRepo = attendanceDateRepo;
+            _courseScheduleRepo = courseScheduleRepo;
         }
 
         [Authorize(Policy = "GetStudentsCourse")]
@@ -278,6 +283,8 @@ namespace FekraHubAPI.Controllers.Students
             var att = (await _attendanceDateRepo.GetRelation<bool>(x => x.Date.Date == DateTime.Now.Date, null,
                 x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id)))
                 .FirstOrDefault();
+            var workingDays = (await _courseScheduleRepo.GetRelation<string>(x => x.CourseID == courseId , null , z=> z.DayOfWeek)).ToList();
+            bool isTodayIsWorkingDay = workingDays.Contains(DateTime.Now.DayOfWeek.ToString());
             var students = Allstudents.Select(x => new
             {
                 x.Id,
@@ -306,7 +313,7 @@ namespace FekraHubAPI.Controllers.Students
                 },
                 parent = x.User == null ? null : new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
             }).ToList();
-            return Ok(new { CourseAttendance = att, students });
+            return Ok(new {IsTodayAWorkDay = isTodayIsWorkingDay, CourseAttendance = att, students });
         }
     }
 }

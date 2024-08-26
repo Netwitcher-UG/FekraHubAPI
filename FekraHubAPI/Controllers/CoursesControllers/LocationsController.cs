@@ -50,7 +50,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         // GET: api/Locations/5
         [Authorize(Policy = "ManageLocations")]
         [HttpGet("{id}")]
-        public async Task<ActionResult<Map_location>> GetLocation(int id)
+        public async Task<ActionResult<Location>> GetLocation(int id)
         {
             var location = await _locationRepository.GetById(id);
             if (location == null)
@@ -94,7 +94,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             var locationEntity = _mapper.Map<Location>(location);
             await _locationRepository.Add(locationEntity);
-            return CreatedAtAction("GetLocation", new { id = locationEntity.Id }, locationEntity);
+            return CreatedAtAction(nameof(GetLocation), new { id = locationEntity.Id });
 
         }
 

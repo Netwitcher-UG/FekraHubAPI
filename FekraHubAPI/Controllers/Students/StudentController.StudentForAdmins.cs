@@ -254,7 +254,7 @@ namespace FekraHubAPI.Controllers.Students
             string userId = _studentContractRepo.GetUserIDFromToken(User);
             bool Teacher = await _studentContractRepo.IsTeacherIDExists(userId);
             var course = await _courseRepo.GetRelation<Course>(x => x.Id == courseId);
-            if (course != null)
+            if (course.FirstOrDefault() != null)
             {
                 if (Teacher)
                 {

@@ -125,40 +125,56 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpPost]
         public async Task<ActionResult<Event>> PostEvent([FromForm] int[] scheduleId, [FromForm] Map_Event eventMdl)
         {
-            var x = (await _ScheduleRepository.GetRelation<CourseSchedule>(n => scheduleId.Contains(n.Id))).ToList();
-
-            //var schedule = await _ScheduleRepository.GetById(scheduleId);
-            //if (schedule == null)
-            //{
-            //    return NotFound("Course schedule not found or does not belong to the course.");
-            //}
-
-
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                var schedule = (await _ScheduleRepository.GetRelation<CourseSchedule>(n => scheduleId.Contains(n.Id))).ToList();
+
+                if (!schedule.Any())
+                {
+                    return NotFound("Course schedule not found or does not belong to the course.");
+                }
+
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+
+                var eventEntity = new Event
+                {
+                    EventName = eventMdl.EventName,
+                    Description = eventMdl.Description,
+                    StartDate = eventMdl.StartDate,
+                    EndDate = eventMdl.EndDate,
+                    StartTime = TimeSpan.Parse(eventMdl.StartDate.ToString("HH:mm:ss")),
+                    EndTime = TimeSpan.Parse(eventMdl.EndDate.ToString("HH:mm:ss")),
+                    TypeID = eventMdl.TypeID,
+                    CourseSchedule = new List<CourseSchedule>()
+
+                };
+
+                eventEntity.CourseSchedule = schedule;
+
+
+                await _eventRepository.Add(eventEntity);
+                return Ok(new
+                {
+                    eventEntity.Id,
+                    eventEntity.EventName,
+                    eventEntity.Description,
+                    eventEntity.StartDate,
+                    eventEntity.StartTime,
+                    eventEntity.EndDate,
+                    eventEntity.EndTime,
+                    eventEntity.TypeID,
+                    CourseSchedule = eventEntity.CourseSchedule.Select(x => new { x.Id, x.DayOfWeek, x.StartTime, x.EndTime, x.CourseID })
+                });
             }
-
-
-            var eventEntity = new Event
+            catch (Exception ex)
             {
-                EventName = eventMdl.EventName,
-                StartDate = eventMdl.StartDate,
-                EndDate   = eventMdl.EndDate,
-                StartTime = eventMdl.StartTime,
-                EndTime  = eventMdl.EndTime,
-                TypeID = eventMdl.TypeID,
-
-                CourseSchedule = new List<CourseSchedule>()
-            };
-
-
-            eventEntity.CourseSchedule = x;
-
-            await _eventRepository.Add(eventEntity);
-
-            return CreatedAtAction("GetEvent", new { id = eventEntity.Id }, eventEntity);
-
+                return BadRequest(ex);
+            }
         }
 
 

@@ -43,10 +43,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             if (Teacher)
             {
             courses = courses.Where(z => z.Teacher.Select(n => n.Id).Contains(userId));
-               
             }
-            
-              
                 if (courses == null)
                 {
                     return NotFound("no course found");
@@ -67,9 +64,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(search == null ? null : x => x.Name.Contains(search));
             if (Teacher)
             {
-
                 courses = courses.Where(z => z.Teacher.Select(n => n.Id).Contains(userId) );
-
             }
 
 
@@ -281,6 +276,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpPost("AssignStudentsToCourse")]
         public async Task<IActionResult> AssignStudentsToCourse( int courseID, [FromBody] List<int> studentIds)
         {
+            try { 
             if (courseID <= 0 || studentIds == null || !studentIds.Any())
             {
                 return BadRequest("Invalid course ID or student list");
@@ -300,9 +296,18 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
             await students.ForEachAsync(student => student.CourseID = courseID);
             await _studentRepository.ManyUpdate(students);
+                return Ok(students.Select(x => new
+                {   x.FirstName,
+                    x.LastName,
+                    x.Course.Id,
+                    x.Course.Name
+                } ));
 
-
-            return NoContent(); // HTTP 204 No Content
+            }catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+            
         }
 
 

@@ -16,6 +16,24 @@ namespace FekraHubAPI.Controllers.Attendance
 
             try
             {
+                var student = (await _studentRepo.GetRelation<Student>(x => x.Id == Id)).SingleOrDefault();
+                if (student == null)
+                {
+                    return BadRequest("Student not found");
+                }
+                string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
+                bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
+                if (Teacher)
+                {
+                    var course = await _coursRepo.GetRelation<Course>(x =>
+                                        x.Teacher.Select(x=> x.Id).Contains(userId)
+                                        && x.Id == student.CourseID);
+                    if (!course.ToList().Any())
+                    {
+                        return BadRequest("This student is not in your course");
+                    }
+                   
+                }
                 IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(
                                                     x => x.StudentID == Id))
                                                     .OrderByDescending(x => x.date);
@@ -55,17 +73,30 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-                var course = await _coursRepo.GetById(coursId);
-                if (course == null)
+                
+                var course = await _coursRepo.GetRelation<Course>(x => x.Id == coursId);
+                if (course.SingleOrDefault() == null)
                 {
                     return BadRequest($"No Course found");
 
                 }
+                string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
+                bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
+                if (Teacher)
+                {
+                    var teacherIds = course.SelectMany(z => z.Teacher.Select(x => x.Id)).ToList();
+                    if (!teacherIds.Contains(userId))
+                    {
+                        return BadRequest("This is not your course");
+                    }
+
+                }
+                var myCourse = course.Single();
                 IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(null,
                     new List<Expression<Func<StudentAttendance, bool>>?>
                     {
                         x => x.CourseID == coursId,
-                        ta => ta.date >= course.StartDate && ta.date <= course.EndDate,
+                        ta => ta.date >= myCourse.StartDate && ta.date <= myCourse.EndDate,
                         startDate.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date >= startDate.Value) : null,
                         endDate.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date <= endDate.Value) : null,
                         year.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date.Year == year.Value) : null,
@@ -106,11 +137,24 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
+                
                 // course exist or not
                 var course = (await _coursRepo.GetRelation<Course>()).Where(x => x.Id == courseId);
                 if (!course.Any())
                 {
                     return BadRequest("Course not found");
+                }
+                // for teacher
+                string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
+                bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
+                if (Teacher)
+                {
+                    var teacherIds = course.SelectMany(z => z.Teacher.Select(x => x.Id)).ToList();
+                    if (!teacherIds.Contains(userId))
+                    {
+                        return BadRequest("This is not your course");
+                    }
+
                 }
                 // from course schedule (working days)
                 var workingDays = (await _courseScheduleRepo.GetRelation<CourseSchedule>())
@@ -165,19 +209,16 @@ namespace FekraHubAPI.Controllers.Attendance
                     attDateId = existingDate.Id;
                 }
                 // course added attendance for today or not
-                var CourseAttExist = await _courseAttendanceRepo.GetRelation<CourseAttendance>();
+                var CourseAttExist = (await _courseAttendanceRepo.GetRelation<CourseAttendance>(ca => 
+                    ca.CourseId == courseId && ca.AttendanceDateId == attDateId))
+                    .ToList();
                 if (CourseAttExist.Any())
                 {
-                    var IsCourseAttExist = course.SelectMany(z => z.CourseAttendance)
-                                        .Any(ca => ca.CourseId == courseId && ca.AttendanceDateId == existingDate.Id);
-                    if (IsCourseAttExist)
-                    {
-                        return BadRequest("This course has an attendance today");
-                    }
+                    return BadRequest("This course has an attendance today");
                 }
                 // finaly add student and course attendance
                 var newAttendance = new List<StudentAttendance>();
-                if (studentAttendance.Any())
+                if (studentAttendance != null)
                 {
                     foreach (var studentAtt in studentAttendance)
                     {
@@ -209,20 +250,26 @@ namespace FekraHubAPI.Controllers.Attendance
         }
 
         [Authorize(Policy = "UpdateStudentsAttendance")]
-
         [HttpPatch("Student")]
         public async Task<IActionResult> UpdateStudentAttendance([FromForm] int id, [FromForm] int statusId)
         {
-            var allStudentAttendance = await _studentAttendanceRepo.GetRelation<StudentAttendance>();
-            var studentAttendance = await allStudentAttendance
-                .Where(sa => sa.Id == id)
-                .SingleOrDefaultAsync();
-
+            var StudentAtt = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(sa => sa.Id == id));
+            var studentAttendance = StudentAtt.SingleOrDefault();
             if (studentAttendance == null)
             {
                 return NotFound("Student Attendance not found.");
             }
+            string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
+            bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
+            if (Teacher)
+            {
+                var teacherIds = StudentAtt.SelectMany(x => x.Course.Teacher.Select(z => z.Id)).ToList();
+                if (teacherIds.Contains(userId))
+                {
+                    return BadRequest("This attendance is not for your student attendance");
+                }
 
+            }
             studentAttendance.StatusID = statusId;
             try
             {
@@ -248,16 +295,24 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-                var allStudentAttendance = await _studentAttendanceRepo.GetRelation<StudentAttendance>();
-                var studentAttendance = await allStudentAttendance
-                    .Where(sa => sa.Id == id)
-                    .SingleOrDefaultAsync();
-
+                
+                var StudentAtt = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(sa => sa.Id == id));
+                var studentAttendance = StudentAtt.SingleOrDefault();
                 if (studentAttendance == null)
                 {
                     return NotFound("Student Attendance not found.");
                 }
+                string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
+                bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
+                if (Teacher)
+                {
+                    var teacherIds = StudentAtt.SelectMany(x => x.Course.Teacher.Select(z => z.Id)).ToList();
+                    if (teacherIds.Contains(userId))
+                    {
+                        return BadRequest("This attendance is not for your student attendance");
+                    }
 
+                }
 
                 await _studentAttendanceRepo.Delete(id);
                 return Ok("Delete success");

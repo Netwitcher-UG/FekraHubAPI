@@ -91,7 +91,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 eventEntity.StartTime,
                 eventEntity.EndDate,
                 eventEntity.EndTime,
-                eventEntity.TypeID,
+                EventType = eventEntity.EventType == null ? null : new
+                {
+                    eventEntity.EventType.Id,
+                    eventEntity.EventType.TypeTitle
+                },
                 CourseSchedule = eventEntity.CourseSchedule == null ? null : eventEntity.CourseSchedule.Select(x => new { x.Id, x.DayOfWeek, x.StartTime, x.EndTime, x.CourseID })
             }).SingleOrDefault());
         }

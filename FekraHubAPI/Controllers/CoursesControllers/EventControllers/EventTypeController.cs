@@ -27,7 +27,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             var eventType = await _eventTypeRepository.GetAll();
 
-            return Ok(eventType);
+            return Ok(eventType.Select(x => new
+            {
+                x.Id,
+                x.TypeTitle
+            }));
         }
 
 
@@ -41,7 +45,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             {
                 return NotFound();
             }
-            return Ok(eventType);
+            return Ok(new { eventType.Id,eventType.TypeTitle });
         }
 
 
@@ -64,7 +68,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             _mapper.Map(eventTypeMdl, eventTypeEntity);
             await _eventTypeRepository.Update(eventTypeEntity);
 
-            return NoContent();
+            return Ok(new { eventTypeEntity.Id, eventTypeEntity.TypeTitle });
         }
         [Authorize(Policy = "ManageEventTypes")]
         [HttpPost]
@@ -77,7 +81,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             }
             var eventTypeEntity = _mapper.Map<EventType>(eventType);
             await _eventTypeRepository.Add(eventTypeEntity);
-            return CreatedAtAction("GetEventType", new { id = eventTypeEntity.Id }, eventTypeEntity);
+            return Ok(new { eventTypeEntity.Id, eventTypeEntity.TypeTitle });
 
         }
 
@@ -94,7 +98,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
             await _eventTypeRepository.Delete(id);
 
-            return NoContent();
+            return Ok("Delete success");
         }
     }
 }

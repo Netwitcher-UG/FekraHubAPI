@@ -42,7 +42,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             {
                 
                 IQueryable<Event> eventE = await _eventRepository.GetRelation<Event>();
-                if(courseId != null)
+                if(courseId.Any())
                 {
                     var CourseWorkingDay = (await _ScheduleRepository.GetRelation<int>(
                         x => courseId.Contains( x.Course.Id),null, x => x.Id)).ToList();

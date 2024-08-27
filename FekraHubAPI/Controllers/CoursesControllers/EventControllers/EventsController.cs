@@ -47,7 +47,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 x.EndDate,
                 x.StartTime,
                 x.EndTime,
-                x.EventType.TypeTitle,
+                EventType = x.EventType == null ? null : new
+                {
+                    x.EventType.Id,
+                    x.EventType.TypeTitle
+                },
                 CourseSchedule = x.CourseSchedule.Select(z => new
                 {
                     z.Id,

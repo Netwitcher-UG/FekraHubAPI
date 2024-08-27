@@ -36,7 +36,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         // GET: api/Event
         [Authorize(Policy = "GetEvents")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents(List<int>? courseId)
+        public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents([FromQuery]List<int>? courseId)
         {
             try
             {

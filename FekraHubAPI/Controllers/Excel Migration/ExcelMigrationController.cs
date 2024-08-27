@@ -12,6 +12,8 @@ using OfficeOpenXml;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
+using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
+using FekraHubAPI.Constract;
 
 namespace FekraHubAPI.Controllers.Excel_Migration
 {
@@ -23,66 +25,78 @@ namespace FekraHubAPI.Controllers.Excel_Migration
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _db;
+        private readonly ILogger<ExcelMigrationController> _logger;
         public ExcelMigrationController(IRepository<Student> studentRepository,
-            UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext db
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager, ApplicationDbContext db,
+            ILogger<ExcelMigrationController> logger
              )
         {
             _db = db;
             _studentRepository = studentRepository;
             _userManager = userManager;
             _roleManager = roleManager;
-
+            _logger = logger;
         }
 
         [Authorize(Policy = "ManageExcelMigration")]
         [HttpPost("UploadData")]
         public async Task<IActionResult> UploadData([Required] IFormFile file)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("File is not selected or empty");
-
-            var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-            using (var stream = new MemoryStream())
+            try
             {
-                await file.CopyToAsync(stream);
-                using (var package = new ExcelPackage(stream))
-                {
-                    var worksheet = package.Workbook.Worksheets[0];
+                if (file == null || file.Length == 0)
+                    return BadRequest("File is not selected or empty");
 
-                    for (int row = 3; row <= 302; row++)
+                var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+                using (var stream = new MemoryStream())
+                {
+                    await file.CopyToAsync(stream);
+                    using (var package = new ExcelPackage(stream))
                     {
-                        var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
-                        if (!emailRegex.IsMatch(email) && IsRowValid(worksheet, row))
-                        {
-                            return BadRequest($"Error at row {row - 2}: Invalid email format.");
-                        }
-                        var dateP = worksheet.Cells[row, 15].Text;
-                        var dateS = worksheet.Cells[row, 4].Text;
-                        if ((!DateTime.TryParse(dateP, out DateTime dateValueP) || !DateTime.TryParse(dateS, out DateTime dateValueS)) && IsRowValid(worksheet, row))
-                        {
-                            return BadRequest($"Error at row {row - 2}: Invalid DateTime format.");
-                        }
-                    }
-                    for (int row = 3; row <= 302; row++)
-                    {
-                        if (IsRowValid(worksheet, row))
+                        var worksheet = package.Workbook.Worksheets[0];
+
+                        for (int row = 3; row <= 302; row++)
                         {
                             var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
-                            var user = await GetUserAsync(email, worksheet, row);
-
-                            if (user != null)
+                            if (!emailRegex.IsMatch(email) && IsRowValid(worksheet, row))
                             {
-                                var student = CreateStudent(worksheet, row, user.Id);
-                                await _studentRepository.Add(student);
+                                return BadRequest($"Error at row {row - 2}: Invalid email format.");
+                            }
+                            var dateP = worksheet.Cells[row, 15].Text;
+                            var dateS = worksheet.Cells[row, 4].Text;
+                            if ((!DateTime.TryParse(dateP, out DateTime dateValueP) || !DateTime.TryParse(dateS, out DateTime dateValueS)) && IsRowValid(worksheet, row))
+                            {
+                                return BadRequest($"Error at row {row - 2}: Invalid DateTime format.");
+                            }
+                        }
+                        for (int row = 3; row <= 302; row++)
+                        {
+                            if (IsRowValid(worksheet, row))
+                            {
+                                var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
+                                var user = await GetUserAsync(email, worksheet, row);
+
+                                if (user != null)
+                                {
+                                    var student = CreateStudent(worksheet, row, user.Id);
+                                    await _studentRepository.Add(student);
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            return Ok("Success");
+                return Ok("Success");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
         private bool IsRowValid(ExcelWorksheet worksheet, int row)

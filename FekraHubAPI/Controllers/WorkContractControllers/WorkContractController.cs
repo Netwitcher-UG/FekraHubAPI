@@ -1,4 +1,6 @@
 using AutoMapper;
+using FekraHubAPI.Constract;
+using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -20,14 +22,17 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
         private readonly IMapper _mapper;
         private readonly IRepository<WorkContract> _workContractRepository;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<WorkContractController> _logger;
         public ClaimsPrincipal User => HttpContext?.User!;
 
         public WorkContractController(IRepository<WorkContract> workContractRepository,
-            IMapper mapper , UserManager<ApplicationUser> userManager)
+            IMapper mapper , UserManager<ApplicationUser> userManager,
+            ILogger<WorkContractController> logger)
         {
             _userManager = userManager;
             _workContractRepository = workContractRepository;
             _mapper = mapper;
+            _logger = logger;
         }
         [Authorize(Policy = "ManageWorkContract")]
         [HttpGet("{workContractID}")]
@@ -47,6 +52,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "WorkContractController", ex.Message));
                 return BadRequest(ex.Message);
             }
         }
@@ -65,6 +71,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "WorkContractController", ex.Message));
                 return BadRequest(ex.Message);
             }
         }
@@ -74,67 +81,93 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
             , [FromQuery][Required] string UserID
             )
         {
-            var user = await _userManager.FindByIdAsync(UserID);
-            if (user == null)
+            try
             {
-                return BadRequest("User Not Found");
-            }
-            var isTeacher = await _workContractRepository.IsTeacherIDExists(user.Id);
-            var isSecretariat = await _workContractRepository.IsSecretariat(user);
-
-
-            if (! (isTeacher || isSecretariat))
-            {
-                return BadRequest("User Must Have Teacher Or Secrtaria Role");
-            }
-            foreach (var file in files)
-            {
-                if (file.Length > 0)
+                var user = await _userManager.FindByIdAsync(UserID);
+                if (user == null)
                 {
-                    byte[] fileBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        await file.CopyToAsync(ms);
-                        fileBytes = ms.ToArray();
-                    }
-                    var fileWorkContract = fileBytes;
-                    var UploadWorkContract = new WorkContract
-                    {
-                        File = fileWorkContract,
-                        Timestamp = DateTime.Now,
-                        FileName = file.FileName,
-                        TeacherID = UserID,
-
-                    };
-                   var workContractEntity = _mapper.Map<WorkContract>(UploadWorkContract);
-                   await _workContractRepository.Add(workContractEntity);
+                    return BadRequest("User Not Found");
                 }
-            }
+                var isTeacher = await _workContractRepository.IsTeacherIDExists(user.Id);
+                var isSecretariat = await _workContractRepository.IsSecretariat(user);
 
-            return Ok();
+
+                if (!(isTeacher || isSecretariat))
+                {
+                    return BadRequest("User Must Have Teacher Or Secrtaria Role");
+                }
+                foreach (var file in files)
+                {
+                    if (file.Length > 0)
+                    {
+                        byte[] fileBytes;
+                        using (var ms = new MemoryStream())
+                        {
+                            await file.CopyToAsync(ms);
+                            fileBytes = ms.ToArray();
+                        }
+                        var fileWorkContract = fileBytes;
+                        var UploadWorkContract = new WorkContract
+                        {
+                            File = fileWorkContract,
+                            Timestamp = DateTime.Now,
+                            FileName = file.FileName,
+                            TeacherID = UserID,
+
+                        };
+                        var workContractEntity = _mapper.Map<WorkContract>(UploadWorkContract);
+                        await _workContractRepository.Add(workContractEntity);
+                    }
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "WorkContractController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
         [Authorize(Policy = "ManageWorkContract")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteWorkContract(int id)
         {
-
-            var WorkContractEntity = await _workContractRepository.GetById(id);
-            if (WorkContractEntity == null)
+            try
             {
-                return NotFound();
+                var WorkContractEntity = await _workContractRepository.GetById(id);
+                if (WorkContractEntity == null)
+                {
+                    return NotFound();
+                }
+                await _workContractRepository.Delete(id);
+                return Ok();
             }
-            await _workContractRepository.Delete(id);
-            return Ok();
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "WorkContractController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
         [Authorize(Policy = "ManageWorkContract")]
         [HttpGet("[action]/{userID}")]
         public async Task<IActionResult> GetByUserID(string userID)
         {
-            var WorkContractEntity = await _workContractRepository.GetAll();
-            var WorkContractUser =   WorkContractEntity.Where(i => i.TeacherID == userID);
-            var data = WorkContractUser.Select(x => new { x.Id , x.TeacherID,x.FileName , x.File }).ToList();
+            try
+            {
+                var WorkContractEntity = await _workContractRepository.GetAll();
+                var WorkContractUser = WorkContractEntity.Where(i => i.TeacherID == userID);
+                var data = WorkContractUser.Select(x => new { x.Id, x.TeacherID, x.FileName, x.File }).ToList();
 
-            return Ok(data);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "WorkContractController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
       
 

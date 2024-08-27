@@ -1,4 +1,5 @@
-﻿using FekraHubAPI.Data.Models;
+﻿using FekraHubAPI.Constract;
+using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,183 +25,200 @@ namespace FekraHubAPI.Controllers.Students
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Error retrieving data from the database : {ex}");
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
 
         [Authorize(Policy = "ManageChildren")]
-
         [HttpGet("ByParent")]
         public async Task<IActionResult> GetStudentsByParent()
         {
-            var parentId = _courseRepo.GetUserIDFromToken(User);
-
-            if (string.IsNullOrEmpty(parentId))
+            try
             {
-                return Unauthorized("Parent not found.");
-            }
+                var parentId = _courseRepo.GetUserIDFromToken(User);
 
-            var students = (await _studentRepo.GetRelation<Student>(x => x.ParentID == parentId)).OrderByDescending(x => x.Id);
-
-            var result = students.Select(z => new
-            {
-                z.Id,
-                z.FirstName,
-                z.LastName,
-                z.Birthday,
-                z.Nationality,
-                z.Note,
-                z.Gender,
-                city = z.City ?? "Like parent",
-                Street = z.Street ?? "Like parent",
-                StreetNr = z.StreetNr ?? "Like parent",
-                ZipCode = z.ZipCode ?? "Like parent",
-                course = z.Course == null ? null : new
+                if (string.IsNullOrEmpty(parentId))
                 {
-                    z.Course.Id,
-                    z.Course.Name,
-                    z.Course.Capacity,
-                    startDate = z.Course.StartDate.Date,
-                    EndDate = z.Course.EndDate.Date,
-                    z.Course.Price,
-                    Teacher = z.Course.Teacher.Select(x => new
-                    {
-                        x.Id,
-                        x.FirstName,
-                        x.LastName
-
-                    })
-                },
-                Room = z.Course == null ? null : new
-                {
-                    z.Course.Room.Id,
-                    z.Course.Room.Name
-                },
-                Location = z.Course == null ? null : new
-                {
-                    z.Course.Room.Location.Id,
-                    z.Course.Room.Location.Name,
-                    z.Course.Room.Location.City,
-                    z.Course.Room.Location.Street,
-                    z.Course.Room.Location.ZipCode,
-                    z.Course.Room.Location.StreetNr
+                    return Unauthorized("Parent not found.");
                 }
 
+                var students = (await _studentRepo.GetRelation<Student>(x => x.ParentID == parentId)).OrderByDescending(x => x.Id);
 
-            }).ToList();
+                var result = students.Select(z => new
+                {
+                    z.Id,
+                    z.FirstName,
+                    z.LastName,
+                    z.Birthday,
+                    z.Nationality,
+                    z.Note,
+                    z.Gender,
+                    city = z.City ?? "Like parent",
+                    Street = z.Street ?? "Like parent",
+                    StreetNr = z.StreetNr ?? "Like parent",
+                    ZipCode = z.ZipCode ?? "Like parent",
+                    course = z.Course == null ? null : new
+                    {
+                        z.Course.Id,
+                        z.Course.Name,
+                        z.Course.Capacity,
+                        startDate = z.Course.StartDate.Date,
+                        EndDate = z.Course.EndDate.Date,
+                        z.Course.Price,
+                        Teacher = z.Course.Teacher.Select(x => new
+                        {
+                            x.Id,
+                            x.FirstName,
+                            x.LastName
+
+                        })
+                    },
+                    Room = z.Course == null ? null : new
+                    {
+                        z.Course.Room.Id,
+                        z.Course.Room.Name
+                    },
+                    Location = z.Course == null ? null : new
+                    {
+                        z.Course.Room.Location.Id,
+                        z.Course.Room.Location.Name,
+                        z.Course.Room.Location.City,
+                        z.Course.Room.Location.Street,
+                        z.Course.Room.Location.ZipCode,
+                        z.Course.Room.Location.StreetNr
+                    }
 
 
-            return Ok(result);
+                }).ToList();
+
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
         [Authorize(Policy = "ManageChildren")]
-
         [HttpGet("GetStudentByParent/{id}")]
         public async Task<IActionResult> GetStudentByParent(int id)
         {
-            var parentId = _courseRepo.GetUserIDFromToken(User);
-
-            if (string.IsNullOrEmpty(parentId))
+            try
             {
-                return Unauthorized("Parent not found.");
-            }
+                var parentId = _courseRepo.GetUserIDFromToken(User);
 
-            var students = await _studentRepo.GetRelation<Student>(x => x.ParentID == parentId && x.Id == id);
-            if (!students.Any())
-            {
-                return NotFound("This student is not found");
-            }
-            var reportNew = students
-                .SelectMany(x => x.Report)
-                .Where(x => x.CreationDate >= DateTime.Now.AddDays(-30))
-                .Select(z => new
+                if (string.IsNullOrEmpty(parentId))
                 {
-                    z.Id,
-                    z.data,
-                    z.CreationDate,
-                    z.CreationDate.Year,
-                    z.CreationDate.Month,
-                    TeacherId = z.UserId,
-                    TeacherFirstName = z.User == null ? null : z.User.FirstName,
-                    TeacherLastName = z.User == null ? null : z.User.LastName,
-                });
-
-            var uploadNew = students
-                            .SelectMany(x => x.Course.Upload)
-                            .Where(upload => upload.Date >= DateTime.Now.AddDays(-30))
-                            .Select(upload => new
-                            {
-                                upload.Id,
-                                upload.FileName,
-                                upload.Date,
-                                upload.UploadType.TypeTitle
-                            })
-                            .ToList();
-            var invoiceNew = students
-                .SelectMany(x => x.Invoices)
-                .Where(x => x.Date >= DateTime.Now.AddDays(-30))
-                .Select(z => new
-                {
-                    z.Id,
-                    z.FileName,
-                    z.Date,
-                });
-            var result = students.Select(z => new
-            {
-                z.Id,
-                z.FirstName,
-                z.LastName,
-                z.Birthday,
-                z.Nationality,
-                z.Note,
-                z.Gender,
-                city = z.City ?? "Like parent",
-                Street = z.Street ?? "Like parent",
-                StreetNr = z.StreetNr ?? "Like parent",
-                ZipCode = z.ZipCode ?? "Like parent",
-                course = z.Course == null ? null : new
-                {
-                    z.Course.Id,
-                    z.Course.Name,
-                    z.Course.Capacity,
-                    startDate = z.Course.StartDate.Date,
-                    EndDate = z.Course.EndDate.Date,
-                    z.Course.Price,
-                    Teacher = z.Course.Teacher.Select(x => new
-                    {
-                        x.Id,
-                        x.FirstName,
-                        x.LastName
-
-                    })
-                },
-                Room = z.Course == null ? null : new
-                {
-                    z.Course.Room.Id,
-                    z.Course.Room.Name
-                },
-                Location = z.Course == null ? null : new
-                {
-                    z.Course.Room.Location.Id,
-                    z.Course.Room.Location.Name,
-                    z.Course.Room.Location.City,
-                    z.Course.Room.Location.Street,
-                    z.Course.Room.Location.ZipCode,
-                    z.Course.Room.Location.StreetNr
-                },
-                News = new
-                {
-                    Report = reportNew == null ? null : reportNew,
-                    WorkSheet = uploadNew == null ? null : uploadNew,
-                    Invoice = invoiceNew == null ? null : invoiceNew
+                    return Unauthorized("Parent not found.");
                 }
 
+                var students = await _studentRepo.GetRelation<Student>(x => x.ParentID == parentId && x.Id == id);
+                if (!students.Any())
+                {
+                    return NotFound("This student is not found");
+                }
+                var reportNew = students
+                    .SelectMany(x => x.Report)
+                    .Where(x => x.CreationDate >= DateTime.Now.AddDays(-30))
+                    .Select(z => new
+                    {
+                        z.Id,
+                        z.data,
+                        z.CreationDate,
+                        z.CreationDate.Year,
+                        z.CreationDate.Month,
+                        TeacherId = z.UserId,
+                        TeacherFirstName = z.User == null ? null : z.User.FirstName,
+                        TeacherLastName = z.User == null ? null : z.User.LastName,
+                    });
 
-            }).FirstOrDefault();
+                var uploadNew = students
+                                .SelectMany(x => x.Course.Upload)
+                                .Where(upload => upload.Date >= DateTime.Now.AddDays(-30))
+                                .Select(upload => new
+                                {
+                                    upload.Id,
+                                    upload.FileName,
+                                    upload.Date,
+                                    upload.UploadType.TypeTitle
+                                })
+                                .ToList();
+                var invoiceNew = students
+                    .SelectMany(x => x.Invoices)
+                    .Where(x => x.Date >= DateTime.Now.AddDays(-30))
+                    .Select(z => new
+                    {
+                        z.Id,
+                        z.FileName,
+                        z.Date,
+                    });
+                var result = students.Select(z => new
+                {
+                    z.Id,
+                    z.FirstName,
+                    z.LastName,
+                    z.Birthday,
+                    z.Nationality,
+                    z.Note,
+                    z.Gender,
+                    city = z.City ?? "Like parent",
+                    Street = z.Street ?? "Like parent",
+                    StreetNr = z.StreetNr ?? "Like parent",
+                    ZipCode = z.ZipCode ?? "Like parent",
+                    course = z.Course == null ? null : new
+                    {
+                        z.Course.Id,
+                        z.Course.Name,
+                        z.Course.Capacity,
+                        startDate = z.Course.StartDate.Date,
+                        EndDate = z.Course.EndDate.Date,
+                        z.Course.Price,
+                        Teacher = z.Course.Teacher.Select(x => new
+                        {
+                            x.Id,
+                            x.FirstName,
+                            x.LastName
+
+                        })
+                    },
+                    Room = z.Course == null ? null : new
+                    {
+                        z.Course.Room.Id,
+                        z.Course.Room.Name
+                    },
+                    Location = z.Course == null ? null : new
+                    {
+                        z.Course.Room.Location.Id,
+                        z.Course.Room.Location.Name,
+                        z.Course.Room.Location.City,
+                        z.Course.Room.Location.Street,
+                        z.Course.Room.Location.ZipCode,
+                        z.Course.Room.Location.StreetNr
+                    },
+                    News = new
+                    {
+                        Report = reportNew == null ? null : reportNew,
+                        WorkSheet = uploadNew == null ? null : uploadNew,
+                        Invoice = invoiceNew == null ? null : invoiceNew
+                    }
 
 
-            return Ok(result);
+                }).FirstOrDefault();
+
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
         [Authorize(Policy = "ManageChildren")]
@@ -238,7 +256,8 @@ namespace FekraHubAPI.Controllers.Students
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
     }

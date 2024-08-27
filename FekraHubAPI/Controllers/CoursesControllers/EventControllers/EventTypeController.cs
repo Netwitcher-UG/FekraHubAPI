@@ -1,4 +1,6 @@
 using AutoMapper;
+using FekraHubAPI.Constract;
+using FekraHubAPI.Controllers.AuthorizationController;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -15,23 +17,35 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
     {
         private readonly IRepository<EventType> _eventTypeRepository;
         private readonly IMapper _mapper;
-        public EventTypeController(IRepository<EventType> eventTypeRepository, IMapper mapper)
+        private readonly ILogger<EventTypeController> _logger;
+        public EventTypeController(IRepository<EventType> eventTypeRepository, IMapper mapper,
+            ILogger<EventTypeController> logger)
         {
             _eventTypeRepository = eventTypeRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [Authorize(Policy = "ManageEventTypes")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_EventType>>> GetEventTypes()
         {
-            var eventType = await _eventTypeRepository.GetAll();
-
-            return Ok(eventType.Select(x => new
+            try
             {
-                x.Id,
-                x.TypeTitle
-            }));
+                var eventType = await _eventTypeRepository.GetAll();
+
+                return Ok(eventType.Select(x => new
+                {
+                    x.Id,
+                    x.TypeTitle
+                }));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventTypeController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
 
@@ -40,12 +54,21 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_EventType>> GetEventType(int id)
         {
-            var eventType = await _eventTypeRepository.GetById(id);
-            if (eventType == null)
+            try
             {
-                return NotFound();
+                var eventType = await _eventTypeRepository.GetById(id);
+                if (eventType == null)
+                {
+                    return NotFound();
+                }
+                return Ok(new { eventType.Id, eventType.TypeTitle });
             }
-            return Ok(new { eventType.Id,eventType.TypeTitle });
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventTypeController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
 
@@ -54,34 +77,51 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEventType(int id, [FromForm] Map_EventType eventTypeMdl)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-            var eventTypeEntity = await _eventTypeRepository.GetById(id);
-            if (eventTypeEntity == null)
+                var eventTypeEntity = await _eventTypeRepository.GetById(id);
+                if (eventTypeEntity == null)
+                {
+                    return NotFound();
+                }
+
+                _mapper.Map(eventTypeMdl, eventTypeEntity);
+                await _eventTypeRepository.Update(eventTypeEntity);
+
+                return Ok(new { eventTypeEntity.Id, eventTypeEntity.TypeTitle });
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventTypeController", ex.Message));
+                return BadRequest(ex.Message);
             }
-
-            _mapper.Map(eventTypeMdl, eventTypeEntity);
-            await _eventTypeRepository.Update(eventTypeEntity);
-
-            return Ok(new { eventTypeEntity.Id, eventTypeEntity.TypeTitle });
+            
         }
         [Authorize(Policy = "ManageEventTypes")]
         [HttpPost]
         public async Task<ActionResult<EventType>> PostEventType([FromForm] Map_EventType eventType)
         {
-
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                var eventTypeEntity = _mapper.Map<EventType>(eventType);
+                await _eventTypeRepository.Add(eventTypeEntity);
+                return Ok(new { eventTypeEntity.Id, eventTypeEntity.TypeTitle });
             }
-            var eventTypeEntity = _mapper.Map<EventType>(eventType);
-            await _eventTypeRepository.Add(eventTypeEntity);
-            return Ok(new { eventTypeEntity.Id, eventTypeEntity.TypeTitle });
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventTypeController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
 
         }
 
@@ -90,15 +130,24 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEventType(int id)
         {
-            var eventType = await _eventTypeRepository.GetById(id);
-            if (eventType == null)
+            try
             {
-                return NotFound();
+                var eventType = await _eventTypeRepository.GetById(id);
+                if (eventType == null)
+                {
+                    return NotFound();
+                }
+
+                await _eventTypeRepository.Delete(id);
+
+                return Ok("Delete success");
             }
-
-            await _eventTypeRepository.Delete(id);
-
-            return Ok("Delete success");
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventTypeController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
     }
 }

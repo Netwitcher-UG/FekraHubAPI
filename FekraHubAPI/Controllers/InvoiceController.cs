@@ -9,6 +9,8 @@ using FekraHubAPI.MapModels.Courses;
 using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
+using FekraHubAPI.Constract;
 
 namespace FekraHubAPI.Controllers
 {
@@ -16,9 +18,7 @@ namespace FekraHubAPI.Controllers
     [ApiController]
     public class InvoiceController : ControllerBase
     {
-
-
-
+        private readonly ILogger<InvoiceController> _logger;
         private readonly IRepository<Invoice> _invoiceRepository;
         private readonly IRepository<Student> _studentRepository;
 
@@ -26,13 +26,13 @@ namespace FekraHubAPI.Controllers
 
         public InvoiceController(IRepository<Student> studentRepository,
             IRepository<Invoice> invoiceRepository,
-
+            ILogger<InvoiceController> logger,
         IMapper mapper)
         {
             _invoiceRepository = invoiceRepository;
             _studentRepository = studentRepository;
             _mapper = mapper;
-
+            _logger = logger;
         }
 
 
@@ -41,29 +41,35 @@ namespace FekraHubAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoices(string? search)
         {
-            IQueryable<Invoice> query = (await _invoiceRepository.GetRelation<Invoice>(
+            try
+            {
+                IQueryable<Invoice> query = (await _invoiceRepository.GetRelation<Invoice>(
                 !string.IsNullOrEmpty(search) ? x => x.Student.FirstName.Contains(search) || x.Student.LastName.Contains(search) : null
 
                 ));
-
-
-
-            var result = query.Select(x => new
-            {
-                x.Id,
-                x.FileName,
-                x.Date,
-                student = x.Student == null ? null : new
+                var result = query.Select(x => new
                 {
-                    x.Student.Id,
-                    x.Student.FirstName,
-                    x.Student.LastName
-                }
+                    x.Id,
+                    x.FileName,
+                    x.Date,
+                    student = x.Student == null ? null : new
+                    {
+                        x.Student.Id,
+                        x.Student.FirstName,
+                        x.Student.LastName
+                    }
 
 
-            }).ToList();
+                }).ToList();
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "InvoiceController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
         [Authorize(Policy = "ManageInvoice")]
@@ -102,6 +108,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "InvoiceController", ex.Message));
                 return BadRequest(ex.Message);
             }
 
@@ -126,11 +133,10 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "InvoiceController", ex.Message));
                 return BadRequest(ex.Message);
             }
         }
-
-
 
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("GetInvoicesStudentForPerant")]
@@ -172,6 +178,7 @@ namespace FekraHubAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "InvoiceController", ex.Message));
                 return BadRequest(ex.Message);
             }
 
@@ -201,6 +208,7 @@ namespace FekraHubAPI.Controllers
             }
             catch(Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "InvoiceController", ex.Message));
                 return BadRequest(ex.Message);
             }
         }
@@ -212,113 +220,103 @@ namespace FekraHubAPI.Controllers
             try
             {
                 var student = await _studentRepository.GetById(studentId);
-            if (student == null)
-            {
-                return NotFound("student not found.");
-            }
-
-
-
-            if (invoiceFile.Length > 0)
-            {
-
-                byte[] fileBytes;
-                using (var ms = new MemoryStream())
+                if (student == null)
                 {
-                    await invoiceFile.CopyToAsync(ms);
-                    fileBytes = ms.ToArray();
+                    return NotFound("student not found.");
                 }
 
-                var upload = new Invoice
+                if (invoiceFile.Length > 0)
                 {
-                    file = fileBytes,
-                    Date = DateTime.Now,
-                    FileName = invoiceFile.FileName,
-                    Studentid = studentId
-                };
 
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        await invoiceFile.CopyToAsync(ms);
+                        fileBytes = ms.ToArray();
+                    }
 
-                await _invoiceRepository.Add(upload);
+                    var upload = new Invoice
+                    {
+                        file = fileBytes,
+                        Date = DateTime.Now,
+                        FileName = invoiceFile.FileName,
+                        Studentid = studentId
+                    };
+
+                    await _invoiceRepository.Add(upload);
+                }
+
+                return Ok("invoice File uploaded successfully.");
 
             }
-
-            return Ok("invoice File uploaded successfully.");
-
-        }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "InvoiceController", ex.Message));
                 return BadRequest(ex.Message);
-    }
-}
-
-
+            }
+        }
 
         [Authorize(Policy = "ManageInvoice")]
         [HttpPut("{invoiceId}")]
         public async Task<IActionResult> EditUploadInvoice( int invoiceId, [FromForm] int studentId, IFormFile invoiceFile)
         {
-            try { 
-            var student = await _studentRepository.GetById(studentId);
-            if (student == null)
+            try
             {
-                return NotFound("student not found.");
-            }
-
-            var invoiceEntity = await _invoiceRepository.GetById(invoiceId);
-
-
-            if (invoiceFile.Length > 0)
-            {
-
-                byte[] fileBytes;
-                using (var ms = new MemoryStream())
+                var student = await _studentRepository.GetById(studentId);
+                if (student == null)
                 {
-                    await invoiceFile.CopyToAsync(ms);
-                    fileBytes = ms.ToArray();
+                    return NotFound("student not found.");
                 }
 
-              
+                var invoiceEntity = await _invoiceRepository.GetById(invoiceId);
+
+                if (invoiceFile.Length > 0)
+                {
+
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        await invoiceFile.CopyToAsync(ms);
+                        fileBytes = ms.ToArray();
+                    }
+
                     invoiceEntity.file = fileBytes;
                     invoiceEntity.Date = DateTime.Now;
                     invoiceEntity.FileName = invoiceFile.FileName;
                     invoiceEntity.Studentid = studentId;
 
-                await _invoiceRepository.Update(invoiceEntity);
+                    await _invoiceRepository.Update(invoiceEntity);
+                }
 
-            
-
-            }
-
-            return Ok("invoice File edited successfully.");
+                return Ok("invoice File edited successfully.");
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "InvoiceController", ex.Message));
                 return BadRequest(ex.Message);
             }
         }
-
-
-
-
 
         [Authorize(Policy = "ManageInvoice")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteInvoiceFile(int id)
         {
-            try { 
-            var invoice = await _invoiceRepository.GetById(id);
-            if (invoice == null)
+            try
             {
-                return NotFound();
+                var invoice = await _invoiceRepository.GetById(id);
+                if (invoice == null)
+                {
+                    return NotFound();
+                }
+
+
+                await _invoiceRepository.Delete(id);
+
+                return NoContent();
             }
-
-
-            await _invoiceRepository.Delete(id);
-
-            return NoContent();
-            }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "InvoiceController", ex.Message));
                 return BadRequest(ex.Message);
             }
         }

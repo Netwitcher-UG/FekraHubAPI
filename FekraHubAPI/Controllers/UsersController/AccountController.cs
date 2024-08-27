@@ -28,7 +28,8 @@ using static System.Net.WebRequestMethods;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
-using System.Net; 
+using System.Net;
+using FekraHubAPI.Constract;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -46,11 +47,12 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly ApplicationDbContext _db;
         private readonly IConfiguration _configuration;
         private readonly EmailSender.IEmailSender _emailSender;
+        private readonly ILogger<AccountController> _logger;
         public AccountController(ApplicationDbContext context  , UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager , EmailSender.IEmailSender emailSender
             , IConfiguration configuration 
             , IRepository<SchoolInfo> schoolInfoRepo,
-            ApplicationDbContext db)
+            ApplicationDbContext db,ILogger<AccountController> logger)
         {
 
             _userManager = userManager;
@@ -59,6 +61,7 @@ namespace FekraHubAPI.Controllers.UsersController
             _configuration = configuration;
             _emailSender = emailSender;
             _schoolInfoRepo = schoolInfoRepo;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -196,79 +199,89 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpPost("[action]")]
         public async Task<IActionResult> LogIn([FromForm] Map_Login login)
         {
-            if (ModelState.IsValid)
+
+            try
             {
-                ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
-                if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
+                if (ModelState.IsValid)
                 {
-                    return Unauthorized("Email or password is invalid");
-                }
+                    ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
+                    if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
+                    {
+                        return Unauthorized("Email or password is invalid");
+                    }
 
-                if (!user.ActiveUser)
-                {
-                    return BadRequest("You must activate your account");
-                }
-                if (!user.EmailConfirmed)
-                {
-                    await _emailSender.SendConfirmationEmail(user);
-                    return StatusCode(409,"Your account not confirmed . The confirm link has been sent to your email");
-                }
+                    if (!user.ActiveUser)
+                    {
+                        return BadRequest("You must activate your account");
+                    }
+                    if (!user.EmailConfirmed)
+                    {
+                        await _emailSender.SendConfirmationEmail(user);
+                        return StatusCode(409, "Your account not confirmed . The confirm link has been sent to your email");
+                    }
 
-                var claims = new List<Claim>
+                    var claims = new List<Claim>
                 {
                     new Claim("name", user.UserName),
                     new Claim("id", user.Id),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
 
-                var roles = await _userManager.GetRolesAsync(user);
-                foreach (var role in roles)
-                {
-                    claims.Add(new Claim("role", role));
-                    var roleUser = await _roleManager.FindByNameAsync(role);
-                    var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
-                    foreach (var roleClaim in roleClaims)
+                    var roles = await _userManager.GetRolesAsync(user);
+                    foreach (var role in roles)
                     {
-                        claims.Add(new Claim("Permissions", roleClaim.Value));
+                        claims.Add(new Claim("role", role));
+                        var roleUser = await _roleManager.FindByNameAsync(role);
+                        var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
+                        foreach (var roleClaim in roleClaims)
+                        {
+                            claims.Add(new Claim("Permissions", roleClaim.Value));
+                        }
                     }
-                }
 
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
-                var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
+                    var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-                var token = new JwtSecurityToken(
-                    claims: claims,
-                    issuer: _configuration["JWT:Issuer"],
-                    audience: _configuration["JWT:Audience"],
-                    expires: DateTime.Now.AddMonths(1),
-                    signingCredentials: signingCredentials
-                );
+                    var token = new JwtSecurityToken(
+                        claims: claims,
+                        issuer: _configuration["JWT:Issuer"],
+                        audience: _configuration["JWT:Audience"],
+                        expires: DateTime.Now.AddMonths(1),
+                        signingCredentials: signingCredentials
+                    );
 
-                var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+                    var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-                var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
-                if (userToken == null)
-                {
-                    userToken = new Tokens
+                    var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
+                    if (userToken == null)
                     {
-                        Email = user.Email,
-                        ExpiryDate = DateTime.Now.AddMonths(1),
-                        UserId = user.Id,
-                        Token = tokenString
-                    };
-                    _db.Token.Add(userToken);
-                }
-                else
-                {
-                    userToken.Token = tokenString;
-                    _db.Token.Update(userToken);
-                }
-                await _db.SaveChangesAsync();
+                        userToken = new Tokens
+                        {
+                            Email = user.Email,
+                            ExpiryDate = DateTime.Now.AddMonths(1),
+                            UserId = user.Id,
+                            Token = tokenString
+                        };
+                        _db.Token.Add(userToken);
+                    }
+                    else
+                    {
+                        userToken.Token = tokenString;
+                        _db.Token.Update(userToken);
+                    }
+                    await _db.SaveChangesAsync();
 
-               
-                return Ok(new {UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(),token = tokenString, token.ValidTo });
+
+                    return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(), token = tokenString, token.ValidTo });
+                }
+                return BadRequest(ModelState);
             }
-            return BadRequest(ModelState);
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AccountController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
         [AllowAnonymous]
         [HttpPost("RegisterParent")]

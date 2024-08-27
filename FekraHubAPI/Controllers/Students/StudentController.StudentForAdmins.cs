@@ -282,7 +282,7 @@ namespace FekraHubAPI.Controllers.Students
                 )).OrderByDescending(x => x.Id);
             var att = (await _attendanceDateRepo.GetRelation<bool>(x => x.Date.Date == DateTime.Now.Date, null,
                 x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id)))
-                .FirstOrDefault();
+                .SingleOrDefault();
             var workingDays = (await _courseScheduleRepo.GetRelation<string>(x => x.CourseID == courseId , null , z=> z.DayOfWeek)).ToList();
             bool isTodayIsWorkingDay = workingDays.Contains(DateTime.Now.DayOfWeek.ToString());
             var students = Allstudents.Select(x => new

@@ -92,9 +92,18 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 return BadRequest(ModelState);
             }
-            var locationEntity = _mapper.Map<Location>(location);
+            Location locationEntity = _mapper.Map<Location>(location);
             await _locationRepository.Add(locationEntity);
-            return CreatedAtAction(nameof(GetLocation), new { id = locationEntity.Id });
+
+            return Ok(new
+            {
+                locationEntity.Id,
+                locationEntity.Name,
+                locationEntity.City,
+                locationEntity.Street,
+                locationEntity.StreetNr,
+                locationEntity.ZipCode,
+            });
 
         }
 

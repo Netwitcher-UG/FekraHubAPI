@@ -192,7 +192,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 var today = DateTime.Now.Date;
                 var existingDate = (await _attendanceDateRepo.GetRelation<AttendanceDate>())
                                     .Where(x => x.Date.Date == today)
-                                    .FirstOrDefault();
+                                    .SingleOrDefault();
                 var attDateId = 0;
                 if (existingDate == null)
                 {
@@ -209,10 +209,10 @@ namespace FekraHubAPI.Controllers.Attendance
                     attDateId = existingDate.Id;
                 }
                 // course added attendance for today or not
-                var CourseAttExist = (await _courseAttendanceRepo.GetRelation<CourseAttendance>(ca => 
-                    ca.CourseId == courseId && ca.AttendanceDateId == attDateId))
-                    .ToList();
-                if (CourseAttExist.Any())
+                var CourseAttExist = (await _attendanceDateRepo.GetRelation<bool>(x => x.Date.Date == today, null,
+                x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id)))
+                .SingleOrDefault();
+                if (CourseAttExist)
                 {
                     return BadRequest("This course has an attendance today");
                 }

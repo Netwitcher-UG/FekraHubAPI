@@ -28,19 +28,21 @@ namespace FekraHubAPI.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration configuration;
         private readonly ApplicationDbContext context;
-        protected ILookupNormalizer normalizer;
+        private readonly ILogger<ManageController> _logger;
+        //protected ILookupNormalizer normalizer;
         public  IServiceProvider serviceProvider;
 
         public ManageController(ApplicationDbContext _context, UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider, ILogger<ManageController> logger)
         {
             this.userManager = userManager;
             _roleManager = roleManager;
             this.configuration = configuration;
             this.context = _context;
             this.serviceProvider = serviceProvider;
+            _logger = logger;
         }
 
         [Authorize(Policy = "GetUsers")]
@@ -50,16 +52,25 @@ namespace FekraHubAPI.Controllers
         //[Authorize(Roles =  ""+DefaultRole.Admin+","+DefaultRole.Secretariat )]
         public async Task<IActionResult> GetUser()
         {
-            var Roles = await _roleManager.FindByNameAsync("Admin");
-            var role = await _roleManager.FindByNameAsync("Admin");
-            var roleClaims = await _roleManager.GetClaimsAsync(role);
-            return Ok(roleClaims);
+            try
+            {
+                var Roles = await _roleManager.FindByNameAsync("Admin");
+                var role = await _roleManager.FindByNameAsync("Admin");
+                var roleClaims = await _roleManager.GetClaimsAsync(role);
+                return Ok(roleClaims);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "ManageController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
         [HttpGet("[action]")]
         public List<IdentityRole> AllRoles()
         {
-
+            
             var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
             foreach (var permission in AllPermissions)
             {

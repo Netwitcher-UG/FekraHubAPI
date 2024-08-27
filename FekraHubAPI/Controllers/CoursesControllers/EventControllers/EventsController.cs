@@ -1,4 +1,6 @@
 using AutoMapper;
+using FekraHubAPI.Constract;
+using FekraHubAPI.Controllers.AuthorizationController;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -18,55 +20,70 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
     {
         private readonly IRepository<Event> _eventRepository;
         private readonly IRepository<CourseSchedule> _ScheduleRepository;
-
+        private readonly ILogger<AuthorizationUsersController> _logger;
         private readonly IMapper _mapper;
         public EventsController(IRepository<Event> eventRepository
            , IMapper mapper,
-            IRepository<CourseSchedule> ScheduleRepository)
+            IRepository<CourseSchedule> ScheduleRepository,
+            ILogger<AuthorizationUsersController> logger)
         {
             _eventRepository = eventRepository;
             _mapper = mapper;
             _ScheduleRepository = ScheduleRepository;
-
+            _logger = logger;
         }
 
         // GET: api/Event
         [Authorize(Policy = "GetEvents")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents()
+        public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents(List<int>? courseId)
         {
-
-            IQueryable<Event> eventE = await _eventRepository.GetRelation<Event>();
-
-            var result = eventE.Select(x => new
+            try
             {
-                x.Id,
-                x.EventName,
-                x.Description,
-                x.StartDate,
-                x.EndDate,
-                x.StartTime,
-                x.EndTime,
-                EventType = x.EventType == null ? null : new
+                
+                IQueryable<Event> eventE = await _eventRepository.GetRelation<Event>();
+                if(courseId != null)
                 {
-                    x.EventType.Id,
-                    x.EventType.TypeTitle
-                },
-                CourseSchedule = x.CourseSchedule.Select(z => new
+                    var CourseWorkingDay = (await _ScheduleRepository.GetRelation<int>(
+                        x => courseId.Contains( x.Course.Id),null, x => x.Id)).ToList();
+                    eventE = eventE.Where(x =>  x.CourseSchedule.Any(z => CourseWorkingDay.Contains(z.Id)));
+                }
+                var result = eventE.Select(x => new
                 {
-                    z.Id,
-                    z.DayOfWeek,
-                    z.StartTime,
-                    z.EndTime,
-                    courseName = z.Course.Name,
-                    courseID = z.Course.Id
+                    x.Id,
+                    x.EventName,
+                    x.Description,
+                    x.StartDate,
+                    x.EndDate,
+                    x.StartTime,
+                    x.EndTime,
+                    EventType = x.EventType == null ? null : new
+                    {
+                        x.EventType.Id,
+                        x.EventType.TypeTitle
+                    },
+                    CourseSchedule = x.CourseSchedule.Select(z => new
+                    {
+                        z.Id,
+                        z.DayOfWeek,
+                        z.StartTime,
+                        z.EndTime,
+                        courseName = z.Course.Name,
+                        courseID = z.Course.Id
 
-                })
+                    })
 
 
-            }).ToList();
+                }).ToList();
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
 
@@ -76,28 +93,37 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Map_Event>> GetEvent(int id)
         {
-            var eventEntity = (await _eventRepository.GetRelation<Event>(x => x.Id == id));
-            if (eventEntity.SingleOrDefault() == null)
+            try
             {
-                return NotFound();
-            }
-
-            return Ok(eventEntity.Select(eventEntity => new
-            {
-                eventEntity.Id,
-                eventEntity.EventName,
-                eventEntity.Description,
-                eventEntity.StartDate,
-                eventEntity.StartTime,
-                eventEntity.EndDate,
-                eventEntity.EndTime,
-                EventType = eventEntity.EventType == null ? null : new
+                var eventEntity = (await _eventRepository.GetRelation<Event>(x => x.Id == id));
+                if (eventEntity.SingleOrDefault() == null)
                 {
-                    eventEntity.EventType.Id,
-                    eventEntity.EventType.TypeTitle
-                },
-                CourseSchedule = eventEntity.CourseSchedule == null ? null : eventEntity.CourseSchedule.Select(x => new { x.Id, x.DayOfWeek, x.StartTime, x.EndTime, x.CourseID })
-            }).SingleOrDefault());
+                    return NotFound();
+                }
+
+                return Ok(eventEntity.Select(eventEntity => new
+                {
+                    eventEntity.Id,
+                    eventEntity.EventName,
+                    eventEntity.Description,
+                    eventEntity.StartDate,
+                    eventEntity.StartTime,
+                    eventEntity.EndDate,
+                    eventEntity.EndTime,
+                    EventType = eventEntity.EventType == null ? null : new
+                    {
+                        eventEntity.EventType.Id,
+                        eventEntity.EventType.TypeTitle
+                    },
+                    CourseSchedule = eventEntity.CourseSchedule == null ? null : eventEntity.CourseSchedule.Select(x => new { x.Id, x.DayOfWeek, x.StartTime, x.EndTime, x.CourseID })
+                }).SingleOrDefault());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
 
@@ -151,9 +177,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex);
-    }
-}
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
         // POST: api/Event
         [Authorize(Policy = "ManageEvents")]
         [HttpPost]
@@ -204,7 +231,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventsController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
@@ -215,15 +243,24 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEvent(int id)
         {
-            var eventType = await _eventRepository.GetById(id);
-            if (eventType == null)
+            try
             {
-                return NotFound();
+                var eventType = await _eventRepository.GetById(id);
+                if (eventType == null)
+                {
+                    return NotFound();
+                }
+
+                await _eventRepository.Delete(id);
+
+                return Ok("Delete success");
             }
-
-            await _eventRepository.Delete(id);
-
-            return Ok("Delete success");
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
     }
 }

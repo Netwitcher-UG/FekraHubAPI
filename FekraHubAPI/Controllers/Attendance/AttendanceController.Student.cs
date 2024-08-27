@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using FekraHubAPI.Constract;
 
 namespace FekraHubAPI.Controllers.Attendance
 {
@@ -56,7 +57,8 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
@@ -124,7 +126,8 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
@@ -245,34 +248,36 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
         [Authorize(Policy = "UpdateStudentsAttendance")]
         [HttpPatch("Student")]
-        public async Task<IActionResult> UpdateStudentAttendance([FromForm] int id, [FromForm] int statusId)
+        public async Task<IActionResult> UpdateStudentAttendance(int id, int statusId)
         {
-            var StudentAtt = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(sa => sa.Id == id));
-            var studentAttendance = StudentAtt.SingleOrDefault();
-            if (studentAttendance == null)
-            {
-                return NotFound("Student Attendance not found.");
-            }
-            string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
-            bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
-            if (Teacher)
-            {
-                var teacherIds = StudentAtt.SelectMany(x => x.Course.Teacher.Select(z => z.Id)).ToList();
-                if (teacherIds.Contains(userId))
-                {
-                    return BadRequest("This attendance is not for your student attendance");
-                }
-
-            }
-            studentAttendance.StatusID = statusId;
+            
             try
             {
+                var StudentAtt = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(sa => sa.Id == id));
+                var studentAttendance = StudentAtt.SingleOrDefault();
+                if (studentAttendance == null)
+                {
+                    return NotFound("Student Attendance not found.");
+                }
+                string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
+                bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
+                if (Teacher)
+                {
+                    var teacherIds = StudentAtt.SelectMany(x => x.Course.Teacher.Select(z => z.Id)).ToList();
+                    if (teacherIds.Contains(userId))
+                    {
+                        return BadRequest("This attendance is not for your student attendance");
+                    }
+
+                }
+                studentAttendance.StatusID = statusId;
                 await _studentAttendanceRepo.Update(studentAttendance);
                 return Ok(new
                 {
@@ -285,13 +290,14 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
         [Authorize(Policy = "UpdateStudentsAttendance")]
         [HttpDelete("Student")]
-        public async Task<IActionResult> DeleteStudentAttendance([FromForm] int id)
+        public async Task<IActionResult> DeleteStudentAttendance(int id)
         {
             try
             {
@@ -319,7 +325,8 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
     }

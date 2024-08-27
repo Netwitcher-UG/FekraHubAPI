@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System;
 using System.Data;
 using System.Reflection;
@@ -95,6 +96,10 @@ builder.Services.AddAuthentication(options =>
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 });
 
+builder.Host.UseSerilog((context, configuration) =>
+      configuration
+      .ReadFrom.Configuration(context.Configuration)
+      );
 
 using (var scope = builder.Services.BuildServiceProvider().CreateScope())
 {

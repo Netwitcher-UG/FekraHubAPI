@@ -1,4 +1,5 @@
-﻿using FekraHubAPI.Data.Models;
+﻿using FekraHubAPI.Constract;
+using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -30,7 +31,8 @@ namespace FekraHubAPI.Controllers.Students
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
         [Authorize(Policy = "GetContracts")]
@@ -56,21 +58,31 @@ namespace FekraHubAPI.Controllers.Students
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
         [Authorize(Policy = "GetContracts")]
         [HttpGet("DownloadContractFileForAdmin")]
         public async Task<ActionResult<IEnumerable<Upload>>> DownloadContractFileForAdmin(int contractId)
         {
-            var query = await _studentContractRepo.GetById(contractId);
-            if (query == null)
+            try
             {
-                return BadRequest("file not found");
-            }
-            var result = Convert.ToBase64String(query.File);
+                var query = await _studentContractRepo.GetById(contractId);
+                if (query == null)
+                {
+                    return BadRequest("file not found");
+                }
+                var result = Convert.ToBase64String(query.File);
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
     }

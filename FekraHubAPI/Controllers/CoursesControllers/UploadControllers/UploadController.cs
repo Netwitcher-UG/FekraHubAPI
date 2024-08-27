@@ -12,6 +12,8 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
+using FekraHubAPI.Controllers.CoursesControllers.EventControllers;
+using FekraHubAPI.Constract;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
@@ -26,17 +28,18 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         private readonly IRepository<Course> _courseRepository;
         private readonly IRepository<Upload> _uploadRepository;
         private readonly IRepository<Student> _studentRepository;
-
+        private readonly ILogger<UploadController> _logger;
         private readonly IRepository<UploadType> _uploadTypeRepository;
         private readonly IMapper _mapper;
         public UploadController(IRepository<Course> courseRepository, IRepository<Upload> uploadRepository,
             IRepository<Student> studentRepository,
-            IRepository<UploadType> uploadTypeRepository, IMapper mapper)
+            IRepository<UploadType> uploadTypeRepository, IMapper mapper,
+            ILogger<UploadController> logger)
         {
             _courseRepository = courseRepository;
             _uploadRepository = uploadRepository;
             _studentRepository = studentRepository;
-
+            _logger = logger;
             _uploadTypeRepository = uploadTypeRepository;
             _mapper = mapper;
          
@@ -57,7 +60,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         studentId != null ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Student.Any(y => y.Id == studentId))) : null
                     }.Where(x => x != null).Cast<Expression<Func<Upload, bool>>>().ToList());
 
-                
+
 
                 var result = query.Select(x => new
                 {
@@ -74,12 +77,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 }).ToList();
 
                 return Ok(result);
-             
-                }
-                catch (Exception ex)
-                {
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
-                }
+            }
+            
+             
+                
 
         }
         [Authorize(Policy = "ManageFile")]
@@ -100,6 +106,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
            
@@ -152,6 +159,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
           
@@ -174,6 +182,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
           
@@ -191,6 +200,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
            
@@ -199,44 +209,52 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
         private async Task<IActionResult> SaveFile(int courseId, List<IFormFile> files, int TypeId)
         {
-
-
-            var course = await _courseRepository.GetById(courseId);
-            if (course == null)
+            try
             {
-                return NotFound("Course not found.");
-            }
-
-
-            foreach (var file in files)
-            {
-                if (file.Length > 0)
+                var course = await _courseRepository.GetById(courseId);
+                if (course == null)
                 {
-
-                    byte[] fileBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        await file.CopyToAsync(ms);
-                        fileBytes = ms.ToArray();
-                    }
-
-                    var upload = new Upload
-                    {
-                        UploadTypeid = TypeId,
-                        file = fileBytes,
-                        FileName = file.FileName,
-                        Date = DateTime.Now,
-                        Courses = new List<Course>()
-                    };
-            
-                    upload.Courses.Add(course);
-
-                    await _uploadRepository.Add(upload);
-
+                    return NotFound("Course not found.");
                 }
+
+
+                foreach (var file in files)
+                {
+                    if (file.Length > 0)
+                    {
+
+                        byte[] fileBytes;
+                        using (var ms = new MemoryStream())
+                        {
+                            await file.CopyToAsync(ms);
+                            fileBytes = ms.ToArray();
+                        }
+
+                        var upload = new Upload
+                        {
+                            UploadTypeid = TypeId,
+                            file = fileBytes,
+                            FileName = file.FileName,
+                            Date = DateTime.Now,
+                            Courses = new List<Course>()
+                        };
+
+                        upload.Courses.Add(course);
+
+                        await _uploadRepository.Add(upload);
+
+                    }
+                }
+
+                return Ok("Files uploaded successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
-            return Ok("Files uploaded successfully.");
+            
         }
 
 
@@ -261,6 +279,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
           

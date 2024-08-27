@@ -1,4 +1,6 @@
 using AutoMapper;
+using FekraHubAPI.Constract;
+using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -16,34 +18,54 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         private readonly IRepository<Location> _locationRepository;
         private readonly IRepository<Room> _roomRepository;
         private readonly IMapper _mapper;
-        public LocationsController(IRepository<Room> roomRepository, IRepository<Location> locationRepository, IMapper mapper)
+        private readonly ILogger<LocationsController> _logger;
+        public LocationsController(IRepository<Room> roomRepository, IRepository<Location> locationRepository,
+            IMapper mapper , ILogger<LocationsController> logger)
         {
             _roomRepository = roomRepository;
             _locationRepository = locationRepository;
             _mapper = mapper;
+            _logger = logger;
         }
         [Authorize]
         [HttpGet("GetLocationsNames")]
         public async Task<IActionResult> GetLocationsNames()
         {
-            var locations = await _locationRepository.GetRelation<Location>();
-            if (locations == null) 
+            try
             {
-                return NotFound("no locations found");
+                var locations = await _locationRepository.GetRelation<Location>();
+                if (locations == null)
+                {
+                    return NotFound("no locations found");
+                }
+                return Ok(locations.Select(x => new { x.Id, x.Name }));
             }
-            return Ok(locations.Select(x => new {x.Id,x.Name}));
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "LocationsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
         [Authorize(Policy = "ManageLocations")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_location>>> GetLocations(string? search)
-
         {
-            var locations = (await _locationRepository.GetRelation<Location>(
+            try
+            {
+                var locations = (await _locationRepository.GetRelation<Location>(
                 search != null ? x => x.Name.Contains(search) || x.Street.Contains(search) || x.StreetNr.Contains(search)
                 || x.ZipCode.Contains(search) || x.City.Contains(search) : null
                 )).OrderByDescending(x => x.Id);
+
+                return Ok(locations.Select(x => new { x.Id, x.Name, x.City, x.Street, x.StreetNr, x.ZipCode, Room = x.room.Select(z => new { z.Id, z.Name }) }));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "LocationsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
             
-            return Ok(locations.Select(x => new {x.Id,x.Name,x.City,x.Street,x.StreetNr,x.ZipCode,Room = x.room.Select(z => new { z.Id,z.Name })  }));
         }
 
 
@@ -52,12 +74,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Location>> GetLocation(int id)
         {
-            var location = await _locationRepository.GetById(id);
-            if (location == null)
+            try
             {
-                return NotFound();
+                var location = await _locationRepository.GetById(id);
+                if (location == null)
+                {
+                    return NotFound();
+                }
+                return Ok(new { location.Id, location.Name, location.City, location.Street, location.StreetNr, location.ZipCode });
+
             }
-            return Ok(new { location.Id,location.Name, location.City, location.Street, location.StreetNr, location.ZipCode });
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "LocationsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
 
@@ -66,73 +98,89 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-            var locationEntity = await _locationRepository.GetById(id);
-            if (locationEntity == null)
+                var locationEntity = await _locationRepository.GetById(id);
+                if (locationEntity == null)
+                {
+                    return NotFound();
+                }
+
+                _mapper.Map(locationMdl, locationEntity);
+                await _locationRepository.Update(locationEntity);
+
+                return NoContent();
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "LocationsController", ex.Message));
+                return BadRequest(ex.Message);
             }
-
-            _mapper.Map(locationMdl, locationEntity);
-            await _locationRepository.Update(locationEntity);
-
-            return NoContent();
+            
         }
         // POST: api/Locations
         [Authorize(Policy = "ManageLocations")]
         [HttpPost]
         public async Task<ActionResult<Location>> PostLocation([FromForm] Map_location location)
         {
-
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                Location locationEntity = _mapper.Map<Location>(location);
+                await _locationRepository.Add(locationEntity);
+
+                return Ok(new
+                {
+                    locationEntity.Id,
+                    locationEntity.Name,
+                    locationEntity.City,
+                    locationEntity.Street,
+                    locationEntity.StreetNr,
+                    locationEntity.ZipCode,
+                });
             }
-            Location locationEntity = _mapper.Map<Location>(location);
-            await _locationRepository.Add(locationEntity);
-
-            return Ok(new
+            catch (Exception ex)
             {
-                locationEntity.Id,
-                locationEntity.Name,
-                locationEntity.City,
-                locationEntity.Street,
-                locationEntity.StreetNr,
-                locationEntity.ZipCode,
-            });
-
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "LocationsController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
-
 
         // DELETE: api/Locations/5
         [Authorize(Policy = "ManageLocations")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLocation(int id)
         {
-            try { 
-            var location = await _locationRepository.GetById(id);
-            if (location == null)
+            try 
             {
-                return NotFound();
-            }
-            var roomExist = (await _roomRepository.GetRelation<Room>(n => n.LocationID == id)).Any();
-            if (roomExist)
-            {
-                return BadRequest("This Location contains Rooms !!");
-            }
+                var location = await _locationRepository.GetById(id);
+                if (location == null)
+                {
+                    return NotFound();
+                }
+                var roomExist = (await _roomRepository.GetRelation<Room>(n => n.LocationID == id)).Any();
+                if (roomExist)
+                {
+                    return BadRequest("This Location contains Rooms !!");
+                }
 
-            await _locationRepository.Delete(id);
+                await _locationRepository.Delete(id);
 
                 return Ok("Delete success");
 
             }
             catch (Exception ex)
             {
-                return BadRequest(ex);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "LocationsController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 

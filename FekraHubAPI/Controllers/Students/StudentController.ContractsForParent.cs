@@ -1,4 +1,5 @@
-﻿using FekraHubAPI.Data.Models;
+﻿using FekraHubAPI.Constract;
+using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,13 +14,12 @@ namespace FekraHubAPI.Controllers.Students
         [HttpPost]
         public async Task<IActionResult> GetContract([FromForm] Map_Student student)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
                 var parentId = _courseRepo.GetUserIDFromToken(User);
 
                 if (string.IsNullOrEmpty(parentId))
@@ -47,7 +47,8 @@ namespace FekraHubAPI.Controllers.Students
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating new student record {ex}");
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
@@ -55,14 +56,15 @@ namespace FekraHubAPI.Controllers.Students
         [HttpPost("AcceptedContract")]
         public async Task<IActionResult> AcceptedContract([FromForm] Map_Student student)
         {
-            var userId = _courseRepo.GetUserIDFromToken(User);
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User ID not found in token.");
-            }
+            
             try
             {
+                var userId = _courseRepo.GetUserIDFromToken(User);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("User ID not found in token.");
+                }
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
@@ -94,7 +96,8 @@ namespace FekraHubAPI.Controllers.Students
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
@@ -123,7 +126,8 @@ namespace FekraHubAPI.Controllers.Students
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
         [Authorize(Policy = "ManageChildren")]
@@ -152,21 +156,31 @@ namespace FekraHubAPI.Controllers.Students
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("[action]")]
         public async Task<ActionResult<IEnumerable<Upload>>> DownloadContractFile(int contractId)
         {
-            var query = await _studentContractRepo.GetById(contractId);
-            if (query == null)
+            try
             {
-                return BadRequest("file not found");
-            }
-            var result = Convert.ToBase64String(query.File);
+                var query = await _studentContractRepo.GetById(contractId);
+                if (query == null)
+                {
+                    return BadRequest("file not found");
+                }
+                var result = Convert.ToBase64String(query.File);
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
     }
 }

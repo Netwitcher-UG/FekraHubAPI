@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using FekraHubAPI.Constract;
 
 namespace FekraHubAPI.Controllers.Attendance
 {
@@ -38,7 +39,8 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
         }
@@ -106,7 +108,8 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
@@ -201,7 +204,8 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
 
         }
@@ -210,17 +214,18 @@ namespace FekraHubAPI.Controllers.Attendance
         [HttpPatch("Teacher")]
         public async Task<IActionResult> UpdateTeacherAttendance([FromForm] int id, [FromForm] int statusId)
         {
-            var allTeacherAttendance = await _teacherAttendanceRepo.GetRelation<TeacherAttendance>();
-            var teacherAttendance = await allTeacherAttendance
-                .Where(sa => sa.Id == id)
-                .SingleOrDefaultAsync();
-            if (teacherAttendance == null)
-            {
-                return NotFound("Teacher Attendance not found.");
-            }
-            teacherAttendance.StatusID = statusId;
+            
             try
             {
+                var allTeacherAttendance = await _teacherAttendanceRepo.GetRelation<TeacherAttendance>();
+                var teacherAttendance = await allTeacherAttendance
+                    .Where(sa => sa.Id == id)
+                    .SingleOrDefaultAsync();
+                if (teacherAttendance == null)
+                {
+                    return NotFound("Teacher Attendance not found.");
+                }
+                teacherAttendance.StatusID = statusId;
                 await _teacherAttendanceRepo.Update(teacherAttendance);
                 return Ok(new
                 {
@@ -233,7 +238,8 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
     }

@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using FekraHubAPI.Constract;
+using FekraHubAPI.Controllers.AuthorizationController;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -24,6 +26,7 @@ namespace FekraHubAPI.Controllers.Attendance
         private readonly IRepository<CourseSchedule> _courseScheduleRepo;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<AuthorizationUsersController> _logger;
 
         public AttendanceController(IRepository<TeacherAttendance> teacherAttendanceRepo,
             IRepository<StudentAttendance> studentAttendanceRepo,
@@ -33,7 +36,8 @@ namespace FekraHubAPI.Controllers.Attendance
             UserManager<ApplicationUser> userManager,
             IRepository<AttendanceDate> attendanceDateRepo,
             IRepository<CourseAttendance> courseAttendanceRepo,
-            IRepository<CourseSchedule> courseScheduleRepo)
+            IRepository<CourseSchedule> courseScheduleRepo,
+            ILogger<AuthorizationUsersController> logger)
         {
             _teacherAttendanceRepo = teacherAttendanceRepo;
             _studentAttendanceRepo = studentAttendanceRepo;
@@ -45,6 +49,7 @@ namespace FekraHubAPI.Controllers.Attendance
             _attendanceDateRepo = attendanceDateRepo;
             _courseAttendanceRepo = courseAttendanceRepo;
             _courseScheduleRepo = courseScheduleRepo;
+            _logger = logger;
         }
 
         [Authorize(Policy = "ManageAttendanceStatus")]
@@ -62,7 +67,8 @@ namespace FekraHubAPI.Controllers.Attendance
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
@@ -70,52 +76,53 @@ namespace FekraHubAPI.Controllers.Attendance
         [HttpPost("AttendanceStatus")]
         public async Task<IActionResult> AddAttendanceStatus([FromForm] string status)
         {
-            if (status == null)
-            {
-                return BadRequest("Please enter a status");
-            }
-            var statuses = (await _attendanceStatusRepo.GetRelation<AttendanceStatus>(s => s.Title.ToLower() == status.ToLower())).SingleOrDefaultAsync();
-            if (statuses != null)
-            {
-                return BadRequest("This status is already exists");
-            }
-            AttendanceStatus attendanceStatus = new AttendanceStatus()
-            {
-                Title = status,
-            };
             try
             {
+                if (status == null)
+                {
+                    return BadRequest("Please enter a status");
+                }
+                var statuses = (await _attendanceStatusRepo.GetRelation<AttendanceStatus>(s => s.Title.ToLower() == status.ToLower())).SingleOrDefaultAsync();
+                if (statuses != null)
+                {
+                    return BadRequest("This status is already exists");
+                }
+                AttendanceStatus attendanceStatus = new AttendanceStatus()
+                {
+                    Title = status,
+                };
+
                 await _attendanceStatusRepo.Add(attendanceStatus);
                 return Ok(attendanceStatus);
-
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
+            
+
         }
 
         [Authorize(Policy = "ManageAttendanceStatus")]
         [HttpDelete("AttendanceStatus/{id}")]
         public async Task<IActionResult> DeleteAttendanceStatus(int id)
         {
-
-            var attendanceStatus = await _attendanceStatusRepo.GetById(id);
-            if (attendanceStatus == null)
-            {
-                return NotFound("The status with the provided ID does not exist.");
-            }
-
-
             try
             {
+                var attendanceStatus = await _attendanceStatusRepo.GetById(id);
+                if (attendanceStatus == null)
+                {
+                    return NotFound("The status with the provided ID does not exist.");
+                }
                 await _attendanceStatusRepo.Delete(attendanceStatus.Id);
 
                 return Ok($"{attendanceStatus.Title} deleted successfully.");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
             }
         }
     }

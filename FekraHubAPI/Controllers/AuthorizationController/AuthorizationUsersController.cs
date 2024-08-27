@@ -22,96 +22,125 @@ namespace FekraHubAPI.Controllers.AuthorizationController
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IRepository<AspNetPermissions> _repoPermissions;
+        private readonly ILogger<AuthorizationUsersController> _logger;
         public AuthorizationUsersController(UserManager<ApplicationUser> userManager ,
-            RoleManager<IdentityRole> roleManager, IRepository<AspNetPermissions> repoPermissions) 
+            RoleManager<IdentityRole> roleManager, IRepository<AspNetPermissions> repoPermissions,
+            ILogger<AuthorizationUsersController> logger) 
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _repoPermissions = repoPermissions;
-
+            _logger = logger;
         }
         [Authorize(Policy = "ManagePermissions")]
         [HttpGet("[action]")]
         public async Task<IActionResult> SchoolPermissions()
         {
-            var roles = await _roleManager.Roles
+            try
+            {
+                var roles = await _roleManager.Roles
                 .Where(x => x.Name != "Parent")
                 .ToListAsync();
 
-            var rolesWithPermissions = new Dictionary<string, List<string>>();
+                var rolesWithPermissions = new Dictionary<string, List<string>>();
 
-            foreach (var role in roles)
-            {
-                var roleClaims = await _roleManager.GetClaimsAsync(role);
-                rolesWithPermissions[role.Name] = roleClaims.Select(claim => claim.Value).ToList();
+                foreach (var role in roles)
+                {
+                    var roleClaims = await _roleManager.GetClaimsAsync(role);
+                    rolesWithPermissions[role.Name] = roleClaims.Select(claim => claim.Value).ToList();
+                }
+                return Ok(rolesWithPermissions);
             }
-            return Ok( rolesWithPermissions);
+            catch(Exception ex) 
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AuthorizationUsersController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
         [Authorize(Policy = "ManagePermissions")]
         [HttpGet("[action]")]
         public async Task<IActionResult> AllRolesAndPermissions()
         {
-            var roles = await _roleManager.Roles
+            try
+            {
+                var roles = await _roleManager.Roles
                 .Where(x => x.Name != "Parent")
                 .ToListAsync();
 
-            var parentRole = await _roleManager.Roles
-                .FirstOrDefaultAsync(x => x.Name == "Parent");
+                var parentRole = await _roleManager.Roles
+                    .FirstOrDefaultAsync(x => x.Name == "Parent");
 
-            if (parentRole != null)
-            {
-                var parentClaims = (await _roleManager.GetClaimsAsync(parentRole))
-                    .Select(claim => claim.Value)
-                    .ToList();
-
-                var permissions = (await _repoPermissions.GetRelation<AspNetPermissions>(
-                    permission => !parentClaims.Contains(permission.Value)))
-                    .Select(permission => permission.Value)
-                    .ToList();
-
-                return Ok(new
+                if (parentRole != null)
                 {
-                    AllRoles = roles.Select(x=> x.Name),
-                    AllPermissions = permissions
-                });
-            }
+                    var parentClaims = (await _roleManager.GetClaimsAsync(parentRole))
+                        .Select(claim => claim.Value)
+                        .ToList();
 
-            return NotFound();
+                    var permissions = (await _repoPermissions.GetRelation<AspNetPermissions>(
+                        permission => !parentClaims.Contains(permission.Value)))
+                        .Select(permission => permission.Value)
+                        .ToList();
+
+                    return Ok(new
+                    {
+                        AllRoles = roles.Select(x => x.Name),
+                        AllPermissions = permissions
+                    });
+                }
+
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AuthorizationUsersController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
         [Authorize(Policy = "ManagePermissions")]
         [HttpPost("[action]")]
         public async Task<IActionResult> AssignPermissionToRole([FromForm] string RoleName, [FromForm] List<string> PermissionsName)
         {
-            if (string.IsNullOrEmpty(RoleName) || PermissionsName == null || !PermissionsName.Any())
+            try
             {
-                return BadRequest("RoleName or PermissionsName cannot be null or empty.");
-            }
+                if (string.IsNullOrEmpty(RoleName) || PermissionsName == null || !PermissionsName.Any())
+                {
+                    return BadRequest("RoleName or PermissionsName cannot be null or empty.");
+                }
 
-            var role = await _roleManager.FindByNameAsync(RoleName);
-            if (role == null)
-            {
-                return NotFound("Role not found.");
-            }
-            var validPermissions = PermissionsName.Where(x => PermissionsEnum.CheckPermissionExist(x)).ToList();
-            if (validPermissions.Count() != PermissionsName.Count())
-            {
-                return BadRequest("One ore more permissions not valid");
-            }
-            var roleClaims = await _roleManager.GetClaimsAsync(role);
-            var currentPermissions = roleClaims.Select(c => c.Value).ToList();
-            var claimsToRemove = roleClaims.Where(c => !validPermissions.Contains(c.Value) && PermissionsEnum.CheckPermissionExist(c.Value)).ToList();
-            foreach (var claim in claimsToRemove)
-            {
-                await _roleManager.RemoveClaimAsync(role, claim);
-            }
+                var role = await _roleManager.FindByNameAsync(RoleName);
+                if (role == null)
+                {
+                    return NotFound("Role not found.");
+                }
+                var validPermissions = PermissionsName.Where(x => PermissionsEnum.CheckPermissionExist(x)).ToList();
+                if (validPermissions.Count() != PermissionsName.Count())
+                {
+                    return BadRequest("One ore more permissions not valid");
+                }
+                var roleClaims = await _roleManager.GetClaimsAsync(role);
+                var currentPermissions = roleClaims.Select(c => c.Value).ToList();
+                var claimsToRemove = roleClaims.Where(c => !validPermissions.Contains(c.Value) && PermissionsEnum.CheckPermissionExist(c.Value)).ToList();
+                foreach (var claim in claimsToRemove)
+                {
+                    await _roleManager.RemoveClaimAsync(role, claim);
+                }
 
-            var claimsToAdd = validPermissions.Where(p => !currentPermissions.Contains(p)).ToList();
-            foreach (var permission in claimsToAdd)
-            {
-                await _roleManager.AddClaimAsync(role, new Claim(permission, permission));
-            }
+                var claimsToAdd = validPermissions.Where(p => !currentPermissions.Contains(p)).ToList();
+                foreach (var permission in claimsToAdd)
+                {
+                    await _roleManager.AddClaimAsync(role, new Claim(permission, permission));
+                }
 
-            return Ok("Permissions updated successfully.");
+                return Ok("Permissions updated successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AuthorizationUsersController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
 
         }
         //[Authorize(Policy = "ManagePermissions")]
@@ -149,19 +178,28 @@ namespace FekraHubAPI.Controllers.AuthorizationController
         [HttpPost("[action]")]
         public async Task<IActionResult> RolePermissions()
         {
-            var rolesWithPermissions = new Dictionary<string, List<string>>();
-
-            var roles = await _roleManager.Roles.ToListAsync();
-            foreach (var role in roles)
+            try
             {
-                var roleClaims = await _roleManager.GetClaimsAsync(role);
-                if (!rolesWithPermissions.ContainsKey(role.Name))
+                var rolesWithPermissions = new Dictionary<string, List<string>>();
+
+                var roles = await _roleManager.Roles.ToListAsync();
+                foreach (var role in roles)
                 {
-                    rolesWithPermissions[role.Name] = new List<string>();
+                    var roleClaims = await _roleManager.GetClaimsAsync(role);
+                    if (!rolesWithPermissions.ContainsKey(role.Name))
+                    {
+                        rolesWithPermissions[role.Name] = new List<string>();
+                    }
+                    rolesWithPermissions[role.Name] = roleClaims.Select(x => x.Value).ToList();
                 }
-                rolesWithPermissions[role.Name] = roleClaims.Select(x => x.Value).ToList();
+                return Ok(rolesWithPermissions);
             }
-            return Ok(rolesWithPermissions);
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AuthorizationUsersController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
         }
 
     }

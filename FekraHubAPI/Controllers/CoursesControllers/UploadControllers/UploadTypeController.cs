@@ -88,7 +88,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 _mapper.Map(uploadTypeMdl, uploadTypeEntity);
                 await _uploadTypeRepository.Update(uploadTypeEntity);
 
-                return NoContent();
+                return Ok(new
+                {
+                    uploadTypeEntity.Id,
+                    uploadTypeEntity.TypeTitle,
+                });
             }
             catch (Exception ex)
             {
@@ -110,7 +114,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 }
                 var uploadTypeEntity = _mapper.Map<UploadType>(uploadType);
                 await _uploadTypeRepository.Add(uploadTypeEntity);
-                return CreatedAtAction("GetUploadType", new { id = uploadTypeEntity.Id }, uploadTypeEntity);
+                return Ok(new
+                {
+                    uploadTypeEntity.Id,
+                    uploadTypeEntity.TypeTitle,
+                });
             }
             catch (Exception ex)
             {
@@ -137,7 +145,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
                 await _uploadTypeRepository.Delete(id);
 
-                return NoContent();
+                return Ok("Delete success");
             }
             catch (Exception ex)
             {

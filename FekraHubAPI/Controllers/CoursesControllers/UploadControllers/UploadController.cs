@@ -275,7 +275,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
                 await _uploadRepository.Delete(id);
 
-                return NoContent();
+                return Ok("Delete success");
             }
             catch (Exception ex)
             {

@@ -104,7 +104,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _mapper.Map(room, roomEntity);
                 await _roomRepository.Update(roomEntity);
 
-                return NoContent();
+                return Ok(new
+                {
+                    roomEntity.Id,
+                    roomEntity.Name,
+                    Location = roomEntity.Location == null ? null : new { roomEntity.Location.Id, roomEntity.Location.Name },
+                });
             }
             catch (Exception ex)
             {
@@ -124,7 +129,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 var roomEntity = _mapper.Map<Room>(room);
                 await _roomRepository.Add(roomEntity);
-                return CreatedAtAction("GetRoom", new { id = roomEntity.Id }, roomEntity);
+                return Ok(new
+                {
+                    roomEntity.Id,
+                    roomEntity.Name,
+                    Location = roomEntity.Location == null  ? null : new { roomEntity.Location.Id, roomEntity.Location.Name },
+                });
             }
             catch (Exception ex)
             {

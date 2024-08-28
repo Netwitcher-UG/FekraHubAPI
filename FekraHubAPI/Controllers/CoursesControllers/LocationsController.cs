@@ -114,7 +114,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _mapper.Map(locationMdl, locationEntity);
                 await _locationRepository.Update(locationEntity);
 
-                return NoContent();
+                return Ok(new
+                {
+                    locationEntity.Id,
+                    locationEntity.Name,
+                    locationEntity.City,
+                    locationEntity.Street,
+                    locationEntity.StreetNr,
+                    locationEntity.ZipCode,
+                });
             }
             catch (Exception ex)
             {

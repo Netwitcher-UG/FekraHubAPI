@@ -11,6 +11,51 @@ namespace FekraHubAPI.Controllers.Attendance
 {
     public partial class AttendanceController
     {
+        [Authorize(Policy = "ManageChildren")]
+        [HttpGet("StudentAttendanceForParent/{Id}")]
+        public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetStudentAttendanceForParent(int Id)
+        {
+
+            try
+            {
+                var student = (await _studentRepo.GetRelation<Student>(x => x.Id == Id)).SingleOrDefault();
+                if (student == null)
+                {
+                    return BadRequest("Student not found");
+                }
+                string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
+
+                if (student.ParentID != userId)
+                {
+                    return BadRequest("This student is not your child");
+                }
+                IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(
+                                                    x => x.StudentID == Id))
+                                                    .OrderByDescending(x => x.date);
+                if (query.Any())
+                {
+                    var result = await query.Select(sa => new
+                    {
+                        id = sa.Id,
+                        Date = sa.date,
+                        course = new { sa.Course.Id, sa.Course.Name },
+                        student = new { sa.Student.Id, sa.Student.FirstName, sa.Student.LastName },
+                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
+                    }).ToListAsync();
+                    return Ok(result);
+                }
+                else
+                {
+                    return NotFound("No attendance records found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
+
         [Authorize(Policy = "GetStudentsAttendance")]
         [HttpGet("StudentAttendance/{Id}")]
         public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetStudentAttendance(int Id)

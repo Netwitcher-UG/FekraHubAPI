@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using FekraHubAPI.Constract;
+using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.Controllers.Attendance
 {
@@ -245,6 +246,61 @@ namespace FekraHubAPI.Controllers.Attendance
 
 
                 return Ok(newAttendance.Select(x => new { x.Id, x.StudentID, x.CourseID, x.date, x.StatusID }));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [Authorize(Policy = "UpdateStudentsAttendance")]
+        [HttpPost("newAttendanceForProfile")]
+        public async Task<IActionResult> AddAttendanceInProfile(
+            [FromForm][Required]int studentId,
+            [FromForm][Required] int statusId, 
+            [FromForm][Required] DateTime date)
+        {
+            try
+            {
+                var DateIsExist = (await _attendanceDateRepo.GetRelation<AttendanceDate>
+                    (x => x.Date.Date == date.Date)).Any();
+                if(!DateIsExist) 
+                {
+                    return BadRequest("This date is not a working day");
+                }
+                var Student = await _studentRepo.GetById(studentId);
+                if (Student == null)
+                {
+                    return BadRequest("Student not found");
+                }
+                var StudentAttendanceExist = (await _studentAttendanceRepo.GetRelation<StudentAttendance>
+                    (x => x.Student.Id == studentId && x.date.Date == date.Date)).Any();
+                if (StudentAttendanceExist)
+                {
+                    return BadRequest("This student has an attendance on this date");
+                }
+                bool statusExist = await _attendanceStatusRepo.GetById(statusId) == null;
+                if(statusExist)
+                {
+                    return BadRequest("Status not found");
+                }
+                var newAtt = new StudentAttendance
+                {
+                    date = date,
+                    StatusID = statusId,
+                    StudentID = studentId,
+                    CourseID = Student.CourseID
+                };
+                await _studentAttendanceRepo.Add(newAtt);
+                return Ok(new
+                {
+                    newAtt.Id,
+                    newAtt.date,
+                    newAtt.StudentID,
+                    newAtt.CourseID,
+                    newAtt.StatusID
+                });
             }
             catch (Exception ex)
             {

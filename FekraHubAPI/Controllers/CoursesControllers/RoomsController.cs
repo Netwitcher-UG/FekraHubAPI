@@ -41,6 +41,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     x.Id,
                     x.Name,
+                    locationId = x.Location.Id,
                     locationName = x.Location.Name,
                     locationStreet = x.Location.Street,
                     locationStreetNr = x.Location.StreetNr,

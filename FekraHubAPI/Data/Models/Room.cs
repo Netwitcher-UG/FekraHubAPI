@@ -14,7 +14,7 @@ namespace FekraHubAPI.Data.Models
 
         [ForeignKey("LocationID")]
         public virtual Location Location { get; set; }
-        public int? LocationID { get; set; }
+        public int LocationID { get; set; }
 
         public ICollection<Course> Course { get; set; }
 

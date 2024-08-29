@@ -121,7 +121,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 _mapper.Map(courseSchedMdl, courseScheduleEntity);
                 await _courseScheduleRepository.Update(courseScheduleEntity);
 
-                return NoContent();
+                return Ok(new
+                {
+                    courseScheduleEntity.Id,
+                    courseScheduleEntity.DayOfWeek,
+                    courseScheduleEntity.StartTime,
+                    courseScheduleEntity.EndTime,
+                    Course = courseScheduleEntity.Course == null ? null : new { courseScheduleEntity.Course.Id, courseScheduleEntity.Course.Name },
+                });
             }
             catch (Exception ex)
             {
@@ -157,8 +164,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
                     var courseScheduleEntity = _mapper.Map<CourseSchedule>(courseSchedule);
                     await _courseScheduleRepository.Add(courseScheduleEntity);
-                    return CreatedAtAction("GetCourseSchedule", new { id = courseScheduleEntity.Id }, courseScheduleEntity);
 
+                    return Ok(new
+                    {
+                        courseSchedule.Id,
+                        courseSchedule.DayOfWeek,
+                        courseSchedule.StartTime,
+                        courseSchedule.EndTime,
+                        Course = courseSchedule.Course == null ? null : new { courseSchedule.Course.Id, courseSchedule.Course.Name },
+                    });
                 }
                 else
                 {
@@ -190,7 +204,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
                 await _courseScheduleRepository.Delete(id);
 
-                return NoContent();
+                return Ok("Delete success");
             }
             catch (Exception ex)
             {

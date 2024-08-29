@@ -309,10 +309,10 @@ namespace FekraHubAPI.Controllers
                     return NotFound();
                 }
 
-
+                
                 await _invoiceRepository.Delete(id);
 
-                return NoContent();
+                return Ok("Delete success");
             }
             catch (Exception ex)
             {

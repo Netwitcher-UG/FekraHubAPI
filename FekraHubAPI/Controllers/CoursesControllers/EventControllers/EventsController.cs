@@ -36,13 +36,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         // GET: api/Event
         [Authorize(Policy = "GetEvents")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents([FromQuery]List<int>? courseId)
+        public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents([FromQuery] List<int>? courseId)
         {
             try
             {
-                
+
                 IQueryable<Event> eventE = await _eventRepository.GetRelation<Event>();
-                if(courseId.Any())
+                if (courseId.Any())
                 {
                     var CourseWorkingDay = (await _ScheduleRepository.GetRelation<int>(
                         x => courseId.Contains( x.Course.Id),null, x => x.Id)).ToList();
@@ -83,7 +83,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventsController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
 
 

@@ -73,13 +73,13 @@ namespace FekraHubAPI.Controllers.Attendance
                 if (Teacher)
                 {
                     var course = await _coursRepo.GetRelation<Course>(x =>
-                                        x.Teacher.Select(x => x.Id).Contains(userId)
+                                        x.Teacher.Select(x=> x.Id).Contains(userId)
                                         && x.Id == student.CourseID);
                     if (!course.ToList().Any())
                     {
                         return BadRequest("This student is not in your course");
                     }
-
+                   
                 }
                 IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(
                                                     x => x.StudentID == Id))
@@ -121,7 +121,7 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-
+                
                 var course = await _coursRepo.GetRelation<Course>(x => x.Id == coursId);
                 if (course.SingleOrDefault() == null)
                 {
@@ -186,7 +186,7 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-
+                
                 // course exist or not
                 var course = (await _coursRepo.GetRelation<Course>()).Where(x => x.Id == courseId);
                 if (!course.Any())
@@ -302,15 +302,15 @@ namespace FekraHubAPI.Controllers.Attendance
         [Authorize(Policy = "UpdateStudentsAttendance")]
         [HttpPost("newAttendanceForProfile")]
         public async Task<IActionResult> AddAttendanceInProfile(
-            [FromForm][Required] int studentId,
-            [FromForm][Required] int statusId,
+            [FromForm][Required]int studentId,
+            [FromForm][Required] int statusId, 
             [FromForm][Required] DateTime date)
         {
             try
             {
                 var DateIsExist = (await _attendanceDateRepo.GetRelation<AttendanceDate>
                     (x => x.Date.Date == date.Date)).Any();
-                if (!DateIsExist)
+                if(!DateIsExist) 
                 {
                     return BadRequest("This date is not a working day");
                 }
@@ -326,7 +326,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     return BadRequest("This student has an attendance on this date");
                 }
                 bool statusExist = await _attendanceStatusRepo.GetById(statusId) == null;
-                if (statusExist)
+                if(statusExist)
                 {
                     return BadRequest("Status not found");
                 }
@@ -358,7 +358,7 @@ namespace FekraHubAPI.Controllers.Attendance
         [HttpPatch("Student")]
         public async Task<IActionResult> UpdateStudentAttendance(int id, int statusId)
         {
-
+            
             try
             {
                 var StudentAtt = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(sa => sa.Id == id));
@@ -402,7 +402,7 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-
+                
                 var StudentAtt = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(sa => sa.Id == id));
                 var studentAttendance = StudentAtt.SingleOrDefault();
                 if (studentAttendance == null)

@@ -2,16 +2,20 @@
 using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data.Models;
-using FekraHubAPI.MapModels;
+using FekraHubAPI.MapModels.SchoolInfo;
+
 using FekraHubAPI.Repositories.Interfaces;
+using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 
 namespace FekraHubAPI.Controllers
 {
-    
+
     [Route("api/[controller]")]
     [ApiController]
     public class SchoolInfoController : ControllerBase
@@ -19,49 +23,186 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<SchoolInfo> _schoolInfoRepo;
         private readonly IMapper _mapper;
         private readonly ILogger<SchoolInfoController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
         public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo,IMapper mapper,
-            ILogger<SchoolInfoController> logger)
+            ILogger<SchoolInfoController> logger, UserManager<ApplicationUser> userManager)
         {
             _schoolInfoRepo = schoolInfoRepo;
             _mapper = mapper;
             _logger = logger;
+            _userManager = userManager;
         }
         [Authorize(Policy = "ManageSchoolInfo")]
-        [HttpGet]
-        public async Task<IActionResult> GetSchoolInfo()
+        [HttpGet("SchoolInfoBasic")]
+        public async Task<IActionResult> GetSchoolInfoBasic()
         {
             try
             {
-                var schoolInfo = (await _schoolInfoRepo.GetAll()).FirstOrDefault();
+                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null,null,
+                    x => new { x.SchoolName,x.SchoolOwner,x.LogoBase64}))
+                    .SingleOrDefault();
                 if (schoolInfo == null)
                 {
                     return NotFound();
                 }
-                var result = new
-                {
-                    schoolInfo.Id,
-                    schoolInfo.SchoolName,
-                    schoolInfo.SchoolOwner,
-                    schoolInfo.UrlDomain,
-                    schoolInfo.EmailServer,
-                    schoolInfo.EmailPortNumber,
-                    schoolInfo.FromEmail,
-                    schoolInfo.Password,
-                    schoolInfo.LogoBase64,
-                    schoolInfo.PrivacyPolicy,
-                    StudentsReportsKeys = schoolInfo.StudentsReportsKeys.Select(x => new
-                    {
-                        x.Id,
-                        x.Keys
-                    }),
-                    ContractPages = schoolInfo.ContractPages.Select(x => new
-                    {
-                        x.Id,
-                        x.ConPage
-                    }),
 
+                return Ok(schoolInfo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+            
+        }
+        [Authorize(Policy = "ManageSchoolInfo")]
+        [HttpGet("SchoolInfoEmailSender")]
+        public async Task<IActionResult> GetSchoolInfoEmailSender()
+        {
+            try
+            {
+                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
+                    x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail,x.Password }))
+                    .SingleOrDefault();
+                if (schoolInfo == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(schoolInfo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+        [Authorize(Policy = "ManageSchoolInfo")]
+        [HttpGet("GetSchoolInfoReportKeys")]
+        public async Task<IActionResult> GetSchoolInfoReportKeys()
+        {
+            try
+            {
+                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
+                    x => x.StudentsReportsKeys.Select(z => z.Keys ))).SingleOrDefault();
+                   
+                if (schoolInfo == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(schoolInfo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+        [Authorize(Policy = "ManageSchoolInfo")]
+        [HttpGet("SchoolInfoContractAndPolice")]
+        public async Task<IActionResult> GetSchoolInfoContractAndPolice()
+        {
+            try
+            {
+                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
+                    x => new { x.PrivacyPolicy, contractPages = x.ContractPages.Select(z => z.ConPage ) })).SingleOrDefault();
+                    
+                if (schoolInfo == null)
+                {
+                    return NotFound();
+                }
+                return Ok(schoolInfo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+        [Authorize(Policy = "ManageSchoolInfo")]
+        [HttpPost("SchoolInfo_Basic")]
+        public async Task<IActionResult> InsertSchoolInfoBasic([FromForm] Map_SchoolInfo_Basic schoolInfo_Basic)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(schoolInfo_Basic);
+                }
+                var IsEmailExists = await _userManager.FindByEmailAsync(schoolInfo_Basic.Email);
+                if (IsEmailExists != null)
+                {
+                    return BadRequest($"Email {schoolInfo_Basic.Email} is already token.");
+                }
+                string RoleAdmin = DefaultRole.Admin;
+                var normalizedEmail = schoolInfo_Basic.Email.ToUpperInvariant();
+                var normalizedUserName = schoolInfo_Basic.Email.ToUpperInvariant();
+                ApplicationUser admin = new()
+                {
+                    UserName = schoolInfo_Basic.Email,
+                    Email = schoolInfo_Basic.Email,
+                    NormalizedUserName = normalizedUserName,
+                    FirstName = schoolInfo_Basic.FirstName,
+                    LastName = schoolInfo_Basic.LastName,
+                    NormalizedEmail = normalizedEmail,
+                    SecurityStamp = Guid.NewGuid().ToString("D"),
                 };
-                return Ok(result);
+
+                IdentityResult result = await _userManager.CreateAsync(admin, schoolInfo_Basic.Password);
+                if (result.Succeeded)
+                {
+                    _userManager.AddToRoleAsync(admin, RoleAdmin).Wait();
+                }
+                else
+                {
+                    return BadRequest(result.Errors.Select(x => x.Description).FirstOrDefault());
+                }
+                string LogoBase64 = "";
+                using (var memoryStream = new MemoryStream())
+                {
+                    schoolInfo_Basic.Logo.CopyTo(memoryStream);
+                    byte[] fileBytes = memoryStream.ToArray();
+                    LogoBase64 = Convert.ToBase64String(fileBytes);
+                }
+                bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
+                if (SchoolInfoExist)
+                {
+                    var OldSchoolInfo = (await _schoolInfoRepo.GetAll()).First();
+                    OldSchoolInfo.SchoolName = schoolInfo_Basic.SchoolName;
+                    OldSchoolInfo.SchoolOwner = schoolInfo_Basic.SchoolOwner;
+                    OldSchoolInfo.LogoBase64 = LogoBase64;
+                    await _schoolInfoRepo.Update(OldSchoolInfo);
+                    return Ok("Success");
+                   
+                }
+                else
+                {
+                    //bool SchoolInfoBasicExist = await _schoolInfoRepo.DataExist(null,
+                    //   new List<Expression<Func<SchoolInfo, bool>>>
+                    //       {
+                    //            entity => entity.SchoolName != null,
+                    //            entity => entity.SchoolOwner !=null,
+                    //            entity => entity.LogoBase64 != null
+                    //       }
+                    //   );
+                    //if (SchoolInfoBasicExist)
+                    //{
+                    //    return BadRequest("School Basic Information was added earlier");
+                    //}
+                    SchoolInfo newSchoolInfo = new SchoolInfo()
+                    {
+                        SchoolName = schoolInfo_Basic.SchoolName,
+                        SchoolOwner = schoolInfo_Basic.SchoolOwner,
+                        LogoBase64 = LogoBase64
+                    };
+                    await _schoolInfoRepo.Add(newSchoolInfo);
+                    return Ok("Success");
+
+                }
             }
             catch (Exception ex)
             {
@@ -70,136 +211,223 @@ namespace FekraHubAPI.Controllers
             }
             
         }
+
         [Authorize(Policy = "ManageSchoolInfo")]
-        [HttpPost]
-        public async Task<IActionResult> InsertSchoolInfo([FromForm] Map_SchoolInfo SchoolInfo)
+        [HttpPost("SchoolInfo_EmailSender")]
+        public async Task<IActionResult> InsertSchoolInfoEmailSender([FromForm] Map_schoolInfo_EmailSender schoolInfo_EmailSender)
         {
             try
             {
-                var schoolInfos = await _schoolInfoRepo.GetAll();
-                if (schoolInfos.Any())
-                {
-                    return BadRequest("School Information was added earlier");
-                }
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(SchoolInfo);
+                    return BadRequest(schoolInfo_EmailSender);
                 }
-                var schoolInfo = _mapper.Map<SchoolInfo>(SchoolInfo);
-                if (SchoolInfo.ContractPages != null && SchoolInfo.ContractPages.Any())
+                bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
+                if (SchoolInfoExist)
                 {
-                    schoolInfo.ContractPages = SchoolInfo.ContractPages
-                        .Select(page => new ContractPage
-                        {
-                            ConPage = page,
-                            SchoolInfo = schoolInfo
-                        }).ToList();
+                    var OldSchoolInfo = (await _schoolInfoRepo.GetAll()).First();
+                    OldSchoolInfo.EmailServer = schoolInfo_EmailSender.EmailServer;
+                    OldSchoolInfo.EmailPortNumber = schoolInfo_EmailSender.EmailPortNumber;
+                    OldSchoolInfo.FromEmail = schoolInfo_EmailSender.FromEmail;
+                    OldSchoolInfo.Password = schoolInfo_EmailSender.Password;
+                    await _schoolInfoRepo.Update(OldSchoolInfo);
+                    return Ok("Success");
                 }
-
-                if (SchoolInfo.StudentsReportsKeys != null && SchoolInfo.StudentsReportsKeys.Any())
+                else
                 {
-                    schoolInfo.StudentsReportsKeys = SchoolInfo.StudentsReportsKeys
-                        .Select(key => new StudentsReportsKey
-                        {
-                            Keys = key,
-                            SchoolInfo = schoolInfo
-                        }).ToList();
+                    return Ok("You cant add email sender info before adding the basic info");
                 }
-                await _schoolInfoRepo.Add(schoolInfo);
-                return Ok(schoolInfo);
             }
             catch (Exception ex)
             {
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
+
         [Authorize(Policy = "ManageSchoolInfo")]
-        [HttpPut]
-        public async Task<IActionResult> UpdateSchoolInfo([FromForm] Map_SchoolInfo schoolInfo)
+        [HttpPost("SchoolInfo_ReportKeys")]
+        public async Task<IActionResult> InsertSchoolInfoReportKeys([FromForm] Map_SchoolInfo_ReportKeys schoolInfo_ReportKeys)
         {
             try
             {
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(schoolInfo);
+                    return BadRequest(schoolInfo_ReportKeys);
                 }
 
-                var schoolInfos = (await _schoolInfoRepo.GetRelation<SchoolInfo>()).FirstOrDefault();
-                if (schoolInfos == null)
+
+                bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
+                if (SchoolInfoExist)
                 {
-                    return BadRequest("No school Information added");
-                }
+                    var OldSchoolInfos = (await _schoolInfoRepo.GetRelation<SchoolInfo>());
 
-                _mapper.Map(schoolInfo, schoolInfos);
 
-                if (schoolInfo.ContractPages != null)
-                {
-                    schoolInfos.ContractPages.Clear();
-
-                    schoolInfos.ContractPages = schoolInfo.ContractPages
-                        .Select(page => new ContractPage
-                        {
-                            ConPage = page,
-                            SchoolInfoId = schoolInfos.Id
-                        }).ToList();
-                }
-
-                if (schoolInfo.StudentsReportsKeys != null)
-                {
-                    schoolInfos.StudentsReportsKeys.Clear();
-
-                    schoolInfos.StudentsReportsKeys = schoolInfo.StudentsReportsKeys
-                        .Select(key => new StudentsReportsKey
+                    (OldSchoolInfos.Select(x => x.StudentsReportsKeys)).Single().Clear();
+                    var OldSchoolInfo = OldSchoolInfos.Single();
+                    List<StudentsReportsKey> studentsReportsKeys = new List<StudentsReportsKey>();
+                    foreach(var key in schoolInfo_ReportKeys.StudentsReportsKeys)
+                    {
+                        var studentRKey = new StudentsReportsKey
                         {
                             Keys = key,
-                            SchoolInfoId = schoolInfos.Id
-                        }).ToList();
+                            SchoolInfoId = OldSchoolInfo.Id
+                        };
+                        studentsReportsKeys.Add(studentRKey);
+                    }
+                    OldSchoolInfo.StudentsReportsKeys = studentsReportsKeys;
+                    await _schoolInfoRepo.Update(OldSchoolInfo);
+                    return Ok("Success");
+
                 }
+                else
+                {
+                    return Ok("You cant add report keys before adding the basic info");
 
-                await _schoolInfoRepo.Update(schoolInfos);
-
-                return Ok(schoolInfo);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
         [Authorize(Policy = "ManageSchoolInfo")]
-        [HttpDelete]
-        public async Task<IActionResult> DeleteSchoolInfo()
+        [HttpPost("SchoolInfo_ContractAndPolice")]
+        public async Task<IActionResult> InsertSchoolInfoContractAndPolice([FromForm] Map_SchoolInfo_ContractAndPolice schoolInfo_ContractAndPolice)
         {
             try
             {
-                var schoolInfos = await _schoolInfoRepo.GetAll();
-                foreach (var schoolInfo in schoolInfos)
+                if (!ModelState.IsValid)
                 {
-                    if (schoolInfo.ContractPages != null)
-                    {
-                        schoolInfo.ContractPages.Clear();
-                    }
-
-                    if (schoolInfo.StudentsReportsKeys != null)
-                    {
-                        schoolInfo.StudentsReportsKeys.Clear();
-                    }
-
-                    await _schoolInfoRepo.Delete(schoolInfo.Id);
+                    return BadRequest(schoolInfo_ContractAndPolice);
                 }
 
-                return Ok("Done");
+
+                bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
+                if (SchoolInfoExist)
+                {
+                    var OldSchoolInfos = (await _schoolInfoRepo.GetRelation<SchoolInfo>());
+                    
+                    
+                    (OldSchoolInfos.Select(x => x.ContractPages)).Single().Clear();
+                    var OldSchoolInfo = OldSchoolInfos.Single();
+                    OldSchoolInfo.PrivacyPolicy = schoolInfo_ContractAndPolice.PrivacyPolicy;
+                    List<ContractPage> studentsContractPages = new List<ContractPage>();
+                    foreach (var page in schoolInfo_ContractAndPolice.ContractPages)
+                    {
+                        var studentRKey = new ContractPage
+                        {
+                            ConPage = page,
+                            SchoolInfoId = OldSchoolInfo.Id
+                        };
+                        studentsContractPages.Add(studentRKey);
+                    }
+                    OldSchoolInfo.ContractPages = studentsContractPages;
+                    await _schoolInfoRepo.Update(OldSchoolInfo);
+                    return Ok("Success");
+
+                }
+                else
+                {
+                    return Ok("You cant add contract and police before adding the basic info");
+
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
+        //[Authorize(Policy = "ManageSchoolInfo")]
+        //[HttpPut]
+        //public async Task<IActionResult> UpdateSchoolInfo([FromForm] Map_SchoolInfo_Basic schoolInfo)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //        {
+        //            return BadRequest(schoolInfo);
+        //        }
+
+        //        var schoolInfos = (await _schoolInfoRepo.GetRelation<SchoolInfo>()).FirstOrDefault();
+        //        if (schoolInfos == null)
+        //        {
+        //            return BadRequest("No school Information added");
+        //        }
+
+        //        _mapper.Map(schoolInfo, schoolInfos);
+
+        //        if (schoolInfo.ContractPages != null)
+        //        {
+        //            schoolInfos.ContractPages.Clear();
+
+        //            schoolInfos.ContractPages = schoolInfo.ContractPages
+        //                .Select(page => new ContractPage
+        //                {
+        //                    ConPage = page,
+        //                    SchoolInfoId = schoolInfos.Id
+        //                }).ToList();
+        //        }
+
+        //        if (schoolInfo.StudentsReportsKeys != null)
+        //        {
+        //            schoolInfos.StudentsReportsKeys.Clear();
+
+        //            schoolInfos.StudentsReportsKeys = schoolInfo.StudentsReportsKeys
+        //                .Select(key => new StudentsReportsKey
+        //                {
+        //                    Keys = key,
+        //                    SchoolInfoId = schoolInfos.Id
+        //                }).ToList();
+        //        }
+
+        //        await _schoolInfoRepo.Update(schoolInfos);
+
+        //        return Ok(schoolInfo);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+        //        return BadRequest(ex.Message);
+        //    }
+
+        //}
+        //[Authorize(Policy = "ManageSchoolInfo")]
+        //[HttpDelete]
+        //public async Task<IActionResult> DeleteSchoolInfo()
+        //{
+        //    try
+        //    {
+        //        var schoolInfos = await _schoolInfoRepo.GetAll();
+        //        foreach (var schoolInfo in schoolInfos)
+        //        {
+        //            if (schoolInfo.ContractPages != null)
+        //            {
+        //                schoolInfo.ContractPages.Clear();
+        //            }
+
+        //            if (schoolInfo.StudentsReportsKeys != null)
+        //            {
+        //                schoolInfo.StudentsReportsKeys.Clear();
+        //            }
+
+        //            await _schoolInfoRepo.Delete(schoolInfo.Id);
+        //        }
+
+        //        return Ok("Done");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+        //        return BadRequest(ex.Message);
+        //    }
+
+        //}
         [AllowAnonymous]
         [HttpGet("SchoolLogo")]
         public async Task<IActionResult> SchoolLogo()

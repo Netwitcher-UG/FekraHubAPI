@@ -24,7 +24,8 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task<T> GetUser(string id);
         string GetUserIDFromToken(ClaimsPrincipal User);
         Task<PagedResponse<T>> GetPagedDataAsync(IQueryable<T> source, PaginationParameters paginationParameters);
-
+        Task<bool> DataExist(Expression<Func<T, bool>>? singlePredicate = null,List<Expression<Func<T, bool>>>? predicates = null);
+        
 
     }
 }

@@ -167,6 +167,30 @@ namespace FekraHubAPI.Repositories.Implementations
             return new PagedResponse<T>(items, count, paginationParameters.PageNumber, paginationParameters.PageSize);
         }
 
+        public async Task<bool> DataExist(
+            Expression<Func<T, bool>>? singlePredicate = null,
+            List<Expression<Func<T, bool>>>? predicates = null)
+        {
+            if (singlePredicate != null)
+            {
+                return await _dbSet.AnyAsync(singlePredicate);
+            }
+
+            if (predicates != null && predicates.Any())
+            {
+                foreach (var predicate in predicates)
+                {
+                    bool exists = await _dbSet.AnyAsync(predicate);
+                    if (!exists)
+                    {
+                        return false; 
+                    }
+                }
+                return true; 
+            }
+            return await _dbSet.AnyAsync();
+        }
+
 
     }
 }

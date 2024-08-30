@@ -102,8 +102,8 @@ namespace FekraHubAPI.Controllers
 
         }
         [Authorize(Policy = "ManageSchoolInfo")]
-        [HttpGet("SchoolInfoContractAndPolice")]
-        public async Task<IActionResult> GetSchoolInfoContractAndPolice()
+        [HttpGet("SchoolInfoContractAndPolicy")]
+        public async Task<IActionResult> GetSchoolInfoContractAndPolicy()
         {
             try
             {
@@ -295,14 +295,14 @@ namespace FekraHubAPI.Controllers
 
         }
         [Authorize(Policy = "ManageSchoolInfo")]
-        [HttpPost("SchoolInfo_ContractAndPolice")]
-        public async Task<IActionResult> InsertSchoolInfoContractAndPolice([FromForm] Map_SchoolInfo_ContractAndPolice schoolInfo_ContractAndPolice)
+        [HttpPost("SchoolInfo_ContractAndPolicy")]
+        public async Task<IActionResult> InsertSchoolInfoContractAndPolicy([FromForm] Map_SchoolInfo_ContractAndPolicy schoolInfo_ContractAndPolicy)
         {
             try
             {
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(schoolInfo_ContractAndPolice);
+                    return BadRequest(schoolInfo_ContractAndPolicy);
                 }
 
 
@@ -314,9 +314,9 @@ namespace FekraHubAPI.Controllers
                     
                     (OldSchoolInfos.Select(x => x.ContractPages)).Single().Clear();
                     var OldSchoolInfo = OldSchoolInfos.Single();
-                    OldSchoolInfo.PrivacyPolicy = schoolInfo_ContractAndPolice.PrivacyPolicy;
+                    OldSchoolInfo.PrivacyPolicy = schoolInfo_ContractAndPolicy.PrivacyPolicy;
                     List<ContractPage> studentsContractPages = new List<ContractPage>();
-                    foreach (var page in schoolInfo_ContractAndPolice.ContractPages)
+                    foreach (var page in schoolInfo_ContractAndPolicy.ContractPages)
                     {
                         var studentRKey = new ContractPage
                         {
@@ -332,7 +332,7 @@ namespace FekraHubAPI.Controllers
                 }
                 else
                 {
-                    return Ok("You cant add contract and police before adding the basic info");
+                    return Ok("You cant add contract and policy before adding the basic info");
 
                 }
             }

@@ -24,10 +24,9 @@ namespace FekraHubAPI.EmailSender
         private readonly IRepository<SchoolInfo> _schoolInfo;
         private readonly IRepository<Course> _courseRepo;
         private readonly IConfiguration _configuration;
-        private readonly ILogger _logger;
         public EmailSender(IRepository<SchoolInfo> schoolInfo, UserManager<ApplicationUser> userManager,
             IRepository<Student> studentRepo, IRepository<StudentContract> studentContract, ApplicationDbContext context,
-            IConfiguration configuration, IRepository<Course> courseRepo, ILogger logger)
+            IConfiguration configuration, IRepository<Course> courseRepo)
         {
             _schoolInfo = schoolInfo;
             _userManager = userManager;
@@ -36,7 +35,6 @@ namespace FekraHubAPI.EmailSender
             _context = context;
             _configuration = configuration;
             _courseRepo = courseRepo;
-            _logger = logger;
         }
 
         private async Task SendEmail(string toEmail, string subject, string body, bool isBodyHTML,string? submessage = "", byte[]? pdf = null, string? pdfName = null)

@@ -91,7 +91,7 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
                 }
-
+                await _emailSender.SendToAdminNewStudent(studentEntity);
                 return Ok("welcomes your son to our family . A copy of the contract was sent to your email");
             }
             catch (Exception ex)

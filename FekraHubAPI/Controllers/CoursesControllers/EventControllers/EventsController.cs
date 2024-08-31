@@ -2,6 +2,7 @@ using AutoMapper;
 using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers.AuthorizationController;
 using FekraHubAPI.Data.Models;
+using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -22,15 +23,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         private readonly IRepository<CourseSchedule> _ScheduleRepository;
         private readonly ILogger<AuthorizationUsersController> _logger;
         private readonly IMapper _mapper;
+        private readonly IEmailSender _emailSender;
         public EventsController(IRepository<Event> eventRepository
            , IMapper mapper,
             IRepository<CourseSchedule> ScheduleRepository,
-            ILogger<AuthorizationUsersController> logger)
+            ILogger<AuthorizationUsersController> logger, IEmailSender emailSender)
         {
             _eventRepository = eventRepository;
             _mapper = mapper;
             _ScheduleRepository = ScheduleRepository;
             _logger = logger;
+            _emailSender = emailSender;
         }
 
         // GET: api/Event
@@ -188,7 +191,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                var schedule = (await _ScheduleRepository.GetRelation<CourseSchedule>(n => scheduleId.Contains(n.Id))).ToList();
+                var schedule = await _ScheduleRepository.GetRelation<CourseSchedule>(n => scheduleId.Contains(n.Id));
 
              
 
@@ -212,10 +215,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
                 };
 
-                eventEntity.CourseSchedule = schedule;
+                eventEntity.CourseSchedule = schedule.ToList();
 
 
                 await _eventRepository.Add(eventEntity);
+                var courses = schedule.Select(x => x.CourseID).ToList();
+                if (courses.Any())
+                {
+                    await _emailSender.SendToAllNewEvent(courses);
+                }
+                
                 return Ok(new
                 {
                     eventEntity.Id,

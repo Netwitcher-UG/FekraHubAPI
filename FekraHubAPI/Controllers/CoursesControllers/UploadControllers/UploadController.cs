@@ -14,6 +14,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using FekraHubAPI.Controllers.CoursesControllers.EventControllers;
 using FekraHubAPI.Constract;
+using FekraHubAPI.EmailSender;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 {
@@ -31,10 +32,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         private readonly ILogger<UploadController> _logger;
         private readonly IRepository<UploadType> _uploadTypeRepository;
         private readonly IMapper _mapper;
+        private readonly IEmailSender _emailSender;
         public UploadController(IRepository<Course> courseRepository, IRepository<Upload> uploadRepository,
             IRepository<Student> studentRepository,
             IRepository<UploadType> uploadTypeRepository, IMapper mapper,
-            ILogger<UploadController> logger)
+            ILogger<UploadController> logger, IEmailSender emailSender)
         {
             _courseRepository = courseRepository;
             _uploadRepository = uploadRepository;
@@ -42,7 +44,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
             _logger = logger;
             _uploadTypeRepository = uploadTypeRepository;
             _mapper = mapper;
-         
+            _emailSender = emailSender;
         }
 
 
@@ -242,10 +244,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         upload.Courses.Add(course);
 
                         await _uploadRepository.Add(upload);
-
                     }
                 }
-
+                await _emailSender.SendToParentsNewFiles(courseId);
                 return Ok("Files uploaded successfully.");
             }
             catch (Exception ex)

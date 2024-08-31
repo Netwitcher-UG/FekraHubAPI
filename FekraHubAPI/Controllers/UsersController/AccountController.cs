@@ -412,6 +412,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var result = await _userManager.ConfirmEmailAsync(user, Token);
             if (result.Succeeded)
             {
+                await _emailSender.SendToAdminNewParent(user);
                 return Ok();
             }
             else

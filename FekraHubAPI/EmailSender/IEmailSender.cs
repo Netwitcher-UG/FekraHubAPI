@@ -12,8 +12,9 @@ namespace FekraHubAPI.EmailSender
         Task<IActionResult> SendContractEmail(int studentId, string pdfName);
         Task SendRestPassword(string email, string link);
         Task SendToAdminNewParent(ApplicationUser user);
-        Task SendToAllNewEvent();
-        Task SendToParentsNewFiles(List<Student> students);
+        Task SendToAdminNewStudent(Student student);
+        Task SendToAllNewEvent(List<int?> corsesId);
+        Task SendToParentsNewFiles(int coursId);
         Task SendToSecretaryNewReportsForStudents();
         Task SendToSecretaryUpdateReportsForStudents();
         Task SendToParentsNewReportsForStudents(List<Student> students);

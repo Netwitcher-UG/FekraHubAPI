@@ -24,7 +24,7 @@ namespace FekraHubAPI.Controllers
         private readonly IMapper _mapper;
         private readonly ILogger<SchoolInfoController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
-        public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo,IMapper mapper,
+        public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo, IMapper mapper,
             ILogger<SchoolInfoController> logger, UserManager<ApplicationUser> userManager)
         {
             _schoolInfoRepo = schoolInfoRepo;
@@ -38,8 +38,8 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null,null,
-                    x => new { x.SchoolName,x.SchoolOwner,x.LogoBase64}))
+                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
+                    x => new { x.SchoolName, x.SchoolOwner, x.LogoBase64 }))
                     .SingleOrDefault();
                 if (schoolInfo == null)
                 {
@@ -53,7 +53,7 @@ namespace FekraHubAPI.Controllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
         [Authorize(Policy = "ManageSchoolInfo")]
         [HttpGet("SchoolInfoEmailSender")]
@@ -62,7 +62,7 @@ namespace FekraHubAPI.Controllers
             try
             {
                 var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
-                    x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail,x.Password }))
+                    x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password }))
                     .SingleOrDefault();
                 if (schoolInfo == null)
                 {
@@ -85,8 +85,8 @@ namespace FekraHubAPI.Controllers
             try
             {
                 var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
-                    x => x.StudentsReportsKeys.Select(z => z.Keys ))).SingleOrDefault();
-                   
+                    x => x.StudentsReportsKeys.Select(z => z.Keys))).SingleOrDefault();
+
                 if (schoolInfo == null)
                 {
                     return NotFound();
@@ -108,8 +108,8 @@ namespace FekraHubAPI.Controllers
             try
             {
                 var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
-                    x => new { x.PrivacyPolicy, contractPages = x.ContractPages.Select(z => z.ConPage ) })).SingleOrDefault();
-                    
+                    x => new { x.PrivacyPolicy, contractPages = x.ContractPages.Select(z => z.ConPage) })).SingleOrDefault();
+
                 if (schoolInfo == null)
                 {
                     return NotFound();
@@ -177,7 +177,7 @@ namespace FekraHubAPI.Controllers
                     OldSchoolInfo.LogoBase64 = LogoBase64;
                     await _schoolInfoRepo.Update(OldSchoolInfo);
                     return Ok("Success");
-                   
+
                 }
                 else
                 {
@@ -209,7 +209,7 @@ namespace FekraHubAPI.Controllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
 
         [Authorize(Policy = "ManageSchoolInfo")]
@@ -267,7 +267,7 @@ namespace FekraHubAPI.Controllers
                     (OldSchoolInfos.Select(x => x.StudentsReportsKeys)).Single().Clear();
                     var OldSchoolInfo = OldSchoolInfos.Single();
                     List<StudentsReportsKey> studentsReportsKeys = new List<StudentsReportsKey>();
-                    foreach(var key in schoolInfo_ReportKeys.StudentsReportsKeys)
+                    foreach (var key in schoolInfo_ReportKeys.StudentsReportsKeys)
                     {
                         var studentRKey = new StudentsReportsKey
                         {
@@ -310,8 +310,8 @@ namespace FekraHubAPI.Controllers
                 if (SchoolInfoExist)
                 {
                     var OldSchoolInfos = (await _schoolInfoRepo.GetRelation<SchoolInfo>());
-                    
-                    
+
+
                     (OldSchoolInfos.Select(x => x.ContractPages)).Single().Clear();
                     var OldSchoolInfo = OldSchoolInfos.Single();
                     OldSchoolInfo.PrivacyPolicy = schoolInfo_ContractAndPolicy.PrivacyPolicy;
@@ -443,7 +443,7 @@ namespace FekraHubAPI.Controllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
         //[AllowAnonymous]
         //[HttpPut("updateTESTING")]

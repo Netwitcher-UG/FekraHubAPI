@@ -221,17 +221,17 @@ namespace FekraHubAPI.Controllers.Attendance
                 // student ids are in this course or not
                 if (studentAttendance != null && studentAttendance.Any())
                 {
-                    var studentsIdInCourse = (await _studentRepo.GetAll())
-                        .Where(x => x.CourseID == courseId)
-                        .Select(x => x.Id)
-                        .ToList();
+                    var studentsIdInCourse = (await _studentRepo.GetRelation<int>(
+                        x => x.CourseID == courseId,null, x => x.Id
+                        )).ToList();
+
+
 
                     var studentsInList = studentAttendance
-                        .Where(sa => !studentsIdInCourse.Contains(sa.StudentID))
-                        .Select(sa => sa.StudentID)
-                        .ToList();
+                        .Any(sa => !studentsIdInCourse.Contains(sa.StudentID));
+                       
 
-                    if (studentsInList.Any())
+                    if (studentsInList)
                     {
                         return BadRequest("Some students do not belong to the course.");
                     }

@@ -65,6 +65,15 @@ namespace FekraHubAPI.Repositories.Implementations
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task DeleteRange(Expression<Func<T, bool>> singlePredicate)
+        {
+            var entity = await _dbSet.Where(singlePredicate).ToListAsync();
+            if (entity != null)
+            {
+                _dbSet.RemoveRange(entity);
+                await _context.SaveChangesAsync();
+            }
+        }
         public async Task<IQueryable<TResult>> GetRelation<TResult>(
                 Expression<Func<T, bool>>? singlePredicate = null,
                 List<Expression<Func<T, bool>>>? predicates = null,

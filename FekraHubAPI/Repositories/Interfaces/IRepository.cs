@@ -13,6 +13,7 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task Add(T entity);
         Task Update(T entity);
         Task Delete(int id);
+        Task DeleteRange(Expression<Func<T, bool>> singlePredicate);
         Task<IQueryable<TResult>> GetRelation<TResult>(Expression<Func<T, bool>>? singlePredicate = null, List<Expression<Func<T, bool>>>? predicate = null , Expression<Func<T, TResult>>? selector = null);
         Task ManyAdd(List<T> entity);
         Task ManyUpdate(IEnumerable<T> entity);

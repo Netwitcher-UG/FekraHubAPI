@@ -103,6 +103,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         z.Id,
                         z.FirstName,
                         z.LastName
+                    }),
+                    CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
+                    {
+                        x.Id,
+                        x.DayOfWeek,
+                        x.StartTime,
+                        x.EndTime
                     })
 
 
@@ -157,7 +164,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         z.Id,
                         z.FirstName,
                         z.LastName
-                    })
+                    }),
+                    CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
+                    {
+                        x.Id,
+                        x.DayOfWeek,
+                        x.StartTime,
+                        x.EndTime
+                    }),
 
 
 

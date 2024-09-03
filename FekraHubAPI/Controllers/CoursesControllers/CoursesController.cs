@@ -65,10 +65,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
-           
 
-          
+
+
+
         }
         // GET: api/Course
         [Authorize(Policy = "GetCourse")]
@@ -103,6 +103,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         z.Id,
                         z.FirstName,
                         z.LastName
+                    }),
+                    CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
+                    {
+                        x.Id,
+                        x.DayOfWeek,
+                        x.StartTime,
+                        x.EndTime
                     })
 
 
@@ -115,7 +122,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
 
 
         }
@@ -157,7 +164,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         z.Id,
                         z.FirstName,
                         z.LastName
-                    })
+                    }),
+                    CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
+                    {
+                        x.Id,
+                        x.DayOfWeek,
+                        x.StartTime,
+                        x.EndTime
+                    }),
 
 
 
@@ -168,10 +182,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
-            
 
-           
+
+
+
         }
         public class MapCourseSchedule
         {
@@ -181,100 +195,100 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
         [Authorize(Policy = "AddCourse")]
         [HttpPost]
-                public async Task<ActionResult<Course>> PostCourse(MapCourseSchedule mapCourseSchedule)
+        public async Task<ActionResult<Course>> PostCourse(MapCourseSchedule mapCourseSchedule)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
                 {
-                    try
-                    {
-                        if (!ModelState.IsValid)
-                        {
-                            return BadRequest(ModelState);
-                        }
-                        if (mapCourseSchedule.TeacherId == null || mapCourseSchedule.TeacherId.Length == 0)
-                        {
-                            return BadRequest("The teacherId is required!!");
-                        }
-                        var teachers = (await _teacherRepository.GetRelation<ApplicationUser>(n => mapCourseSchedule.TeacherId.Contains(n.Id))).ToList();
-                        if (!teachers.Any())
-                        {
-                            return BadRequest("The teacherId does not exist");
-                        }
-
-
-                        var room = (await _roomRepo.GetRelation<Room>(x => x.Id == mapCourseSchedule.course.RoomId))
-                                    .Select(x => new { x.Id ,x.Name,Location = new { x.Location.Id, x.Location.Name } })
-                                    .SingleOrDefault();
-                        if (room == null)
-                        {
-                            return BadRequest("The RoomId does not exist");
-                        }
-                        
-                        var courseEntity = new Course
-                        {
-                            Name = mapCourseSchedule.course.Name,
-                            Price = mapCourseSchedule.course.Price,
-                            Lessons = mapCourseSchedule.course.Lessons,
-                            Capacity = mapCourseSchedule.course.Capacity,
-                            StartDate = mapCourseSchedule.course.StartDate,
-                            EndDate = mapCourseSchedule.course.EndDate,
-                            RoomId = mapCourseSchedule.course.RoomId,
-                            Teacher = new List<ApplicationUser>()
-                        };
-                        courseEntity.Teacher = teachers;
-                        await _courseRepository.Add(courseEntity);
-
-                        List<CourseSchedule> courseSchedules = new List<CourseSchedule>();
-                        foreach(var courseSched in mapCourseSchedule.courseSchedule)
-                        {
-                            var courseSchedule = new CourseSchedule
-                            {
-                                DayOfWeek = courseSched.DayOfWeek,
-                                StartTime = TimeSpan.Parse(courseSched.StartTime),
-                                EndTime = TimeSpan.Parse(courseSched.EndTime),
-                                CourseID = courseEntity.Id
-                            };
-                            courseSchedules.Add(courseSchedule);
-                        }
-
-                        await _courseScheduleRepository.ManyAdd(courseSchedules);
-
-                        return Ok(new
-                        {
-                            id = courseEntity.Id,
-                            name = courseEntity.Name,
-                            price = courseEntity.Price,
-                            lessons = courseEntity.Lessons,
-                            capacity = courseEntity.Capacity,
-                            startDate = courseEntity.StartDate,
-                            endDate = courseEntity.EndDate,
-                            Room = new { room.Id, room.Name },
-                            Location = new {room.Location.Id, room.Location.Name },
-                            Teacher = courseEntity.Teacher == null ? null : courseEntity.Teacher.Select(z => new
-                            {
-                                z.Id,
-                                z.FirstName,
-                                z.LastName
-                            }),
-                            courseSchedule = courseSchedules.Select(x => new
-                            {
-                                x.Id,
-                                x.DayOfWeek,
-                                x.StartTime,
-                                x.EndTime,
-                            })
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
-                        return BadRequest(ex.Message);
-                    }
-            
+                    return BadRequest(ModelState);
+                }
+                if (mapCourseSchedule.TeacherId == null || mapCourseSchedule.TeacherId.Length == 0)
+                {
+                    return BadRequest("The teacherId is required!!");
+                }
+                var teachers = (await _teacherRepository.GetRelation<ApplicationUser>(n => mapCourseSchedule.TeacherId.Contains(n.Id))).ToList();
+                if (!teachers.Any())
+                {
+                    return BadRequest("The teacherId does not exist");
                 }
 
+
+                var room = (await _roomRepo.GetRelation<Room>(x => x.Id == mapCourseSchedule.course.RoomId))
+                            .Select(x => new { x.Id, x.Name, Location = new { x.Location.Id, x.Location.Name } })
+                            .SingleOrDefault();
+                if (room == null)
+                {
+                    return BadRequest("The RoomId does not exist");
+                }
+
+                var courseEntity = new Course
+                {
+                    Name = mapCourseSchedule.course.Name,
+                    Price = mapCourseSchedule.course.Price,
+                    Lessons = mapCourseSchedule.course.Lessons,
+                    Capacity = mapCourseSchedule.course.Capacity,
+                    StartDate = mapCourseSchedule.course.StartDate,
+                    EndDate = mapCourseSchedule.course.EndDate,
+                    RoomId = mapCourseSchedule.course.RoomId,
+                    Teacher = new List<ApplicationUser>()
+                };
+                courseEntity.Teacher = teachers;
+                await _courseRepository.Add(courseEntity);
+
+                List<CourseSchedule> courseSchedules = new List<CourseSchedule>();
+                foreach (var courseSched in mapCourseSchedule.courseSchedule)
+                {
+                    var courseSchedule = new CourseSchedule
+                    {
+                        DayOfWeek = courseSched.DayOfWeek,
+                        StartTime = TimeSpan.Parse(courseSched.StartTime),
+                        EndTime = TimeSpan.Parse(courseSched.EndTime),
+                        CourseID = courseEntity.Id
+                    };
+                    courseSchedules.Add(courseSchedule);
+                }
+
+                await _courseScheduleRepository.ManyAdd(courseSchedules);
+
+                return Ok(new
+                {
+                    id = courseEntity.Id,
+                    name = courseEntity.Name,
+                    price = courseEntity.Price,
+                    lessons = courseEntity.Lessons,
+                    capacity = courseEntity.Capacity,
+                    startDate = courseEntity.StartDate,
+                    endDate = courseEntity.EndDate,
+                    Room = new { room.Id, room.Name },
+                    Location = new { room.Location.Id, room.Location.Name },
+                    Teacher = courseEntity.Teacher == null ? null : courseEntity.Teacher.Select(z => new
+                    {
+                        z.Id,
+                        z.FirstName,
+                        z.LastName
+                    }),
+                    courseSchedule = courseSchedules.Select(x => new
+                    {
+                        x.Id,
+                        x.DayOfWeek,
+                        x.StartTime,
+                        x.EndTime,
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+
         // PUT: api/Course/5
-        [Authorize(Policy = "putCourse")]        
+        [Authorize(Policy = "putCourse")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse(int id, MapCourseSchedule courseData )
+        public async Task<IActionResult> PutCourse(int id, MapCourseSchedule courseData)
         {
             try
             {
@@ -353,7 +367,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
 
         [Authorize(Policy = "DeleteCourse")]
@@ -385,9 +399,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         [Authorize(Policy = "ManageStudentsToCourses")]
         [HttpPost("AssignStudentsToCourse")]
-        public async Task<IActionResult> AssignStudentsToCourse( int courseID, [FromBody] List<int> studentIds)
+        public async Task<IActionResult> AssignStudentsToCourse(int courseID, [FromBody] List<int> studentIds)
         {
-            try 
+            try
             {
                 if (courseID <= 0 || studentIds == null || !studentIds.Any())
                 {
@@ -422,7 +436,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
 
 

@@ -68,47 +68,20 @@ namespace FekraHubAPI.EmailSender
 
             using (var client = new SmtpClient())
             {
-
                 try
                 {
                     await client.ConnectAsync(MailServer, Port, MailKit.Security.SecureSocketOptions.Auto);
                     await client.AuthenticateAsync(FromEmail, Password);
-
                     await client.SendAsync(message);
-                    await client.DisconnectAsync(true);
                 }
                 catch (SmtpCommandException ex) when (ex.ErrorCode == SmtpErrorCode.SenderNotAccepted)
                 {
-                    await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.Auto);
-                    await client.AuthenticateAsync("abog9022@gmail.com", "xhuzbgwifkyajsms");
-
-                    await client.SendAsync(message);
-                    await client.DisconnectAsync(true);
-
-                    var AdminIds = await _context.UserRoles.Where(x => x.RoleId == "1").Select(x => x.UserId).ToListAsync();
-                    var admins = await _userManager.Users.Where(x => AdminIds.Contains(x.Id)).ToListAsync();
-                    if (admins.Any())
+                    try
                     {
-                        foreach (var admin in admins)
-                        {
-                            var notificationMessage = new MimeMessage();
-                            notificationMessage.From.Add(new MailboxAddress(schoolInfo.SchoolName, "abog9022@gmail.com"));
-                            notificationMessage.To.Add(new MailboxAddress("", admin.Email));
-                            notificationMessage.Subject = "Failed to use school email";
-                            notificationMessage.Body = new TextPart("plain")
-                            {
-                                Text = $"Failed to send email by {FromEmail}.\n now we use alternative email."
-                            };
-                            await client.SendAsync(notificationMessage);
-                        }
-                        await client.DisconnectAsync(true);
-                    }
+                        await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.Auto);
+                        await client.AuthenticateAsync("abog9022@gmail.com", "xhuzbgwifkyajsms");
+                        await client.SendAsync(message);
 
-                }
-                catch (SmtpCommandException ex) when (ex.ErrorCode == SmtpErrorCode.RecipientNotAccepted)
-                {
-                    if (submessage != "")
-                    {
                         var AdminIds = await _context.UserRoles.Where(x => x.RoleId == "1").Select(x => x.UserId).ToListAsync();
                         var admins = await _userManager.Users.Where(x => AdminIds.Contains(x.Id)).ToListAsync();
                         if (admins.Any())
@@ -116,31 +89,70 @@ namespace FekraHubAPI.EmailSender
                             foreach (var admin in admins)
                             {
                                 var notificationMessage = new MimeMessage();
-                                notificationMessage.From.Add(new MailboxAddress(schoolInfo.SchoolName, FromEmail));
+                                notificationMessage.From.Add(new MailboxAddress(schoolInfo.SchoolName, "abog9022@gmail.com"));
                                 notificationMessage.To.Add(new MailboxAddress("", admin.Email));
-                                notificationMessage.Subject = "Failed to deliver email";
+                                notificationMessage.Subject = "Failed to use school email";
                                 notificationMessage.Body = new TextPart("plain")
                                 {
-                                    Text = $"Failed to send email to {toEmail}. {submessage}."
+                                    Text = $"Failed to send email by {FromEmail}.\nNow we use alternative email."
                                 };
                                 await client.SendAsync(notificationMessage);
                             }
-                            await client.DisconnectAsync(true);
                         }
                     }
+                    catch
+                    {
 
+                    }
                 }
-                catch (SmtpCommandException ex) when (ex.ErrorCode == SmtpErrorCode.MessageNotAccepted)
+                catch (SmtpCommandException ex) when (ex.ErrorCode == SmtpErrorCode.RecipientNotAccepted)
+                {
+                    try
+                    {
+                        if (submessage != "")
+                        {
+                            var AdminIds = await _context.UserRoles.Where(x => x.RoleId == "1").Select(x => x.UserId).ToListAsync();
+                            var admins = await _userManager.Users.Where(x => AdminIds.Contains(x.Id)).ToListAsync();
+                            if (admins.Any())
+                            {
+                                foreach (var admin in admins)
+                                {
+                                    var notificationMessage = new MimeMessage();
+                                    notificationMessage.From.Add(new MailboxAddress(schoolInfo.SchoolName, FromEmail));
+                                    notificationMessage.To.Add(new MailboxAddress("", admin.Email));
+                                    notificationMessage.Subject = "Failed to deliver email";
+                                    notificationMessage.Body = new TextPart("plain")
+                                    {
+                                        Text = $"Failed to send email to {toEmail}. {submessage}."
+                                    };
+                                    await client.SendAsync(notificationMessage);
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                catch (Exception)
                 {
 
                 }
-                catch (SmtpCommandException ex) when (ex.ErrorCode == SmtpErrorCode.UnexpectedStatusCode)
+                finally
                 {
 
+                    try
+                    {
+                        await client.DisconnectAsync(true);
+                    }
+                    catch
+                    {
+
+                    }
                 }
-
-
             }
+
         }
 
 

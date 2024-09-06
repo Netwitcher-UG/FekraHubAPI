@@ -75,20 +75,21 @@ namespace FekraHubAPI.Repositories.Implementations
             }
         }
         public async Task<IQueryable<TResult>> GetRelation<TResult>(
-                Expression<Func<T, bool>>? singlePredicate = null,
-                List<Expression<Func<T, bool>>>? predicates = null,
-                Expression<Func<T, TResult>>? selector = null)
+                Expression<Func<T, bool>>? where = null,
+                List<Expression<Func<T, bool>>>? manyWhere = null,
+                Expression<Func<T, TResult>>? selector = null,
+                Func<IQueryable<T>, IQueryable<T>>? include = null)
         {
             IQueryable<T> query = _dbSet.AsQueryable();
 
-            if (singlePredicate != null)
+            if (where != null)
             {
-                query = query.Where(singlePredicate);
+                query = query.Where(where);
             }
 
-            if (predicates != null)
+            if (manyWhere != null)
             {
-                foreach (var predicate in predicates)
+                foreach (var predicate in manyWhere)
                 {
                     if (predicate != null)
                     {
@@ -96,7 +97,10 @@ namespace FekraHubAPI.Repositories.Implementations
                     }
                 }
             }
-
+            if (include != null)
+            {
+                query = include(query);
+            }
             if (selector != null)
             {
                 return await Task.FromResult(query.Select(selector));

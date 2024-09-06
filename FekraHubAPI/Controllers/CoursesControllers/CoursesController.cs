@@ -189,7 +189,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
         public class MapCourseSchedule
         {
-            public string[] TeacherId { get; set; }
+            public string[]? TeacherId { get; set; }
             public Map_Course course { get; set; }
             public List<Map_CourseSchedule> courseSchedule { get; set; }
         }
@@ -207,11 +207,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         {
                             return BadRequest("The teacherId is required!!");
                         }
-                        var teachers = (await _teacherRepository.GetRelation<ApplicationUser>(n => mapCourseSchedule.TeacherId.Contains(n.Id))).ToList();
-                        if (!teachers.Any())
-                        {
-                            return BadRequest("The teacherId does not exist");
-                        }
+                        
 
 
                         var room = (await _roomRepo.GetRelation<Room>(x => x.Id == mapCourseSchedule.course.RoomId))
@@ -233,7 +229,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                             RoomId = mapCourseSchedule.course.RoomId,
                             Teacher = new List<ApplicationUser>()
                         };
-                        courseEntity.Teacher = teachers;
+                        if (mapCourseSchedule.TeacherId != null)
+                        {
+                            var teachers = (await _teacherRepository.GetRelation<ApplicationUser>(n =>
+                            mapCourseSchedule.TeacherId.Contains(n.Id))).ToList();
+                            courseEntity.Teacher = teachers;
+                        }
+                        
                         await _courseRepository.Add(courseEntity);
 
                         List<CourseSchedule> courseSchedules = new List<CourseSchedule>();

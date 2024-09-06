@@ -39,7 +39,7 @@ namespace FekraHubAPI.EmailSender
         }
 
         private async Task SendEmail(string emailServer, int emailPortNumber,string fromEmail,string password,
-            string SchoolName , string toEmail, string subject, string body,
+            string SchoolName , List<string> toEmail, string subject, string body,
             bool isBodyHTML,string? submessage = "", byte[]? pdf = null, string? pdfName = null)
         {
             
@@ -50,7 +50,20 @@ namespace FekraHubAPI.EmailSender
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(SchoolName, FromEmail));
-            message.To.Add(new MailboxAddress("", toEmail));
+            if (toEmail.Count > 99) { }/////////////////////////////////////////////////////
+            //foreach(var email in toEmail)
+            //{
+            //    message.Bcc.Add(new MailboxAddress("", email));
+            //}
+            List<string> x = new List<string>()
+            {
+                "abog5464@gmail.com","baselios.com.net.sy7@gmail.com","basel.slaby@gmail.com","abog5461@gmail.com"
+            };
+            foreach(var email in x)
+            {
+                message.Bcc.Add(new MailboxAddress("", email));
+            }
+            
             message.Subject = subject;
             
             var bodyBuilder = new BodyBuilder
@@ -86,18 +99,18 @@ namespace FekraHubAPI.EmailSender
                         var admins = await _userManager.Users.Where(x => AdminIds.Contains(x.Id)).ToListAsync();
                         if (admins.Any())
                         {
+                            var notificationMessage = new MimeMessage();
+                            notificationMessage.From.Add(new MailboxAddress(SchoolName, "abog9022@gmail.com"));
+                            notificationMessage.Subject = "Failed to use school email";
+                            notificationMessage.Body = new TextPart("plain")
+                            {
+                                Text = $"Failed to send email by {FromEmail}.\nNow we use alternative email."
+                            };
                             foreach (var admin in admins)
                             {
-                                var notificationMessage = new MimeMessage();
-                                notificationMessage.From.Add(new MailboxAddress(SchoolName, "abog9022@gmail.com"));
-                                notificationMessage.To.Add(new MailboxAddress("", admin.Email));
-                                notificationMessage.Subject = "Failed to use school email";
-                                notificationMessage.Body = new TextPart("plain")
-                                {
-                                    Text = $"Failed to send email by {FromEmail}.\nNow we use alternative email."
-                                };
-                                await client.SendAsync(notificationMessage);
+                                notificationMessage.Bcc.Add(new MailboxAddress("", admin.Email));
                             }
+                            await client.SendAsync(notificationMessage);
                         }
                     }
                     catch
@@ -115,18 +128,18 @@ namespace FekraHubAPI.EmailSender
                             var admins = await _userManager.Users.Where(x => AdminIds.Contains(x.Id)).ToListAsync();
                             if (admins.Any())
                             {
+                                var notificationMessage = new MimeMessage();
+                                notificationMessage.From.Add(new MailboxAddress(SchoolName, FromEmail));
+                                notificationMessage.Subject = "Failed to deliver email";
+                                notificationMessage.Body = new TextPart("plain")
+                                {
+                                    Text = $"Failed to send email to {toEmail.ToList()}. {submessage}."
+                                };
                                 foreach (var admin in admins)
                                 {
-                                    var notificationMessage = new MimeMessage();
-                                    notificationMessage.From.Add(new MailboxAddress(SchoolName, FromEmail));
-                                    notificationMessage.To.Add(new MailboxAddress("", admin.Email));
-                                    notificationMessage.Subject = "Failed to deliver email";
-                                    notificationMessage.Body = new TextPart("plain")
-                                    {
-                                        Text = $"Failed to send email to {toEmail}. {submessage}."
-                                    };
-                                    await client.SendAsync(notificationMessage);
+                                    notificationMessage.Bcc.Add(new MailboxAddress("", admin.Email));
                                 }
+                                await client.SendAsync(notificationMessage);
                             }
                         }
                     }
@@ -396,7 +409,7 @@ a[x-apple-data-detectors],
                 try
                 {
                     await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                        school.SchoolName ?? "", user.Email ?? "", "Please Confirm Your Email", Message(content, school.SchoolName ?? ""), true);
+                        school.SchoolName ?? "", [user.Email] , "Please Confirm Your Email", Message(content, school.SchoolName ?? ""), true);
                     return new OkResult();
                 }
                 catch (Exception ex)
@@ -502,7 +515,7 @@ a[x-apple-data-detectors],
             try
             {
                 await SendEmail(school.EmailServer ??"", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", user.Email ?? "", "Please Confirm Your Email",
+                    school.SchoolName ?? "", [user.Email], "Please Confirm Your Email",
                     Message(content, school.SchoolName ?? ""), true, "confirming an account link + login details");
                 return new OkResult();
             }
@@ -595,7 +608,7 @@ a[x-apple-data-detectors],
             try
             {
                 await SendEmail(school.EmailServer ?? "" , school.EmailPortNumber, school.FromEmail ?? "" , school.Password ?? "" ,
-                   school.SchoolName ?? "", parent.Email ?? "", "Registration Confirmation", Message(content,school.SchoolName??""),
+                   school.SchoolName ?? "", [parent.Email], "Registration Confirmation", Message(content,school.SchoolName??""),
                     true,$"a new student named <b>{student.FirstName} {student.LastName}</b> has been registered successfully + copy of the contract",
                     contracts, pdfName + ".pdf");
                 return new OkResult();
@@ -612,13 +625,13 @@ a[x-apple-data-detectors],
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
                 .SingleAsync();
             var admins = await _userManager.Users
-                    .Where(user => _context.UserRoles
+                    .Where(admin => admin.EmailConfirmed == true && _context.UserRoles
                         .Where(role => role.RoleId == "1")
                         .Select(role => role.UserId)
-                        .Contains(user.Id))
+                        .Contains(admin.Id))
+                    .Select(x => x.Email)
                     .ToListAsync();
-            foreach (var admin in admins)
-            {
+            
 
 
                 var content = @$"
@@ -637,7 +650,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {admin.FirstName} {admin.LastName}</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Greetings</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">{school.SchoolName} would like to tell you some new information about your school ,</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">A new family has been added .</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">​</p><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap""><strong>family information :</strong></p>
@@ -685,9 +698,9 @@ a[x-apple-data-detectors],
               </table>
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                   school.SchoolName ?? "", admin?.Email ?? "", "New User Registered", Message(content, school.SchoolName ?? ""),
+                   school.SchoolName ?? "", admins, "New User Registered", Message(content, school.SchoolName ?? ""),
                    true);
-            }
+            
         }
         public async Task SendToAdminNewStudent(Student student)
         {
@@ -695,15 +708,15 @@ a[x-apple-data-detectors],
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
                 .SingleAsync();
             var admins = await _userManager.Users
-                    .Where(user => _context.UserRoles
+                    .Where(user => user.EmailConfirmed == true && _context.UserRoles
                         .Where(role => role.RoleId == "1")
                         .Select(role => role.UserId)
                         .Contains(user.Id))
+                    .Select(x => x.Email)
                     .ToListAsync();
             var user = await _userManager.Users.Where(x => x.Id == student.ParentID).SingleAsync();
             var courseSelectedName = await _context.Courses.Where(x => x.Id == student.CourseID).SingleAsync();
-            foreach (var admin in admins)
-            {
+           
 
 
                 var content = @$"
@@ -722,7 +735,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {admin.FirstName} {admin.LastName}</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Greetings</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">{school.SchoolName} would like to tell you some new information about your school ,</p>
@@ -785,45 +798,33 @@ a[x-apple-data-detectors],
               </table>
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                   school.SchoolName ?? "", admin?.Email ?? "", "New student Registered", Message(content, school.SchoolName ?? ""), true);
-            }
+                   school.SchoolName ?? "", admins, "New student Registered", Message(content, school.SchoolName ?? ""), true);
+            
         }
 
-        public async Task SendToAllNewEvent(List<int?> corsesId)//////////////
+        public async Task SendToAllNewEvent(List<int?> corsesId)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
                 .SingleAsync();
+            var emails = await _userManager.Users
+                        .Where(u => u.EmailConfirmed == true && _context.Courses.Where(c => corsesId.Contains(c.Id))
+                                                     .SelectMany(c => c.Teacher)
+                                                     .Select(t => t.Id)
+                                                     .Union(
+                                                         _context.UserRoles.Where(r => r.RoleId == "1" || r.RoleId == "2")
+                                                                           .Select(r => r.UserId)
+                                                     ).Contains(u.Id)
+                                 || _context.Students.Where(s => corsesId.Contains(s.CourseID))
+                                                     .Select(s => s.ParentID)
+                                                     .Contains(u.Id))
+                        .Select(x => x.Email)
+                        .ToListAsync();
+            
+            //foreach (var student in students)
+            //{
 
-            var AdminSecrTeacher = await _userManager.Users
-                .Where(u => _context.Courses.Where(c => corsesId.Contains(c.Id))
-                                             .SelectMany(c => c.Teacher)
-                                             .Select(t => t.Id)
-                                             .Union(
-                                                 _context.UserRoles.Where(r => r.RoleId == "1" || r.RoleId == "2")
-                                                                   .Select(r => r.UserId)
-                                             ).Contains(u.Id))
-                .Select(x => new { x.Id, x.FirstName, x.LastName, x.Email })
-                .ToListAsync();
 
-            var students = await _context.Students
-                .Where( x => corsesId.Contains( x.CourseID) )
-                .Include(x => x.User)
-                .Select(z => new {
-                    z.FirstName,
-                    z.LastName,
-                    User = new
-                    {
-                        z.User.FirstName,
-                        z.User.LastName,
-                        z.User.Email
-                    }
-
-                }).ToListAsync();
-            foreach (var student in students)
-            {
-                
-                   
 
                     var content = @$"
 
@@ -842,15 +843,12 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {student.User.FirstName} {student.User.LastName}</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Greetings</h2></td>
                             </tr>
                             <tr>
-                             <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">{school.SchoolName} would like to tell you some new information about your children</p>
+                             <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">{school.SchoolName} would like to tell you some new information about our student</p>
 <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">​</p>
-<p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap""><strong>Children Name :</strong></p>
-                              <ul style=""font-family:arial, 'helvetica neue', helvetica, sans-serif;padding:0px 0px 0px 40px;margin:15px 0px;white-space:nowrap"">
-                              <li style=""color:#333333;margin:0px 0px 15px;font-size:14px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;mso-margin-top-alt:15px"">{student.FirstName} {student.LastName}</p></li>
-                              </ul>
+
                               <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">A new event has been added .</p>
                               <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">For more information, please go to the events page on our official website or click the button to be directed to the event's page<a target=""_blank"" href="""" style=""mso-line-height-rule:exactly;text-decoration:underline;color:#5C68E2;font-size:14px;line-height:21px""> event's page </a></p>
                             </td>
@@ -886,71 +884,71 @@ a[x-apple-data-detectors],
             
 ";
                     await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                   school.SchoolName ?? "", student.User.Email ?? "", "New Event", Message(content, school.SchoolName ?? ""), true, "A new event has been added");
+                   school.SchoolName ?? "", emails, "New Event", Message(content, school.SchoolName ?? ""), true, "A new event has been added");
                 
-            }
-            foreach (var user in AdminSecrTeacher)
-            {
-                var content = @$" <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
-                <tr>
-                 <td align=""center"" style=""padding:0;Margin:0"">
-                  <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-content-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px"">
-                    <tr>
-                     <td align=""left"" style=""Margin:0;padding-right:20px;padding-left:20px;padding-top:30px;padding-bottom:10px"">
-                      <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                        <tr>
-                         <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
-                          <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                            <tr>
-                             <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
-                            </tr>
-                            <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {user.FirstName} {user.LastName}</h2></td>
-                            </tr>
-                            <tr>
-                             <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
-                            <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">{school.SchoolName} would like to tell you some new information about your students</p>
+//            }
+//            foreach (var user in AdminSecrTeacher)
+//            {
+//                var content = @$" <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
+//                <tr>
+//                 <td align=""center"" style=""padding:0;Margin:0"">
+//                  <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-content-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px"">
+//                    <tr>
+//                     <td align=""left"" style=""Margin:0;padding-right:20px;padding-left:20px;padding-top:30px;padding-bottom:10px"">
+//                      <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+//                        <tr>
+//                         <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
+//                          <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+//                            <tr>
+//                             <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
+//                            </tr>
+//                            <tr>
+//                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {user.FirstName} {user.LastName}</h2></td>
+//                            </tr>
+//                            <tr>
+//                             <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
+//                            <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">{school.SchoolName} would like to tell you some new information about your students</p>
                              
-                              <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">A new event has been added .</p>
-                            </td>
-                            </tr>
-                            <tr>
-                             <td align=""center"" style=""padding:20px;Margin:0;font-size:0"">
-                              <table cellpadding=""0"" cellspacing=""0"" border=""0"" width=""5%"" height=""100%"" class=""es-spacer"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                                <tr>
-                                 <td style=""padding:0;Margin:0;width:100%;margin:0px;border-bottom:1px solid #cccccc;background:none;height:1px""></td>
-                                </tr>
-                              </table></td>
-                            </tr>
-                          </table></td>
-                        </tr>
-                      </table></td>
-                    </tr>
-                    <tr>
-                     <td align=""left"" style=""padding:0;Margin:0;padding-right:20px;padding-left:20px;padding-bottom:30px"">
-                      <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                        <tr>
-                         <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
-                          <table cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;border-radius:5px"" role=""presentation"">
-                            <tr>
-                             <td align=""left"" class=""es-m-p0r es-m-p0l es-text-5335"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><br></p><p style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><span class=""es-text-mobile-size-12 es-override-size"">Thank you for your time</span></p></td>
-                            </tr>
-                          </table></td>
-                        </tr>
-                      </table></td>
-                    </tr>
-                  </table></td>
-                </tr>
-              </table>
+//                              <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">A new event has been added .</p>
+//                            </td>
+//                            </tr>
+//                            <tr>
+//                             <td align=""center"" style=""padding:20px;Margin:0;font-size:0"">
+//                              <table cellpadding=""0"" cellspacing=""0"" border=""0"" width=""5%"" height=""100%"" class=""es-spacer"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+//                                <tr>
+//                                 <td style=""padding:0;Margin:0;width:100%;margin:0px;border-bottom:1px solid #cccccc;background:none;height:1px""></td>
+//                                </tr>
+//                              </table></td>
+//                            </tr>
+//                          </table></td>
+//                        </tr>
+//                      </table></td>
+//                    </tr>
+//                    <tr>
+//                     <td align=""left"" style=""padding:0;Margin:0;padding-right:20px;padding-left:20px;padding-bottom:30px"">
+//                      <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+//                        <tr>
+//                         <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
+//                          <table cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;border-radius:5px"" role=""presentation"">
+//                            <tr>
+//                             <td align=""left"" class=""es-m-p0r es-m-p0l es-text-5335"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><br></p><p style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><span class=""es-text-mobile-size-12 es-override-size"">Thank you for your time</span></p></td>
+//                            </tr>
+//                          </table></td>
+//                        </tr>
+//                      </table></td>
+//                    </tr>
+//                  </table></td>
+//                </tr>
+//              </table>
 
-";
-                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", user.Email ?? "", "", Message(content, school.SchoolName ?? ""), true, "A new event has been added");
-            }
+//";
+//                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+//                    school.SchoolName ?? "", user.Email ?? "", "", Message(content, school.SchoolName ?? ""), true, "A new event has been added");
+//            }
 
         }
 
-        public async Task SendToParentsNewFiles(int coursId)/////////////////////
+        public async Task SendToParentsNewFiles(int coursId)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -959,12 +957,12 @@ a[x-apple-data-detectors],
             var students = await _context.Students
             .Where(x => x.CourseID == coursId)
             .Include(x => x.User)
-            .Select(z => new { z.FirstName, z.LastName, parent = new { z.User.FirstName, z.User.LastName, z.User.Email } })
+            .Where(x => x.User.EmailConfirmed == true)
+            .Select(z =>  z.User.Email  )
             .ToListAsync();
 
 
-            foreach (var student in students)
-            {
+            
 
 
                 var content = @$"
@@ -983,16 +981,13 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {student.parent.FirstName} {student.parent.LastName}</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Greetings</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
 <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">{school.SchoolName} would like to tell you some new information about your children</p>
 <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">​</p>
-<p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap""><strong>Children Name :</strong></p>
-                              <ul style=""font-family:arial, 'helvetica neue', helvetica, sans-serif;padding:0px 0px 0px 40px;margin:15px 0px;white-space:nowrap"">
-                              <li>{student.FirstName} {student.LastName}</li>
-                              </ul>
+
                               <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">A new file has been added .</p>
                               <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">For more information, please go to the events page on our official <a target=""_blank"" href="""" style=""mso-line-height-rule:exactly;text-decoration:underline;color:#5C68E2;font-size:14px;line-height:21px""> website</a></p>
                             </td>
@@ -1028,9 +1023,9 @@ a[x-apple-data-detectors],
 
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", student.parent.Email ?? "", "New Files", Message(content, school.SchoolName ?? ""), true, "A new file has been added ");
+                school.SchoolName ?? "", students, "New Files", Message(content, school.SchoolName ?? ""), true, "A new file has been added ");
 
-            }
+            
 
 
         }
@@ -1042,12 +1037,12 @@ a[x-apple-data-detectors],
                 .SingleAsync();
             
             var Secretaries = await _userManager.Users
-                         .Where(user => _context.UserRoles
+                         .Where(user => user.EmailConfirmed == true && _context.UserRoles
                             .Where(x => x.RoleId == "2")
                             .Select(x => x.UserId).Contains(user.Id))
+                         .Select(x => x.Email)
                          .ToListAsync();
-            foreach (var Secretary in Secretaries)
-            {
+           
                 var content = @$"
  <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
                 <tr>
@@ -1063,7 +1058,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {Secretary.FirstName} {Secretary.LastName}</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Greetings</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
@@ -1103,8 +1098,8 @@ a[x-apple-data-detectors],
 
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", Secretary.Email??"", "", Message(content, school.SchoolName ?? ""), true, "New reports has been added .", null, null);
-            }
+                school.SchoolName ?? "", Secretaries, "", Message(content, school.SchoolName ?? ""), true, "New reports has been added .", null, null);
+            
 
         }
         public async Task SendToSecretaryUpdateReportsForStudents()
@@ -1114,12 +1109,12 @@ a[x-apple-data-detectors],
                 .SingleAsync();
             
             var Secretaries = await _userManager.Users
-                         .Where(user => _context.UserRoles
+                         .Where(user => user.EmailConfirmed == true && _context.UserRoles
                             .Where(x => x.RoleId == "2")
                             .Select(x => x.UserId).Contains(user.Id))
+                         .Select(x => x.Email)
                          .ToListAsync();
-            foreach (var Secretary in Secretaries)
-            {
+            
                 var content = @$"
  <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
                 <tr>
@@ -1135,7 +1130,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {Secretary.FirstName} {Secretary.LastName}</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Greetings</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
@@ -1175,8 +1170,8 @@ a[x-apple-data-detectors],
 
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", Secretary.Email ?? "", "", Message(content, school.SchoolName ?? ""), true, "Some reports has been updated .", null, null);
-            }
+                school.SchoolName ?? "", Secretaries, "", Message(content, school.SchoolName ?? ""), true, "Some reports has been updated .", null, null);
+            
 
         }
         public async Task SendToParentsNewReportsForStudents(List<Student> students)
@@ -1186,14 +1181,12 @@ a[x-apple-data-detectors],
                 .SingleAsync();
             var parentIds = students.Select(s => s.ParentID).Distinct().ToList();
             var parents = await _userManager.Users
-                .Where(x => parentIds.Contains(x.Id))
-                .Select(x => new { x.Id, x.FirstName, x.LastName, x.Email })
-                .ToDictionaryAsync(x => x.Id);
+                .Where(x => x.EmailConfirmed == true && parentIds.Contains(x.Id))
+                .Select(x =>x.Email )
+                .ToListAsync();
 
-            foreach (var student in students)
-            {
-                if (parents.TryGetValue(student.ParentID, out var parent))
-                {
+           
+                
                     var content = @$"
 
  <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
@@ -1210,16 +1203,13 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hello {parent.FirstName} {parent.LastName}</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Greetings</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
 <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">{school.SchoolName} would like to tell you some new information about your children</p>
 <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">​</p>
-<p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;""><strong>Children Name :</strong></p>
-                              <ul style=""font-family:arial, 'helvetica neue', helvetica, sans-serif;padding:0px 0px 0px 40px;margin:15px 0px;white-space:nowrap"">
-                              <li>{student.FirstName} {student.LastName}</li>
-                              </ul>
+
                               <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">A new report has been added .</p>
                               <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">For more information, please go to the reports page on our official <a target=""_blank"" href="""" style=""mso-line-height-rule:exactly;text-decoration:underline;color:#5C68E2;font-size:14px;line-height:21px""> website</a></p>
                             </td>
@@ -1256,11 +1246,11 @@ a[x-apple-data-detectors],
 
 ";
                     await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", parent.Email ?? "", "New Reports", Message(content, school.SchoolName ?? ""), true, "A new report has been added .");
+                school.SchoolName ?? "", parents, "New Reports", Message(content, school.SchoolName ?? ""), true, "A new report has been added .");
 
-                }
+                
 
-            }
+            
         }
 
         public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId,string teacherId)
@@ -1272,6 +1262,7 @@ a[x-apple-data-detectors],
             if (await _studentRepo.IsTeacherIDExists(teacherId))
             {
                 var teacher = await _userManager.FindByIdAsync(teacherId);
+                if (teacher != null) { 
                 var content = @$"
 <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
                 <tr>
@@ -1331,10 +1322,10 @@ a[x-apple-data-detectors],
 
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", teacher.Email ?? "", "", Message(content, school.SchoolName ?? ""), true,
+                    school.SchoolName ?? "", [teacher.Email], "", Message(content, school.SchoolName ?? ""), true,
                     "a report has been not accepteds .");
 
-
+                }
 
 
             }
@@ -1346,7 +1337,9 @@ a[x-apple-data-detectors],
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
                 .SingleAsync();
             var user = await _userManager.FindByEmailAsync(email);
-            var content = $@"
+            if (user != null)
+            {
+                var content = $@"
 <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
          <tr>
           <td align=""center"" style=""padding:0;Margin:0"">
@@ -1408,10 +1401,10 @@ a[x-apple-data-detectors],
        </table>
 
                     ";
-            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", email ?? "", "Reset Password", Message(content, school.SchoolName ?? ""), true, "forget password link");
+                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+                        school.SchoolName ?? "", [email], "Reset Password", Message(content, school.SchoolName ?? ""), true, "forget password link");
+            }
         }
-
         
     }
 }

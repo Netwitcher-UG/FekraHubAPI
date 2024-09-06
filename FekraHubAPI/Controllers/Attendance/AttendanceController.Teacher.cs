@@ -11,6 +11,14 @@ namespace FekraHubAPI.Controllers.Attendance
 {
     public partial class AttendanceController
     {
+        [Authorize]
+        [HttpGet("TeachersName")]
+        public async Task<IActionResult> GetTeachers()
+        {
+            var x = await _userManager.GetUsersInRoleAsync("Teacher");
+            return Ok(x.Select(x => new { x.Id, x.FirstName, x.LastName }));
+        }
+
         [Authorize(Policy = "GetTeachersAttendance")]
         [HttpGet("TeacherAttendance/{Id}")]
         public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendance(string Id)

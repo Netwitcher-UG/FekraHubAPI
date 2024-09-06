@@ -51,19 +51,12 @@ namespace FekraHubAPI.EmailSender
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(SchoolName, FromEmail));
             if (toEmail.Count > 99) { }/////////////////////////////////////////////////////
-            //foreach(var email in toEmail)
-            //{
-            //    message.Bcc.Add(new MailboxAddress("", email));
-            //}
-            List<string> x = new List<string>()
-            {
-                "abog5464@gmail.com","baselios.com.net.sy7@gmail.com","basel.slaby@gmail.com","abog5461@gmail.com"
-            };
-            foreach(var email in x)
+            foreach (var email in toEmail)
             {
                 message.Bcc.Add(new MailboxAddress("", email));
             }
-            
+
+
             message.Subject = subject;
             
             var bodyBuilder = new BodyBuilder

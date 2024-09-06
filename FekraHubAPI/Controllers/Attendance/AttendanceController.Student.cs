@@ -32,16 +32,16 @@ namespace FekraHubAPI.Controllers.Attendance
                 IQueryable<StudentAttendance> query = (await _studentAttendanceRepo.GetRelation<StudentAttendance>(
                                                     x => x.StudentID == Id))
                                                     .OrderByDescending(x => x.date);
-                if (query.Any())
+                var result = await query.Select(sa => new
                 {
-                    var result = await query.Select(sa => new
-                    {
-                        id = sa.Id,
-                        Date = sa.date,
-                        course = new { sa.Course.Id, sa.Course.Name },
-                        student = new { sa.Student.Id, sa.Student.FirstName, sa.Student.LastName },
-                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
-                    }).ToListAsync();
+                    id = sa.Id,
+                    Date = sa.date,
+                    course = new { sa.Course.Id, sa.Course.Name },
+                    student = new { sa.Student.Id, sa.Student.FirstName, sa.Student.LastName },
+                    AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
+                }).ToListAsync();
+                if (result.Any())
+                {
                     return Ok(result);
                 }
                 else

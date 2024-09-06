@@ -54,11 +54,11 @@ namespace FekraHubAPI.Controllers.Attendance
 
         [Authorize(Policy = "ManageAttendanceStatus")]
         [HttpGet("AttendanceStatus")]
-        public async Task<ActionResult<IEnumerable<StudentAttendance>>> GetAttendanceStatus()
+        public async Task<ActionResult<IEnumerable<AttendanceStatus>>> GetAttendanceStatus()
         {
             try
             {
-                var attendanceStatus = await _attendanceStatusRepo.GetAll();
+                IEnumerable<AttendanceStatus> attendanceStatus = await _attendanceStatusRepo.GetAll();
                 if (!attendanceStatus.Any())
                 {
                     return Ok("There are no attendance status");

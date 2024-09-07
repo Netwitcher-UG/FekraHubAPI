@@ -134,7 +134,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         // POST: api/Locations
         [Authorize(Policy = "ManageLocations")]
         [HttpPost]
-        public async Task<ActionResult<Location>> PostLocation([FromForm] Map_location location)
+        public async Task<ActionResult<Location>> PostLocation([FromForm] Map_location location, [FromForm] List<string> rooms)
         {
             try
             {
@@ -144,7 +144,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 }
                 Location locationEntity = _mapper.Map<Location>(location);
                 await _locationRepository.Add(locationEntity);
-
+                List<Room> room = new List<Room>();
+                foreach (var r in rooms)
+                {
+                    room.Add(new Room { Name = r, LocationID = locationEntity.Id });
+                }
+                await _roomRepository.ManyAdd(room);
                 return Ok(new
                 {
                     locationEntity.Id,
@@ -153,6 +158,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     locationEntity.Street,
                     locationEntity.StreetNr,
                     locationEntity.ZipCode,
+                    Room = room.Select(r => new
+                    {
+                        r.Id,
+                        r.Name
+                    })
                 });
             }
             catch (Exception ex)

@@ -181,7 +181,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
         [Authorize(Policy = "UpdateTeachersAttendance")]
         [HttpPatch("Teacher")]
-        public async Task<IActionResult> UpdateTeacherAttendance([FromForm] int id, [FromForm] int statusId)
+        public async Task<IActionResult> UpdateTeacherAttendance( int id, int statusId)
         {
             
             try

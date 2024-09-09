@@ -6,9 +6,9 @@ namespace FekraHubAPI.MapModels
         public int TotalPages { get; set; }
         public int PageSize { get; set; }
         public int TotalCount { get; set; }
-        public IQueryable<T> Data { get; set; }
+        public List<T> Data { get; set; }
 
-        public PagedResponse(IQueryable<T> data, int count, int pageNumber, int pageSize)
+        public PagedResponse(List<T> data, int count, int pageNumber, int pageSize)
         {
             TotalCount = count;
             PageSize = pageSize;

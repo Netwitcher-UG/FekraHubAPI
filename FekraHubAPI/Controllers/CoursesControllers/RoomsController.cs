@@ -7,6 +7,7 @@ using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.IO;
 using System.Reflection.Emit;
 
@@ -36,21 +37,23 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                IQueryable<Room> rooms = (await _roomRepository.GetRelation<Room>());
-                var result = rooms.Select(x => new
-                {
-                    x.Id,
-                    x.Name,
-                    locationId = x.Location.Id,
-                    locationName = x.Location.Name,
-                    locationStreet = x.Location.Street,
-                    locationStreetNr = x.Location.StreetNr,
-                    locationZipCode = x.Location.ZipCode,
-                    locationCity = x.Location.City,
-
-
-                }).ToList();
-                return Ok(result);
+                var rooms = await _roomRepository.GetRelationList(
+                    include:x=>x.Include(l=>l.Location),
+                    selector: x => new
+                    {
+                        x.Id,
+                        x.Name,
+                        locationId = x.Location.Id,
+                        locationName = x.Location.Name,
+                        locationStreet = x.Location.Street,
+                        locationStreetNr = x.Location.StreetNr,
+                        locationZipCode = x.Location.ZipCode,
+                        locationCity = x.Location.City,
+                    },
+                    orderBy:x=>x.Name,
+                    asNoTracking:true
+                    );
+                return Ok(rooms);
             }
             catch (Exception ex)
             {
@@ -128,6 +131,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
                 var roomEntity = _mapper.Map<Room>(room);
                 await _roomRepository.Add(roomEntity);
                 return Ok(new
@@ -152,12 +159,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try 
             {
-                var room = await _roomRepository.GetById(id);
-                if (room == null)
+                var room = await _roomRepository.DataExist(x=> x.Id == id);
+                if (!room)
                 {
                     return NotFound();
                 }
-                var CourseExist = (await _CourseRepository.GetRelation<Course>(n => n.RoomId == id)).Any();
+                var CourseExist = await _CourseRepository.DataExist(n => n.RoomId == id);
                 if (CourseExist)
                 {
                     return BadRequest("This room contains Courses !!");

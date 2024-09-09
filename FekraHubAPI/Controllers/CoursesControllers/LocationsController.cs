@@ -7,6 +7,7 @@ using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers.CoursesControllers
 {
@@ -33,12 +34,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                var locations = await _locationRepository.GetRelation<Location>();
+                var locations = await _locationRepository.GetRelationList(
+                    selector: x => new { x.Id, x.Name },
+                    orderBy:x=>x.Id,
+                    asNoTracking:true);
                 if (locations == null)
                 {
                     return NotFound("no locations found");
                 }
-                return Ok(locations.Select(x => new { x.Id, x.Name }));
+                return Ok(locations);
             }
             catch (Exception ex)
             {
@@ -53,12 +57,31 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                var locations = (await _locationRepository.GetRelation<Location>(
-                search != null ? x => x.Name.Contains(search) || x.Street.Contains(search) || x.StreetNr.Contains(search)
-                || x.ZipCode.Contains(search) || x.City.Contains(search) : null
-                )).OrderByDescending(x => x.Id);
+                var locations = await _locationRepository.GetRelationList(
+                where: search != null ? x =>
+                x.Name.Contains(search) ||
+                x.Street.Contains(search) || 
+                x.StreetNr.Contains(search) ||
+                x.ZipCode.Contains(search) ||
+                x.City.Contains(search) : null,
+                include:x=>x.Include(z=>z.room),
+                orderBy:x=>x.Id,
+                selector: x => new 
+                {
+                    x.Id,
+                    x.Name,
+                    x.City,
+                    x.Street,
+                    x.StreetNr,
+                    x.ZipCode,
+                    Room = x.room.Select(z => new { 
+                        z.Id,
+                        z.Name
+                    }) 
+                },
+                asNoTracking:true);
 
-                return Ok(locations.Select(x => new { x.Id, x.Name, x.City, x.Street, x.StreetNr, x.ZipCode, Room = x.room.Select(z => new { z.Id, z.Name }) }));
+                return Ok(locations);
             }
             catch (Exception ex)
             {
@@ -89,14 +112,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "LocationsController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
 
 
         // PUT: api/Locations/5
-        [Authorize(Policy = "ManageLocations")]
+        
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl, [FromForm] List<string> rooms)
+        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl , [FromForm] List<string> rooms)
         {
             try
             {
@@ -143,7 +166,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "LocationsController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
         // POST: api/Locations
         [Authorize(Policy = "ManageLocations")]
@@ -193,12 +216,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try 
             {
-                var location = await _locationRepository.GetById(id);
-                if (location == null)
+                var location = await _locationRepository.DataExist(x=>x.Id == id);
+                if (!location)
                 {
                     return NotFound();
                 }
-                var roomExist = (await _roomRepository.GetRelation<Room>(n => n.LocationID == id)).Any();
+                var roomExist = await _roomRepository.DataExist(n => n.LocationID == id);
                 if (roomExist)
                 {
                     return BadRequest("This Location contains Rooms !!");

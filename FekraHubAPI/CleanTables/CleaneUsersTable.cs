@@ -29,16 +29,19 @@ namespace FekraHubAPI.CleanTables
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 //================ email was registerd 30 days ago to delete ===============
                 var thresholdDate = DateTime.UtcNow.AddDays(-30);
-
-                var unconfirmedUsers = context.ApplicationUser
+                try
+                {
+                    var unconfirmedUsers = context.ApplicationUser
                     .Where(u => !u.EmailConfirmed && u.RegistrationDate <= thresholdDate)
                     .ToList();
 
-                if (unconfirmedUsers.Any())
-                {
-                    context.Users.RemoveRange(unconfirmedUsers);
-                    await context.SaveChangesAsync();
+                    if (unconfirmedUsers.Any())
+                    {
+                        context.Users.RemoveRange(unconfirmedUsers);
+                        await context.SaveChangesAsync();
+                    }
                 }
+                catch (Exception) { }
             }
         }
     }

@@ -2,6 +2,8 @@
 using DinkToPdf.Contracts;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.Repositories.Interfaces;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -50,20 +52,28 @@ namespace FekraHubAPI.ExportReports
         }
         private async Task<string> ReportHtmlPage(int id)
         {
-            var logo = (await _schoolInfoRepo.GetRelation<string>(null ,null ,x => x.LogoBase64 ?? "")).FirstOrDefault();
-            var reportData = (await _reportRepo.GetRelation<Report>()).Where(x => x.Id == id).Select(x => new
-            {
-                x.data,
-                x.Student.FirstName,
-                x.Student.LastName,
-                x.Student.Birthday,
-                x.Student.Gender,
-                courseName = x.Student.Course.Name,
-                TeacherFirstName = x.User.FirstName,
-                TeacherLastName = x.User.LastName
-            }).FirstOrDefault();
+            var logo = await _schoolInfoRepo.GetRelationSingle(
+                selector: x => x.LogoBase64,
+                returnType: QueryReturnType.Single,
+                asNoTracking: true);
+            var reportData = await _reportRepo.GetRelationSingle(
+                where: x => x.Id == id,
+                include:x=>x.Include(s=>s.Student).ThenInclude(c=>c.Course).Include(u=>u.User),
+                selector: x => new
+                {
+                    x.data,
+                    x.Student.FirstName,
+                    x.Student.LastName,
+                    x.Student.Birthday,
+                    x.Student.Gender,
+                    courseName = x.Student.Course.Name,
+                    TeacherFirstName = x.User.FirstName,
+                    TeacherLastName = x.User.LastName
+                },
+                returnType:QueryReturnType.SingleOrDefault,
+                asNoTracking: true);
 
-
+            
             var dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(reportData.data);
 
             var htmlTableRows = new StringBuilder();

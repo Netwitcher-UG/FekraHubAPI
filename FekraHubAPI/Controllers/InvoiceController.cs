@@ -43,11 +43,13 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                IQueryable<Invoice> query = (await _invoiceRepository.GetRelation<Invoice>(
-                !string.IsNullOrEmpty(search) ? x => x.Student.FirstName.Contains(search) || x.Student.LastName.Contains(search) : null
-
-                ));
-                var result = query.Select(x => new
+                var query = await _invoiceRepository.GetRelationList(
+                where: !string.IsNullOrEmpty(search) ? x => 
+                x.Student.FirstName.Contains(search) ||
+                x.Student.LastName.Contains(search) : null,
+                include:x=>x.Include(s=>s.Student),
+                orderBy:x=>x.Date,
+                selector: x => new
                 {
                     x.Id,
                     x.FileName,
@@ -58,11 +60,11 @@ namespace FekraHubAPI.Controllers
                         x.Student.FirstName,
                         x.Student.LastName
                     }
+                },
+                asNoTracking:true
+                );
 
-
-                }).ToList();
-
-                return Ok(result);
+                return Ok(query);
             }
             catch (Exception ex)
             {
@@ -78,31 +80,30 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var student = await _studentRepository.GetById(studentId);
-                if (student == null)
+                var student = await _studentRepository.DataExist(x=> x.Id == studentId);
+                if (!student)
                 {
                     return BadRequest("Student not found");
                 }
                
-                IQueryable<Invoice> query = (await _invoiceRepository.GetRelation<Invoice>()).Where(x => x.Studentid == studentId);
-                if (!query.Any())
-                {
-                    return NotFound("No invoices found");
-                }
-                var result = query.Select(x => new
+                var result = await _invoiceRepository.GetRelationList(
+                where: x => x.Studentid == studentId,
+                include: x => x.Include(s => s.Student),
+                orderBy: x => x.Date,
+                selector: x => new
                 {
                     x.Id,
                     x.FileName,
                     x.Date,
-                    Student = x.Student == null ? null : new
+                    student = x.Student == null ? null : new
                     {
                         x.Student.Id,
                         x.Student.FirstName,
                         x.Student.LastName
                     }
-
-
-                }).ToList();
+                },
+                asNoTracking: true
+                );
 
                 return Ok(result);
             }
@@ -120,14 +121,18 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var query = (await _invoiceRepository.GetRelation<Invoice>()).Where(x => x.Id == Id);
+                var query = await _invoiceRepository.GetRelationSingle(
+                    where:x => x.Id == Id,
+                    selector:x=>x,
+                    returnType:QueryReturnType.SingleOrDefault,
+                    asNoTracking:true);
                 if (query == null)
                 {
                     return BadRequest("file not found");
                 }
 
 
-                var result = Convert.ToBase64String(query.First().file);
+                var result = Convert.ToBase64String(query.file);
 
                 return Ok(result);
             }
@@ -154,25 +159,29 @@ namespace FekraHubAPI.Controllers
                 {
                     return NotFound("This is not your child's information.");
                 }
-                IQueryable<Invoice> query = (await _invoiceRepository.GetRelation<Invoice>()).Where(x => x.Studentid == studentId);
-                if (!query.Any())
-                {
-                    return NotFound("No invoices found");
-                }
-                var result = query.Select(x => new
+                var result = await _invoiceRepository.GetRelationList(
+                where: x => x.Studentid == studentId,
+                include: x => x.Include(s => s.Student),
+                orderBy: x => x.Date,
+                selector: x => new
                 {
                     x.Id,
                     x.FileName,
                     x.Date,
-                    Student = x.Student == null ? null : new
+                    student = x.Student == null ? null : new
                     {
                         x.Student.Id,
                         x.Student.FirstName,
                         x.Student.LastName
                     }
-
-
-                }).ToList();
+                },
+                asNoTracking: true
+                );
+                if (!result.Any())
+                {
+                    return NotFound("No invoices found");
+                }
+               
 
                 return Ok(result);
             }
@@ -190,19 +199,18 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var query = (await _invoiceRepository.GetRelation<Invoice>()).Where(x => x.Id == Id);
+                var userId = _invoiceRepository.GetUserIDFromToken(User);
+                var query = await _invoiceRepository.GetRelationSingle(
+                    where: x => x.Id == Id && x.Student.ParentID == userId,
+                    selector:x=>x,
+                    returnType:QueryReturnType.SingleOrDefault,
+                    asNoTracking:true);
                 if (query == null)
                 {
                     return BadRequest("file not found");
                 }
 
-                var userId = _invoiceRepository.GetUserIDFromToken(User);
-                if (userId != query.Select(x => x.Student.ParentID).FirstOrDefault())
-                {
-                    return NotFound("This is not your child's information.");
-                }
-
-                var result = Convert.ToBase64String(query.First().file);
+                var result = Convert.ToBase64String(query.file);
 
                 return Ok(result);
             }
@@ -262,8 +270,8 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var student = await _studentRepository.GetById(studentId);
-                if (student == null)
+                var student = await _studentRepository.DataExist(x=>x.Id == studentId);
+                if (!student)
                 {
                     return NotFound("student not found.");
                 }
@@ -303,8 +311,8 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var invoice = await _invoiceRepository.GetById(id);
-                if (invoice == null)
+                var invoice = await _invoiceRepository.DataExist(x=> x.Id == id);
+                if (!invoice)
                 {
                     return NotFound();
                 }

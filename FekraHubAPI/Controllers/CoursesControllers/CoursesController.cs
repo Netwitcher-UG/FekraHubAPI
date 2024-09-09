@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq.Expressions;
 using static FekraHubAPI.Controllers.CoursesControllers.CoursesController;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -49,16 +50,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 var userId = _courseRepository.GetUserIDFromToken(User);
                 var Teacher = await _courseRepository.IsTeacherIDExists(userId);
-                IQueryable<Course> courses = await _courseRepository.GetRelation<Course>();
-                if (Teacher)
-                {
-                    courses = courses.Where(z => z.Teacher.Select(n => n.Id).Contains(userId));
-                }
+                var courses = await _courseRepository.GetRelationList(
+                    where: Teacher ? z => z.Teacher.Select(n => n.Id).Contains(userId) : null,
+                    selector: x => new { x.Id, x.Name },
+                    asNoTracking:true
+                    );
+                
                 if (courses == null)
                 {
                     return NotFound("no course found");
                 }
-                return Ok(courses.Select(x => new { x.Id, x.Name }));
+                return Ok(courses);
             }
             catch (Exception ex)
             {
@@ -80,42 +82,41 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var userId = _courseRepository.GetUserIDFromToken(User);
                 var Teacher = await _courseRepository.IsTeacherIDExists(userId);
 
-                IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(search == null ? null : x => x.Name.Contains(search));
-                if (Teacher)
-                {
-                    courses = courses.Where(z => z.Teacher.Select(n => n.Id).Contains(userId));
-                }
-
-
-                var result = await courses.Select(sa => new
-                {
-                    id = sa.Id,
-                    name = sa.Name,
-                    price = sa.Price,
-                    lessons = sa.Lessons,
-                    capacity = sa.Capacity,
-                    startDate = sa.StartDate,
-                    endDate = sa.EndDate,
-                    Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
-                    Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name },
-                    Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
+                var courses = await _courseRepository.GetRelationList(
+                    manyWhere: new List<Expression<Func<Course, bool>>?>
                     {
-                        z.Id,
-                        z.FirstName,
-                        z.LastName
-                    }),
-                    CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
+                        search != null ? (Expression<Func<Course, bool>>)(x => x.Name.Contains(search)) : null,
+                        Teacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Select(n => n.Id).Contains(userId)) : null,
+                    }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
+                    include:x => x.Include(r => r.Room).Include(l=>l.Room.Location).Include(t=>t.Teacher).Include(c=>c.CourseSchedule),
+                    selector: sa => new
                     {
-                        x.Id,
-                        x.DayOfWeek,
-                        x.StartTime,
-                        x.EndTime
-                    })
+                        id = sa.Id,
+                        name = sa.Name,
+                        price = sa.Price,
+                        lessons = sa.Lessons,
+                        capacity = sa.Capacity,
+                        startDate = sa.StartDate,
+                        endDate = sa.EndDate,
+                        Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
+                        Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name },
+                        Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
+                        {
+                            z.Id,
+                            z.FirstName,
+                            z.LastName
+                        }),
+                        CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
+                        {
+                            x.Id,
+                            x.DayOfWeek,
+                            x.StartTime,
+                            x.EndTime
+                        })
+                    },
+                    asNoTracking:true );
 
-
-
-                }).ToListAsync();
-                return Ok(result);
+                return Ok(courses);
             }
             catch (Exception ex)
             {
@@ -135,47 +136,46 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 var userId = _courseRepository.GetUserIDFromToken(User);
                 var Teacher = await _courseRepository.IsTeacherIDExists(userId);
-                IQueryable<Course> courses = await _courseRepository.GetRelation<Course>(x => x.Id == id);
-
-                if (Teacher)
-                {
-                    courses = courses.Where(z => z.Teacher.Select(n => n.Id).Contains(userId));
-
-
-                }
+                var courses = await _courseRepository.GetRelationSingle(
+                    where: x => x.Id == id,
+                    manyWhere: new List<Expression<Func<Course, bool>>?>
+                    {
+                        Teacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Select(n => n.Id).Contains(userId)) : null,
+                    }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
+                    include: x => x.Include(r => r.Room).Include(l => l.Room.Location).Include(t => t.Teacher).Include(c => c.CourseSchedule),
+                    selector: sa => new
+                    {
+                        id = sa.Id,
+                        name = sa.Name,
+                        price = sa.Price,
+                        lessons = sa.Lessons,
+                        capacity = sa.Capacity,
+                        startDate = sa.StartDate,
+                        endDate = sa.EndDate,
+                        Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
+                        Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name },
+                        Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
+                        {
+                            z.Id,
+                            z.FirstName,
+                            z.LastName
+                        }),
+                        CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
+                        {
+                            x.Id,
+                            x.DayOfWeek,
+                            x.StartTime,
+                            x.EndTime
+                        }),
+                    },
+                    returnType:QueryReturnType.FirstOrDefault,
+                    asNoTracking:true);
 
                 if (courses == null)
                 {
                     return NotFound();
                 }
-                return Ok(courses.Select(sa => new
-                {
-                    id = sa.Id,
-                    name = sa.Name,
-                    price = sa.Price,
-                    lessons = sa.Lessons,
-                    capacity = sa.Capacity,
-                    startDate = sa.StartDate,
-                    endDate = sa.EndDate,
-                    Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
-                    Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name },
-                    Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
-                    {
-                        z.Id,
-                        z.FirstName,
-                        z.LastName
-                    }),
-                    CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
-                    {
-                        x.Id,
-                        x.DayOfWeek,
-                        x.StartTime,
-                        x.EndTime
-                    }),
-
-
-
-                }).FirstOrDefault());
+                return Ok(courses);
             }
             catch (Exception ex)
             {
@@ -210,9 +210,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         
 
 
-                        var room = (await _roomRepo.GetRelation<Room>(x => x.Id == mapCourseSchedule.course.RoomId))
-                                    .Select(x => new { x.Id ,x.Name,Location = new { x.Location.Id, x.Location.Name } })
-                                    .SingleOrDefault();
+                        var room = await _roomRepo.GetRelationSingle(
+                            where:x => x.Id == mapCourseSchedule.course.RoomId,
+                            include:x=>x.Include(l=>l.Location),
+                            selector: x => new { x.Id, x.Name, Location = new { x.Location.Id, x.Location.Name } },
+                            returnType:QueryReturnType.SingleOrDefault,
+                            asNoTracking:true);
                         if (room == null)
                         {
                             return BadRequest("The RoomId does not exist");
@@ -231,8 +234,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         };
                         if (mapCourseSchedule.TeacherId != null)
                         {
-                            var teachers = (await _teacherRepository.GetRelation<ApplicationUser>(n =>
-                            mapCourseSchedule.TeacherId.Contains(n.Id))).ToList();
+                            var teachers = await _teacherRepository.GetRelationList(
+                                where:n =>mapCourseSchedule.TeacherId.Contains(n.Id),
+                                selector:x=>x);
                             courseEntity.Teacher = teachers;
                         }
                         
@@ -294,7 +298,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                var Teacher = (await _teacherRepository.GetRelation<ApplicationUser>(n => courseData.TeacherId.Contains(n.Id))).ToList();
+                var Teacher = new List<ApplicationUser>();
+                if (courseData.TeacherId != null)
+                {
+                    Teacher = await _teacherRepository.GetRelationList(
+                    where: n => courseData.TeacherId.Contains(n.Id),
+                    selector: x => x,
+                    asNoTracking: true);
+                }
+                
 
 
                 if (!ModelState.IsValid)
@@ -302,15 +314,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     return BadRequest(ModelState);
                 }
 
-                var room = (await _roomRepo.GetRelation<Room>(x => x.Id == courseData.course.RoomId))
-                                    .Select(x => new { x.Id, x.Name, Location = new { x.Location.Id, x.Location.Name } })
-                                    .SingleOrDefault();
+                var room = await _roomRepo.GetRelationSingle(
+                    where: x => x.Id == courseData.course.RoomId,
+                    include: x => x.Include(l => l.Location),
+                    selector: x => new { x.Id, x.Name, Location = new { x.Location.Id, x.Location.Name } },
+                    returnType: QueryReturnType.SingleOrDefault,
+                    asNoTracking:true);
+                                    
                 if (room == null)
                 {
                     return BadRequest("The RoomId does not exist");
                 }
-                var courseEntity = (await _courseRepository.GetRelation<Course>(n => n.Id == id))
-                  .Include(e => e.Teacher).First();
+                var courseEntity = await _courseRepository.GetRelationSingle(
+                    where: n => n.Id == id,
+                    include: x => x.Include(e => e.Teacher),
+                    selector: x => x,
+                    returnType: QueryReturnType.FirstOrDefault);
 
                 if (courseEntity == null)
                 {
@@ -378,12 +397,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                var courseEntity = await _courseRepository.GetById(id);
-                if (courseEntity == null)
+                var courseEntity = await _courseRepository.DataExist(x=>x.Id == id);
+                if (!courseEntity)
                 {
                     return NotFound();
                 }
-                var studentExist = (await _studentRepository.GetRelation<Student>(n => n.CourseID == id)).Any();
+                var studentExist = await _studentRepository.DataExist(n => n.CourseID == id);
                 if (studentExist)
                 {
                     return BadRequest("This course contains students !!");
@@ -415,14 +434,19 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     return NotFound("Course not found");
                 }
-                var students = await _studentRepository.GetRelation<Student>(s => studentIds.Contains(s.Id));
+                var students = await _studentRepository.GetRelationList(
+                    where:s => studentIds.Contains(s.Id),
+                    selector:x=>x);
 
                 if (!students.Any())
                 {
                     return NotFound("No students found with the provided IDs");
                 }
 
-                await students.ForEachAsync(student => student.CourseID = courseID);
+                foreach (var student in students)
+                {
+                    student.CourseID = courseID;
+                }
                 await _studentRepository.ManyUpdate(students);
                 return Ok(students.Select(x => new
                 {

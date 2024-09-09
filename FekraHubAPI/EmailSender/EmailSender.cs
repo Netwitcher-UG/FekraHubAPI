@@ -328,7 +328,7 @@ a[x-apple-data-detectors],
 ";
             return ConstantsMessage;
         }
-        public async Task<IActionResult> SendConfirmationEmail(ApplicationUser user)
+        public async Task SendConfirmationEmail(ApplicationUser user)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
@@ -399,23 +399,15 @@ a[x-apple-data-detectors],
        </table>
 
  ";
-                try
-                {
-                    await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                        school.SchoolName ?? "", [user.Email] , "Please Confirm Your Email", Message(content, school.SchoolName ?? ""), true);
-                    return new OkResult();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error sending email: {ex.Message}");
-                    return new BadRequestObjectResult($"Error sending email: {ex.Message}");
-                }
-                
+
+                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+                    school.SchoolName ?? "", [user.Email], "Please Confirm Your Email", Message(content, school.SchoolName ?? ""), true);
+
+
             }
-            return new OkResult();
 
         }
-        public async Task<IActionResult> SendConfirmationEmailWithPassword(ApplicationUser user, string password)
+        public async Task SendConfirmationEmailWithPassword(ApplicationUser user, string password)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
@@ -505,33 +497,24 @@ a[x-apple-data-detectors],
          </tr>
        </table>
                             ";
-            try
-            {
-                await SendEmail(school.EmailServer ??"", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+
+            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
                     school.SchoolName ?? "", [user.Email], "Please Confirm Your Email",
                     Message(content, school.SchoolName ?? ""), true, "confirming an account link + login details");
-                return new OkResult();
-            }
-            catch (Exception ex)
-            {
-                return new BadRequestObjectResult($"Error sending email: {ex.Message}");
-            }
+
 
 
 
         }
 
-        public async Task<IActionResult> SendContractEmail(int studentId, string pdfName)//
+        public async Task SendContractEmail(int studentId, string pdfName)//
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName})
                 .SingleAsync();
             var student = await _studentRepo.GetById(studentId);
             var parent = await _userManager.FindByIdAsync(student.ParentID ?? "");
-            if (student == null || parent == null)
-            {
-                return new BadRequestObjectResult("Something seems wrong. Please re-register your child or contact us");
-            }
+           
             byte[] contracts = await _context.StudentContract
                 .Where(x => x.StudentID == studentId)
                 .Select(x => x.File)
@@ -598,18 +581,12 @@ a[x-apple-data-detectors],
         </tr>
       </table>
 ";
-            try
-            {
-                await SendEmail(school.EmailServer ?? "" , school.EmailPortNumber, school.FromEmail ?? "" , school.Password ?? "" ,
-                   school.SchoolName ?? "", [parent.Email], "Registration Confirmation", Message(content,school.SchoolName??""),
-                    true,$"a new student named <b>{student.FirstName} {student.LastName}</b> has been registered successfully + copy of the contract",
-                    contracts, pdfName + ".pdf");
-                return new OkResult();
-            }
-            catch (Exception ex)
-            {
-                return new BadRequestObjectResult($"Error sending email: {ex.Message}");
-            }
+
+            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+                  school.SchoolName ?? "", [parent.Email], "Registration Confirmation", Message(content, school.SchoolName ?? ""),
+                   true, $"a new student named <b>{student.FirstName} {student.LastName}</b> has been registered successfully + copy of the contract",
+                   contracts, pdfName + ".pdf");
+
         }
 
         public async Task SendToAdminNewParent(ApplicationUser user)//////////////

@@ -8,6 +8,8 @@ namespace FekraHubAPI.MapModels.Users
         [Required]
         public string Role { get; set; }
 
+        
+
         [Required]
         public string Password { get; set; }
         public string? FirstName { get; set; }

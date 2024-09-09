@@ -32,13 +32,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                var eventType = await _eventTypeRepository.GetAll();
+                var eventType = await _eventTypeRepository.GetRelationList(
+                    selector: x => new
+                    {
+                        x.Id,
+                        x.TypeTitle
+                    },
+                    asNoTracking:true
+                    );
 
-                return Ok(eventType.Select(x => new
-                {
-                    x.Id,
-                    x.TypeTitle
-                }));
+                return Ok(eventType);
             }
             catch (Exception ex)
             {
@@ -132,8 +135,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                var eventType = await _eventTypeRepository.GetById(id);
-                if (eventType == null)
+                var eventType = await _eventTypeRepository.DataExist(x => x.Id == id);
+                if (!eventType)
                 {
                     return NotFound();
                 }

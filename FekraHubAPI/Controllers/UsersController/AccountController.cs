@@ -130,11 +130,13 @@ namespace FekraHubAPI.Controllers.UsersController
                 var encodedToken = WebUtility.UrlEncode(token);
                 // var callbackUrl = Url.Action("GetResetPassword", "Account", new { email = user.Email, token = token }, protocol: HttpContext.Request.Scheme);
 
-                var domain = (await _schoolInfoRepo.GetRelation<string?>(null,null,x=>x.UrlDomain)).First();
+                var domain = await _schoolInfoRepo.GetRelationSingle(
+                    selector: x=>x.UrlDomain,
+                    returnType:QueryReturnType.Single,
+                    asNoTracking:true);
                 var restPaswordLink = "/reset-password";
                 var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={encodedToken}";
-
-                await _emailSender.SendRestPassword(user.Email, callbackUrlLink);
+                _ = Task.Run(() => _emailSender.SendRestPassword(user.Email, callbackUrlLink));
                 return Ok();
 
             }
@@ -216,7 +218,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     }
                     if (!user.EmailConfirmed)
                     {
-                        await _emailSender.SendConfirmationEmail(user);
+                        _ = Task.Run(() => _emailSender.SendConfirmationEmail(user));
                         return StatusCode(409, "Your account not confirmed . The confirm link has been sent to your email");
                     }
 
@@ -347,7 +349,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             ApplicationUser? ThisNewUser = await _userManager.FindByEmailAsync(user.email);
                             if (ThisNewUser != null)
                             {
-                                await _emailSender.SendConfirmationEmail(ThisNewUser);
+                                _ = Task.Run(() => _emailSender.SendConfirmationEmail(ThisNewUser));
                                 return Ok($"Success!! . Please go to your email message box and confirm your email");
                             }
 
@@ -381,8 +383,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var user = await _userManager.FindByEmailAsync(Email);
             if (user != null) 
             {
-                await _emailSender.SendConfirmationEmail(user);
-
+                _ = Task.Run(() => _emailSender.SendConfirmationEmail(user));
                 return Ok();
             }
             else
@@ -412,7 +413,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var result = await _userManager.ConfirmEmailAsync(user, Token);
             if (result.Succeeded)
             {
-                await _emailSender.SendToAdminNewParent(user);
+                _ = Task.Run(() => _emailSender.SendToAdminNewParent(user));
                 return Ok();
             }
             else

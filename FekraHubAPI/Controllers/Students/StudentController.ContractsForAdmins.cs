@@ -2,6 +2,7 @@
 using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.Controllers.Students
@@ -15,19 +16,23 @@ namespace FekraHubAPI.Controllers.Students
         {
             try
             {
-                var contracts = (await _studentContractRepo.GetRelation<StudentContract>()).OrderByDescending(x => x.Id);
-                var result = contracts.Select(x => new {
-                    x.Id,
-                    x.StudentID,
-                    x.Student.FirstName,
-                    x.Student.LastName,
-                    ParentId = x.Student.ParentID,
-                    ParentFirstName = x.Student.User.FirstName,
-                    ParentLastName = x.Student.User.LastName,
-                    x.CreationDate,
+                var contracts = await _studentContractRepo.GetRelationList(
+                    orderBy: x => x.Id,
+                    include: x=> x.Include(s=>s.Student).ThenInclude(u=>u.User),
+                    selector: x => new {
+                        x.Id,
+                        x.StudentID,
+                        x.Student.FirstName,
+                        x.Student.LastName,
+                        ParentId = x.Student.ParentID,
+                        ParentFirstName = x.Student.User.FirstName,
+                        ParentLastName = x.Student.User.LastName,
+                        x.CreationDate,
 
-                }).ToList();
-                return Ok(result);
+                    },
+                    asNoTracking:true
+                    );
+                return Ok(contracts);
             }
             catch (Exception ex)
             {
@@ -41,20 +46,25 @@ namespace FekraHubAPI.Controllers.Students
         {
             try
             {
-                var contracts = (await _studentContractRepo.GetRelation<StudentContract>(x => x.StudentID == studentId))
-                    .OrderByDescending(x => x.Id);
-                var result = contracts.Select(x => new {
-                    x.Id,
-                    x.StudentID,
-                    x.Student.FirstName,
-                    x.Student.LastName,
-                    ParentId = x.Student.ParentID,
-                    ParentFirstName = x.Student.User.FirstName,
-                    ParentLastName = x.Student.User.LastName,
-                    x.CreationDate,
+                
+                var contracts = await _studentContractRepo.GetRelationList(
+                    where: x => x.StudentID == studentId,
+                    orderBy: x => x.Id,
+                    include: x => x.Include(s => s.Student).ThenInclude(u => u.User),
+                    selector: x => new {
+                        x.Id,
+                        x.StudentID,
+                        x.Student.FirstName,
+                        x.Student.LastName,
+                        ParentId = x.Student.ParentID,
+                        ParentFirstName = x.Student.User.FirstName,
+                        ParentLastName = x.Student.User.LastName,
+                        x.CreationDate,
 
-                }).ToList();
-                return Ok(result);
+                    },
+                    asNoTracking: true
+                    );
+                return Ok(contracts);
             }
             catch (Exception ex)
             {

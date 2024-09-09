@@ -35,7 +35,6 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                //string UserID = "86687f5a-ab0e-4dc7-a830-367329c91e8a";
                 var user = await _userManager.FindByIdAsync(UserID);
 
                 if (user == null)
@@ -91,8 +90,8 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var PayRollEntity = await _payRollRepository.GetById(id);
-                if (PayRollEntity == null)
+                var PayRollEntity = await _payRollRepository.DataExist(x=>x.Id == id);
+                if (!PayRollEntity)
                 {
                     return NotFound();
                 }

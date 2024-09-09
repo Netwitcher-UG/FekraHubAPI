@@ -64,11 +64,12 @@ namespace FekraHubAPI.Controllers.AuthorizationController
         {
             try
             {
-                var roles = await _roleManager.Roles
+                var roles = await _roleManager.Roles.AsNoTracking()
                 .Where(x => x.Name != "Parent")
+                .Select(x=> x.Name)
                 .ToListAsync();
 
-                var parentRole = await _roleManager.Roles
+                var parentRole = await _roleManager.Roles.AsNoTracking()
                     .FirstOrDefaultAsync(x => x.Name == "Parent");
 
                 if (parentRole != null)
@@ -77,14 +78,14 @@ namespace FekraHubAPI.Controllers.AuthorizationController
                         .Select(claim => claim.Value)
                         .ToList();
 
-                    var permissions = (await _repoPermissions.GetRelation<AspNetPermissions>(
-                        permission => !parentClaims.Contains(permission.Value)))
-                        .Select(permission => permission.Value)
-                        .ToList();
+                    var permissions = await _repoPermissions.GetRelationList(
+                        where:permission => !parentClaims.Contains(permission.Value),
+                        selector: permission => permission.Value,
+                        asNoTracking: true);
 
                     return Ok(new
                     {
-                        AllRoles = roles.Select(x => x.Name),
+                        AllRoles = roles,
                         AllPermissions = permissions
                     });
                 }

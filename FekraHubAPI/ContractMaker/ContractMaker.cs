@@ -75,7 +75,7 @@ namespace FekraHubAPI.ContractMaker
                 {
                     await _studentrepo.Delete(student.Id);
                 }
-                if ((await _repo.GetRelation<StudentContract>(x => x.StudentID == student.Id)).Any())
+                if (await _repo.DataExist(x => x.StudentID == student.Id))
                 {
                     await _repo.Delete(student.Id);
                 }
@@ -97,7 +97,10 @@ namespace FekraHubAPI.ContractMaker
         
         private async Task<List<string>> ContractHtmlPage(Student student)
         {
-            var schoolInfoLogo = (await _schoolInforepo.GetRelation<string>(null ,null, x=>x.LogoBase64 ?? "")).SingleOrDefault();
+            var schoolInfoLogo = await _schoolInforepo.GetRelationSingle(
+                selector: x => x.LogoBase64,
+                returnType: QueryReturnType.Single,
+                asNoTracking: true);
             if (schoolInfoLogo == null) 
             {
                 return new List<string>();

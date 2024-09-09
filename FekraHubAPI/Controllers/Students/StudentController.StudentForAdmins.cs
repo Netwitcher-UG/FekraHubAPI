@@ -266,7 +266,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
                 
-                return Ok(new { studentsAll.TotalCount, studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, studentsAll.Data });
+                return Ok(new { studentsAll.TotalCount, studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students = studentsAll.Data });
 
             }
             catch (Exception ex)

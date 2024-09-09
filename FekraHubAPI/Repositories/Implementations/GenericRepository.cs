@@ -74,14 +74,112 @@ namespace FekraHubAPI.Repositories.Implementations
                 await _context.SaveChangesAsync();
             }
         }
-        public async Task<IQueryable<TResult>> GetRelation<TResult>(
+       
+        public async Task<IQueryable<TResult>> GetRelationAsQueryable<TResult>(
+                        Expression<Func<T, bool>>? where = null,
+                        List<Expression<Func<T, bool>>>? manyWhere = null,
+                        Expression<Func<T, TResult>>? selector = null,
+                        Func<IQueryable<T>, IQueryable<T>>? include = null,
+                        Expression<Func<T, object>>? orderBy = null,
+                        bool asNoTracking = false)
+        {
+            IQueryable<T> query = _dbSet.AsQueryable();
+            if (asNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+            if (where != null)
+            {
+                query = query.Where(where);
+            }
+
+            if (manyWhere != null)
+            {
+                foreach (var predicate in manyWhere)
+                {
+                    if (predicate != null)
+                    {
+                        query = query.Where(predicate);
+                    }
+                }
+            }
+
+            if (include != null)
+            {
+                query = include(query);
+            }
+
+            if (orderBy != null)
+            {
+                query = query.OrderByDescending(orderBy);
+            }
+
+            if (selector == null)
+            {
+                throw new ArgumentException("Selector must be provided.");
+            }
+
+            return await Task.FromResult(query.Select(selector));
+        }
+        public async Task<List<TResult>> GetRelationList<TResult>(
+                        Expression<Func<T, bool>>? where = null,
+                        List<Expression<Func<T, bool>>>? manyWhere = null,
+                        Expression<Func<T, TResult>>? selector = null,
+                        Func<IQueryable<T>, IQueryable<T>>? include = null,
+                        Expression<Func<T, object>>? orderBy = null,
+                        bool asNoTracking = false)
+        {
+            IQueryable<T> query = _dbSet.AsQueryable();
+            if (asNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+            if (where != null)
+            {
+                query = query.Where(where);
+            }
+
+            if (manyWhere != null)
+            {
+                foreach (var predicate in manyWhere)
+                {
+                    if (predicate != null)
+                    {
+                        query = query.Where(predicate);
+                    }
+                }
+            }
+
+            if (include != null)
+            {
+                query = include(query);
+            }
+
+            if (orderBy != null)
+            {
+                query = query.OrderByDescending(orderBy);
+            }
+
+            if (selector == null)
+            {
+                throw new ArgumentException("Selector must be provided.");
+            }
+
+            return await query.Select(selector).ToListAsync();
+        }
+        public async Task<TResult?> GetRelationSingle<TResult>(
                 Expression<Func<T, bool>>? where = null,
                 List<Expression<Func<T, bool>>>? manyWhere = null,
                 Expression<Func<T, TResult>>? selector = null,
-                Func<IQueryable<T>, IQueryable<T>>? include = null)
+                Func<IQueryable<T>, IQueryable<T>>? include = null,
+                QueryReturnType? returnType = QueryReturnType.FirstOrDefault,
+                bool asNoTracking = false)
         {
             IQueryable<T> query = _dbSet.AsQueryable();
-
+            if (asNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
             if (where != null)
             {
                 query = query.Where(where);
@@ -101,12 +199,31 @@ namespace FekraHubAPI.Repositories.Implementations
             {
                 query = include(query);
             }
-            if (selector != null)
+            
+            if(selector == null)
             {
-                return await Task.FromResult(query.Select(selector));
+                throw new ArgumentException("Selector must be provided.");
             }
-
-            return await Task.FromResult((IQueryable<TResult>)query);
+            try
+            {
+                switch (returnType)
+                {
+                    case QueryReturnType.SingleOrDefault:
+                        return await query.Select(selector).SingleOrDefaultAsync();
+                    case QueryReturnType.Single:
+                        return await query.Select(selector).SingleAsync();
+                    case QueryReturnType.FirstOrDefault:
+                        return await query.Select(selector).FirstOrDefaultAsync();
+                    case QueryReturnType.First:
+                        return await query.Select(selector).FirstAsync();
+                    default:
+                        throw new NotSupportedException($"Return type '{returnType}' is not supported.");
+                }
+            }
+            catch (InvalidCastException ex)
+            {
+                throw new InvalidOperationException("The result type does not match the expected type. Check your selector or return type.", ex);
+            }
         }
         public async Task ManyAdd(List<T> entity)
         {
@@ -171,13 +288,14 @@ namespace FekraHubAPI.Repositories.Implementations
             return User.FindFirst("id")?.Value;
         }
 
-        public async Task<PagedResponse<T>> GetPagedDataAsync(IQueryable<T> source, PaginationParameters paginationParameters)
+        public async Task<PagedResponse<TResult>> GetPagedDataAsync<TResult>(IQueryable<TResult> source, PaginationParameters paginationParameters)
         {
-            var count = await source.CountAsync();
-            var items =  source.Skip((paginationParameters.PageNumber - 1) * paginationParameters.PageSize)
-                                    .Take(paginationParameters.PageSize);
+            var count =  await source.CountAsync();
+            var items =  await source.Skip((paginationParameters.PageNumber - 1) * paginationParameters.PageSize)
+                                    .Take(paginationParameters.PageSize)
+                                    .ToListAsync();
 
-            return new PagedResponse<T>(items, count, paginationParameters.PageNumber, paginationParameters.PageSize);
+            return new PagedResponse<TResult>(items, count, paginationParameters.PageNumber, paginationParameters.PageSize);
         }
 
         public async Task<bool> DataExist(
@@ -191,19 +309,16 @@ namespace FekraHubAPI.Repositories.Implementations
 
             if (predicates != null && predicates.Any())
             {
-                foreach (var predicate in predicates)
-                {
-                    bool exists = await _dbSet.AnyAsync(predicate);
-                    if (!exists)
-                    {
-                        return false; 
-                    }
-                }
-                return true; 
+                var combinedPredicate = predicates
+                    .Aggregate((current, next) => Expression.Lambda<Func<T, bool>>(
+                        Expression.AndAlso(current.Body, Expression.Invoke(next, current.Parameters)),
+                        current.Parameters));
+
+                return await _dbSet.AnyAsync(combinedPredicate);
             }
             return await _dbSet.AnyAsync();
         }
 
-
+       
     }
 }

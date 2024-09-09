@@ -59,8 +59,37 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             try
             {
-                var pagedProducts = await _applicationUserRepository.GetPagedDataAsync(await _applicationUserRepository.GetRelation<ApplicationUser>(), paginationParameters);
-                return Ok(pagedProducts);
+                var users = await _applicationUserRepository.GetRelationAsQueryable(
+                    selector: x => new
+                    {
+                        x.Id,
+                        x.FirstName,
+                        x.LastName,
+                        x.Email,
+                        x.PhoneNumber,
+                        x.EmergencyPhoneNumber,
+                        x.Birthday,
+                        x.Birthplace,
+                        x.City,
+                        x.Street,
+                        x.StreetNr,
+                        x.ZipCode,
+                        x.Job,
+                        x.Gender,
+                        x.Graduation,
+                        x.Nationality
+                    },
+                    asNoTracking:true
+                    );
+                var p = await  _applicationUserRepository.GetPagedDataAsync(users , paginationParameters);
+                return Ok(new
+                {
+                    p.CurrentPage,
+                    p.PageSize,
+                    p.TotalCount,
+                    p.TotalPages,
+                    p.Data
+                });
             }
             catch (Exception ex)
             {
@@ -425,7 +454,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             {
                                 _userManager.AddToRoleAsync(appUser, user.Role).Wait();
                                 transaction.Commit();
-                                await _emailSender.SendConfirmationEmailWithPassword(appUser, user.Password);
+                                _ = Task.Run(() => _emailSender.SendConfirmationEmailWithPassword(appUser, user.Password));
                                 return Ok();
                             }
                             else

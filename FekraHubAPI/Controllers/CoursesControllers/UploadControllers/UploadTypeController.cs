@@ -137,8 +137,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         {
             try
             {
-                var uploadType = await _uploadTypeRepository.GetById(id);
-                if (uploadType == null)
+                var uploadType = await _uploadTypeRepository.DataExist(X=>X.Id == id);
+                if (!uploadType)
                 {
                     return NotFound();
                 }

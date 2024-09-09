@@ -1,7 +1,9 @@
 ﻿using FekraHubAPI.Constract;
 using FekraHubAPI.Data.Models;
+using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers.Students
 {
@@ -44,57 +46,63 @@ namespace FekraHubAPI.Controllers.Students
                     return Unauthorized("Parent not found.");
                 }
 
-                var students = (await _studentRepo.GetRelation<Student>(x => x.ParentID == parentId)).OrderByDescending(x => x.Id);
-
-                var result = students.Select(z => new
-                {
-                    z.Id,
-                    z.FirstName,
-                    z.LastName,
-                    z.Birthday,
-                    z.Nationality,
-                    z.Note,
-                    z.Gender,
-                    city = z.City ?? "Like parent",
-                    Street = z.Street ?? "Like parent",
-                    StreetNr = z.StreetNr ?? "Like parent",
-                    ZipCode = z.ZipCode ?? "Like parent",
-                    course = z.Course == null ? null : new
+                var students = await _studentRepo.GetRelationList(
+                    where:x => x.ParentID == parentId,
+                    orderBy: x => x.Id,
+                    include:x=> x.Include(t => t.Course.Teacher).Include(c=>c.Course).ThenInclude(r=>r.Room).ThenInclude(l=>l.Location),
+                    selector: z => new
                     {
-                        z.Course.Id,
-                        z.Course.Name,
-                        z.Course.Capacity,
-                        startDate = z.Course.StartDate.Date,
-                        EndDate = z.Course.EndDate.Date,
-                        z.Course.Price,
-                        Teacher = z.Course.Teacher.Select(x => new
+                        z.Id,
+                        z.FirstName,
+                        z.LastName,
+                        z.Birthday,
+                        z.Nationality,
+                        z.Note,
+                        z.Gender,
+                        city = z.City ?? "Like parent",
+                        Street = z.Street ?? "Like parent",
+                        StreetNr = z.StreetNr ?? "Like parent",
+                        ZipCode = z.ZipCode ?? "Like parent",
+                        course = z.Course == null ? null : new
                         {
-                            x.Id,
-                            x.FirstName,
-                            x.LastName
+                            z.Course.Id,
+                            z.Course.Name,
+                            z.Course.Capacity,
+                            startDate = z.Course.StartDate.Date,
+                            EndDate = z.Course.EndDate.Date,
+                            z.Course.Price,
+                            Teacher = z.Course.Teacher.Select(x => new
+                            {
+                                x.Id,
+                                x.FirstName,
+                                x.LastName
 
-                        })
+                            })
+                        },
+                        Room = z.Course == null ? null : new
+                        {
+                            z.Course.Room.Id,
+                            z.Course.Room.Name
+                        },
+                        Location = z.Course == null ? null : new
+                        {
+                            z.Course.Room.Location.Id,
+                            z.Course.Room.Location.Name,
+                            z.Course.Room.Location.City,
+                            z.Course.Room.Location.Street,
+                            z.Course.Room.Location.ZipCode,
+                            z.Course.Room.Location.StreetNr
+                        }
+
+
                     },
-                    Room = z.Course == null ? null : new
-                    {
-                        z.Course.Room.Id,
-                        z.Course.Room.Name
-                    },
-                    Location = z.Course == null ? null : new
-                    {
-                        z.Course.Room.Location.Id,
-                        z.Course.Room.Location.Name,
-                        z.Course.Room.Location.City,
-                        z.Course.Room.Location.Street,
-                        z.Course.Room.Location.ZipCode,
-                        z.Course.Room.Location.StreetNr
-                    }
+                    asNoTracking:true
+                    );
+
+                
 
 
-                }).ToList();
-
-
-                return Ok(result);
+                return Ok(students);
             }
             catch (Exception ex)
             {
@@ -117,101 +125,102 @@ namespace FekraHubAPI.Controllers.Students
                     return Unauthorized("Parent not found.");
                 }
 
-                var students = await _studentRepo.GetRelation<Student>(x => x.ParentID == parentId && x.Id == id);
-                if (!students.Any())
+                var students = await _studentRepo.GetRelationSingle(
+                    where:x => x.ParentID == parentId && x.Id == id,
+                    returnType:QueryReturnType.SingleOrDefault,
+                    include:x=>x.Include(r=>r.Report).Include(c=>c.Course).ThenInclude(u=>u.Upload).Include(i=>i.Invoices)
+                    .Include(z=>z.Course.Room).ThenInclude(z=>z.Location).Include(z => z.Course.Teacher),
+                    selector: z => new
+                    {
+                        z.Id,
+                        z.FirstName,
+                        z.LastName,
+                        z.Birthday,
+                        z.Nationality,
+                        z.Note,
+                        z.Gender,
+                        city = z.City ?? "Like parent",
+                        Street = z.Street ?? "Like parent",
+                        StreetNr = z.StreetNr ?? "Like parent",
+                        ZipCode = z.ZipCode ?? "Like parent",
+                        course = z.Course == null ? null : new
+                        {
+                            z.Course.Id,
+                            z.Course.Name,
+                            z.Course.Capacity,
+                            startDate = z.Course.StartDate.Date,
+                            EndDate = z.Course.EndDate.Date,
+                            z.Course.Price,
+                            Teacher = z.Course.Teacher.Select(x => new
+                            {
+                                x.Id,
+                                x.FirstName,
+                                x.LastName
+
+                            })
+                        },
+                        Room = z.Course == null ? null : new
+                        {
+                            z.Course.Room.Id,
+                            z.Course.Room.Name
+                        },
+                        Location = z.Course == null ? null : new
+                        {
+                            z.Course.Room.Location.Id,
+                            z.Course.Room.Location.Name,
+                            z.Course.Room.Location.City,
+                            z.Course.Room.Location.Street,
+                            z.Course.Room.Location.ZipCode,
+                            z.Course.Room.Location.StreetNr
+                        },
+                        News = new
+                        {
+                            Report = z.Report == null ? null : z.Report
+                                            .Where(x => x.CreationDate >= DateTime.Now.AddDays(-30))
+                                            .Select(z => new
+                                            {
+                                                z.Id,
+                                                z.data,
+                                                z.CreationDate,
+                                                z.CreationDate.Year,
+                                                z.CreationDate.Month,
+                                                TeacherId = z.UserId,
+                                                TeacherFirstName = z.User == null ? null : z.User.FirstName,
+                                                TeacherLastName = z.User == null ? null : z.User.LastName
+                                            })
+                                            .ToList(),
+
+                            WorkSheet = z.Course == null || z.Course.Upload == null ? null : z.Course.Upload
+                                             .Where(upload => upload.Date >= DateTime.Now.AddDays(-30))
+                                             .Select(upload => new
+                                             {
+                                                 upload.Id,
+                                                 upload.FileName,
+                                                 upload.Date,
+                                                 upload.UploadType.TypeTitle
+                                             })
+                                             .ToList(),
+
+                            Invoice = z.Invoices == null ? null : z.Invoices
+                                             .Where(x => x.Date >= DateTime.Now.AddDays(-30))
+                                             .Select(z => new
+                                             {
+                                                 z.Id,
+                                                 z.FileName,
+                                                 z.Date,
+                                             })
+                                             .ToList()
+                        }
+                    },
+                    asNoTracking:true);
+                if (students == null)
                 {
                     return NotFound("This student is not found");
                 }
-                var reportNew = students
-                    .SelectMany(x => x.Report)
-                    .Where(x => x.CreationDate >= DateTime.Now.AddDays(-30))
-                    .Select(z => new
-                    {
-                        z.Id,
-                        z.data,
-                        z.CreationDate,
-                        z.CreationDate.Year,
-                        z.CreationDate.Month,
-                        TeacherId = z.UserId,
-                        TeacherFirstName = z.User == null ? null : z.User.FirstName,
-                        TeacherLastName = z.User == null ? null : z.User.LastName,
-                    });
-
-                var uploadNew = students
-                                .SelectMany(x => x.Course.Upload)
-                                .Where(upload => upload.Date >= DateTime.Now.AddDays(-30))
-                                .Select(upload => new
-                                {
-                                    upload.Id,
-                                    upload.FileName,
-                                    upload.Date,
-                                    upload.UploadType.TypeTitle
-                                })
-                                .ToList();
-                var invoiceNew = students
-                    .SelectMany(x => x.Invoices)
-                    .Where(x => x.Date >= DateTime.Now.AddDays(-30))
-                    .Select(z => new
-                    {
-                        z.Id,
-                        z.FileName,
-                        z.Date,
-                    });
-                var result = students.Select(z => new
-                {
-                    z.Id,
-                    z.FirstName,
-                    z.LastName,
-                    z.Birthday,
-                    z.Nationality,
-                    z.Note,
-                    z.Gender,
-                    city = z.City ?? "Like parent",
-                    Street = z.Street ?? "Like parent",
-                    StreetNr = z.StreetNr ?? "Like parent",
-                    ZipCode = z.ZipCode ?? "Like parent",
-                    course = z.Course == null ? null : new
-                    {
-                        z.Course.Id,
-                        z.Course.Name,
-                        z.Course.Capacity,
-                        startDate = z.Course.StartDate.Date,
-                        EndDate = z.Course.EndDate.Date,
-                        z.Course.Price,
-                        Teacher = z.Course.Teacher.Select(x => new
-                        {
-                            x.Id,
-                            x.FirstName,
-                            x.LastName
-
-                        })
-                    },
-                    Room = z.Course == null ? null : new
-                    {
-                        z.Course.Room.Id,
-                        z.Course.Room.Name
-                    },
-                    Location = z.Course == null ? null : new
-                    {
-                        z.Course.Room.Location.Id,
-                        z.Course.Room.Location.Name,
-                        z.Course.Room.Location.City,
-                        z.Course.Room.Location.Street,
-                        z.Course.Room.Location.ZipCode,
-                        z.Course.Room.Location.StreetNr
-                    },
-                    News = new
-                    {
-                        Report = reportNew == null ? null : reportNew,
-                        WorkSheet = uploadNew == null ? null : uploadNew,
-                        Invoice = invoiceNew == null ? null : invoiceNew
-                    }
+               
 
 
-                }).FirstOrDefault();
-
-
-                return Ok(result);
+                return Ok(students);
             }
             catch (Exception ex)
             {

@@ -7,6 +7,7 @@ using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 {
@@ -33,18 +34,18 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                IQueryable<CourseSchedule> courseSched = (await _courseScheduleRepository.GetRelation<CourseSchedule>());
-                var result = courseSched.Select(z => new
-                {
-
-                    z.Id,
-                    z.DayOfWeek,
-                    z.StartTime,
-                    z.EndTime,
-                    courseName = z.Course.Name,
-                    courseID = z.Course.Id
-
-                }).ToList();
+                var result = await _courseScheduleRepository.GetRelationList(
+                    include:x=>x.Include(z=>z.Course),
+                    selector: z => new
+                    {
+                        z.Id,
+                        z.DayOfWeek,
+                        z.StartTime,
+                        z.EndTime,
+                        courseName = z.Course.Name,
+                        courseID = z.Course.Id
+                    },
+                    asNoTracking: true);
 
                 return Ok(result);
             }
@@ -143,16 +144,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                IQueryable<CourseSchedule> courses = (await _courseScheduleRepository.GetRelation<CourseSchedule>(x => x.CourseID == courseSchedMdl.CourseID))
-                .Where(x => x.DayOfWeek == courseSchedMdl.DayOfWeek);
-
-
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
+                bool courses = await _courseScheduleRepository.DataExist(
+                                singlePredicate: x => x.CourseID == courseSchedMdl.CourseID &&
+                                x.DayOfWeek == courseSchedMdl.DayOfWeek);
 
-                if (courses == null)
+                if (!courses)
                 {
                     var courseSchedule = new CourseSchedule
                     {
@@ -171,7 +171,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                         courseSchedule.DayOfWeek,
                         courseSchedule.StartTime,
                         courseSchedule.EndTime,
-                        Course = courseSchedule.Course == null ? null : new { courseSchedule.Course.Id, courseSchedule.Course.Name },
+                        Course = courseSchedule.Course == null ? null : 
+                        new { courseSchedule.Course.Id, courseSchedule.Course.Name },
                     });
                 }
                 else
@@ -196,8 +197,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                var eventType = await _courseScheduleRepository.GetById(id);
-                if (eventType == null)
+                var eventType = await _courseScheduleRepository.DataExist(x => x.Id == id);
+                if (!eventType)
                 {
                     return NotFound();
                 }

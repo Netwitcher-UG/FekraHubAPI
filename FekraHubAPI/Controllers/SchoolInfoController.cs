@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 
@@ -38,9 +39,10 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
-                    x => new { x.SchoolName, x.SchoolOwner, x.LogoBase64 }))
-                    .SingleOrDefault();
+                var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
+                    selector: x => new { x.SchoolName, x.SchoolOwner, x.LogoBase64 },
+                    returnType:QueryReturnType.SingleOrDefault,
+                    asNoTracking:true);
                 if (schoolInfo == null)
                 {
                     return NotFound();
@@ -61,9 +63,11 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
-                    x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password }))
-                    .SingleOrDefault();
+                
+                var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
+                    selector: x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password },
+                    returnType: QueryReturnType.SingleOrDefault,
+                    asNoTracking: true);
                 if (schoolInfo == null)
                 {
                     return NotFound();
@@ -84,9 +88,12 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
-                    x => x.StudentsReportsKeys.Select(z => z.Keys))).SingleOrDefault();
-
+                
+                var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
+                    include:x=>x.Include(k=>k.StudentsReportsKeys),
+                    selector: x => x.StudentsReportsKeys.Select(z => z.Keys).ToList(),
+                    returnType: QueryReturnType.SingleOrDefault,
+                    asNoTracking: true);
                 if (schoolInfo == null)
                 {
                     return NotFound();
@@ -107,9 +114,12 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var schoolInfo = (await _schoolInfoRepo.GetRelation<object>(null, null,
-                    x => new { x.PrivacyPolicy, contractPages = x.ContractPages.Select(z => z.ConPage) })).SingleOrDefault();
-
+                
+                var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
+                    include: x => x.Include(k => k.ContractPages),
+                    selector: x => new { x.PrivacyPolicy, contractPages = x.ContractPages.Select(z => z.ConPage).ToList() },
+                    returnType: QueryReturnType.SingleOrDefault,
+                    asNoTracking: true);
                 if (schoolInfo == null)
                 {
                     return NotFound();
@@ -261,11 +271,14 @@ namespace FekraHubAPI.Controllers
                 bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
                 if (SchoolInfoExist)
                 {
-                    var OldSchoolInfos = (await _schoolInfoRepo.GetRelation<SchoolInfo>());
+                    var OldSchoolInfo = await _schoolInfoRepo.GetRelationSingle(
+                        include:x=> x.Include(k=>k.StudentsReportsKeys),
+                        selector: x => x,
+                        returnType:QueryReturnType.Single
+                        );
 
 
-                    (OldSchoolInfos.Select(x => x.StudentsReportsKeys)).Single().Clear();
-                    var OldSchoolInfo = OldSchoolInfos.Single();
+                    OldSchoolInfo.StudentsReportsKeys.Clear();
                     List<StudentsReportsKey> studentsReportsKeys = new List<StudentsReportsKey>();
                     foreach (var key in schoolInfo_ReportKeys.StudentsReportsKeys)
                     {
@@ -309,11 +322,14 @@ namespace FekraHubAPI.Controllers
                 bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
                 if (SchoolInfoExist)
                 {
-                    var OldSchoolInfos = (await _schoolInfoRepo.GetRelation<SchoolInfo>());
+                    var OldSchoolInfo = await _schoolInfoRepo.GetRelationSingle(
+                        include: x => x.Include(k => k.ContractPages),
+                        selector: x => x,
+                        returnType: QueryReturnType.Single
+                        );
 
 
-                    (OldSchoolInfos.Select(x => x.ContractPages)).Single().Clear();
-                    var OldSchoolInfo = OldSchoolInfos.Single();
+                    OldSchoolInfo.ContractPages.Clear();
                     OldSchoolInfo.PrivacyPolicy = schoolInfo_ContractAndPolicy.PrivacyPolicy;
                     List<ContractPage> studentsContractPages = new List<ContractPage>();
                     foreach (var page in schoolInfo_ContractAndPolicy.ContractPages)
@@ -434,7 +450,10 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var logoBase64 = (await _schoolInfoRepo.GetRelation<SchoolInfo>()).First().LogoBase64;
+                var logoBase64 = await _schoolInfoRepo.GetRelationSingle(
+                    selector:x=>x.LogoBase64,
+                    asNoTracking:true
+                    );
                 var imageBytes = Convert.FromBase64String(logoBase64 ?? "");
                 return File(imageBytes, "image/jpeg");
             }

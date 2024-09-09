@@ -55,28 +55,26 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         {
             try
             {
-                IQueryable<Upload> query = await _uploadRepository.GetRelation<Upload>(null,
-                    new List<Expression<Func<Upload, bool>>?>
+                var result = await _uploadRepository.GetRelationList(
+                    manyWhere: new List<Expression<Func<Upload, bool>>?>
                     {
                         !string.IsNullOrEmpty(search) ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Name.Contains(search))) : null,
                         studentId != null ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Student.Any(y => y.Id == studentId))) : null
-                    }.Where(x => x != null).Cast<Expression<Func<Upload, bool>>>().ToList());
-
-
-
-                var result = query.Select(x => new
-                {
-                    x.Id,
-                    TypeUPload = x.UploadType.TypeTitle,
-                    Courses = x.Courses == null ? null : x.Courses.Select(z => new
+                    }.Where(x => x != null).Cast<Expression<Func<Upload, bool>>>().ToList(),
+                    selector: x => new
                     {
-                        z.Id,
-                        z.Name,
+                        x.Id,
+                        TypeUPload = x.UploadType.TypeTitle,
+                        Courses = x.Courses == null ? null : x.Courses.Select(z => new
+                        {
+                            z.Id,
+                            z.Name,
 
-                    }),
-                    x.FileName,
-                    x.Date
-                }).ToList();
+                        }),
+                        x.FileName,
+                        x.Date
+                    },
+                    asNoTracking: true);
 
                 return Ok(result);
             }
@@ -134,28 +132,29 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 }
 
                 var courseID = student.CourseID;
-                IQueryable<Upload> query = await _uploadRepository.GetRelation<Upload>(x => x.Courses.Any(z => z.Id == courseID));
-
-
-                if (!string.IsNullOrEmpty(search))
-                {
-                    query = query.Where(x => x.Courses.Any(z => z.Name.Contains(search)));
-                }
-
-
-                var result = query.Select(x => new
-                {
-                    x.Id,
-                    TypeUPload = x.UploadType.TypeTitle,
-                    Courses = x.Courses == null ? null : x.Courses.Select(z => new
+                var result = await _uploadRepository.GetRelationList(
+                    where: x => x.Courses.Any(z => z.Id == courseID),
+                    manyWhere: new List<Expression<Func<Upload, bool>>?>
                     {
-                        z.Id,
-                        z.Name,
+                        !string.IsNullOrEmpty(search) ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Name.Contains(search))) : null,
+                    }.Where(x => x != null).Cast<Expression<Func<Upload, bool>>>().ToList(),
+                    include:x=>x.Include(c=>c.Courses),
+                    selector: x => new
+                    {
+                        x.Id,
+                        TypeUPload = x.UploadType.TypeTitle,
+                        Courses = x.Courses == null ? null : x.Courses.Select(z => new
+                        {
+                            z.Id,
+                            z.Name,
 
-                    }),
-                    x.FileName,
-                    x.Date
-                }).ToList();
+                        }),
+                        x.FileName,
+                        x.Date
+                    },
+                    asNoTracking:true);
+
+              
 
                 return Ok(result);
             }
@@ -246,7 +245,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         await _uploadRepository.Add(upload);
                     }
                 }
-                await _emailSender.SendToParentsNewFiles(courseId);
+                _ = Task.Run(() => _emailSender.SendToParentsNewFiles(courseId));
+               
                 return Ok("Files uploaded successfully.");
             }
             catch (Exception ex)
@@ -267,8 +267,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
             try
             {
-                var upload = await _uploadRepository.GetById(id);
-                if (upload == null)
+                var upload = await _uploadRepository.DataExist(X=>X.Id == id);
+                if (!upload)
                 {
                     return NotFound();
                 }

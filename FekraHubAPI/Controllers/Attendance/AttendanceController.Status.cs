@@ -82,7 +82,11 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     return BadRequest("Please enter a status");
                 }
-                var statuses = (await _attendanceStatusRepo.GetRelation<AttendanceStatus>(s => s.Title.ToLower() == status.ToLower())).SingleOrDefaultAsync();
+                var statuses = await _attendanceStatusRepo.GetRelationSingle(
+                    where: s => s.Title.ToLower() == status.ToLower(),
+                    selector:x=>x,
+                    returnType:QueryReturnType.SingleOrDefault,
+                    asNoTracking:true);
                 if (statuses != null)
                 {
                     return BadRequest("This status is already exists");

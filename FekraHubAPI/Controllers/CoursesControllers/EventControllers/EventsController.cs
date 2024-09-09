@@ -6,12 +6,9 @@ using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
-using System;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+
 
 namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 {
@@ -44,14 +41,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             try
             {
 
-                IQueryable<Event> eventE = await _eventRepository.GetRelation<Event>();
-                if (courseId.Any())
-                {
-                    var CourseWorkingDay = (await _ScheduleRepository.GetRelation<int>(
-                        x => courseId.Contains( x.Course.Id),null, x => x.Id)).ToList();
-                    eventE = eventE.Where(x =>  x.CourseSchedule.Any(z => CourseWorkingDay.Contains(z.Id)));
-                }
-                var result = eventE.Select(x => new
+                var CourseWorkingDay = courseId == null || courseId.Count == 0 ? null : await _ScheduleRepository.GetRelationList(
+                        where: x => courseId.Contains(x.Course.Id),
+                        selector: x => x.Id,
+                        asNoTracking: true);
+                var eventE = await _eventRepository.GetRelationList(
+                    where: courseId == null || courseId.Count == 0 ? null : x => x.CourseSchedule.Any(z => CourseWorkingDay.Contains(z.Id)),
+                    include:x=> x.Include(z=>z.EventType).Include(c=>c.CourseSchedule),
+                selector: x => new
                 {
                     x.Id,
                     x.EventName,
@@ -77,9 +74,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     })
 
 
-                }).ToList();
+                },
+                asNoTracking: true);
 
-                return Ok(result);
+
+                return Ok(eventE);
             }
             catch (Exception ex)
             {
@@ -98,28 +97,33 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                var eventEntity = (await _eventRepository.GetRelation<Event>(x => x.Id == id));
-                if (eventEntity.SingleOrDefault() == null)
+                var eventEntity = await _eventRepository.GetRelationSingle(
+                    where:x => x.Id == id,
+                    returnType:QueryReturnType.SingleOrDefault,
+                    include:x=>x.Include(e=>e.EventType).Include(c=>c.CourseSchedule),
+                    selector: eventEntity => new
+                    {
+                        eventEntity.Id,
+                        eventEntity.EventName,
+                        eventEntity.Description,
+                        eventEntity.StartDate,
+                        eventEntity.StartTime,
+                        eventEntity.EndDate,
+                        eventEntity.EndTime,
+                        EventType = eventEntity.EventType == null ? null : new
+                        {
+                            eventEntity.EventType.Id,
+                            eventEntity.EventType.TypeTitle
+                        },
+                        CourseSchedule = eventEntity.CourseSchedule == null ? null : eventEntity.CourseSchedule.Select(x => new { x.Id, x.DayOfWeek, x.StartTime, x.EndTime, x.CourseID })
+                    },
+                    asNoTracking: true);
+                if (eventEntity == null)
                 {
                     return NotFound();
                 }
 
-                return Ok(eventEntity.Select(eventEntity => new
-                {
-                    eventEntity.Id,
-                    eventEntity.EventName,
-                    eventEntity.Description,
-                    eventEntity.StartDate,
-                    eventEntity.StartTime,
-                    eventEntity.EndDate,
-                    eventEntity.EndTime,
-                    EventType = eventEntity.EventType == null ? null : new
-                    {
-                        eventEntity.EventType.Id,
-                        eventEntity.EventType.TypeTitle
-                    },
-                    CourseSchedule = eventEntity.CourseSchedule == null ? null : eventEntity.CourseSchedule.Select(x => new { x.Id, x.DayOfWeek, x.StartTime, x.EndTime, x.CourseID })
-                }).SingleOrDefault());
+                return Ok(eventEntity);
             }
             catch (Exception ex)
             {
@@ -139,7 +143,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                var schedule = (await _ScheduleRepository.GetRelation<CourseSchedule>(n => scheduleId.Contains(n.Id))).ToList();
+                var schedule = await _ScheduleRepository.GetRelationList(
+                    where:n => scheduleId.Contains(n.Id),
+                    selector: x=>x,
+                    asNoTracking: true);
 
             if (!ModelState.IsValid)
             {
@@ -147,8 +154,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             }
 
 
-            var eventEntity = (await _eventRepository.GetRelation<Event>(n => n.Id == id))
-               .Include(e => e.CourseSchedule).First();
+            Event? eventEntity = await _eventRepository.GetRelationSingle(
+                where: n => n.Id == id,
+                returnType:QueryReturnType.SingleOrDefault,
+                include:x=>x.Include(e => e.CourseSchedule),
+                selector:x=>x);
 
             if (eventEntity == null)
             {
@@ -191,16 +201,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                var schedule = await _ScheduleRepository.GetRelation<CourseSchedule>(n => scheduleId.Contains(n.Id));
-
-             
-
+                var schedule = await _ScheduleRepository.GetRelationList(
+                    where:n => scheduleId.Contains(n.Id),
+                    selector:x=>x,
+                    asNoTracking:true);
 
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
-
 
                 var eventEntity = new Event
                 {
@@ -208,21 +217,18 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     Description = eventMdl.Description,
                     StartDate = eventMdl.StartDate,
                     EndDate = eventMdl.EndDate,
-                    StartTime = TimeSpan.Parse(eventMdl.StartDate.ToString("HH:mm:ss")),
-                    EndTime = TimeSpan.Parse(eventMdl.EndDate.ToString("HH:mm:ss")),
+                    StartTime = eventMdl.StartDate.TimeOfDay,
+                    EndTime = eventMdl.EndDate.TimeOfDay,
                     TypeID = eventMdl.TypeID,
-                    CourseSchedule = new List<CourseSchedule>()
+                    CourseSchedule = schedule
 
                 };
-
-                eventEntity.CourseSchedule = schedule.ToList();
-
 
                 await _eventRepository.Add(eventEntity);
                 var courses = schedule.Select(x => x.CourseID).ToList();
                 if (courses.Any())
                 {
-                    await _emailSender.SendToAllNewEvent(courses);
+                    _ = Task.Run(() => _emailSender.SendToAllNewEvent(courses));
                 }
                 
                 return Ok(new
@@ -235,7 +241,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     eventEntity.EndDate,
                     eventEntity.EndTime,
                     eventEntity.TypeID,
-                    CourseSchedule = eventEntity.CourseSchedule.Select(x => new { x.Id, x.DayOfWeek, x.StartTime, x.EndTime, x.CourseID })
+                    CourseSchedule = eventEntity.CourseSchedule.Select(x => new 
+                    { x.Id, x.DayOfWeek, x.StartTime, x.EndTime, x.CourseID })
                 });
             }
             catch (Exception ex)
@@ -254,8 +261,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                var eventType = await _eventRepository.GetById(id);
-                if (eventType == null)
+                var eventType = await _eventRepository.DataExist(x=>x.Id == id);
+                if (!eventType)
                 {
                     return NotFound();
                 }

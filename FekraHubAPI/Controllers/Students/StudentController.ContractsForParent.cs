@@ -3,6 +3,7 @@ using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.Controllers.Students
@@ -86,12 +87,8 @@ namespace FekraHubAPI.Controllers.Students
                 };
                 await _studentRepo.Add(studentEntity);
                 await _contractMaker.ConverterHtmlToPdf(studentEntity);
-                var res = await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
-                if (res is BadRequestObjectResult)
-                {
-                    await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
-                }
-                await _emailSender.SendToAdminNewStudent(studentEntity);
+                _ = Task.Run(() => _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract"));
+                _ = Task.Run(() => _emailSender.SendToAdminNewStudent(studentEntity));
                 return Ok("welcomes your son to our family . A copy of the contract was sent to your email");
             }
             catch (Exception ex)
@@ -113,15 +110,19 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     return Unauthorized("User not found.");
                 }
-                var allContracts = await _studentContractRepo.GetRelation<StudentContract>(x => x.Student.ParentID == userId);
-                var contracts = allContracts.Select(x => new {
-                    x.Id,
-                    studentId = x.Student.Id,
-                    x.Student.FirstName,
-                    x.Student.LastName,
-                    x.CreationDate,
+                var contracts = await _studentContractRepo.GetRelationList(
+                    where: x => x.Student.ParentID == userId,
+                    include:x=>x.Include(s=>s.Student),
+                    selector: x => new {
+                        x.Id,
+                        studentId = x.Student.Id,
+                        x.Student.FirstName,
+                        x.Student.LastName,
+                        x.CreationDate,
 
-                }).ToList();
+                    },
+                    asNoTracking:true);
+                
                 return Ok(contracts);
             }
             catch (Exception ex)
@@ -143,15 +144,18 @@ namespace FekraHubAPI.Controllers.Students
                     return Unauthorized("User not found.");
                 }
                 var parentId = userId;
-                var allContracts = await _studentContractRepo.GetRelation<StudentContract>(x => x.Student.ParentID == parentId && x.StudentID == studentId);
-                var contracts = allContracts.Select(x => new {
-                    x.Id,
-                    studentId = x.Student.Id,
-                    x.Student.FirstName,
-                    x.Student.LastName,
-                    x.CreationDate,
+                var contracts = await _studentContractRepo.GetRelationList(
+                    where: x => x.Student.ParentID == parentId && x.StudentID == studentId,
+                    include:x=>x.Include(s=>s.Student),
+                    selector: x => new {
+                        x.Id,
+                        studentId = x.Student.Id,
+                        x.Student.FirstName,
+                        x.Student.LastName,
+                        x.CreationDate,
+                    },
+                    asNoTracking:true);
 
-                }).ToList();
                 return Ok(contracts);
             }
             catch (Exception ex)

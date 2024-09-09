@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using FekraHubAPI.Constract;
+using FekraHubAPI.Repositories.Interfaces;
 
 namespace FekraHubAPI.Controllers.Attendance
 {
@@ -16,7 +17,7 @@ namespace FekraHubAPI.Controllers.Attendance
         public async Task<IActionResult> GetTeachers()
         {
             var x = await _userManager.GetUsersInRoleAsync("Teacher");
-            return Ok(x.Select(x => new { x.Id,x.FirstName,x.LastName }));
+            return Ok(x.Select(x => new { x.Id, x.FirstName, x.LastName }));
         }
 
         [Authorize(Policy = "GetTeachersAttendance")]
@@ -25,19 +26,21 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-                IQueryable<TeacherAttendance> query = (await _teacherAttendanceRepo.GetRelation<TeacherAttendance>())
-                                                    .Where(x => x.TeacherID == Id)
-                                                    .OrderByDescending(x => x.date);
-                if (query.Any())
-                {
-                    var result = await query.Select(sa => new
+                var result = await _teacherAttendanceRepo.GetRelationList(
+                    where: x => x.TeacherID == Id,
+                    include:x=>x.Include(z=>z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
+                    orderBy: x => x.date,
+                    selector: sa => new
                     {
                         id = sa.Id,
                         Date = sa.date,
                         course = new { sa.Course.Id, sa.Course.Name },
                         Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
                         AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
-                    }).ToListAsync();
+                    },
+                    asNoTracking: true);
+                if (result.Any())
+                {
                     return Ok(result);
                 }
                 else
@@ -69,8 +72,8 @@ namespace FekraHubAPI.Controllers.Attendance
             {
                
               
-                IQueryable<TeacherAttendance> query = (await _teacherAttendanceRepo.GetRelation<TeacherAttendance>(null,
-                    new List<Expression<Func<TeacherAttendance, bool>>?>
+                var result = await _teacherAttendanceRepo.GetRelationList(
+                    manyWhere: new List<Expression<Func<TeacherAttendance, bool>>?>
                     {
                         teacherId != null ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.TeacherID == teacherId) : null,
                         coursId.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.CourseID == coursId) : null,
@@ -79,19 +82,21 @@ namespace FekraHubAPI.Controllers.Attendance
                         year.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Year == year.Value) : null,
                         month.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Month == month.Value) : null,
                         dateTime.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(sa => sa.date.Date == dateTime.Value.Date) : null,
-                    }.Where(x => x != null).Cast<Expression<Func<TeacherAttendance, bool>>>().ToList()
-                    )).OrderByDescending(ta => ta.date);
-
-                if (query.Any())
-                {
-                    var result = await query.Select(sa => new
+                    }.Where(x => x != null).Cast<Expression<Func<TeacherAttendance, bool>>>().ToList(),
+                    orderBy: ta => ta.date,
+                    include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
+                    selector: sa => new
                     {
                         id = sa.Id,
                         Date = sa.date,
                         course = new { sa.Course.Id, sa.Course.Name },
                         Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
                         AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }
-                    }).ToListAsync();
+                    },
+                    asNoTracking: true);
+
+                if (result.Any())
+                {
                     return Ok(result);
                 }
                 else
@@ -108,7 +113,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
         [Authorize(Policy = "UpdateTeachersAttendance")]
         [HttpPost("Teacher")]
-        public async Task<IActionResult> AddTeacherAttendance([FromForm] Map_TeacherAttendance teacherAttendance)
+        public async Task<IActionResult> AddTeacherAttendance(Map_TeacherAttendance teacherAttendance)
         {
             try
             {
@@ -117,21 +122,21 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     return BadRequest(ModelState);
                 }
-                
-                
-                // date  if exist in database or not  (add if not)
-                
+
                 var existingDate = await _attendanceDateRepo.DataExist(x => x.Date.Date == teacherAttendance.Date);
-                
+
                 if (!existingDate)
                 {
                     return BadRequest("This date not a working day");
                 }
+
                 //course teacher
-                var couseId = (await _coursRepo.GetRelation<Course>(
-                    x => x.Teacher.Select(z => z.Id).Contains(teacherAttendance.TeacherID)))
-                    .Select(x=>x.Id)
-                    .FirstOrDefault();
+                var couseId = await _coursRepo.GetRelationSingle(
+                    where: x => x.Teacher.Select(z => z.Id).Contains(teacherAttendance.TeacherID),
+                    selector: x => x.Id,
+                    returnType: QueryReturnType.FirstOrDefault,
+                    asNoTracking:true);
+                   
 
                 if (couseId == 0)
                 {
@@ -139,8 +144,9 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
 
                 // from course schedule (working days)
-                var workingDays = (await _courseScheduleRepo.GetRelation(x => x.CourseID == couseId,
-                    selector: x => x.DayOfWeek.ToLower())).ToList();
+                var workingDays = await _courseScheduleRepo.GetRelationList(
+                    where:x => x.CourseID == couseId,
+                    selector: x => x.DayOfWeek.ToLower());
                 if (!workingDays.Any())
                 {
                     return NotFound("Course working days are not recorded in the school system");
@@ -149,10 +155,10 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     return BadRequest($"Date was not registered as a working day for this course with the id {couseId}");
                 }
-                
+
                 var techerAtten = await _teacherAttendanceRepo.DataExist(
                     x => x.date.Date == teacherAttendance.Date.Date && x.TeacherID == teacherAttendance.TeacherID);
-                  
+
                 if (techerAtten)
                 {
                     return BadRequest("The teachers already have attendance");
@@ -165,8 +171,6 @@ namespace FekraHubAPI.Controllers.Attendance
                     StatusID = teacherAttendance.StatusID
                 };
 
-
-
                 await _teacherAttendanceRepo.Add(tAttendance);
 
                 return Ok(new { tAttendance.Id, tAttendance.TeacherID, tAttendance.CourseID, tAttendance.date, tAttendance.StatusID });
@@ -176,18 +180,21 @@ namespace FekraHubAPI.Controllers.Attendance
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
                 return BadRequest(ex.Message);
             }
+           
+
+            
+            
 
         }
 
         [Authorize(Policy = "UpdateTeachersAttendance")]
         [HttpPatch("Teacher")]
-        public async Task<IActionResult> UpdateTeacherAttendance( int id, int statusId)
+        public async Task<IActionResult> UpdateTeacherAttendance( int id,  int statusId)
         {
             
             try
             {
-                var teacherAttendance = (await _teacherAttendanceRepo.GetRelation<TeacherAttendance>(sa => sa.Id == id))
-                    .SingleOrDefault();
+                var teacherAttendance = await _teacherAttendanceRepo.GetById(id);
                
                 if (teacherAttendance == null)
                 {
@@ -217,8 +224,7 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
 
-                var TeacherAtt = (await _teacherAttendanceRepo.GetRelation<TeacherAttendance>(sa => sa.Id == id))
-                    .SingleOrDefault();
+                var TeacherAtt = await _teacherAttendanceRepo.GetById(id);
                 if (TeacherAtt == null)
                 {
                     return NotFound("Teacher Attendance not found.");

@@ -94,9 +94,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
 
         // PUT: api/Locations/5
-
+        [Authorize(Policy = "ManageLocations")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl)
+        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl, [FromForm] List<string> rooms)
         {
             try
             {
@@ -114,6 +114,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _mapper.Map(locationMdl, locationEntity);
                 await _locationRepository.Update(locationEntity);
 
+                await _roomRepository.DeleteRange(x => x.LocationID == id);
+                List<Room> room = new List<Room>();
+                foreach (var r in rooms)
+                {
+                    room.Add(new Room { Name = r, LocationID = locationEntity.Id });
+                }
+                await _roomRepository.ManyAdd(room);
+
+
                 return Ok(new
                 {
                     locationEntity.Id,
@@ -122,6 +131,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     locationEntity.Street,
                     locationEntity.StreetNr,
                     locationEntity.ZipCode,
+                    Room = room.Select(r => new
+                    {
+                        r.Id,
+                        r.Name
+                    })
                 });
             }
             catch (Exception ex)
@@ -129,7 +143,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "LocationsController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
         // POST: api/Locations
         [Authorize(Policy = "ManageLocations")]

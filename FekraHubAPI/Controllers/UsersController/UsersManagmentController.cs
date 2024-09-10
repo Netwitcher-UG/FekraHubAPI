@@ -238,7 +238,71 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             
         }
+        [Authorize(Policy = "GetTeacher")]
+        [HttpGet("TeacherProfile")]
+        public async Task<IActionResult> GetTeacherProfil(string id)
+        {
+            var teacher = await _db.ApplicationUser.Where(x => x.Id == id).AsNoTracking().Select(s => new
+            {
+                s.Id,
+                s.FirstName,
+                s.LastName,
+                s.Email,
+                s.Gender,
+                s.Job,
+                s.Birthday,
+                s.Birthplace,
+                s.Nationality,
+                s.City,
+                s.Street,
+                s.StreetNr,
+                s.ZipCode,
+                s.PhoneNumber,
+                s.EmergencyPhoneNumber,
+                s.Graduation
+            }).SingleOrDefaultAsync();
+            var courses = await _db.Courses
+                .Include(t => t.Teacher)
+                .Where(x => x.Teacher.Select(z => z.Id).Contains(teacher.Id))
+                .Include(x => x.Room).ThenInclude(x => x.Location).Include(x => x.Student)
+                .AsNoTracking()
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.Capacity,
+                    c.Lessons,
+                    c.Price,
+                    c.StartDate,
+                    c.EndDate,
+                    StudentCount = c.Student.Count,
+                    AnotherTeachers = c.Teacher.Where(x => x.Id != id).Select(z => new
+                    {
+                        z.Id,
+                        z.FirstName,
+                        z.LastName,
+                        z.Email
+                    }),
+                    Room = new
+                    {
+                        c.Room.Id,
+                        c.Room.Name
+                    },
+                    Location = new
+                    {
+                        c.Room.Location.Id,
+                        c.Room.Location.Name,
+                        c.Room.Location.Street,
+                        c.Room.Location.StreetNr,
+                        c.Room.Location.City,
+                        c.Room.Location.ZipCode,
 
+                    }
+
+                })
+                .ToListAsync();
+            return Ok(new { teacher, courses });
+        }
         [Authorize(Policy = "GetSecretary")]
         [HttpGet("GetSecretary")]
         public async Task<IActionResult> GetSecretary()

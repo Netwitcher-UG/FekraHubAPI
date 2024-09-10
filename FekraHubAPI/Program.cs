@@ -187,7 +187,9 @@ app.Use(async (context, next) =>
 bool IsDeveloperEmail(string email)
 {
     var developerEmails = new List<string> { "basel@basel.com", "basel.slaby@gmail.com","p@p.com",
-    "s@s.com","t@t.com","admin@admin.com"};
+    "s@s.com","t@t.com","admin@admin.com","walaa@walaa.com","remoanff@gmail.com","basel.slaby@gmail.com" ,
+        "abog5461@gmail.com","teacher@teacher.com","caryer@gmail.com","remoan@remoan.com","abog5463@gmail.com",
+    "tt@t.com","halanabeel76@gmail.com","remon4445@gmail.com","yousefeldada@gmail.com","h@h.com"};
     return developerEmails.Contains(email);
 }
 

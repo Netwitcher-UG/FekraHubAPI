@@ -206,10 +206,23 @@ namespace FekraHubAPI.Controllers.UsersController
         }
         private bool IsDeveloperEmail(string email)
         {
-            var developerEmails = new List<string> { "basel@basel.com", "basel.slaby@gmail.com","p@p.com",
-    "s@s.com","t@t.com","admin@admin.com","walaa@walaa.com","remoanff@gmail.com","basel.slaby@gmail.com" ,
-        "abog5461@gmail.com","teacher@teacher.com","caryer@gmail.com","remoan@remoan.com","abog5463@gmail.com",
-    "tt@t.com","halanabeel76@gmail.com","remon4445@gmail.com","yousefeldada@gmail.com","h@h.com"};
+            var developerEmails = new List<string> {
+            "mlolo5041@gmail.com",
+            "htarbouch7@gmail.com",
+            "remon4445@gmail.com",
+            "hlovellcharles@gmail.com",
+            "abog9022@gmail.com",
+            "abog546a1@gmail.com",
+            "yousefeldada@gmail.com",
+            "abog5464@gmail.com",
+            "abog5461@gmail.com",
+            "remoanff@gmail.com",
+            "hatha.ana.com.net.sy@gmail.com",
+            "francisdani935@gmail.com",
+            "caryer@gmail.com",
+            "abog5463@gmail.com",
+            "halanabeel76@gmail.com",
+            "info@netwitcher.com"};
             return developerEmails.Contains(email);
         }
         [AllowAnonymous]

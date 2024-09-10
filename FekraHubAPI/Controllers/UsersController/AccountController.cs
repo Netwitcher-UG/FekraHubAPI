@@ -30,6 +30,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using System.Net;
 using FekraHubAPI.Constract;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -195,8 +196,20 @@ namespace FekraHubAPI.Controllers.UsersController
                     new Response { Status = "Error", Message = $"Could not change password , please try again." });
 
         }
-        
 
+        private ApplicationDbContext Create(string connectionString)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+            optionsBuilder.UseSqlServer(connectionString);
+
+            return new ApplicationDbContext(optionsBuilder.Options);
+        }
+        private bool IsDeveloperEmail(string email)
+        {
+            var developerEmails = new List<string> { "basel@basel.com", "basel.slaby@gmail.com","p@p.com",
+                "s@s.com","t@t.com","admin@admin.com"};
+            return developerEmails.Contains(email);
+        }
         [AllowAnonymous]
         [HttpPost("[action]")]
         public async Task<IActionResult> LogIn([FromForm] Map_Login login)
@@ -206,77 +219,118 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 if (ModelState.IsValid)
                 {
-                    ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
-                    if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
+                    string connectionString;
+                    if (IsDeveloperEmail(login.email))
                     {
-                        return Unauthorized("Email or password is invalid");
-                    }
-
-                    if (!user.ActiveUser)
-                    {
-                        return BadRequest("You must activate your account");
-                    }
-                    if (!user.EmailConfirmed)
-                    {
-                        _ = Task.Run(() => _emailSender.SendConfirmationEmail(user));
-                        return StatusCode(409, "Your account not confirmed . The confirm link has been sent to your email");
-                    }
-
-                    var claims = new List<Claim>
-                {
-                    new Claim("name", user.UserName),
-                    new Claim("id", user.Id),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                };
-
-                    var roles = await _userManager.GetRolesAsync(user);
-                    foreach (var role in roles)
-                    {
-                        claims.Add(new Claim("role", role));
-                        var roleUser = await _roleManager.FindByNameAsync(role);
-                        var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
-                        foreach (var roleClaim in roleClaims)
-                        {
-                            claims.Add(new Claim("Permissions", roleClaim.Value));
-                        }
-                    }
-
-                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
-                    var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-                    var token = new JwtSecurityToken(
-                        claims: claims,
-                        issuer: _configuration["JWT:Issuer"],
-                        audience: _configuration["JWT:Audience"],
-                        expires: DateTime.Now.AddMonths(1),
-                        signingCredentials: signingCredentials
-                    );
-
-                    var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-                    var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
-                    if (userToken == null)
-                    {
-                        userToken = new Tokens
-                        {
-                            Email = user.Email,
-                            ExpiryDate = DateTime.Now.AddMonths(1),
-                            UserId = user.Id,
-                            Token = tokenString
-                        };
-                        _db.Token.Add(userToken);
+                        connectionString = _configuration.GetConnectionString("develpConn");
                     }
                     else
                     {
-                        userToken.Token = tokenString;
-                        _db.Token.Update(userToken);
+                        connectionString = _configuration.GetConnectionString("ProdConn");
                     }
-                    await _db.SaveChangesAsync();
+                    using (var dbContext = Create(connectionString))
+                    {
+
+                        //ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
+                        //if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
+                        //{
+                        //    return Unauthorized("Email or password is invalid");
+                        //}
+                        var user = await dbContext.ApplicationUser.SingleOrDefaultAsync(u => u.Email == login.email);
+                        if (user == null)
+                        {
+                            return Unauthorized("Email or password is invalid");
+                        }
+
+                        var passwordHasher = new PasswordHasher<ApplicationUser>();
+                        var passwordVerificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, login.password);
+
+                        if (passwordVerificationResult != PasswordVerificationResult.Success)
+                        {
+                            return Unauthorized("Email or password is invalid");
+                        }
 
 
-                    return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(), token = tokenString, token.ValidTo });
+
+                        if (!user.ActiveUser)
+                        {
+                            return BadRequest("You must activate your account");
+                        }
+                        if (!user.EmailConfirmed)
+                        {
+                            _ = Task.Run(() => _emailSender.SendConfirmationEmail(user));
+                            return StatusCode(409, "Your account not confirmed . The confirm link has been sent to your email");
+                        }
+
+                        var claims = new List<Claim>
+                        {
+                            new Claim("name", user.UserName),
+                            new Claim("id", user.Id),
+                            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                        };
+
+
+                        var roleId = (await dbContext.UserRoles.FirstAsync(x => x.UserId == user.Id)).RoleId;
+                        var role = await dbContext.Roles.FirstAsync(x => x.Id == roleId);
+                        claims.Add(new Claim("role", role.ToString()));
+
+
+                        var roleClaims = await dbContext.RoleClaims.Where(x => x.RoleId == roleId).ToListAsync();
+                        foreach (var roleClaim in roleClaims)
+                        {
+                            claims.Add(new Claim("Permissions", roleClaim.ClaimValue));
+                        }
+
+                        //var roles = await _userManager.GetRolesAsync(user);
+                        //foreach (var role in roles)
+                        //{
+                        //    claims.Add(new Claim("role", role));
+                        //    var roleUser = await _roleManager.FindByNameAsync(role);
+                        //    var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
+                        //    foreach (var roleClaim in roleClaims)
+                        //    {
+                        //        claims.Add(new Claim("Permissions", roleClaim.Value));
+                        //    }
+                        //}
+
+                        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
+                        var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                        var token = new JwtSecurityToken(
+                            claims: claims,
+                            issuer: _configuration["JWT:Issuer"],
+                            audience: _configuration["JWT:Audience"],
+                            expires: DateTime.Now.AddMonths(1),
+                            signingCredentials: signingCredentials
+                        );
+
+                        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+                        var userToken = await dbContext.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
+                        if (userToken == null)
+                        {
+                            userToken = new Tokens
+                            {
+                                Email = user.Email,
+                                ExpiryDate = DateTime.Now.AddMonths(1),
+                                UserId = user.Id,
+                                Token = tokenString
+                            };
+                            _db.Token.Add(userToken);
+                        }
+                        else
+                        {
+                            userToken.Token = tokenString;
+                            _db.Token.Update(userToken);
+                        }
+                        await dbContext.SaveChangesAsync();
+
+
+                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, Role = role.ToString(), token = tokenString, token.ValidTo });
+                    }
                 }
                 return BadRequest(ModelState);
+               
             }
             catch (Exception ex)
             {

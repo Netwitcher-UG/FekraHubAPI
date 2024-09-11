@@ -36,25 +36,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add Connection DataBase.
 
 
-builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
-{
-    var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
-    var httpContext = httpContextAccessor.HttpContext;
-
-    var connectionString = builder.Configuration.GetConnectionString("ProdConn");
-
-    if (httpContext != null && httpContext.User.Identity.IsAuthenticated)
-    {
-        var userEmail = httpContext.User.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
-        if (IsDeveloperEmail(userEmail))
-        {
-            connectionString = builder.Configuration.GetConnectionString("develpConn");
-        }
-    }
-
-    options.UseSqlServer(connectionString);
-});
-builder.Services.AddHttpContextAccessor();
+builder.Services.AddDbContext<ApplicationDbContext>(op =>
+      op.UseSqlServer(builder.Configuration.GetConnectionString("develpConn")));
 
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddDefaultTokenProviders().AddEntityFrameworkStores<ApplicationDbContext>();
@@ -167,48 +150,6 @@ builder.Services.Configure<FormOptions>(options =>
 
 
 var app = builder.Build();
-
-
-app.Use(async (context, next) =>
-{
-    var userEmail = context.User?.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
-
-    if (!string.IsNullOrEmpty(userEmail) && IsDeveloperEmail(userEmail))
-    {
-        context.Items["ConnectionString"] = builder.Configuration.GetConnectionString("develpConn");
-    }
-    else
-    {
-        context.Items["ConnectionString"] = builder.Configuration.GetConnectionString("ProdConn");
-    }
-
-    await next.Invoke();
-});
-bool IsDeveloperEmail(string email)
-{
-    var developerEmails = new List<string> {
-            "mlolo5041@gmail.com",
-            "htarbouch7@gmail.com",
-            "remon4445@gmail.com",
-            "hlovellcharles@gmail.com",
-            "abog9022@gmail.com",
-            "abog546a1@gmail.com",
-            "yousefeldada@gmail.com",
-            "abog5464@gmail.com",
-            "abog5461@gmail.com",
-            "remoanff@gmail.com",
-            "hatha.ana.com.net.sy@gmail.com",
-            "francisdani935@gmail.com",
-            "caryer@gmail.com",
-            "abog5463@gmail.com",
-            "halanabeel76@gmail.com",
-            "info@netwitcher.com",
-            "basel.slaby@gmail.com"};
-    return developerEmails.Contains(email);
-}
-
-
-
 
 app.UseSwagger();
 app.UseSwaggerUI();

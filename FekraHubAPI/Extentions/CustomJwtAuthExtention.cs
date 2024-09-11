@@ -36,40 +36,14 @@ namespace FekraHubAPI.Extentions
                 o.SwaggerDoc("v1", new OpenApiInfo()
                 {
                     Version = "v1",
-                    Title = "FEKRA HUB API",
-                    Description = @"
-### Roles and Associated Emails
-
-- **Admin**
-  - mlolo5041@gmail.com
-  - htarbouch7@gmail.com
-  - remon4445@gmail.com
-
-- **Secretariat**
-  - hlovellcharles@gmail.com
-
-- **Teacher**
-  - abog9022@gmail.com
-  - abog546a1@gmail.com
-  - yousefeldada@gmail.com
-  - abog5464@gmail.com
-
-- **Parent**
-  - abog5461@gmail.com
-  - remoanff@gmail.com
-  - hatha.ana.com.net.sy@gmail.com
-  - francisdani935@gmail.com
-  - caryer@gmail.com
-  - abog5463@gmail.com
-  - halanabeel76@gmail.com
-  - info@netwitcher.com
-",
-                    //Contact = new OpenApiContact()
-                    //{
-                    //    Name = "fekrahub",
-                    //    Email = "info@fekrahub.com",
-                    //    Url = new Uri("https://mydomain.com")
-                    //}
+                    Title = "api Dev",
+                    Description = "for dev",
+                    Contact = new OpenApiContact()
+                    {
+                        Name = "Fekra Hub",
+                        //Email = "ahmed@gmail.com",
+                        //Url = new Uri("https://mydomain.com")
+                    }
                 });
 
                 o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()

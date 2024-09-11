@@ -144,45 +144,73 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             
         }
-        [Authorize(Policy = "GetEmployee")]
 
+        [Authorize(Policy = "GetEmployee")]
         [HttpGet("GetEmployee")]
-        public async Task<IActionResult> GetEmployee()
+        public async Task<IActionResult> GetEmployee(string? RoleName)
         {
             try
             {
-                var roleIds = new List<string> { "2", "4" };
-                var userIdsInRoles = await _db.UserRoles
-                                    .Where(x => roleIds.Contains(x.RoleId))
-                                    .Select(x => x.UserId)
-                                    .ToListAsync();
-                var usersInRoles = await _db.ApplicationUser
-                                    .Where(x => userIdsInRoles.Contains(x.Id))
-                                    .ToListAsync();
-
-                var data = usersInRoles.Select(x => new
+                List<string> roleIds = new List<string>();
+                if (RoleName != null) 
                 {
-                    x.Id,
-                    x.Name,
-                    x.UserName,
-                    x.FirstName,
-                    x.LastName,
-                    x.Email,
-                    x.ImageUser,
-                    x.Gender,
-                    x.Job,
-                    x.Birthday,
-                    x.Birthplace,
-                    x.Nationality,
-                    x.City,
-                    x.Street,
-                    x.StreetNr,
-                    x.ZipCode,
-                    x.PhoneNumber,
-                    x.EmergencyPhoneNumber,
+                     roleIds = await _db.Roles.Where(x => x.Name == RoleName)
+                        .Select(r => r.Id).ToListAsync();
+                    if (!roleIds.Any())  
+                    {
+                        return BadRequest("RoleName not found");
+                    }
+                    if(!roleIds.Any(x=> x =="1" || x =="2" ||x == "4"))
+                    {
+                        return BadRequest("RoleName not an employee");
+                    }
+                }
+                else
+                {
+                    roleIds = new List<string> { "1", "2", "4" };
+                }
+                var userIds = await _db.UserRoles
+                                .Where(ur => roleIds.Contains(ur.RoleId))
+                                .Select(ur => ur.UserId)
+                                .ToListAsync();
 
+                var users = await _db.ApplicationUser
+                    .Where(u => userIds.Contains(u.Id))
+                    .ToListAsync();
+
+                var userRoles = await _db.UserRoles
+                    .Where(ur => userIds.Contains(ur.UserId))
+                    .Join(_db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new
+                    {
+                        ur.UserId,
+                        r.Name
+                    })
+                    .ToListAsync();
+
+                var result = users.Select(user => new
+                {
+                    user.Id,
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    user.ImageUser,
+                    user.Gender,
+                    user.Job,
+                    user.Birthday,
+                    user.Birthplace,
+                    user.Nationality,
+                    user.City,
+                    user.Street,
+                    user.StreetNr,
+                    user.ZipCode,
+                    user.PhoneNumber,
+                    user.EmergencyPhoneNumber,
+
+                    Roles = RoleName != null ? RoleName : string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name))
                 }).ToList();
-                return Ok(data);
+
+                return Ok(result);
+
             }
             catch (Exception ex)
             {

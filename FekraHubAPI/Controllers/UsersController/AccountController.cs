@@ -223,7 +223,8 @@ namespace FekraHubAPI.Controllers.UsersController
                     "caryer@gmail.com",
                     "abog5463@gmail.com",
                     "halanabeel76@gmail.com",
-                    "info@netwitcher.com"};
+                    "info@netwitcher.com",
+                    "basel.slaby@gmail.com"};
             return developerEmails.Contains(email);
         }
         [AllowAnonymous]
@@ -332,12 +333,12 @@ namespace FekraHubAPI.Controllers.UsersController
                                 UserId = user.Id,
                                 Token = tokenString
                             };
-                            _db.Token.Add(userToken);
+                            dbContext.Token.Add(userToken);
                         }
                         else
                         {
                             userToken.Token = tokenString;
-                            _db.Token.Update(userToken);
+                            dbContext.Token.Update(userToken);
                         }
                         await dbContext.SaveChangesAsync();
 
@@ -556,15 +557,15 @@ namespace FekraHubAPI.Controllers.UsersController
                     var user = await dbContext.ApplicationUser.Where( x=> x.Id == userId).AsNoTracking().SingleOrDefaultAsync();
                     if (user != null)
                     {
-                        //var isTokenExists = await dbContext.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
-                        //if (isTokenExists != null && isTokenExists.Token == token)
-                        //{
+                        var isTokenExists = await dbContext.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
+                        if (isTokenExists != null && isTokenExists.Token == token)
+                        {
                             return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
-                        //}
-                        //else
-                        //{
-                        //    return Unauthorized("Invalid token");
-                        //}
+                        }
+                        else
+                        {
+                            return Unauthorized("Invalid token");
+                        }
                     }
                     else
                     {

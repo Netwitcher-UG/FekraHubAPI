@@ -29,19 +29,19 @@ namespace FekraHubAPI.Extentions
             });
         }
 
-        public static void AddSwaggerGenJwtAuth(this IServiceCollection services)
+        public static void AddSwaggerGenJwtAuth(this IServiceCollection services, string V)
         {
             services.AddSwaggerGen(o =>
             {
-                o.SwaggerDoc("v1", new OpenApiInfo()
+                o.SwaggerDoc(V, new OpenApiInfo()
                 {
-                    Version = "v1",
-                    Title = "api Dev",
-                    Description = "for dev",
+                    Version = V,
+                    Title = "API App",
+                    Description = "For FekraHub website",
                     Contact = new OpenApiContact()
                     {
                         Name = "Fekra Hub",
-                        //Email = "ahmed@gmail.com",
+                        Email = "admin@fekraschule.de",
                         //Url = new Uri("https://mydomain.com")
                     }
                 });

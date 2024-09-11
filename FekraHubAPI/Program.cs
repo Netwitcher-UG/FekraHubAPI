@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using System;
 using System.Data;
@@ -31,7 +32,7 @@ using IEmailSender = FekraHubAPI.EmailSender.IEmailSender;
 
 
 var builder = WebApplication.CreateBuilder(args);
-
+var appVersion = builder.Configuration.GetValue<string>("AppSettings:Version");
 
 // Add Connection DataBase.
 
@@ -138,7 +139,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSwaggerGenJwtAuth();
+builder.Services.AddSwaggerGenJwtAuth(appVersion);
 
 builder.Services.AddCustomJwtAuth(builder.Configuration);
 
@@ -155,7 +156,11 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors();
-
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-API-Version", appVersion);
+    await next.Invoke();
+});
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

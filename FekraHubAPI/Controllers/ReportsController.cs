@@ -167,8 +167,47 @@ namespace FekraHubAPI.Controllers
             
         }
 
-        [Authorize(Policy = "GetStudentsReports")]
+        [Authorize(Policy = "GetTeacher")]
+        [HttpGet("TeacherProfile")]
+        public async Task<IActionResult> GetTeacherReport(string id)
+        {
+            var Teacher = await _Users.FindByIdAsync(id); 
+            if (Teacher == null)
+            {
+                return BadRequest("Teacher not found");
+            }
+            var isTeacher = await _reportRepo.IsTeacherIDExists(id);
+            if (!isTeacher)
+            {
+                return BadRequest("The Id does not belong to a teacher");
+            }
+            var teacherReports = await _reportRepo.GetRelationList(
+                where: x=> x.UserId == id ,
+                asNoTracking:true,
+                include:x=> x.Include(z=>z.Student).ThenInclude(z=>z.Course),
+                selector:x=>new
+                {
+                    x.Id,
+                    x.CreationDate,
+                    x.data,
+                    x.Improved,
+                    Student = new
+                    {
+                        x.Student.Id,
+                        x.Student.FirstName,
+                        x.Student.LastName,
+                        Course = new
+                        {
+                            x.Student.Course.Id,
+                            x.Student.Course.Name
+                        }
+                    }
+                }
+                );
+            return Ok(new { Teacher = new { Teacher.Id, Teacher.FirstName, Teacher.LastName },teacherReports });
+        }
 
+        [Authorize(Policy = "GetStudentsReports")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetReport(int id)
         {

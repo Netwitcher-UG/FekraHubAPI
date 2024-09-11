@@ -55,6 +55,45 @@ namespace FekraHubAPI.Controllers.Attendance
             }
 
         }
+        [Authorize(Policy = "GetTeacher")]
+        [HttpGet("TeacherAttendanceProfile")]
+        public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendanceProfile(string id)
+        {
+            try
+            {
+                var Teacher = await _userManager.FindByIdAsync(id);
+                if (Teacher == null)
+                {
+                    return BadRequest("Teacher not found");
+                }
+                var isTeacher = await _teacherAttendanceRepo.IsTeacherIDExists(id);
+                if (!isTeacher)
+                {
+                    return BadRequest("The Id does not belong to a teacher");
+                }
+                var teacherAttendance = await _teacherAttendanceRepo.GetRelationList(
+                    where: x => x.TeacherID == id,
+                    include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
+                    orderBy: x => x.date,
+                    selector: sa => new
+                    {
+                        id = sa.Id,
+                        Date = sa.date,
+                        course = new { sa.Course.Id, sa.Course.Name },
+                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
+                    },
+                    asNoTracking: true);
+                
+                return Ok(new { Teacher = new { Teacher.Id, Teacher.FirstName, Teacher.LastName }, teacherAttendance });
+                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
 
         [Authorize(Policy = "GetTeachersAttendance")]
         [HttpGet("TeacherFilter")]

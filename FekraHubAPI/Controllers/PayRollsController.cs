@@ -108,6 +108,45 @@ namespace FekraHubAPI.Controllers
             
         }
 
+        [Authorize(Policy = "GetTeacher")]
+        [HttpGet("TeacherProfile")]
+        public async Task<IActionResult> GetTeacherPayRolls(string id)
+        {
+            var Teacher = await _userManager.FindByIdAsync(id);
+            if (Teacher == null)
+            {
+                return BadRequest("Teacher not found");
+            }
+            var isTeacher = await _payRollRepository.IsTeacherIDExists(id);
+            if (!isTeacher)
+            {
+                return BadRequest("The Id does not belong to a teacher");
+            }
+            var teacherPayrolls = await _payRollRepository.GetRelationList(
+                where: x => x.UserID == id,
+                asNoTracking: true,
+                include: x => x,
+                selector: x => new
+                {
+                    x.Id,
+                    x.Timestamp,
+                   
+                }
+                );
+            return Ok(new { Teacher = new { Teacher.Id, Teacher.FirstName, Teacher.LastName }, teacherPayrolls });
+        }
+        [Authorize(Policy = "GetTeacher")]
+        [HttpGet("DownloadPayrolls")]
+        public async Task<IActionResult> GetDownloadTeacherPayrolls(int id)
+        {
+            var payRolls = await _payRollRepository.GetById(id);
+            if (payRolls == null)
+            {
+                return BadRequest("File not found");
+            }
+            return Ok(Convert.ToBase64String(payRolls.File));
+        }
+
 
 
 

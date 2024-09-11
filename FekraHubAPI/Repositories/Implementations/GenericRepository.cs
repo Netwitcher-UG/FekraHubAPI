@@ -243,30 +243,14 @@ namespace FekraHubAPI.Repositories.Implementations
         }
         public async Task<bool> IsTeacherIDExists(string userId)
         {
-            var roles = await _context.Roles.FirstOrDefaultAsync(r => r.Name == RolesEnum.Teacher.ToString());
-            if (roles == null)
-            {
-                return false;
-            }
-            var user = await _context.Users.FindAsync(userId);
-            var userRoles = await _context.UserRoles.FirstOrDefaultAsync(x => x.UserId == userId && x.RoleId == roles.Id);
-            return user != null && userRoles != null;
+            var IsTeacher = await _context.UserRoles.AnyAsync(x => x.UserId == userId && x.RoleId == "4");
+
+            return IsTeacher;
         }
         public async Task<bool> IsSecretariatIDExists(string userId)
         {
-
-            var roles = await _context.Roles.FirstOrDefaultAsync(r => r.Name == RolesEnum.Secretariat.ToString());
-            if (roles == null)
-            {
-                return false;
-            }
-            var user = await _context.Users.FindAsync(userId);
-            var userRoles = await _context.UserRoles.FirstOrDefaultAsync(x => x.UserId == userId && x.RoleId == roles.Id);
-            return user != null && userRoles != null;
-
-
-            //var isSecretariat = await _userManager.IsInRoleAsync(user, DefaultRole.Secretariat);
-            //return isSecretariat;
+            var isSecretariat = await _context.UserRoles.AnyAsync(x => x.UserId == userId && x.RoleId == "2");
+            return isSecretariat;
         }
         public async Task<bool> IsSecretariat(ApplicationUser user)
         {

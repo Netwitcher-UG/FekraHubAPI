@@ -31,6 +31,7 @@ using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using System.Net;
 using FekraHubAPI.Constract;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Serilog;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -523,22 +524,52 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     return Unauthorized("Invalid token: Missing user ID");
                 }
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user != null)
+                //var user = await _userManager.FindByIdAsync(userId);
+                //if (user != null)
+                //{
+                //    var isTokenExists = await _db.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
+                //    if (isTokenExists != null && isTokenExists.Token == token)
+                //    {
+                //        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
+                //    }
+                //    else
+                //    {
+                //        return Unauthorized("Invalid token");
+                //    }
+                //}
+                //else
+                //{
+                //    return Unauthorized("Invalid token");
+                //}
+                var email = principal.FindFirstValue("name");
+                string connectionString;
+                if (IsDeveloperEmail(email))
                 {
-                    var isTokenExists = await _db.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
-                    if (isTokenExists != null && isTokenExists.Token == token)
+                    connectionString = _configuration.GetConnectionString("develpConn");
+                }
+                else
+                {
+                    connectionString = _configuration.GetConnectionString("ProdConn");
+                }
+                using (var dbContext = Create(connectionString))
+                {
+                    var user = await dbContext.ApplicationUser.Where( x=> x.Id == userId).AsNoTracking().SingleOrDefaultAsync();
+                    if (user != null)
                     {
-                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
+                        //var isTokenExists = await dbContext.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
+                        //if (isTokenExists != null && isTokenExists.Token == token)
+                        //{
+                            return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
+                        //}
+                        //else
+                        //{
+                        //    return Unauthorized("Invalid token");
+                        //}
                     }
                     else
                     {
                         return Unauthorized("Invalid token");
                     }
-                }
-                else
-                {
-                    return Unauthorized("Invalid token");
                 }
             }
             catch (SecurityTokenException)

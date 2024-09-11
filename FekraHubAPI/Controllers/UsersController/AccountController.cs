@@ -198,35 +198,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
         }
 
-        private ApplicationDbContext Create(string connectionString)
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            optionsBuilder.UseSqlServer(connectionString);
-
-            return new ApplicationDbContext(optionsBuilder.Options);
-        }
-        private bool IsDeveloperEmail(string email)
-        {
-            var developerEmails = new List<string> {
-                    "mlolo5041@gmail.com",
-                    "htarbouch7@gmail.com",
-                    "remon4445@gmail.com",
-                    "hlovellcharles@gmail.com",
-                    "abog9022@gmail.com",
-                    "abog546a1@gmail.com",
-                    "yousefeldada@gmail.com",
-                    "abog5464@gmail.com",
-                    "abog5461@gmail.com",
-                    "remoanff@gmail.com",
-                    "hatha.ana.com.net.sy@gmail.com",
-                    "francisdani935@gmail.com",
-                    "caryer@gmail.com",
-                    "abog5463@gmail.com",
-                    "halanabeel76@gmail.com",
-                    "info@netwitcher.com",
-                    "basel.slaby@gmail.com"};
-            return developerEmails.Contains(email);
-        }
+       
         [AllowAnonymous]
         [HttpPost("[action]")]
         public async Task<IActionResult> LogIn([FromForm] Map_Login login)
@@ -236,81 +208,44 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 if (ModelState.IsValid)
                 {
-                    string connectionString;
-                    if (IsDeveloperEmail(login.email))
+
+
+                    ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
+                    if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
                     {
-                        connectionString = _configuration.GetConnectionString("develpConn");
+                        return Unauthorized("Email or password is invalid");
                     }
-                    else
+
+                    if (!user.ActiveUser)
                     {
-                        connectionString = _configuration.GetConnectionString("ProdConn");
+                        return BadRequest("You must activate your account");
                     }
-                    using (var dbContext = Create(connectionString))
+                    if (!user.EmailConfirmed)
                     {
+                        _ = Task.Run(() => _emailSender.SendConfirmationEmail(user));
+                        return StatusCode(409, "Your account not confirmed . The confirm link has been sent to your email");
+                    }
 
-                        //ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
-                        //if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
-                        //{
-                        //    return Unauthorized("Email or password is invalid");
-                        //}
-                        var user = await dbContext.ApplicationUser.SingleOrDefaultAsync(u => u.Email == login.email);
-                        if (user == null)
-                        {
-                            return Unauthorized("Email or password is invalid");
-                        }
-
-                        var passwordHasher = new PasswordHasher<ApplicationUser>();
-                        var passwordVerificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, login.password);
-
-                        if (passwordVerificationResult != PasswordVerificationResult.Success)
-                        {
-                            return Unauthorized("Email or password is invalid");
-                        }
-
-
-
-                        if (!user.ActiveUser)
-                        {
-                            return BadRequest("You must activate your account");
-                        }
-                        if (!user.EmailConfirmed)
-                        {
-                            _ = Task.Run(() => _emailSender.SendConfirmationEmail(user));
-                            return StatusCode(409, "Your account not confirmed . The confirm link has been sent to your email");
-                        }
-
-                        var claims = new List<Claim>
+                    var claims = new List<Claim>
                         {
                             new Claim("name", user.UserName),
                             new Claim("id", user.Id),
                             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                         };
 
-
-                        var roleId = (await dbContext.UserRoles.FirstAsync(x => x.UserId == user.Id)).RoleId;
-                        var role = await dbContext.Roles.FirstAsync(x => x.Id == roleId);
-                        claims.Add(new Claim("role", role.ToString()));
-
-
-                        var roleClaims = await dbContext.RoleClaims.Where(x => x.RoleId == roleId).ToListAsync();
+                    var roles = await _userManager.GetRolesAsync(user);
+                    foreach (var role in roles)
+                    {
+                        claims.Add(new Claim("role", role));
+                        var roleUser = await _roleManager.FindByNameAsync(role);
+                        var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
                         foreach (var roleClaim in roleClaims)
                         {
-                            claims.Add(new Claim("Permissions", roleClaim.ClaimValue));
+                            claims.Add(new Claim("Permissions", roleClaim.Value));
                         }
+                    }
 
-                        //var roles = await _userManager.GetRolesAsync(user);
-                        //foreach (var role in roles)
-                        //{
-                        //    claims.Add(new Claim("role", role));
-                        //    var roleUser = await _roleManager.FindByNameAsync(role);
-                        //    var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
-                        //    foreach (var roleClaim in roleClaims)
-                        //    {
-                        //        claims.Add(new Claim("Permissions", roleClaim.Value));
-                        //    }
-                        //}
-
-                        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
                         var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
                         var token = new JwtSecurityToken(
@@ -323,7 +258,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
                         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-                        var userToken = await dbContext.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
+                        var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
                         if (userToken == null)
                         {
                             userToken = new Tokens
@@ -333,18 +268,18 @@ namespace FekraHubAPI.Controllers.UsersController
                                 UserId = user.Id,
                                 Token = tokenString
                             };
-                            dbContext.Token.Add(userToken);
+                            _db.Token.Add(userToken);
                         }
                         else
                         {
                             userToken.Token = tokenString;
-                            dbContext.Token.Update(userToken);
+                            _db.Token.Update(userToken);
                         }
-                        await dbContext.SaveChangesAsync();
+                        await _db.SaveChangesAsync();
 
 
-                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, Role = role.ToString(), token = tokenString, token.ValidTo });
-                    }
+                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(), token = tokenString, token.ValidTo });
+                    
                 }
                 return BadRequest(ModelState);
                
@@ -525,53 +460,24 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     return Unauthorized("Invalid token: Missing user ID");
                 }
-                //var user = await _userManager.FindByIdAsync(userId);
-                //if (user != null)
-                //{
-                //    var isTokenExists = await _db.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
-                //    if (isTokenExists != null && isTokenExists.Token == token)
-                //    {
-                //        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
-                //    }
-                //    else
-                //    {
-                //        return Unauthorized("Invalid token");
-                //    }
-                //}
-                //else
-                //{
-                //    return Unauthorized("Invalid token");
-                //}
-                var email = principal.FindFirstValue("name");
-                string connectionString;
-                if (IsDeveloperEmail(email))
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user != null)
                 {
-                    connectionString = _configuration.GetConnectionString("develpConn");
-                }
-                else
-                {
-                    connectionString = _configuration.GetConnectionString("ProdConn");
-                }
-                using (var dbContext = Create(connectionString))
-                {
-                    var user = await dbContext.ApplicationUser.Where( x=> x.Id == userId).AsNoTracking().SingleOrDefaultAsync();
-                    if (user != null)
+                    var isTokenExists = await _db.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
+                    if (isTokenExists != null && isTokenExists.Token == token)
                     {
-                        var isTokenExists = await dbContext.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
-                        if (isTokenExists != null && isTokenExists.Token == token)
-                        {
-                            return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
-                        }
-                        else
-                        {
-                            return Unauthorized("Invalid token");
-                        }
+                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
                     }
                     else
                     {
                         return Unauthorized("Invalid token");
                     }
                 }
+                else
+                {
+                    return Unauthorized("Invalid token");
+                }
+
             }
             catch (SecurityTokenException)
             {

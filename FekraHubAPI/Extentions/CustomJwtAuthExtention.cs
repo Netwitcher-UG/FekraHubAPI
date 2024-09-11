@@ -33,7 +33,7 @@ namespace FekraHubAPI.Extentions
         {
             services.AddSwaggerGen(o =>
             {
-                o.SwaggerDoc(V, new OpenApiInfo()
+                o.SwaggerDoc("v1", new OpenApiInfo()
                 {
                     Version = V,
                     Title = "API App",

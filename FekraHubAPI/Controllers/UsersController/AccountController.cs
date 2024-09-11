@@ -31,6 +31,7 @@ using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using System.Net;
 using FekraHubAPI.Constract;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Serilog;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -49,11 +50,11 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly IConfiguration _configuration;
         private readonly EmailSender.IEmailSender _emailSender;
         private readonly ILogger<AccountController> _logger;
-        public AccountController(ApplicationDbContext context, UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager, EmailSender.IEmailSender emailSender
-            , IConfiguration configuration
+        public AccountController(ApplicationDbContext context  , UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager , EmailSender.IEmailSender emailSender
+            , IConfiguration configuration 
             , IRepository<SchoolInfo> schoolInfoRepo,
-            ApplicationDbContext db, ILogger<AccountController> logger)
+            ApplicationDbContext db,ILogger<AccountController> logger)
         {
 
             _userManager = userManager;
@@ -77,12 +78,12 @@ namespace FekraHubAPI.Controllers.UsersController
             return Ok(user);
         }
         [HttpPut]
-        public async Task<IActionResult> UpdateAccount([FromForm] Map_Account accountUpdate)
+        public async Task<IActionResult> UpdateAccount( [FromForm] Map_Account accountUpdate)
         {
             var getCurrentAccount = await GetCurrentUserAsync();
             var account = await _db.ApplicationUser.FindAsync(getCurrentAccount.Id);
-
-
+            
+            
             if (accountUpdate.ImageUser != null)
             {
                 using var stream = new MemoryStream();
@@ -90,7 +91,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 account.ImageUser = stream.ToString();
 
             }
-
+            
             var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
             var normalizedUserName = accountUpdate.Email.Normalize().ToLower();
 
@@ -132,9 +133,9 @@ namespace FekraHubAPI.Controllers.UsersController
                 // var callbackUrl = Url.Action("GetResetPassword", "Account", new { email = user.Email, token = token }, protocol: HttpContext.Request.Scheme);
 
                 var domain = await _schoolInfoRepo.GetRelationSingle(
-                    selector: x => x.UrlDomain,
-                    returnType: QueryReturnType.Single,
-                    asNoTracking: true);
+                    selector: x=>x.UrlDomain,
+                    returnType:QueryReturnType.Single,
+                    asNoTracking:true);
                 var restPaswordLink = "/reset-password";
                 var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={encodedToken}";
                 _ = Task.Run(() => _emailSender.SendRestPassword(user.Email, callbackUrlLink));
@@ -143,7 +144,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             return BadRequest($"{email} is not registered !");
         }
-
+        
 
         [HttpPost]
         [AllowAnonymous]
@@ -207,22 +208,23 @@ namespace FekraHubAPI.Controllers.UsersController
         private bool IsDeveloperEmail(string email)
         {
             var developerEmails = new List<string> {
-            "mlolo5041@gmail.com",
-            "htarbouch7@gmail.com",
-            "remon4445@gmail.com",
-            "hlovellcharles@gmail.com",
-            "abog9022@gmail.com",
-            "abog546a1@gmail.com",
-            "yousefeldada@gmail.com",
-            "abog5464@gmail.com",
-            "abog5461@gmail.com",
-            "remoanff@gmail.com",
-            "hatha.ana.com.net.sy@gmail.com",
-            "francisdani935@gmail.com",
-            "caryer@gmail.com",
-            "abog5463@gmail.com",
-            "halanabeel76@gmail.com",
-            "info@netwitcher.com"};
+                    "mlolo5041@gmail.com",
+                    "htarbouch7@gmail.com",
+                    "remon4445@gmail.com",
+                    "hlovellcharles@gmail.com",
+                    "abog9022@gmail.com",
+                    "abog546a1@gmail.com",
+                    "yousefeldada@gmail.com",
+                    "abog5464@gmail.com",
+                    "abog5461@gmail.com",
+                    "remoanff@gmail.com",
+                    "hatha.ana.com.net.sy@gmail.com",
+                    "francisdani935@gmail.com",
+                    "caryer@gmail.com",
+                    "abog5463@gmail.com",
+                    "halanabeel76@gmail.com",
+                    "info@netwitcher.com",
+                    "basel.slaby@gmail.com"};
             return developerEmails.Contains(email);
         }
         [AllowAnonymous]
@@ -331,12 +333,12 @@ namespace FekraHubAPI.Controllers.UsersController
                                 UserId = user.Id,
                                 Token = tokenString
                             };
-                            _db.Token.Add(userToken);
+                            dbContext.Token.Add(userToken);
                         }
                         else
                         {
                             userToken.Token = tokenString;
-                            _db.Token.Update(userToken);
+                            dbContext.Token.Update(userToken);
                         }
                         await dbContext.SaveChangesAsync();
 
@@ -345,14 +347,14 @@ namespace FekraHubAPI.Controllers.UsersController
                     }
                 }
                 return BadRequest(ModelState);
-
+               
             }
             catch (Exception ex)
             {
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "AccountController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
         [AllowAnonymous]
         [HttpPost("RegisterParent")]
@@ -396,7 +398,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             PhoneNumber = user.phoneNumber,
                             Gender = user.gender,
                             EmergencyPhoneNumber = user.emergencyPhoneNumber,
-                            Birthday = user.birthday,
+                            Birthday = user.birthday ,
                             Birthplace = user.birthplace,
                             Nationality = user.nationality,
                             Street = user.street,
@@ -422,7 +424,7 @@ namespace FekraHubAPI.Controllers.UsersController
                                 return Ok($"Success!! . Please go to your email message box and confirm your email");
                             }
 
-
+                           
                         }
                         else
                         {
@@ -450,7 +452,7 @@ namespace FekraHubAPI.Controllers.UsersController
         public async Task<IActionResult> ResendConfirmEmail(string Email)
         {
             var user = await _userManager.FindByEmailAsync(Email);
-            if (user != null)
+            if (user != null) 
             {
                 _ = Task.Run(() => _emailSender.SendConfirmationEmail(user));
                 return Ok();
@@ -474,7 +476,7 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 return BadRequest("User not found.");
             }
-            if (user.EmailConfirmed == true)
+            if(user.EmailConfirmed == true)
             {
                 return Ok();
             }
@@ -489,9 +491,9 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 return BadRequest();
             }
-
+            
         }
-
+        
         [HttpPost("[action]")]
         public async Task<IActionResult> ValidateToken()
         {
@@ -552,18 +554,18 @@ namespace FekraHubAPI.Controllers.UsersController
                 }
                 using (var dbContext = Create(connectionString))
                 {
-                    var user = await dbContext.ApplicationUser.Where(x => x.Id == userId).AsNoTracking().SingleOrDefaultAsync();
+                    var user = await dbContext.ApplicationUser.Where( x=> x.Id == userId).AsNoTracking().SingleOrDefaultAsync();
                     if (user != null)
                     {
-                        //var isTokenExists = await dbContext.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
-                        //if (isTokenExists != null && isTokenExists.Token == token)
-                        //{
-                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
-                        //}
-                        //else
-                        //{
-                        //    return Unauthorized("Invalid token");
-                        //}
+                        var isTokenExists = await dbContext.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
+                        if (isTokenExists != null && isTokenExists.Token == token)
+                        {
+                            return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
+                        }
+                        else
+                        {
+                            return Unauthorized("Invalid token");
+                        }
                     }
                     else
                     {
@@ -576,7 +578,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 return Unauthorized("Invalid token");
             }
         }
-
+        
         [HttpPost("[action]")]
         public async Task<IActionResult> Logout()
         {
@@ -584,7 +586,7 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var tokenData = await _db.Token.Where(x => x.UserId == userId).FirstOrDefaultAsync();
-                if (tokenData == null)
+                if (tokenData == null) 
                 {
                     return Unauthorized();
                 }
@@ -593,8 +595,8 @@ namespace FekraHubAPI.Controllers.UsersController
                 await _db.SaveChangesAsync();
                 return Ok();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) 
+            { 
                 return BadRequest(ex.Message);
             }
         }

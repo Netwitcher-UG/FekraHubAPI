@@ -79,7 +79,7 @@ namespace FekraHubAPI.Data
                     EmailServer = "smtp.ionos.de",
                     EmailPortNumber = 587,
                     FromEmail = "info@fekrahub.com",
-                    Password = "Fekra@hub2024",
+                    Password = "NW2024!FekraHub",
                     PrivacyPolicy = "PrivacyPolicy"
                 });
             builder.Entity<ContractPage>().HasData(

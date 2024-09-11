@@ -202,7 +202,8 @@ bool IsDeveloperEmail(string email)
             "caryer@gmail.com",
             "abog5463@gmail.com",
             "halanabeel76@gmail.com",
-            "info@netwitcher.com"};
+            "info@netwitcher.com",
+            "basel.slaby@gmail.com"};
     return developerEmails.Contains(email);
 }
 

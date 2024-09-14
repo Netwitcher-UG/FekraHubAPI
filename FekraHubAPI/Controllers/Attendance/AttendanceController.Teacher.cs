@@ -162,7 +162,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     return BadRequest(ModelState);
                 }
 
-                var existingDate = await _attendanceDateRepo.DataExist(x => x.Date.Date == teacherAttendance.Date);
+                var existingDate = await _attendanceDateRepo.DataExist(x => x.Date.Date == teacherAttendance.Date.Date);
 
                 if (!existingDate)
                 {

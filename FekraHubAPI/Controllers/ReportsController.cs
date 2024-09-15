@@ -499,7 +499,7 @@ namespace FekraHubAPI.Controllers
 
                 if (reports)
                 {
-                    return BadRequest($"There is a report for a student on this date");
+                    return BadRequest($"There is a report for a student on this month");
                 }
                 var userId = _reportRepo.GetUserIDFromToken(User);
 

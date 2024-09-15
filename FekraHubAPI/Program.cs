@@ -77,7 +77,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
     {
-        builder.WithOrigins("http://localhost:3000", "https://fekrahub.app")//frontend url
+        builder.WithOrigins("http://localhost:3000", "https://dev.fekrahub.app")//frontend url
                .AllowAnyHeader()
                .AllowAnyMethod()
                .AllowCredentials();

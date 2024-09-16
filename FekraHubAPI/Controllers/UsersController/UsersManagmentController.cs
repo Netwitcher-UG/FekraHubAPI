@@ -151,14 +151,19 @@ namespace FekraHubAPI.Controllers.UsersController
             try
             {
                 List<string> roleIds = new List<string>();
+
                 if (RoleName != null)
                 {
-                    roleIds = await _db.Roles.Where(x => x.Name == RoleName)
-                       .Select(r => r.Id).ToListAsync();
+                    roleIds = await _db.Roles
+                        .Where(x => x.Name == RoleName)
+                        .Select(r => r.Id)
+                        .ToListAsync();
+
                     if (!roleIds.Any())
                     {
                         return BadRequest("RoleName not found");
                     }
+
                     if (!roleIds.Any(x => x == "1" || x == "2" || x == "4"))
                     {
                         return BadRequest("RoleName not an employee");
@@ -168,10 +173,11 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     roleIds = new List<string> { "1", "2", "4" };
                 }
+
                 var userIds = await _db.UserRoles
-                                .Where(ur => roleIds.Contains(ur.RoleId))
-                                .Select(ur => ur.UserId)
-                                .ToListAsync();
+                    .Where(ur => roleIds.Contains(ur.RoleId))
+                    .Select(ur => ur.UserId)
+                    .ToListAsync();
 
                 var users = await _db.ApplicationUser
                     .Where(u => userIds.Contains(u.Id))
@@ -185,6 +191,19 @@ namespace FekraHubAPI.Controllers.UsersController
                         r.Name
                     })
                     .ToListAsync();
+
+                // Get the current month
+                var currentMonth = DateTime.Now.Month;
+                var currentYear = DateTime.Now.Year;
+
+                // Query to check if a user has payrolls this month
+                var payrollsThisMonth = await _db.PayRoll
+                    .Where(p => p.Timestamp.Month == currentMonth && p.Timestamp.Year == currentYear)
+                    .GroupBy(p => p.UserID)
+                    .Select(g => new { UserId = g.Key, HasPayroll = true })
+                    .ToListAsync();
+
+                var payrollsLookup = payrollsThisMonth.ToDictionary(p => p.UserId, p => p.HasPayroll);
 
                 var result = users.Select(user => new
                 {
@@ -204,8 +223,8 @@ namespace FekraHubAPI.Controllers.UsersController
                     user.ZipCode,
                     user.PhoneNumber,
                     user.EmergencyPhoneNumber,
-
-                    Roles = RoleName != null ? RoleName : string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name))
+                    Roles = RoleName != null ? RoleName : string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name)),
+                    Payrolls = payrollsLookup.ContainsKey(user.Id) ? payrollsLookup[user.Id] : false
                 }).ToList();
 
                 return Ok(result);

@@ -193,11 +193,9 @@ namespace FekraHubAPI.Controllers.UsersController
                     })
                     .ToListAsync();
 
-                // Get the current month
                 var currentMonth = DateTime.Now.Month;
                 var currentYear = DateTime.Now.Year;
 
-                // Query to check if a user has payrolls this month
                 var payrollsThisMonth = await _db.PayRoll
                     .Where(p => p.Timestamp.Month == currentMonth && p.Timestamp.Year == currentYear)
                     .GroupBy(p => p.UserID)

@@ -31,7 +31,7 @@ namespace FekraHubAPI.Controllers
 
         [Authorize(Policy = "ManagePayrolls")]
         [HttpPost]
-        public async Task<IActionResult> PostpayRoll([FromForm] string UserID, List<IFormFile> files)
+        public async Task<IActionResult> PostpayRoll([FromForm] string UserID, IFormFile file)
         {
             try
             {
@@ -41,38 +41,37 @@ namespace FekraHubAPI.Controllers
                 {
                     return NotFound("User not found.");
                 }
-
+                var payrollsExists = await _payRollRepository.DataExist(x=> x.UserID == UserID && x.Timestamp.Month == DateTime.Now.Month);
+                if (payrollsExists)
+                {
+                    return BadRequest("You have a payrolls in this month");
+                }
                 var isTeacher = await _payRollRepository.IsTeacherIDExists(user.Id);
                 var isSecretariat = await _payRollRepository.IsSecretariatIDExists(user.Id);
-
-
                 if (!(isTeacher || isSecretariat))
                 {
                     return BadRequest("User Must Have Teacher Or Secrtaria Role");
                 }
-                foreach (var file in files)
+                if (file.Length > 0)
                 {
-                    if (file.Length > 0)
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
                     {
-                        byte[] fileBytes;
-                        using (var ms = new MemoryStream())
-                        {
-                            await file.CopyToAsync(ms);
-                            fileBytes = ms.ToArray();
-                        }
-                        var filePayRoll = fileBytes;
-                        var UploadPayRoll = new Map_PayRoll
-                        {
-                            File = filePayRoll,
-                            UserID = user.Id,
-
-                        };
-
-                        var PayRollEntity = _mapper.Map<PayRoll>(UploadPayRoll);
-                        await _payRollRepository.Add(PayRollEntity);
-
-
+                        await file.CopyToAsync(ms);
+                        fileBytes = ms.ToArray();
                     }
+                    var filePayRoll = fileBytes;
+                    var UploadPayRoll = new Map_PayRoll
+                    {
+                        File = filePayRoll,
+                        UserID = user.Id,
+
+                    };
+
+                    var PayRollEntity = _mapper.Map<PayRoll>(UploadPayRoll);
+                    await _payRollRepository.Add(PayRollEntity);
+
+
                 }
                 return Ok();
             }

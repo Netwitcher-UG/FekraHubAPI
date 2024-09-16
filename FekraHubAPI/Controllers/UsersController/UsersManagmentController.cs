@@ -718,5 +718,193 @@ namespace FekraHubAPI.Controllers.UsersController
             
         }
 
+        [Authorize]
+        [HttpGet("UserProfile")]
+        public async Task<IActionResult> GetUserProfile()
+        {
+            try
+            {
+                var userID = _applicationUserRepository.GetUserIDFromToken(User);
+                var userRole = await _db.UserRoles.Where(x => x.UserId == userID).Select(x => x.RoleId).SingleOrDefaultAsync();
+                if (userRole == null)
+                {
+                    return BadRequest("Role not exist");
+                }
+                if (userRole == "4")
+                {
+                    var user = await _applicationUserRepository.GetRelationSingle(
+                    where: x => x.Id == userID,
+                    include: x => x.Include(z => z.Course).ThenInclude(z => z.Room).ThenInclude(z => z.Location).Include(z => z.Course).ThenInclude(c => c.CourseSchedule),
+                    selector: s => new
+                    {
+                        s.Id,
+                        s.FirstName,
+                        s.LastName,
+                        s.Email,
+                        s.Gender,
+                        s.Job,
+                        s.Birthday,
+                        s.Birthplace,
+                        s.Nationality,
+                        s.City,
+                        s.Street,
+                        s.StreetNr,
+                        s.ZipCode,
+                        s.PhoneNumber,
+                        s.EmergencyPhoneNumber,
+                        s.Graduation,
+                        s.ImageUser,
+                        course = s.Course.Select(x => new
+                        {
+                            x.Id,
+                            x.Name,
+                            x.Capacity,
+                            x.StartDate,
+                            x.EndDate,
+                            schedule = x.CourseSchedule.Select(z => new
+                            {
+                                z.Id,
+                                z.DayOfWeek,
+                                z.StartTime,
+                                z.EndTime
+                            }),
+                            Room = new
+                            {
+                                x.Room.Id,
+                                x.Room.Name,
+                                Location = new
+                                {
+                                    x.Room.Location.Id,
+                                    x.Room.Location.Name,
+                                    x.Room.Location.Street,
+                                    x.Room.Location.StreetNr,
+                                    x.Room.Location.ZipCode,
+                                    x.Room.Location.City
+                                }
+                            }
+                        }),
+                        TeacherAttendance = s.TeacherAttendance.Select(a => new
+                        {
+                            a.Id,
+                            a.date,
+                            a.AttendanceStatus.Title
+                        })
+                    },
+                    returnType: QueryReturnType.SingleOrDefault,
+                    asNoTracking: true
+                    );
+                    return Ok(user);
+                }
+                else
+                {
+                    var user = await _applicationUserRepository.GetRelationSingle(
+                       where: x => x.Id == userID,
+                       selector: s => new
+                       {
+                           s.Id,
+                           s.FirstName,
+                           s.LastName,
+                           s.Email,
+                           s.Gender,
+                           s.Job,
+                           s.Birthday,
+                           s.Birthplace,
+                           s.Nationality,
+                           s.City,
+                           s.Street,
+                           s.StreetNr,
+                           s.ZipCode,
+                           s.PhoneNumber,
+                           s.EmergencyPhoneNumber,
+                           s.Graduation,
+                           s.ImageUser,
+                       },
+                    returnType: QueryReturnType.SingleOrDefault,
+                    asNoTracking: true
+                    );
+                    return Ok(user);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+        public class UserDTO
+        {
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+            public string Email { get; set; }
+            public string Gender { get; set; }
+            public string Job { get; set; }
+            public string PhoneNumber { get; set; }
+            public string EmergencyPhoneNumber { get; set; }
+            public string ZipCode { get; set; }
+            public string Street { get; set; }
+            public string City { get; set; }
+            public string StreetNr { get; set; }
+            public string Nationality { get; set; }
+            public string Graduation { get; set; }
+            public IFormFile? Image { get; set; }
+        }
+        [Authorize]
+        [HttpPut("UserProfile")]
+        public async Task<IActionResult> UpdateUserProfile([FromForm] UserDTO userData)
+        {
+            try
+            {
+                var userID = _applicationUserRepository.GetUserIDFromToken(User);
+                var user = await _db.ApplicationUser.FindAsync(userID);
+                var img = "";
+                if (userData.Image != null && userData.Image.Length != 0)
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await userData.Image.CopyToAsync(memoryStream);
+                        var imageBytes = memoryStream.ToArray();
+                        img = Convert.ToBase64String(imageBytes);
+                    }
+                }
+                user.FirstName = userData.FirstName;
+                user.LastName = userData.LastName;
+                user.Email = userData.Email;
+                user.PhoneNumber = userData.PhoneNumber;
+                user.EmergencyPhoneNumber = userData.EmergencyPhoneNumber;
+                user.City = userData.City;
+                user.StreetNr = userData.StreetNr;
+                user.Nationality = userData.Nationality;
+                user.Street = userData.Street;
+                user.Gender = userData.Gender;
+                user.ZipCode = userData.ZipCode;
+                user.Graduation = userData.Graduation;
+                user.Job = userData.Job;
+                user.ImageUser = img;
+                await _db.SaveChangesAsync();
+                return Ok(new
+                {
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    user.PhoneNumber,
+                    user.EmergencyPhoneNumber,
+                    user.City,
+                    user.StreetNr,
+                    user.Nationality,
+                    user.Street,
+                    user.Gender,
+                    user.ZipCode,
+                    user.Graduation,
+                    user.Job,
+                    user.ImageUser,
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

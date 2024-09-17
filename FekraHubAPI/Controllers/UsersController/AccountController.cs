@@ -32,7 +32,8 @@ using System.Net;
 using FekraHubAPI.Constract;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Serilog;
-
+using MailKit.Net.Smtp;
+using MimeKit;
 
 namespace FekraHubAPI.Controllers.UsersController
 {
@@ -65,7 +66,35 @@ namespace FekraHubAPI.Controllers.UsersController
             _schoolInfoRepo = schoolInfoRepo;
             _logger = logger;
         }
+        //[AllowAnonymous]
+        //[HttpGet("testing")]
+        //public async Task<IActionResult> Testing(string email)
+        //{
+        //    using (var client = new SmtpClient())
+        //    {
+        //        var user = await _userManager.FindByEmailAsync(email);
+        //        var school = await _db.SchoolInfos.SingleOrDefaultAsync();
+        //        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        //        _ = Task.Run(async() => await _emailSender.SendConfirmationEmail(user, token, school));
 
+
+
+        //        //var message = new MimeMessage();
+        //        //message.From.Add(new MailboxAddress("SchoolName", "abog9022@gmail.com"));
+        //        //message.Subject = "Failed to use school email";
+        //        //message.Body = new TextPart("plain")
+        //        //{
+        //        //    Text = $"Failed to send email by xxx.\nNow we use alternative email."
+        //        //};
+        //        //message.Bcc.Add(new MailboxAddress("", "basel.slaby2@gmail.com"));
+        //        //message.Bcc.Add(new MailboxAddress("", email));
+        //        //await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.Auto);
+        //        //await client.AuthenticateAsync("abog9022@gmail.com", "xhuzbgwifkyajsms");
+        //        //await client.SendAsync(message);
+        //        //await client.DisconnectAsync(true);
+        //        return Ok();
+        //    }
+        //}
         [HttpGet]
         public async Task<IActionResult> GetAccount()
         {
@@ -138,7 +167,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     asNoTracking:true);
                 var restPaswordLink = "/reset-password";
                 var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={encodedToken}";
-                _ = Task.Run(() => _emailSender.SendRestPassword(user.Email, callbackUrlLink));
+                await _emailSender.SendRestPassword(user.Email, callbackUrlLink);
                 return Ok();
 
             }
@@ -222,7 +251,8 @@ namespace FekraHubAPI.Controllers.UsersController
                     }
                     if (!user.EmailConfirmed)
                     {
-                        _ = Task.Run(() => _emailSender.SendConfirmationEmail(user));
+                        
+                        await _emailSender.SendConfirmationEmail(user);
                         return StatusCode(409, "Your account not confirmed . The confirm link has been sent to your email");
                     }
 
@@ -246,50 +276,50 @@ namespace FekraHubAPI.Controllers.UsersController
                     }
 
                     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
-                    var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                        var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-                    var token = new JwtSecurityToken(
-                        claims: claims,
-                        issuer: _configuration["JWT:Issuer"],
-                        audience: _configuration["JWT:Audience"],
-                        expires: DateTime.Now.AddMonths(1),
-                        signingCredentials: signingCredentials
-                    );
+                        var token = new JwtSecurityToken(
+                            claims: claims,
+                            issuer: _configuration["JWT:Issuer"],
+                            audience: _configuration["JWT:Audience"],
+                            expires: DateTime.Now.AddMonths(1),
+                            signingCredentials: signingCredentials
+                        );
 
-                    var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+                        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-                    var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
-                    if (userToken == null)
-                    {
-                        userToken = new Tokens
+                        var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
+                        if (userToken == null)
                         {
-                            Email = user.Email,
-                            ExpiryDate = DateTime.Now.AddMonths(1),
-                            UserId = user.Id,
-                            Token = tokenString
-                        };
-                        _db.Token.Add(userToken);
-                    }
-                    else
-                    {
-                        userToken.Token = tokenString;
-                        _db.Token.Update(userToken);
-                    }
-                    await _db.SaveChangesAsync();
+                            userToken = new Tokens
+                            {
+                                Email = user.Email,
+                                ExpiryDate = DateTime.Now.AddMonths(1),
+                                UserId = user.Id,
+                                Token = tokenString
+                            };
+                            _db.Token.Add(userToken);
+                        }
+                        else
+                        {
+                            userToken.Token = tokenString;
+                            _db.Token.Update(userToken);
+                        }
+                        await _db.SaveChangesAsync();
 
 
-                    return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(), token = tokenString, token.ValidTo });
-
+                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(), token = tokenString, token.ValidTo });
+                    
                 }
                 return BadRequest(ModelState);
-
+               
             }
             catch (Exception ex)
             {
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "AccountController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
         [AllowAnonymous]
         [HttpPost("RegisterParent")]
@@ -355,7 +385,8 @@ namespace FekraHubAPI.Controllers.UsersController
                             ApplicationUser? ThisNewUser = await _userManager.FindByEmailAsync(user.email);
                             if (ThisNewUser != null)
                             {
-                                _ = Task.Run(() => _emailSender.SendConfirmationEmail(ThisNewUser));
+                                
+                                await _emailSender.SendConfirmationEmail(ThisNewUser);
                                 return Ok($"Success!! . Please go to your email message box and confirm your email");
                             }
 
@@ -389,7 +420,8 @@ namespace FekraHubAPI.Controllers.UsersController
             var user = await _userManager.FindByEmailAsync(Email);
             if (user != null) 
             {
-                _ = Task.Run(() => _emailSender.SendConfirmationEmail(user));
+                
+                await _emailSender.SendConfirmationEmail(user);
                 return Ok();
             }
             else
@@ -419,7 +451,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var result = await _userManager.ConfirmEmailAsync(user, Token);
             if (result.Succeeded)
             {
-                _ = Task.Run(() => _emailSender.SendToAdminNewParent(user));
+                await _emailSender.SendToAdminNewParent(user);
                 return Ok();
             }
             else
@@ -428,7 +460,7 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             
         }
-
+        
         [HttpPost("[action]")]
         public async Task<IActionResult> ValidateToken()
         {
@@ -484,7 +516,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 return Unauthorized("Invalid token");
             }
         }
-
+        
         [HttpPost("[action]")]
         public async Task<IActionResult> Logout()
         {

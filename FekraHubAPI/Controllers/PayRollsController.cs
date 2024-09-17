@@ -41,7 +41,7 @@ namespace FekraHubAPI.Controllers
                 {
                     return NotFound("User not found.");
                 }
-                var payrollsExists = await _payRollRepository.DataExist(x => x.UserID == UserID && x.Timestamp.Month == DateTime.Now.Month);
+                var payrollsExists = await _payRollRepository.DataExist(x=> x.UserID == UserID && x.Timestamp.Month == DateTime.Now.Month);
                 if (payrollsExists)
                 {
                     return BadRequest("You have a payrolls in this month");
@@ -80,7 +80,7 @@ namespace FekraHubAPI.Controllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "PayRollsController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
 
         }
         [Authorize(Policy = "ManagePayrolls")]

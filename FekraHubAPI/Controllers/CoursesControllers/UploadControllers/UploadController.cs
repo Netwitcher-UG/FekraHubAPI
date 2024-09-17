@@ -245,7 +245,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         await _uploadRepository.Add(upload);
                     }
                 }
-                _ = Task.Run(() => _emailSender.SendToParentsNewFiles(courseId));
+                await _emailSender.SendToParentsNewFiles(courseId);
                
                 return Ok("Files uploaded successfully.");
             }

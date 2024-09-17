@@ -147,27 +147,27 @@ namespace FekraHubAPI.Controllers.UsersController
 
         [Authorize(Policy = "GetEmployee")]
         [HttpGet("GetEmployee")]
-        public async Task<IActionResult> GetEmployee(string? RoleName)
+        public async Task<IActionResult> GetEmployee([FromQuery]List<string>? RoleName)
         {
             try
             {
                 List<string> roleIds = new List<string>();
 
-                if (RoleName != null)
+                if (RoleName != null && RoleName.Any())
                 {
                     roleIds = await _db.Roles
-                        .Where(x => x.Name == RoleName)
+                        .Where(x => RoleName.Contains(x.Name))
                         .Select(r => r.Id)
                         .ToListAsync();
 
                     if (!roleIds.Any())
                     {
-                        return BadRequest("RoleName not found");
+                        return BadRequest("RoleNames not found");
                     }
 
-                    if (!roleIds.Any(x => x == "1" || x == "2" || x == "4"))
+                    if (roleIds.Any(x => x != "1" && x != "2" && x != "4"))
                     {
-                        return BadRequest("RoleName not an employee");
+                        return BadRequest("One or more RoleNames is not an employee");
                     }
                 }
                 else
@@ -198,11 +198,12 @@ namespace FekraHubAPI.Controllers.UsersController
 
                 var payrollsThisMonth = await _db.PayRoll
                     .Where(p => p.Timestamp.Month == currentMonth && p.Timestamp.Year == currentYear)
-                    .GroupBy(p => p.UserID)
-                    .Select(g => new { UserId = g.Key, HasPayroll = true })
+                    .Select(p => new { p.UserID, p.Timestamp, p.Id })
                     .ToListAsync();
 
-                var payrollsLookup = payrollsThisMonth.ToDictionary(p => p.UserId ?? "", p => p.HasPayroll);
+                var payrollsDataLookup = payrollsThisMonth
+                    .GroupBy(p => p.UserID)
+                    .ToDictionary(g => g.Key ?? "", g => g.Select(p => new { p.Id, p.Timestamp }).ToList());
 
                 var result = users.Select(user => new
                 {
@@ -222,8 +223,8 @@ namespace FekraHubAPI.Controllers.UsersController
                     user.ZipCode,
                     user.PhoneNumber,
                     user.EmergencyPhoneNumber,
-                    Roles = RoleName != null ? RoleName : string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name)),
-                    Payrolls = payrollsLookup.ContainsKey(user.Id) ? payrollsLookup[user.Id] : false
+                    Roles = RoleName != null ? string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name)) : string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name)),
+                    Payrolls = payrollsDataLookup.ContainsKey(user.Id) ? payrollsDataLookup[user.Id] : null
                 }).ToList();
 
                 return Ok(result);
@@ -563,7 +564,8 @@ namespace FekraHubAPI.Controllers.UsersController
                             {
                                 _userManager.AddToRoleAsync(appUser, user.Role).Wait();
                                 transaction.Commit();
-                                _ = Task.Run(() => _emailSender.SendConfirmationEmailWithPassword(appUser, user.Password));
+
+                                await _emailSender.SendConfirmationEmailWithPassword(appUser, user.Password);
                                 return Ok();
                             }
                             else
@@ -850,19 +852,19 @@ namespace FekraHubAPI.Controllers.UsersController
         }
         public class UserDTO
         {
-            public string FirstName { get; set; }
-            public string LastName { get; set; }
-            public string Email { get; set; }
-            public string Gender { get; set; }
-            public string Job { get; set; }
-            public string PhoneNumber { get; set; }
-            public string EmergencyPhoneNumber { get; set; }
-            public string ZipCode { get; set; }
-            public string Street { get; set; }
-            public string City { get; set; }
-            public string StreetNr { get; set; }
-            public string Nationality { get; set; }
-            public string Graduation { get; set; }
+            public string? FirstName { get; set; }
+            public string? LastName { get; set; }
+            public string? Email { get; set; }
+            public string? Gender { get; set; }
+            public string? Job { get; set; }
+            public string? PhoneNumber { get; set; }
+            public string? EmergencyPhoneNumber { get; set; }
+            public string? ZipCode { get; set; }
+            public string? Street { get; set; }
+            public string? City { get; set; }
+            public string? StreetNr { get; set; }
+            public string? Nationality { get; set; }
+            public string? Graduation { get; set; }
             public IFormFile? Image { get; set; }
         }
         [Authorize]
@@ -873,6 +875,10 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 var userID = _applicationUserRepository.GetUserIDFromToken(User);
                 var user = await _db.ApplicationUser.FindAsync(userID);
+                if(user == null)
+                {
+                    return BadRequest("User not found");
+                }
                 var img = "";
                 if (userData.Image != null && userData.Image.Length != 0)
                 {
@@ -883,20 +889,20 @@ namespace FekraHubAPI.Controllers.UsersController
                         img = Convert.ToBase64String(imageBytes);
                     }
                 }
-                user.FirstName = userData.FirstName;
-                user.LastName = userData.LastName;
-                user.Email = userData.Email;
-                user.PhoneNumber = userData.PhoneNumber;
-                user.EmergencyPhoneNumber = userData.EmergencyPhoneNumber;
-                user.City = userData.City;
-                user.StreetNr = userData.StreetNr;
-                user.Nationality = userData.Nationality;
-                user.Street = userData.Street;
-                user.Gender = userData.Gender;
-                user.ZipCode = userData.ZipCode;
-                user.Graduation = userData.Graduation;
-                user.Job = userData.Job;
-                user.ImageUser = img;
+                if (userData.FirstName != null) user.FirstName = userData.FirstName;
+                if (userData.LastName != null) user.LastName = userData.LastName;
+                if (userData.Email != null) user.Email = userData.Email;
+                if (userData.PhoneNumber != null) user.PhoneNumber = userData.PhoneNumber;
+                if (userData.EmergencyPhoneNumber != null) user.EmergencyPhoneNumber = userData.EmergencyPhoneNumber;
+                if (userData.City != null) user.City = userData.City;
+                if (userData.StreetNr != null) user.StreetNr = userData.StreetNr;
+                if (userData.Nationality != null) user.Nationality = userData.Nationality;
+                if (userData.Street != null) user.Street = userData.Street;
+                if (userData.Gender != null) user.Gender = userData.Gender;
+                if (userData.ZipCode != null) user.ZipCode = userData.ZipCode;
+                if (userData.Graduation != null) user.Graduation = userData.Graduation;
+                if (userData.Job != null) user.Job = userData.Job;
+                if (userData.Image != null) user.ImageUser = img;
                 await _db.SaveChangesAsync();
                 return Ok(new
                 {
@@ -915,6 +921,67 @@ namespace FekraHubAPI.Controllers.UsersController
                     user.Job,
                     user.ImageUser,
                 });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
+        public class AccountDTO
+        {
+            public string Email { get; set; }
+            public ChangePassword Password { get; set; }
+        }
+        [Authorize]
+        [HttpPut("UserProfileAccount")]
+        public async Task<IActionResult> UpdateUserAccountFromProfile([FromForm] AccountDTO accountDTO)
+        {
+            try
+            {
+                var userID = _applicationUserRepository.GetUserIDFromToken(User);
+                var user = await _db.ApplicationUser.FindAsync(userID);
+                if (user == null)
+                {
+                    return BadRequest("User not found");
+                }
+                if (!string.IsNullOrEmpty(accountDTO.Password.Password))
+                {
+                    var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    var resetResult = await _userManager.ResetPasswordAsync(user, resetToken, accountDTO.Password.Password);
+                    if (!resetResult.Succeeded)
+                    {
+                        return BadRequest(resetResult.Errors);
+                    }
+                }
+                if (!string.IsNullOrEmpty(accountDTO.Email) && accountDTO.Email != user.Email)
+                {
+                    var emailExist = await _userManager.FindByEmailAsync(accountDTO.Email);
+                    if (emailExist != null)
+                    {
+                        return BadRequest("Email is already in use.");
+                    }
+
+                    user.Email = accountDTO.Email;
+                    user.NormalizedEmail = accountDTO.Email.ToUpperInvariant();
+                    user.UserName = accountDTO.Email;
+                    user.NormalizedUserName = accountDTO.Email.ToUpperInvariant();
+                    user.EmailConfirmed = false;
+
+                    var emailResult = await _userManager.UpdateAsync(user);
+                    if (!emailResult.Succeeded)
+                    {
+                        return BadRequest(emailResult.Errors);
+                    }
+                    else
+                    {
+                        await _emailSender.SendConfirmationEmail(user);
+                    }
+                    return Ok("Updated successfully. Please go to your email message box and confirm your email");
+                }
+                
+
+                return Ok("User password updated successfully.");
             }
             catch (Exception ex)
             {

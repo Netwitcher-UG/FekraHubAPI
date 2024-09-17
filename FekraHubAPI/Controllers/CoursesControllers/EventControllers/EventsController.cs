@@ -228,7 +228,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var courses = schedule.Select(x => x.CourseID).ToList();
                 if (courses.Any())
                 {
-                    _ = Task.Run(() => _emailSender.SendToAllNewEvent(courses));
+                    await _emailSender.SendToAllNewEvent(courses);
                 }
                 
                 return Ok(new

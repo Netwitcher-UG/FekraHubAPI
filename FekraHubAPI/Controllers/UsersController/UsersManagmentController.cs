@@ -201,7 +201,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     .Select(g => new { UserId = g.Key, HasPayroll = true })
                     .ToListAsync();
 
-                var payrollsLookup = payrollsThisMonth.ToDictionary(p => p.UserId, p => p.HasPayroll);
+                var payrollsLookup = payrollsThisMonth.ToDictionary(p => p.UserId ?? "", p => p.HasPayroll);
 
                 var result = users.Select(user => new
                 {
@@ -742,11 +742,13 @@ namespace FekraHubAPI.Controllers.UsersController
             try
             {
                 var userID = _applicationUserRepository.GetUserIDFromToken(User);
-                var userRole = await _db.UserRoles.Where(x => x.UserId == userID).Select(x => x.RoleId).SingleOrDefaultAsync();
+                var userRole = await _db.UserRoles.Where(x => x.UserId == userID)
+                    .AsNoTracking().Select(x => x.RoleId).SingleOrDefaultAsync();
                 if (userRole == null)
                 {
                     return BadRequest("Role not exist");
                 }
+                var role = await _db.Roles.Where(x => x.Id == userRole).AsNoTracking().Select(x => x.Name).SingleOrDefaultAsync();
                 if (userRole == "4")
                 {
                     var user = await _applicationUserRepository.GetRelationSingle(
@@ -778,13 +780,6 @@ namespace FekraHubAPI.Controllers.UsersController
                             x.Capacity,
                             x.StartDate,
                             x.EndDate,
-                            schedule = x.CourseSchedule.Select(z => new
-                            {
-                                z.Id,
-                                z.DayOfWeek,
-                                z.StartTime,
-                                z.EndTime
-                            }),
                             Room = new
                             {
                                 x.Room.Id,
@@ -805,7 +800,8 @@ namespace FekraHubAPI.Controllers.UsersController
                             a.Id,
                             a.date,
                             a.AttendanceStatus.Title
-                        })
+                        }),
+                        role
                     },
                     returnType: QueryReturnType.SingleOrDefault,
                     asNoTracking: true
@@ -835,6 +831,7 @@ namespace FekraHubAPI.Controllers.UsersController
                            s.EmergencyPhoneNumber,
                            s.Graduation,
                            s.ImageUser,
+                           role
                        },
                     returnType: QueryReturnType.SingleOrDefault,
                     asNoTracking: true

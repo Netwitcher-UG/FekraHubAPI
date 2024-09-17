@@ -87,8 +87,8 @@ namespace FekraHubAPI.Controllers.Students
                 };
                 await _studentRepo.Add(studentEntity);
                 await _contractMaker.ConverterHtmlToPdf(studentEntity);
-                _ = Task.Run(() => _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract"));
-                _ = Task.Run(() => _emailSender.SendToAdminNewStudent(studentEntity));
+                await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
+                await _emailSender.SendToAdminNewStudent(studentEntity);
                 return Ok("welcomes your son to our family . A copy of the contract was sent to your email");
             }
             catch (Exception ex)

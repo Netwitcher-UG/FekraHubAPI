@@ -517,7 +517,7 @@ namespace FekraHubAPI.Controllers
                 }).ToList();
 
                 await _reportRepo.ManyAdd(AllReports);
-                _ = Task.Run(() => _emailSender.SendToSecretaryNewReportsForStudents());
+                await _emailSender.SendToSecretaryNewReportsForStudents();
                 return Ok(AllReports.Select(x => new {
                     x.Id,
                     x.data,
@@ -556,7 +556,7 @@ namespace FekraHubAPI.Controllers
                 report.Improved = true;
                 await _reportRepo.Update(report);
                 var student = await _studentRepo.GetById(report.StudentId ?? 0);
-                _ = Task.Run(() => _emailSender.SendToParentsNewReportsForStudents([student]));
+                await _emailSender.SendToParentsNewReportsForStudents([student]);
                 return Ok(new { 
                     report.Id,
                     report.CreationDate,
@@ -587,7 +587,7 @@ namespace FekraHubAPI.Controllers
                 }
                 report.Improved = false;
                 await _reportRepo.Update(report);
-                _ = Task.Run(() => _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0, report.UserId ?? ""));
+                await _emailSender.SendToTeacherReportsForStudentsNotAccepted(report.StudentId ?? 0, report.UserId ?? "");
                 return Ok(new {
                     report.Id,
                     report.CreationDate,
@@ -627,7 +627,7 @@ namespace FekraHubAPI.Controllers
                 await _reportRepo.ManyUpdate(reports);
 
                 List<Student> students = reports.Select(x => x.Student).ToList();
-                _ = Task.Run(() => _emailSender.SendToParentsNewReportsForStudents(students));
+                await _emailSender.SendToParentsNewReportsForStudents(students);
                 return Ok(reports.Select(x => new {
                     x.Id,
                     x.CreationDate,
@@ -664,7 +664,7 @@ namespace FekraHubAPI.Controllers
                 report.Improved = null;
                 report.data = map_Report_Update.Data;
                 await _reportRepo.Update(report);
-                _ = Task.Run(() => _emailSender.SendToSecretaryUpdateReportsForStudents());
+                await _emailSender.SendToSecretaryUpdateReportsForStudents();
                 return Ok(new {
                     report.Id,
                     report.CreationDate,

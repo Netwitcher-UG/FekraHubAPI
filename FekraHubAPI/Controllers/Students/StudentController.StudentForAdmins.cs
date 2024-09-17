@@ -310,7 +310,7 @@ namespace FekraHubAPI.Controllers.Students
                     returnType:QueryReturnType.SingleOrDefault,
                     asNoTracking:true
                     ) ;
-                var students = await _studentRepo.GetRelationList(
+                var Allstudents = await _studentRepo.GetRelationList(
                     manyWhere: new List<Expression<Func<Student, bool>>?>
                         {
                         x => x.CourseID == courseId,
@@ -355,7 +355,7 @@ namespace FekraHubAPI.Controllers.Students
                     asNoTracking:true);
                 bool isTodayIsWorkingDay = workingDays.Contains(DateTime.Now.DayOfWeek.ToString());
                 
-                return Ok(new { IsTodayAWorkDay = isTodayIsWorkingDay, CourseAttendance = att, students });
+                return Ok(new { IsTodayAWorkDay = isTodayIsWorkingDay, CourseAttendance = att, Allstudents });
             }
             catch (Exception ex)
             {

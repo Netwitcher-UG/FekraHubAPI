@@ -773,6 +773,7 @@ namespace FekraHubAPI.Controllers.UsersController
                         s.EmergencyPhoneNumber,
                         s.Graduation,
                         s.ImageUser,
+                        s.RegistrationDate,
                         course = s.Course.Select(x => new
                         {
                             x.Id,
@@ -831,6 +832,7 @@ namespace FekraHubAPI.Controllers.UsersController
                            s.EmergencyPhoneNumber,
                            s.Graduation,
                            s.ImageUser,
+                           s.RegistrationDate,
                            role
                        },
                     returnType: QueryReturnType.SingleOrDefault,

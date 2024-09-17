@@ -303,8 +303,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     Teacher = await _teacherRepository.GetRelationList(
                     where: n => courseData.TeacherId.Contains(n.Id),
-                    selector: x => x,
-                    asNoTracking: true);
+                    selector: x => x
+                    );
                 }
                 
 

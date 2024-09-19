@@ -401,7 +401,7 @@ a[x-apple-data-detectors],
  ";
 
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [user.Email], "Please Confirm Your Email", Message(content, school.SchoolName ?? ""), true);
+                    school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail", Message(content, school.SchoolName ?? ""), true);
 
 
             }
@@ -503,8 +503,8 @@ a[x-apple-data-detectors],
                             ";
 
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [user.Email], "Please Confirm Your Email",
-                    Message(content, school.SchoolName ?? ""), true, "confirming an account link + login details");
+                    school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail",
+                    Message(content, school.SchoolName ?? ""), true, "Bestätigungslink für das Konto + Anmeldedaten");
 
 
 
@@ -587,8 +587,8 @@ a[x-apple-data-detectors],
 ";
 
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                  school.SchoolName ?? "", [parent.Email], "Registration Confirmation", Message(content, school.SchoolName ?? ""),
-                   true, $"a new student named <b>{student.FirstName} {student.LastName}</b> has been registered successfully + copy of the contract",
+                  school.SchoolName ?? "", [parent.Email], "Registrierungsbestätigung", Message(content, school.SchoolName ?? ""),
+                   true, $"Ein neuer Schüler namens <b>{student.FirstName} {student.LastName}</b> wurde erfolgreich registriert + Kopie des Vertrags",
                    contracts, pdfName + ".pdf");
 
         }
@@ -675,7 +675,7 @@ a[x-apple-data-detectors],
               </table>
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                   school.SchoolName ?? "", admins, "New User Registered", Message(content, school.SchoolName ?? ""),
+                   school.SchoolName ?? "", admins, "Neuer Benutzer registriert", Message(content, school.SchoolName ?? ""),
                    true);
             
         }
@@ -775,7 +775,7 @@ a[x-apple-data-detectors],
               </table>
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                   school.SchoolName ?? "", admins, "New student Registered", Message(content, school.SchoolName ?? ""), true);
+                   school.SchoolName ?? "", admins, "Neuer Schüler registriert", Message(content, school.SchoolName ?? ""), true);
             
         }
 
@@ -857,7 +857,7 @@ a[x-apple-data-detectors],
             
 ";
                     await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                   school.SchoolName ?? "", emails, "New Event", Message(content, school.SchoolName ?? ""), true, "A new event has been added");
+                   school.SchoolName ?? "", emails, "Neue Veranstaltung", Message(content, school.SchoolName ?? ""), true, "Eine neue Veranstaltung wurde hinzugefügt");
                 
 
 
@@ -934,7 +934,7 @@ a[x-apple-data-detectors],
 
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", students, "New Files", Message(content, school.SchoolName ?? ""), true, "A new file has been added ");
+                school.SchoolName ?? "", students, "Neue Dateien", Message(content, school.SchoolName ?? ""), true, "Eine neue Datei wurde hinzugefügt");
 
             
 
@@ -1009,7 +1009,7 @@ a[x-apple-data-detectors],
 
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", Secretaries, "", Message(content, school.SchoolName ?? ""), true, "New reports has been added .", null, null);
+                school.SchoolName ?? "", Secretaries, "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .", null, null);
             
 
         }
@@ -1081,7 +1081,7 @@ a[x-apple-data-detectors],
 
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", Secretaries, "", Message(content, school.SchoolName ?? ""), true, "Some reports has been updated .", null, null);
+                school.SchoolName ?? "", Secretaries, "Einige Berichte wurden aktualisiert", Message(content, school.SchoolName ?? ""), true, "Einige Berichte wurden aktualisiert .", null, null);
             
 
         }
@@ -1157,7 +1157,7 @@ a[x-apple-data-detectors],
 
 ";
                     await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", parents, "New Reports", Message(content, school.SchoolName ?? ""), true, "A new report has been added .");
+                school.SchoolName ?? "", parents, "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .");
 
                 
 
@@ -1233,8 +1233,8 @@ a[x-apple-data-detectors],
 
 ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [teacher.Email], "", Message(content, school.SchoolName ?? ""), true,
-                    "a report has been not accepteds .");
+                    school.SchoolName ?? "", [teacher.Email], "A report has not been accepted", Message(content, school.SchoolName ?? ""), true,
+                    "A report has not been accepted .");
 
                 }
 
@@ -1319,7 +1319,7 @@ oder rufen Sie uns an unter <a target=""_blank"" href="""" style=""mso-line-heig
 
                     ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                        school.SchoolName ?? "", [email], "Reset Password", Message(content, school.SchoolName ?? ""), true, "forget password link");
+                        school.SchoolName ?? "", [email], "Passwort zurücksetzen", Message(content, school.SchoolName ?? ""), true, "Passwort zurücksetzen");
             }
         }
         

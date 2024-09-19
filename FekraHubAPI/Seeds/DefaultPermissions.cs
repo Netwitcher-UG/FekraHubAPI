@@ -34,7 +34,7 @@ namespace FekraHubAPI.Seeds
                 i++;
             }
         }
-        public static async Task SeedRoleAdminClaimsAsync(ModelBuilder builder)
+        public static  async Task SeedRoleAdminClaimsAsync(ModelBuilder builder)
         {
             List<string> per2 = new()
                     {
@@ -51,11 +51,17 @@ namespace FekraHubAPI.Seeds
                     {
                         "GetStudentsReports",
                         "AddUsers",
-                        "InsertUpdateStudentsReports"
+                        "InsertUpdateStudentsReports",
+                        "ApproveReports",
+                        "GetStudentsAttendance",
+                        "AddStudentAttendance",
+                        "GetStudentsCourse",
+                        "GetTeachersAttendance",
+                        "UpdateStudentsAttendance"
                     };
             List<IdentityRoleClaim<string>> identityRoleClaims = new();
             var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
-            var i = 70;
+            var i = 148;
             foreach (var Permission in AllPermissions)
             {
 
@@ -75,33 +81,33 @@ namespace FekraHubAPI.Seeds
                 else
 
                 {
-
-                    if (per2.Contains(Permission.ToString()))
+                    
+                    if ( per2.Contains(Permission.ToString()))
                     {
-
-                        var x2 = new IdentityRoleClaim<string>()
-                        {
-                            Id = i,
-                            RoleId = "2",
-                            ClaimType = Permission.ToString(),
-                            ClaimValue = Permission.ToString()
-                        };
+                        
+                     var x2 = new IdentityRoleClaim<string>()
+                     {
+                         Id = i,
+                         RoleId = "2",
+                         ClaimType = Permission.ToString(),
+                         ClaimValue = Permission.ToString()
+                     };
                         identityRoleClaims.Add(x2);
                         i++;
                     }
 
-
+                    
 
                     if (per4.Contains(Permission.ToString()))
                     {
-
-                        var x4 = new IdentityRoleClaim<string>()
-                        {
-                            Id = i,
-                            RoleId = "4",
-                            ClaimType = Permission.ToString(),
-                            ClaimValue = Permission.ToString()
-                        };
+                        
+                     var x4 = new IdentityRoleClaim<string>()
+                     {
+                         Id = i,
+                         RoleId = "4",
+                         ClaimType = Permission.ToString(),
+                         ClaimValue = Permission.ToString()
+                     };
                         identityRoleClaims.Add(x4);
                         i++;
                     }
@@ -118,7 +124,7 @@ namespace FekraHubAPI.Seeds
                     i++;
                 }
 
-
+               
 
 
             }
@@ -179,6 +185,6 @@ namespace FekraHubAPI.Seeds
              }
              */
         }
-
+       
     }
 }

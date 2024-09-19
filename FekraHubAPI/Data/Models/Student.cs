@@ -26,7 +26,7 @@ namespace FekraHubAPI.Data.Models
         public virtual ApplicationUser User { get; set; }
         public string? ParentID { get; set; }
 
-        [ForeignKey("CourseID")]
+          [ForeignKey("CourseID")]
         public virtual Course Course { get; set; }
         public int? CourseID { get; set; }
 

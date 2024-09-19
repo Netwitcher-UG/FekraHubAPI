@@ -25,12 +25,12 @@ namespace FekraHubAPI.Data.Models
     }
     public class ContractPage
     {
-        public int Id { get; set; }
-        public string ConPage { get; set; }
+        public int Id { get; set; } 
+        public string ConPage {  get; set; }
 
         [ForeignKey("SchoolInfoId")]
-        public int SchoolInfoId { get; set; }
-        public SchoolInfo SchoolInfo { get; set; }
+        public int SchoolInfoId { get; set; } 
+        public SchoolInfo SchoolInfo { get; set; }  
     }
     public class StudentsReportsKey
     {

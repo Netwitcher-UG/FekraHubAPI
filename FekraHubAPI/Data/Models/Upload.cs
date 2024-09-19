@@ -7,7 +7,7 @@ namespace FekraHubAPI.Data.Models
     {
         [Key]
         public int Id { get; set; }
-
+        
         public byte[] file { get; set; }
 
         public string FileName { get; set; }

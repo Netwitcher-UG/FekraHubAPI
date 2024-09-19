@@ -32,7 +32,7 @@ namespace FekraHubAPI.Data.Models
         public ICollection<Student> Student { get; set; }
 
         public ICollection<Upload> Upload { get; set; }
-
+   
         public ICollection<ApplicationUser> Teacher { get; set; }
         public ICollection<CourseAttendance> CourseAttendance { get; set; } = new List<CourseAttendance>();
 

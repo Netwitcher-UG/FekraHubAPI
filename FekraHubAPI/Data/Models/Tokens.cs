@@ -13,7 +13,7 @@ namespace FekraHubAPI.Data.Models
         public string Email { get; set; }
         public string Token { get; set; }
         public DateTime ExpiryDate { get; set; }
-
+        
         [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; }
         public string? UserId { get; set; }

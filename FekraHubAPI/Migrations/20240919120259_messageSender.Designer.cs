@@ -4,6 +4,7 @@ using FekraHubAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FekraHubAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240919120259_messageSender")]
+    partial class messageSender
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1130,15 +1133,26 @@ namespace FekraHubAPI.Migrations
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.UserMessage", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MUserId")
+                        .HasColumnType("int");
 
                     b.Property<int>("MessageSenderId")
                         .HasColumnType("int");
 
-                    b.HasKey("UserId", "MessageSenderId");
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("MessageSenderId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("UserMessage");
                 });
@@ -2195,19 +2209,17 @@ namespace FekraHubAPI.Migrations
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.UserMessage", b =>
                 {
-                    b.HasOne("FekraHubAPI.Data.Models.MessageSender", "MessageSender")
-                        .WithMany("UserMessages")
+                    b.HasOne("FekraHubAPI.Data.Models.MessageSender", "MessageSended")
+                        .WithMany("MessageSended")
                         .HasForeignKey("MessageSenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
-                        .WithMany("UserMessages")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("User")
+                        .HasForeignKey("UserId");
 
-                    b.Navigation("MessageSender");
+                    b.Navigation("MessageSended");
 
                     b.Navigation("User");
                 });
@@ -2339,7 +2351,7 @@ namespace FekraHubAPI.Migrations
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.MessageSender", b =>
                 {
-                    b.Navigation("UserMessages");
+                    b.Navigation("MessageSended");
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.Room", b =>
@@ -2383,7 +2395,7 @@ namespace FekraHubAPI.Migrations
                     b.Navigation("Token")
                         .IsRequired();
 
-                    b.Navigation("UserMessages");
+                    b.Navigation("User");
 
                     b.Navigation("WorkContract");
                 });

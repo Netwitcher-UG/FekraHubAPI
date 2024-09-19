@@ -51,11 +51,17 @@ namespace FekraHubAPI.Seeds
                     {
                         "GetStudentsReports",
                         "AddUsers",
-                        "InsertUpdateStudentsReports"
+                        "InsertUpdateStudentsReports",
+                        "ApproveReports",
+                        "GetStudentsAttendance",
+                        "AddStudentAttendance",
+                        "GetStudentsCourse",
+                        "GetTeachersAttendance",
+                        "UpdateStudentsAttendance"
                     };
             List<IdentityRoleClaim<string>> identityRoleClaims = new();
             var AllPermissions = Enum.GetValues(typeof(PermissionsEnum.AllPermissions));
-            var i = 70;
+            var i = 148;
             foreach (var Permission in AllPermissions)
             {
 

@@ -854,7 +854,6 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             public string? FirstName { get; set; }
             public string? LastName { get; set; }
-            public string? Email { get; set; }
             public string? Gender { get; set; }
             public string? Job { get; set; }
             public string? PhoneNumber { get; set; }
@@ -891,7 +890,6 @@ namespace FekraHubAPI.Controllers.UsersController
                 }
                 if (userData.FirstName != null) user.FirstName = userData.FirstName;
                 if (userData.LastName != null) user.LastName = userData.LastName;
-                if (userData.Email != null) user.Email = userData.Email;
                 if (userData.PhoneNumber != null) user.PhoneNumber = userData.PhoneNumber;
                 if (userData.EmergencyPhoneNumber != null) user.EmergencyPhoneNumber = userData.EmergencyPhoneNumber;
                 if (userData.City != null) user.City = userData.City;
@@ -930,8 +928,22 @@ namespace FekraHubAPI.Controllers.UsersController
         }
         public class AccountDTO
         {
-            public string Email { get; set; }
-            public ChangePassword Password { get; set; }
+            public string? Email { get; set; }
+            public ChangePassword? Password { get; set; }
+            public bool AreAllFieldsNull()
+            {
+                return Email == null && Password == null;
+            }
+
+            public bool IsEmailNull()
+            {
+                return Email == null;
+            }
+
+            public bool IsPasswordNull()
+            {
+                return Password == null;
+            }
         }
         [Authorize]
         [HttpPut("UserProfileAccount")]
@@ -939,13 +951,17 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             try
             {
+                if (accountDTO.AreAllFieldsNull())
+                {
+                    return BadRequest("No data found");
+                }
                 var userID = _applicationUserRepository.GetUserIDFromToken(User);
                 var user = await _db.ApplicationUser.FindAsync(userID);
                 if (user == null)
                 {
                     return BadRequest("User not found");
                 }
-                if (!string.IsNullOrEmpty(accountDTO.Password.Password))
+                if (!accountDTO.IsPasswordNull())
                 {
                     var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
                     var resetResult = await _userManager.ResetPasswordAsync(user, resetToken, accountDTO.Password.Password);
@@ -954,7 +970,7 @@ namespace FekraHubAPI.Controllers.UsersController
                         return BadRequest(resetResult.Errors);
                     }
                 }
-                if (!string.IsNullOrEmpty(accountDTO.Email) && accountDTO.Email != user.Email)
+                if (!accountDTO.IsEmailNull())
                 {
                     var emailExist = await _userManager.FindByEmailAsync(accountDTO.Email);
                     if (emailExist != null)
@@ -979,8 +995,6 @@ namespace FekraHubAPI.Controllers.UsersController
                     }
                     return Ok("Updated successfully. Please go to your email message box and confirm your email");
                 }
-                
-
                 return Ok("User password updated successfully.");
             }
             catch (Exception ex)

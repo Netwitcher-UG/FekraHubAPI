@@ -271,12 +271,20 @@ namespace FekraHubAPI.Controllers.Attendance
 
                 // date now if exist in database or not  (add if not)
                 var today = DateTime.Now.Date;
+                if(today < course.StartDate.Date)
+                {
+                    return BadRequest("The course has not started yet");
+                }
+                if (today > course.EndDate.Date)
+                {
+                    return BadRequest("The course is over");
+                }
                 var existingDate = await _attendanceDateRepo.GetRelationSingle(
                     where: x => x.Date.Date == today,
                     selector: x => x,
                     returnType: QueryReturnType.SingleOrDefault,
                     asNoTracking: true);
-                                    
+
                 var attDateId = 0;
                 if (existingDate == null)
                 {

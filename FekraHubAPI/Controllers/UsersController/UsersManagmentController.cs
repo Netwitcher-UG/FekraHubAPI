@@ -929,7 +929,9 @@ namespace FekraHubAPI.Controllers.UsersController
         public class AccountDTO
         {
             public string? Email { get; set; }
-            public ChangePassword? Password { get; set; }
+            public string Password { get; set; } = null!;
+            [Compare("Password", ErrorMessage = "The password and confirmation, password do not match.")]
+            public string ConfirmPassword { get; set; } = null!;
             public bool AreAllFieldsNull()
             {
                 return Email == null && Password == null;
@@ -964,7 +966,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 if (!accountDTO.IsPasswordNull())
                 {
                     var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-                    var resetResult = await _userManager.ResetPasswordAsync(user, resetToken, accountDTO.Password.Password);
+                    var resetResult = await _userManager.ResetPasswordAsync(user, resetToken, accountDTO.Password);
                     if (!resetResult.Succeeded)
                     {
                         return BadRequest(resetResult.Errors);

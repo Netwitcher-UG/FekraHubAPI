@@ -67,10 +67,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                             }
                             var dateP = worksheet.Cells[row, 15].Text;
                             var dateS = worksheet.Cells[row, 4].Text;
-                            if ((!DateTime.TryParse(dateP, out DateTime dateValueP) || !DateTime.TryParse(dateS, out DateTime dateValueS)) && IsRowValid(worksheet, row))
-                            {
-                                return BadRequest($"Error at row {row - 2}: Invalid DateTime format.");
-                            }
+                            
                         }
                         for (int row = 3; row <= 302; row++)
                         {

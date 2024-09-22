@@ -105,7 +105,6 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                    !string.IsNullOrEmpty(worksheet.Cells[row, 3].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 4].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 5].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 6].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 7].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 12].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 14].Text);
@@ -192,7 +191,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 LastName = worksheet.Cells[row, 3].Text.Trim(),
                 Birthday = DateTime.Parse(worksheet.Cells[row, 4].Text.Trim()),
                 Nationality = worksheet.Cells[row, 5].Text.Trim(),
-                Note = worksheet.Cells[row, 6].Text.Trim(),
+                Note = worksheet.Cells[row, 6].Text.Trim() ?? "",
                 Gender = MaleOrFemail( worksheet.Cells[row, 7].Text.Trim()) ,
                 City = worksheet.Cells[row, 8].Text.Trim(),
                 Street = worksheet.Cells[row, 9].Text.Trim(),

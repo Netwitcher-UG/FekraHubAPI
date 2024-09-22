@@ -271,7 +271,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
                 // date now if exist in database or not  (add if not)
                 var today = DateTime.Now.Date;
-                if (today < course.StartDate.Date)
+                if(today < course.StartDate.Date)
                 {
                     return BadRequest("The course has not started yet");
                 }
@@ -284,7 +284,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     selector: x => x,
                     returnType: QueryReturnType.SingleOrDefault,
                     asNoTracking: true);
-                                    
+
                 var attDateId = 0;
                 if (existingDate == null)
                 {

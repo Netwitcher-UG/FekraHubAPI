@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using FekraHubAPI.MapModels;
 using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Constract;
+using static FekraHubAPI.Controllers.UsersController.UsersManagment;
+using System.Linq;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -594,10 +596,38 @@ namespace FekraHubAPI.Controllers.UsersController
             }
 
         }
+        public class UserDataDTO
+        {
+
+            public string Role { get; set; }
+            public string? Password { get; set; }
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+            public string Email { get; set; }
+
+            public string PhoneNumber { get; set; }
+
+            public IFormFile? ImageUser { get; set; }
+            public string Gender { get; set; }
+
+            public string EmergencyPhoneNumber { get; set; }
+            public DateTime Birthday { get; set; }
+            public string Birthplace { get; set; }
+
+            public string Nationality { get; set; }
+            public string Street { get; set; }
+            public string StreetNr { get; set; }
+            public string ZipCode { get; set; }
+            public string City { get; set; }
+            public string Job { get; set; }
+            public string Graduation { get; set; }
+
+
+        }
         [Authorize(Policy = "UpdateUser")]
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromForm] Map_Account accountUpdate)
+        [HttpPut("userData/{id}")]
+        public async Task<IActionResult> UpdateUser(string id, [FromForm] UserDataDTO accountUpdate)
         {
             try
             {
@@ -607,31 +637,139 @@ namespace FekraHubAPI.Controllers.UsersController
                     return NotFound($" account id {id} not exists !");
                 }
 
-                string folderFile = "images/users/";
-                if (accountUpdate.ImageUser != null)
+                var currentRoles = await _userManager.GetRolesAsync(account);
+                if (currentRoles.Contains(accountUpdate.Role))
                 {
-                    if (account.ImageUser != accountUpdate.ImageUser.FileName)
+                    var removeResult = await _userManager.RemoveFromRolesAsync(account, currentRoles);
+                    if (!removeResult.Succeeded)
                     {
-                        string folder = Guid.NewGuid().ToString() + "_" + accountUpdate.ImageUser.FileName;
-                        string image = folderFile + folder;
-
-                        if (!System.IO.Directory.Exists(folderFile))
-                        {
-                            System.IO.Directory.Delete(folderFile);
-
-                        }
-                        string serverFolder = Path.Combine(folderFile, folder);
-                        using var stream = new FileStream(serverFolder, FileMode.Create);
-                        accountUpdate.ImageUser.CopyTo(stream);
-                        account.ImageUser = image;
-                        //image = user.imageUser.ToString();
+                        throw new Exception("Failed to remove user's current roles");
                     }
-
+                    var addResult = await _userManager.AddToRoleAsync(account, accountUpdate.Role);
+                    if (!addResult.Succeeded)
+                    {
+                        throw new Exception($"Failed to add user to role {accountUpdate.Role}");
+                    }
                 }
 
+                if (accountUpdate.ImageUser != null && accountUpdate.ImageUser.Length != 0)
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await accountUpdate.ImageUser.CopyToAsync(memoryStream);
+                        byte[] imageBytes = memoryStream.ToArray();
+                        account.ImageUser = Convert.ToBase64String(imageBytes);
+                    }
+                }
+
+                if (accountUpdate.Password != null)
+                {
+                    var Token = await _userManager.GeneratePasswordResetTokenAsync(account);
+                    var Result = await _userManager.ResetPasswordAsync(account, Token, accountUpdate.Password);
+                    if (!Result.Succeeded)
+                    {
+                        return BadRequest(Result.Errors);
+                    }
+                }
+                var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
+                var normalizedUserName = accountUpdate.Email.Normalize().ToLower();
+
+                account.UserName = accountUpdate.Email;
+                account.Email = accountUpdate.Email;
+                account.NormalizedUserName = normalizedUserName;
+                account.NormalizedEmail = normalizedEmail;
+
+                account.FirstName = accountUpdate.FirstName;
+                account.LastName = accountUpdate.LastName;
+                account.SecurityStamp = Guid.NewGuid().ToString("D");
+                account.PhoneNumber = accountUpdate.PhoneNumber;
+                account.Gender = accountUpdate.Gender;
+                account.EmergencyPhoneNumber = accountUpdate.EmergencyPhoneNumber;
+                account.Birthday = accountUpdate.Birthday;
+                account.Birthplace = accountUpdate.Birthplace;
+                account.Nationality = accountUpdate.Nationality;
+                account.Street = accountUpdate.Street;
+                account.StreetNr = accountUpdate.Street;
+                account.ZipCode = accountUpdate.ZipCode;
+                account.City = accountUpdate.City;
+                account.Job = accountUpdate.Job;
+                account.Graduation = accountUpdate.Graduation;
+
+                _db.SaveChanges();
+                return Ok("success");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+
+        public class ParentDataDTO
+        {
+
+            public string Role { get; set; }
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+            public string Email { get; set; }
+
+            public string PhoneNumber { get; set; }
+
+            public IFormFile? ImageUser { get; set; }
+            public string Gender { get; set; }
+
+            public string EmergencyPhoneNumber { get; set; }
+            public DateTime Birthday { get; set; }
+            public string Birthplace { get; set; }
+
+            public string Nationality { get; set; }
+            public string Street { get; set; }
+            public string StreetNr { get; set; }
+            public string ZipCode { get; set; }
+            public string City { get; set; }
+            public string Job { get; set; }
+            public string Graduation { get; set; }
 
 
-                // await _applicationUserRepository.Update(account);
+        }
+        [Authorize(Policy = "UpdateUser")]
+
+        [HttpPut("parentData/{id}")]
+        public async Task<IActionResult> UpdateParent(string id, [FromForm] ParentDataDTO accountUpdate)
+        {
+            try
+            {
+                var account = await _db.ApplicationUser.FindAsync(id);
+                if (account == null)
+                {
+                    return NotFound($" account id {id} not exists !");
+                }
+
+                var currentRoles = await _userManager.GetRolesAsync(account);
+                if (currentRoles.Contains(accountUpdate.Role))
+                {
+                    var removeResult = await _userManager.RemoveFromRolesAsync(account, currentRoles);
+                    if (!removeResult.Succeeded)
+                    {
+                        throw new Exception("Failed to remove user's current roles");
+                    }
+                    var addResult = await _userManager.AddToRoleAsync(account, accountUpdate.Role);
+                    if (!addResult.Succeeded)
+                    {
+                        throw new Exception($"Failed to add user to role {accountUpdate.Role}");
+                    }
+                }
+
+                if (accountUpdate.ImageUser != null && accountUpdate.ImageUser.Length != 0)
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await accountUpdate.ImageUser.CopyToAsync(memoryStream);
+                        byte[] imageBytes = memoryStream.ToArray();
+                        account.ImageUser = Convert.ToBase64String(imageBytes);
+                    }
+                }
 
                 var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
                 var normalizedUserName = accountUpdate.Email.Normalize().ToLower();
@@ -658,7 +796,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 account.Graduation = accountUpdate.Graduation;
 
                 _db.SaveChanges();
-                return Ok(account);
+                return Ok("success");
             }
             catch (Exception ex)
             {
@@ -668,26 +806,25 @@ namespace FekraHubAPI.Controllers.UsersController
 
         }
 
-        [Authorize(Policy = "DeleteUser")]
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(string id)
+        [Authorize(Policy = "UpdateUser")]
+        [HttpPut("DeactivateUser/{id}")]
+        public async Task<IActionResult> DeactivateUser(string id, bool activate)
         {
             try
             {
-                var currentUser = await GetCurrentUserAsync();
-                if (currentUser.Id == id)
+                var user = await _db.ApplicationUser.FindAsync(id);
+                if (user == null)
                 {
-                    return BadRequest("Cant Delete This User");
+                    return NotFound($" account id {id} not exists !");
                 }
-                var deleteUser = await _db.ApplicationUser.SingleOrDefaultAsync(x => x.Id == id);
-                if (deleteUser == null)
-                {
-                    return NotFound($"user id not exists !");
-                }
-                _db.ApplicationUser.Remove(deleteUser);
+                user.ActiveUser = activate;
+                _db.ApplicationUser.Update(user);
                 await _db.SaveChangesAsync();
-                return Ok("User Deleted");
+                if (activate)
+                {
+                    return Ok("User Activate");
+                }
+                return Ok("User Deactivate");
             }
             catch (Exception ex)
             {

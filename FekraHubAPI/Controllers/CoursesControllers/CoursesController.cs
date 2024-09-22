@@ -203,10 +203,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         {
                             return BadRequest(ModelState);
                         }
-                        if (mapCourseSchedule.TeacherId == null || mapCourseSchedule.TeacherId.Length == 0)
-                        {
-                            return BadRequest("The teacherId is required!!");
-                        }
+                       
                         
 
 

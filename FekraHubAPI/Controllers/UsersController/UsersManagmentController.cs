@@ -36,13 +36,13 @@ namespace FekraHubAPI.Controllers.UsersController
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _db;
-        // private  UserManager<ApplicationUser>  currentUser ;
+       // private  UserManager<ApplicationUser>  currentUser ;
         private readonly IRepository<ApplicationUser> _applicationUserRepository;
         private readonly ApplicationUsersServices _applicationUsersServices;
         private readonly EmailSender.IEmailSender _emailSender;
         private readonly ILogger<UsersManagment> _logger;
         public UsersManagment(ApplicationDbContext context, UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager, IRepository<ApplicationUser> applicationUserRepository, ApplicationUsersServices applicationUsersServices,
+            RoleManager<IdentityRole> roleManager, IRepository<ApplicationUser> applicationUserRepository , ApplicationUsersServices applicationUsersServices  ,
         ApplicationDbContext db, EmailSender.IEmailSender emailSender, ILogger<UsersManagment> logger)
         {
 
@@ -81,9 +81,9 @@ namespace FekraHubAPI.Controllers.UsersController
                         x.Graduation,
                         x.Nationality
                     },
-                    asNoTracking: true
+                    asNoTracking:true
                     );
-                var p = await _applicationUserRepository.GetPagedDataAsync(users, paginationParameters);
+                var p = await  _applicationUserRepository.GetPagedDataAsync(users , paginationParameters);
                 return Ok(new
                 {
                     p.CurrentPage,
@@ -98,7 +98,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
 
         [Authorize(Policy = "GetUsers")]
@@ -144,12 +144,12 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
 
         [Authorize(Policy = "GetEmployee")]
         [HttpGet("GetEmployee")]
-        public async Task<IActionResult> GetEmployee([FromQuery] List<string>? RoleName)
+        public async Task<IActionResult> GetEmployee([FromQuery]List<string>? RoleName)
         {
             try
             {
@@ -237,9 +237,9 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
-
+        
         [Authorize(Policy = "GetTeacher")]
         [HttpGet("GetTeacher")]
         public async Task<IActionResult> GetTeacher()
@@ -284,13 +284,13 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
         [Authorize(Policy = "GetTeacher")]
         [HttpGet("TeacherProfile")]
         public async Task<IActionResult> GetTeacherProfil(string id)
         {
-            var teacher = await _db.ApplicationUser.Where(x => x.Id == id).AsNoTracking().Select(s => new
+            var teacher = await _db.ApplicationUser.Where(x => x.Id == id).AsNoTracking().Select(s=> new
             {
                 s.Id,
                 s.FirstName,
@@ -312,7 +312,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var courses = await _db.Courses
                 .Include(t => t.Teacher)
                 .Where(x => x.Teacher.Select(z => z.Id).Contains(teacher.Id))
-                .Include(x => x.Room).ThenInclude(x => x.Location).Include(x => x.Student)
+                .Include(x=>x.Room).ThenInclude(x=>x.Location).Include(x=>x.Student)
                 .AsNoTracking()
                 .Select(c => new
                 {
@@ -324,13 +324,13 @@ namespace FekraHubAPI.Controllers.UsersController
                     c.StartDate,
                     c.EndDate,
                     StudentCount = c.Student.Count,
-                    AnotherTeachers = c.Teacher.Where(x => x.Id != id).Select(z => new
+                    AnotherTeachers = c.Teacher.Where(x=>x.Id != id).Select(z => new 
                     {
                         z.Id,
                         z.FirstName,
                         z.LastName,
                         z.Email
-                    }),
+                    }), 
                     Room = new
                     {
                         c.Room.Id,
@@ -349,7 +349,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
                 })
                 .ToListAsync();
-            return Ok(new { teacher, courses });
+            return Ok(new { teacher,courses });
         }
         [Authorize(Policy = "GetSecretary")]
         [HttpGet("GetSecretary")]
@@ -395,7 +395,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
 
         [Authorize(Policy = "GetParent")]
@@ -446,9 +446,9 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
-
+        
         [Authorize(Policy = "GetUsers")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(string id)
@@ -499,7 +499,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
         [Authorize(Policy = "AddUsers")]
         [HttpPost]
@@ -594,11 +594,11 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
         public class UserDataDTO
         {
-
+            
             public string Role { get; set; }
             public string? Password { get; set; }
             public string FirstName { get; set; }
@@ -611,7 +611,7 @@ namespace FekraHubAPI.Controllers.UsersController
             public string Gender { get; set; }
 
             public string EmergencyPhoneNumber { get; set; }
-            public DateTime Birthday { get; set; }
+            public DateTime Birthday { get; set; }  
             public string Birthplace { get; set; }
 
             public string Nationality { get; set; }
@@ -703,7 +703,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
 
         public class ParentDataDTO
@@ -770,7 +770,7 @@ namespace FekraHubAPI.Controllers.UsersController
                         account.ImageUser = Convert.ToBase64String(imageBytes);
                     }
                 }
-
+                
                 var normalizedEmail = accountUpdate.Email.Normalize().ToLower();
                 var normalizedUserName = accountUpdate.Email.Normalize().ToLower();
 
@@ -808,7 +808,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
         [Authorize(Policy = "UpdateUser")]
         [HttpPut("DeactivateUser/{id}")]
-        public async Task<IActionResult> DeactivateUser(string id, bool activate)
+        public async Task<IActionResult> DeactivateUser(string id ,bool activate)
         {
             try
             {
@@ -831,12 +831,12 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
         [Authorize(Policy = "ResetPasswordUser")]
         [HttpPost]
         [Route("[action]")]
-        public async Task<IActionResult> ResetPasswordUser([Required] string id, [Required] string newPassword)
+        public async Task<IActionResult> ResetPasswordUser([Required] string id , [Required] string newPassword)
         {
             try
             {
@@ -872,7 +872,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
         [Authorize]
         [HttpGet("UserProfile")]
@@ -887,7 +887,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     return BadRequest("Role not exist");
                 }
-                var role = await _db.Roles.Where(x => x.Id == userRole).AsNoTracking().Select(x => x.Name).SingleOrDefaultAsync();
+                var role = await _db.Roles.Where(x=>x.Id == userRole).AsNoTracking().Select(x=>x.Name).SingleOrDefaultAsync();
                 if (userRole == "4")
                 {
                     var user = await _applicationUserRepository.GetRelationSingle(
@@ -1011,7 +1011,7 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 var userID = _applicationUserRepository.GetUserIDFromToken(User);
                 var user = await _db.ApplicationUser.FindAsync(userID);
-                if (user == null)
+                if(user == null)
                 {
                     return BadRequest("User not found");
                 }
@@ -1041,17 +1041,17 @@ namespace FekraHubAPI.Controllers.UsersController
                 await _db.SaveChangesAsync();
                 return Ok(new
                 {
-                    user.FirstName,
-                    user.LastName,
-                    user.Email,
-                    user.PhoneNumber,
-                    user.EmergencyPhoneNumber,
-                    user.City,
-                    user.StreetNr,
+                    user.FirstName ,
+                    user.LastName ,
+                    user.Email ,
+                    user.PhoneNumber ,
+                    user.EmergencyPhoneNumber ,
+                    user.City ,
+                    user.StreetNr ,
                     user.Nationality,
                     user.Street,
-                    user.Gender,
-                    user.ZipCode,
+                    user.Gender ,
+                    user.ZipCode ,
                     user.Graduation,
                     user.Job,
                     user.ImageUser,

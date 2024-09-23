@@ -225,6 +225,8 @@ namespace FekraHubAPI.Controllers.UsersController
                     user.ZipCode,
                     user.PhoneNumber,
                     user.EmergencyPhoneNumber,
+                    user.Graduation,
+                    user.ActiveUser,
                     Roles = RoleName != null ? string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name)) : string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name)),
                     Payrolls = payrollsDataLookup.ContainsKey(user.Id) ? payrollsDataLookup[user.Id] : null
                 }).ToList();

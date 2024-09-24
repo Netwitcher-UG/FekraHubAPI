@@ -439,6 +439,8 @@ namespace FekraHubAPI.Controllers.UsersController
                     x.ZipCode,
                     x.PhoneNumber,
                     x.EmergencyPhoneNumber,
+                    x.Graduation,
+                    x.ActiveUser
 
                 }).ToList();
                 return Ok(data);

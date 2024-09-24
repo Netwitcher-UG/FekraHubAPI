@@ -358,17 +358,18 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     return BadRequest("Student not found");
                 }
-                var courseAtt = await _attendanceDateRepo.GetRelationAsQueryable(
+                var courseAtt = await _attendanceDateRepo.GetRelationSingle(
 
                                     where: x => x.Date.Date == date.Date,
-                                    selector: x => x ==null?null: x.CourseAttendance.Select(z=>z.CourseId),);
+                                    selector: x => x ==null?null: x.CourseAttendance.Select(z=>z.CourseId).ToList(),
+                                    returnType:QueryReturnType.SingleOrDefault,asNoTracking:true);
                 if (courseAtt == null)
                 {
                     return BadRequest("This date is not a working day");
                 }
                 else
                 {
-                    if (!courseAtt.Contains(Student.CourseID))
+                    if (!courseAtt.Contains(Student.CourseID ?? 0))
                     {
                         return BadRequest("This date is not a working day");
                     }

@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using MailKit.Net.Smtp;
 using MimeKit;
 using FekraHubAPI.Constract;
+using FekraHubAPI.Migrations;
+using Microsoft.AspNetCore.Identity;
+using FekraHubAPI.MapModels;
 
 namespace FekraHubAPI.Controllers
 {
@@ -17,21 +20,28 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<MessageSender> _messageSenderRepo;
         private readonly IRepository<ApplicationUser> _UserRepo;
         private readonly IRepository<SchoolInfo> _schoolInfoRepo;
+        private readonly IRepository<Student> _studentRepo;
         private readonly ILogger<PayRollsController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         public MessageSenderController(IRepository<MessageSender> messageSenderRepo,
-            IRepository<ApplicationUser> userRepo, IRepository<SchoolInfo> schoolInfoRepo, ILogger<PayRollsController> logger)
+            IRepository<ApplicationUser> userRepo, IRepository<SchoolInfo> schoolInfoRepo, ILogger<PayRollsController> logger,
+            UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager , IRepository<Student> studentRepo)
         {
             _messageSenderRepo = messageSenderRepo;
             _UserRepo = userRepo;
             _schoolInfoRepo = schoolInfoRepo;
             _logger = logger;
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _studentRepo = studentRepo;
         }
 
         [Authorize(Policy = "MessageSender")]
         [HttpGet]
-        public async Task<IActionResult> GetMessages()
+        public async Task<IActionResult> GetMessages([FromQuery] PaginationParameters paginationParameters)
         {
-            var messages = await _messageSenderRepo.GetRelationList(
+            var Allmessages = await _messageSenderRepo.GetRelationAsQueryable(
                 include:x=>x.Include(z=>z.UserMessages).ThenInclude(z=>z.User),
                 selector:x=> new
                 {
@@ -49,7 +59,8 @@ namespace FekraHubAPI.Controllers
                 },
                 asNoTracking:true
                 );
-            return Ok(messages);
+            var messages = await _messageSenderRepo.GetPagedDataAsync(Allmessages, paginationParameters);
+            return Ok(new { messages.TotalCount, messages.PageSize, messages.TotalPages, messages.CurrentPage, Messages = messages.Data });
         }
 
         [Authorize(Policy = "MessageSender")]
@@ -72,8 +83,10 @@ namespace FekraHubAPI.Controllers
         {
             public string? Subject { get; set; }
             public string Message { get; set; }
-            public List<string> UserId { get; set; }
+            public List<string>? UserId { get; set; }
             public List<IFormFile>? Files { get; set; }
+            public string? Role { get; set; }
+            public int? CourseId { get; set; }
 
         }
         [Authorize(Policy = "MessageSender")]
@@ -84,15 +97,75 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var users = await _UserRepo.GetRelationList(
+            if((messagDTO.UserId == null || !messagDTO.UserId.Any()) && messagDTO.Role == null && messagDTO .CourseId == null)
+            {
+                return BadRequest("There are no users to send notifications to.");
+            }
+            List<string> Emails = new List<string>();
+            List<ApplicationUser> allUsers = new List<ApplicationUser>();
+            if(messagDTO.UserId != null && messagDTO.UserId.Any())
+            {
+                var users = await _UserRepo.GetRelationList(
                 where: x => messagDTO.UserId.Contains(x.Id),
                 include: x => x.Include(u => u.UserMessages),
                 selector: x => x
                 );
-            if (users == null || !users.Any())
-            {
-                return BadRequest("User not found");
+                if (users == null || !users.Any())
+                {
+                    return BadRequest("User not found");
+                }
+                else
+                {
+                    allUsers.AddRange(users);
+                    users.ForEach(x => Emails.Add(x.Email));
+                }
+                
             }
+            if(messagDTO.Role != null)
+            {
+                var role = await _roleManager.FindByNameAsync(messagDTO.Role);
+                if (role == null)
+                {
+                    return NotFound(new { Message = "Role not found" });
+                }
+
+                var usersInRole = (await _userManager.GetUsersInRoleAsync(messagDTO.Role)).ToList();
+                if (usersInRole == null || !usersInRole.Any())
+                {
+                    return BadRequest("User not found");
+                }
+                else
+                {
+                    allUsers.AddRange(usersInRole);
+                    usersInRole.ForEach(x => Emails.Add(x.Email));
+                }
+            }
+            if (messagDTO.CourseId != null)
+            {
+                var Parents = await _studentRepo.GetRelationList(
+                    where:x=>x.CourseID == messagDTO.CourseId,
+                    include:x=>x.Include(z=>z.User),
+                    selector:x=>x.User,
+                    asNoTracking:true
+                    );
+                if (Parents == null || !Parents.Any())
+                {
+                    return BadRequest("User not found");
+                }
+                else
+                {
+                    allUsers.AddRange(Parents);
+                    Parents.ForEach(x => Emails.Add(x.Email));
+                }
+            }
+
+            HashSet<string> uniqueEmails = new HashSet<string>(Emails);
+            Emails = uniqueEmails.ToList();
+            List<ApplicationUser> uniqueUsers = allUsers
+            .GroupBy(user => user.Email)
+            .Select(group => group.First())
+            .ToList();
+
             var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
                 selector: x => new
                 {
@@ -103,9 +176,9 @@ namespace FekraHubAPI.Controllers
                 );
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail));
-            foreach (var user in users)
+            foreach (var Email in Emails)
             {
-                message.Bcc.Add(new MailboxAddress("", user.Email));
+                message.Bcc.Add(new MailboxAddress("", Email));
             }
 
 
@@ -114,7 +187,7 @@ namespace FekraHubAPI.Controllers
             var bodyBuilder = new BodyBuilder
             {
                 
-                TextBody = messagDTO.Message
+                HtmlBody = messagDTO.Message
             };
 
             if (messagDTO.Files != null && messagDTO.Files.Any())
@@ -155,7 +228,7 @@ namespace FekraHubAPI.Controllers
             var messageSender = new MessageSender
             {
                 Message = messagDTO.Message,
-                UserMessages = users.Select(user => new UserMessage
+                UserMessages = uniqueUsers.Select(user => new UserMessage
                 {
                     UserId = user.Id
                 }).ToList()
@@ -168,12 +241,12 @@ namespace FekraHubAPI.Controllers
                 messageSender.Id,
                 messageSender.Date,
                 messageSender.Message,
-                User = messageSender.UserMessages.Select(x=>new
+                User = uniqueUsers.Select(x=>new
                 {
-                    x.UserId,
-                    x.User.FirstName,
-                    x.User.LastName,
-                    x.User.Email
+                    x.Id,
+                    x.FirstName,
+                    x.LastName,
+                    x.Email
                 })
             });
         }

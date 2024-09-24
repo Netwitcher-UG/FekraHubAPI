@@ -1059,9 +1059,9 @@ namespace FekraHubAPI.Controllers.UsersController
         public class AccountDTO
         {
             public string? Email { get; set; }
-            public string Password { get; set; } = null!;
+            public string? Password { get; set; } = null!;
             [Compare("Password", ErrorMessage = "The password and confirmation, password do not match.")]
-            public string ConfirmPassword { get; set; } = null!;
+            public string? ConfirmPassword { get; set; } = null!;
             public bool AreAllFieldsNull()
             {
                 return Email == null && Password == null;

@@ -361,17 +361,17 @@ namespace FekraHubAPI.Controllers.Attendance
                 var courseAtt = await _attendanceDateRepo.GetRelationAsQueryable(
 
                                     where: x => x.Date.Date == date.Date,
-                                    selector: x => x ==null?null: x.CourseAttendance.Select(z=>z.CourseId),);
+                                    selector: x => x ==null?null: x.CourseAttendance.Select(z=>z.CourseId));
                 if (courseAtt == null)
                 {
                     return BadRequest("This date is not a working day");
                 }
                 else
                 {
-                    if (!courseAtt.Contains(Student.CourseID))
-                    {
-                        return BadRequest("This date is not a working day");
-                    }
+                    //if (!courseAtt.Contains(Student.CourseID))
+                    //{
+                    //    return BadRequest("This date is not a working day");
+                    //}
                 }
                 
                

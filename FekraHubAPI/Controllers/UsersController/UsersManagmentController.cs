@@ -711,7 +711,6 @@ namespace FekraHubAPI.Controllers.UsersController
         public class ParentDataDTO
         {
 
-            public string Role { get; set; }
             public string FirstName { get; set; }
             public string LastName { get; set; }
             public string Email { get; set; }
@@ -746,21 +745,6 @@ namespace FekraHubAPI.Controllers.UsersController
                 if (account == null)
                 {
                     return NotFound($" account id {id} not exists !");
-                }
-
-                var currentRoles = await _userManager.GetRolesAsync(account);
-                if (currentRoles.Contains(accountUpdate.Role))
-                {
-                    var removeResult = await _userManager.RemoveFromRolesAsync(account, currentRoles);
-                    if (!removeResult.Succeeded)
-                    {
-                        throw new Exception("Failed to remove user's current roles");
-                    }
-                    var addResult = await _userManager.AddToRoleAsync(account, accountUpdate.Role);
-                    if (!addResult.Succeeded)
-                    {
-                        throw new Exception($"Failed to add user to role {accountUpdate.Role}");
-                    }
                 }
 
                 if (accountUpdate.ImageUser != null && accountUpdate.ImageUser.Length != 0)

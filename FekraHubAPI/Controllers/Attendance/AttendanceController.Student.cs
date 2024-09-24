@@ -353,18 +353,29 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-                var DateIsExist = (await _attendanceDateRepo.GetRelationList(
-                                    where: x => x.Date.Date == date.Date,
-                                    selector: x => x, asNoTracking: true)).Any();
-                if (!DateIsExist) 
-                {
-                    return BadRequest("This date is not a working day");
-                }
                 var Student = await _studentRepo.GetById(studentId);
                 if (Student == null)
                 {
                     return BadRequest("Student not found");
                 }
+                var courseAtt = await _attendanceDateRepo.GetRelationAsQueryable(
+
+                                    where: x => x.Date.Date == date.Date,
+                                    selector: x => x ==null?null: x.CourseAttendance.Select(z=>z.CourseId),);
+                if (courseAtt == null)
+                {
+                    return BadRequest("This date is not a working day");
+                }
+                else
+                {
+                    if (!courseAtt.Contains(Student.CourseID))
+                    {
+                        return BadRequest("This date is not a working day");
+                    }
+                }
+                
+               
+                
                 var StudentAttendanceExist = (await _studentAttendanceRepo.GetRelationList
                     (where: x => x.Student.Id == studentId && x.date.Date == date.Date,
                     selector: x => x, asNoTracking: true)).Any();

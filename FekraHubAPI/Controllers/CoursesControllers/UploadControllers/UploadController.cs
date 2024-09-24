@@ -197,25 +197,20 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
             try
             {
-                return await SaveFile(courseId, files, UploadTypeId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
-                return BadRequest(ex.Message);
-            }
-           
-        }
-
-
-        private async Task<IActionResult> SaveFile(int courseId, List<IFormFile> files, int TypeId)
-        {
-            try
-            {
                 var course = await _courseRepository.GetById(courseId);
                 if (course == null)
                 {
                     return NotFound("Course not found.");
+                }
+                var Type = await _uploadTypeRepository.GetById(UploadTypeId);
+                if (Type == null)
+                {
+                    return NotFound("Type not found.");
+                }
+
+                if (files == null || !files.Any() )
+                {
+                    return NotFound("files not exist.");
                 }
 
 
@@ -233,7 +228,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
                         var upload = new Upload
                         {
-                            UploadTypeid = TypeId,
+                            UploadTypeid = UploadTypeId
+                            ,
                             file = fileBytes,
                             FileName = file.FileName,
                             Date = DateTime.Now,
@@ -246,7 +242,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                     }
                 }
                 await _emailSender.SendToParentsNewFiles(courseId);
-               
+
                 return Ok("Files uploaded successfully.");
             }
             catch (Exception ex)
@@ -255,8 +251,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 return BadRequest(ex.Message);
             }
 
-            
         }
+
+
+    
 
 
 

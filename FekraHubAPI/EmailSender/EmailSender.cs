@@ -251,7 +251,7 @@ a[x-apple-data-detectors],
           <td align=""center"" style=""padding:0;Margin:0"">
            <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-header-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px"">
              <tr class=""es-mobile-hidden"">
-             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><object type=""image/svg+xml"" data=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></object></td>
+             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
 
              </tr>
            </table></td>
@@ -261,7 +261,7 @@ a[x-apple-data-detectors],
          <tr>
           
              
-   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><object type=""image/svg+xml"" data=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></object></td>
+   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
 
             
          </tr>

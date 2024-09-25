@@ -83,6 +83,7 @@ namespace FekraHubAPI.Controllers
         {
             public string? Subject { get; set; }
             public string Message { get; set; }
+            public List<string>? ExternalEmails { get; set; }
             public List<string>? UserId { get; set; }
             public List<IFormFile>? Files { get; set; }
             public string? Role { get; set; }
@@ -180,7 +181,13 @@ namespace FekraHubAPI.Controllers
             {
                 message.Bcc.Add(new MailboxAddress("", Email));
             }
-
+            if (messagDTO.ExternalEmails != null && messagDTO.ExternalEmails.Any())
+            {
+                foreach(var email in messagDTO.ExternalEmails)
+                {
+                    message.Bcc.Add(new MailboxAddress("", email));
+                }
+            }
 
             message.Subject = messagDTO.Subject;
 

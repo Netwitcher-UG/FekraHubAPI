@@ -67,22 +67,22 @@ namespace FekraHubAPI.Controllers.UsersController
             _logger = logger;
         }
 
-        //[AllowAnonymous]
-        //[HttpPost("teeest")]
-        //public async Task<IActionResult> test(IFormFile imageSvg)
-        //{
-        //    string LogoBase64 = "";
-        //    using (var reader = new StreamReader(imageSvg.OpenReadStream()))
-        //    {
-        //        string svgContent = reader.ReadToEnd();
-        //        byte[] svgBytes = System.Text.Encoding.UTF8.GetBytes(svgContent);
-        //        LogoBase64 = Convert.ToBase64String(svgBytes);
-        //    }
-        //    var OldSchoolInfo = (await _schoolInfoRepo.GetAll()).First();
-        //    OldSchoolInfo.LogoBase64 = LogoBase64;
-        //    await _schoolInfoRepo.Update(OldSchoolInfo);
-        //    return Ok("Success");
-        //}
+        [AllowAnonymous]
+        [HttpPost("teeest")]
+        public async Task<IActionResult> test(IFormFile imagePNG)
+        {
+            string LogoBase64 = "";
+            using (var memoryStream = new MemoryStream())
+            {
+                imagePNG.CopyTo(memoryStream);
+                byte[] fileBytes = memoryStream.ToArray();
+                LogoBase64 = Convert.ToBase64String(fileBytes);
+            }
+            var OldSchoolInfo = (await _schoolInfoRepo.GetAll()).First();
+            OldSchoolInfo.LogoBase64 = LogoBase64;
+            await _schoolInfoRepo.Update(OldSchoolInfo);
+            return Ok("Success");
+        }
         [HttpGet]
         public async Task<IActionResult> GetAccount()
         {

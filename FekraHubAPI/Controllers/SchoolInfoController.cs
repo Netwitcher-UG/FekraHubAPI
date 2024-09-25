@@ -445,8 +445,8 @@ namespace FekraHubAPI.Controllers
 
         //}
         [AllowAnonymous]
-        [HttpGet("SchoolLogo")]
-        public async Task<IActionResult> SchoolLogo()
+        [HttpGet("SchoolLogo1")]
+        public async Task<IActionResult> SchoolLogo1()
         {
             try
             {
@@ -455,7 +455,27 @@ namespace FekraHubAPI.Controllers
                     asNoTracking:true
                     );
                 var imageBytes = Convert.FromBase64String(logoBase64 ?? "");
-                return File(imageBytes, "image/jpeg");
+                return File(imageBytes, "image/svg+xml");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+        [AllowAnonymous]
+        [HttpGet("SchoolLogo2")]
+        public async Task<IActionResult> SchoolLogo2()
+        {
+            try
+            {
+                var logoBase64 = await _schoolInfoRepo.GetRelationSingle(
+                    selector: x => x.LogoBase64,
+                    asNoTracking: true
+                    );
+                var imageBytes = Convert.FromBase64String(logoBase64 ?? "");
+                return File(imageBytes, "image/svg+xml");
             }
             catch (Exception ex)
             {

@@ -471,7 +471,7 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var filePath = Path.Combine("images", "Logo", "1.png");
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(),"Controllers", "1.png");
 
                 var imageBytes = System.IO.File.ReadAllBytes(filePath);
 

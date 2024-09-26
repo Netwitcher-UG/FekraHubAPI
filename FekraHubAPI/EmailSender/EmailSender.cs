@@ -758,7 +758,7 @@ a[x-apple-data-detectors],
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
                 .SingleAsync();
             var emails = await _userManager.Users
-                        .Where(u => u.EmailConfirmed == true && _context.Courses.Where(c => corsesId.Contains(c.Id))
+                        .Where(u => u.EmailConfirmed == true && u.ActiveUser == true && _context.Courses.Where(c => corsesId.Contains(c.Id))
                                                      .SelectMany(c => c.Teacher)
                                                      .Select(t => t.Id)
                                                      .Union(
@@ -845,7 +845,7 @@ a[x-apple-data-detectors],
             var students = await _context.Students
             .Where(x => x.CourseID == coursId)
             .Include(x => x.User)
-            .Where(x => x.User.EmailConfirmed == true)
+            .Where(x => x.User.EmailConfirmed == true&&x.User.ActiveUser == true)
             .Select(z =>  z.User.Email  )
             .ToListAsync();
 
@@ -921,7 +921,7 @@ a[x-apple-data-detectors],
                 .SingleAsync();
             
             var Secretaries = await _userManager.Users
-                         .Where(user => user.EmailConfirmed == true && _context.UserRoles
+                         .Where(user => user.EmailConfirmed == true && user.ActiveUser == true && _context.UserRoles
                             .Where(x => x.RoleId == "2")
                             .Select(x => x.UserId).Contains(user.Id))
                          .Select(x => x.Email)
@@ -993,7 +993,7 @@ a[x-apple-data-detectors],
                 .SingleAsync();
             
             var Secretaries = await _userManager.Users
-                         .Where(user => user.EmailConfirmed == true && _context.UserRoles
+                         .Where(user => user.EmailConfirmed == true && user.ActiveUser == true && _context.UserRoles
                             .Where(x => x.RoleId == "2")
                             .Select(x => x.UserId).Contains(user.Id))
                          .Select(x => x.Email)
@@ -1065,7 +1065,7 @@ a[x-apple-data-detectors],
                 .SingleAsync();
             var parentIds = students.Select(s => s.ParentID).Distinct().ToList();
             var parents = await _userManager.Users
-                .Where(x => x.EmailConfirmed == true && parentIds.Contains(x.Id))
+                .Where(x => x.EmailConfirmed == true && x.ActiveUser == true && parentIds.Contains(x.Id))
                 .Select(x =>x.Email )
                 .ToListAsync();
 

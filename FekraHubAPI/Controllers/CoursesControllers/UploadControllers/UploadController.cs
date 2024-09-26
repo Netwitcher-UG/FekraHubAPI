@@ -198,7 +198,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         [HttpPost]
         public async Task<IActionResult> UploadFiles([FromForm] UploadFilesDTO uploadFilesDTO )
         {
-         
+         return Ok("walaa");
 
             try
             {

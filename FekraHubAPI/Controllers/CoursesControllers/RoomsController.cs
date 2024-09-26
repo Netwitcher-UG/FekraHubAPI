@@ -141,7 +141,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     roomEntity.Id,
                     roomEntity.Name,
-                    Location = roomEntity.Location == null  ? null : new { roomEntity.Location.Id, roomEntity.Location.Name },
+                    Location = roomEntity.Location == null  ? null : new { roomEntity.Location.Id, roomEntity.Location.Name }
                 });
             }
             catch (Exception ex)

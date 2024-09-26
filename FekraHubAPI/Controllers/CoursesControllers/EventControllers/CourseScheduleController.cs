@@ -113,6 +113,39 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     return BadRequest(ModelState);
                 }
 
+                var course= await _courseRepository.GetById(courseSchedMdl.CourseID ?? 0);
+                if (course == null)
+                {
+                    return BadRequest("course not found");
+                }
+                if (TimeSpan.Parse(courseSchedMdl.EndTime) < TimeSpan.Parse(courseSchedMdl.StartTime))
+                {
+                    return BadRequest("The start and end times must be correct");
+                }
+                bool courses = await _courseScheduleRepository.DataExist(
+                         singlePredicate: x => x.CourseID == courseSchedMdl.CourseID &&
+                         x.DayOfWeek == courseSchedMdl.DayOfWeek && (
+
+                         (TimeSpan.Parse(courseSchedMdl.StartTime) >= x.StartTime &&
+                         TimeSpan.Parse(courseSchedMdl.StartTime) <= x.EndTime) ||
+
+                         (TimeSpan.Parse(courseSchedMdl.EndTime) <= x.EndTime &&
+                         TimeSpan.Parse(courseSchedMdl.EndTime) >= x.StartTime) ||
+
+                         TimeSpan.Parse(courseSchedMdl.EndTime) == x.EndTime ||
+                         TimeSpan.Parse(courseSchedMdl.StartTime) == x.StartTime)
+                         );
+                if (courses)
+                {
+                    return BadRequest("This schedule is already scheduled for this course");
+                }
+
+                var daysWeek = Days();
+                if (!daysWeek.Contains(courseSchedMdl.DayOfWeek))
+                {
+                    return BadRequest("This day is not correct");
+                }
+
                 var courseScheduleEntity = await _courseScheduleRepository.GetById(id);
                 if (courseScheduleEntity == null)
                 {
@@ -147,6 +180,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
+                }
+                var course = await _courseRepository.GetById(courseSchedMdl.CourseID ?? 0);
+                if (course == null)
+                {
+                    return BadRequest("course not found");
+                }
+                if (TimeSpan.Parse(courseSchedMdl.EndTime) < TimeSpan.Parse(courseSchedMdl.StartTime))
+                {
+                    return BadRequest("The start and end times must be correct");
                 }
                 bool courses = await _courseScheduleRepository.DataExist(
                                 singlePredicate: x => x.CourseID == courseSchedMdl.CourseID &&

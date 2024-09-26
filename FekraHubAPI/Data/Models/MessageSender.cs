@@ -10,6 +10,7 @@ namespace FekraHubAPI.Data.Models
         public string Message { get; set; }
         public DateTime Date { get; set; } = DateTime.Now;
         public ICollection<UserMessage> UserMessages { get; set; }
+        public ICollection<MessageSenderExternalEmail> MessageSenderExternalEmails { get; set; }
 
     }
 }

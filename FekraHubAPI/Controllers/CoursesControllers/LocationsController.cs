@@ -40,7 +40,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     asNoTracking:true);
                 if (locations == null)
                 {
-                    return NotFound("no locations found");
+                    return BadRequest("no locations found");
                 }
                 return Ok(locations);
             }
@@ -102,7 +102,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var location = await _locationRepository.GetById(id);
                 if (location == null)
                 {
-                    return NotFound();
+                    return BadRequest("Location not found");
                 }
                 return Ok(new { location.Id, location.Name, location.City, location.Street, location.StreetNr, location.ZipCode });
 
@@ -131,7 +131,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var locationEntity = await _locationRepository.GetById(id);
                 if (locationEntity == null)
                 {
-                    return NotFound();
+                    return BadRequest("Location not found");
                 }
 
                 _mapper.Map(locationMdl, locationEntity);
@@ -211,7 +211,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var location = await _locationRepository.DataExist(x=>x.Id == id);
                 if (!location)
                 {
-                    return NotFound();
+                    return BadRequest("Location not found");
                 }
                 var roomExist = await _roomRepository.DataExist(n => n.LocationID == id);
                 if (roomExist)

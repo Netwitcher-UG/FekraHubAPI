@@ -18,6 +18,7 @@ namespace FekraHubAPI.Controllers
     public class MessageSenderController : ControllerBase
     {
         private readonly IRepository<MessageSender> _messageSenderRepo;
+        private readonly IRepository<ExternalEmails> _externalEmailRepo;
         private readonly IRepository<ApplicationUser> _UserRepo;
         private readonly IRepository<SchoolInfo> _schoolInfoRepo;
         private readonly IRepository<Student> _studentRepo;
@@ -26,7 +27,8 @@ namespace FekraHubAPI.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         public MessageSenderController(IRepository<MessageSender> messageSenderRepo,
             IRepository<ApplicationUser> userRepo, IRepository<SchoolInfo> schoolInfoRepo, ILogger<MessageSenderController> logger,
-            UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager , IRepository<Student> studentRepo)
+            UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager ,
+            IRepository<Student> studentRepo, IRepository<ExternalEmails> externalEmailRepo)
         {
             _messageSenderRepo = messageSenderRepo;
             _UserRepo = userRepo;
@@ -35,6 +37,7 @@ namespace FekraHubAPI.Controllers
             _userManager = userManager;
             _roleManager = roleManager;
             _studentRepo = studentRepo;
+            _externalEmailRepo = externalEmailRepo;
         }
 
         [Authorize(Policy = "MessageSender")]
@@ -44,7 +47,8 @@ namespace FekraHubAPI.Controllers
             try
             {
                 var Allmessages = await _messageSenderRepo.GetRelationAsQueryable(
-                include: x => x.Include(z => z.UserMessages).ThenInclude(z => z.User),
+                include: x => x.Include(z => z.UserMessages).ThenInclude(z => z.User)
+                .Include(z => z.MessageSenderExternalEmails).ThenInclude(z => z.ExternalEmail),
                 selector: x => new
                 {
                     x.Id,
@@ -56,6 +60,13 @@ namespace FekraHubAPI.Controllers
                         z.User.FirstName,
                         z.User.LastName,
                         z.User.Email
+                    }),
+                    ExternalEmails = x.MessageSenderExternalEmails.Select(z => new
+                    {
+                        z.ExternalEmailId,
+                        z.ExternalEmail.FirstName,
+                        z.ExternalEmail.LastName,
+                        z.ExternalEmail.Email
                     })
 
                 },
@@ -69,26 +80,49 @@ namespace FekraHubAPI.Controllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "MessageSenderController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
 
         [Authorize(Policy = "MessageSender")]
         [HttpGet("UserMessages")]
-        public async Task<IActionResult> GetUserMessages(string UserId)
+        public async Task<IActionResult> GetUserMessages(string Email)
         {
             try
             {
-                var messages = await _messageSenderRepo.GetRelationList(
-                where: x => x.UserMessages.Select(z => z.UserId).Contains(UserId),
-                selector: x => new
+                var ISUserds = await _messageSenderRepo.DataExist(x => x.UserMessages.Select(z => z.User.Email).Contains(Email));
+                var ISExternal = await _externalEmailRepo.DataExist(m=> m.Email == Email);
+
+                if (ISUserds)
                 {
-                    x.Id,
-                    x.Message,
-                    x.Date,
-                },
-                asNoTracking: true
-                );
-                return Ok(messages);
+                    var messages = await _messageSenderRepo.GetRelationList(
+                        include:x=> x.Include(z=>z.UserMessages).ThenInclude(z=>z.User),
+                    where: x => x.UserMessages.Select(z => z.User.Email).Contains(Email),
+                    selector: x => new
+                    {
+                        x.Id,
+                        x.Message,
+                        x.Date,
+                    },
+                    asNoTracking: true
+                    );
+                    return Ok(messages);
+                }
+                else if (ISExternal)
+                {
+                    var messages = await _messageSenderRepo.GetRelationList(
+                        include: x => x.Include(z => z.MessageSenderExternalEmails).ThenInclude(z => z.ExternalEmail),
+                    where: x => x.MessageSenderExternalEmails.Select(z => z.ExternalEmail.Email).Contains(Email),
+                    selector: x => new
+                    {
+                        x.Id,
+                        x.Message,
+                        x.Date,
+                    },
+                    asNoTracking: true
+                    );
+                        return Ok(messages);
+                }
+                return Ok(new {});
             }
             catch (Exception ex)
             {
@@ -97,11 +131,18 @@ namespace FekraHubAPI.Controllers
             }
             
         }
+        public class ExternalEmailsDTO
+        {
+            public int? Id { get; set; }
+            public string? FirstName { get; set; }
+            public string? LastName { get; set; }
+            public string Email { get; set; }
+        }
         public class MessagDTO
         {
             public string? Subject { get; set; }
             public string Message { get; set; }
-            public List<string>? ExternalEmails { get; set; }
+            public List<ExternalEmailsDTO>? ExternalEmails { get; set; }
             public List<string>? UserId { get; set; }
             public List<IFormFile>? Files { get; set; }
             public string? Role { get; set; }
@@ -110,7 +151,7 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize(Policy = "MessageSender")]
         [HttpPost("UserMessages")]
-        public async Task<IActionResult> GetUserMessages([FromForm] MessagDTO messagDTO)
+        public async Task<IActionResult> GetUserMessages([FromBody] MessagDTO messagDTO)
         {
             try
             {
@@ -118,7 +159,7 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest(ModelState);
                 }
-                if ((messagDTO.UserId == null || !messagDTO.UserId.Any()) && messagDTO.Role == null && messagDTO.CourseId == null)
+                if ((messagDTO.UserId == null || !messagDTO.UserId.Any()) && messagDTO.Role == null && messagDTO.CourseId == null && (messagDTO.ExternalEmails == null || !messagDTO.ExternalEmails.Any()))
                 {
                     return BadRequest("There are no users to send notifications to.");
                 }
@@ -207,7 +248,7 @@ namespace FekraHubAPI.Controllers
                 }
                 if (messagDTO.ExternalEmails != null && messagDTO.ExternalEmails.Any())
                 {
-                    foreach (var email in messagDTO.ExternalEmails)
+                    foreach (var email in messagDTO.ExternalEmails.Select(x=>x.Email))
                     {
                         message.Bcc.Add(new MailboxAddress("", email));
                     }
@@ -255,31 +296,62 @@ namespace FekraHubAPI.Controllers
 
                 }
 
-
-                var messageSender = new MessageSender
+                if(uniqueUsers != null && uniqueUsers.Any())
                 {
-                    Message = messagDTO.Message,
-                    UserMessages = uniqueUsers.Select(user => new UserMessage
+                    var messageSender = new MessageSender
                     {
-                        UserId = user.Id
-                    }).ToList()
-                };
-                await _messageSenderRepo.Add(messageSender);
-
-
-                return Ok(new
+                        Message = messagDTO.Message,
+                        UserMessages = uniqueUsers.Select(user => new UserMessage
+                        {
+                            UserId = user.Id
+                        }).ToList()
+                    };
+                    await _messageSenderRepo.Add(messageSender);
+                }
+                if (messagDTO.ExternalEmails != null && messagDTO.ExternalEmails.Any())
                 {
-                    messageSender.Id,
-                    messageSender.Date,
-                    messageSender.Message,
-                    User = uniqueUsers.Select(x => new
+                    var ExternalEmailsList = new List<ExternalEmails>();
+                    foreach (var emailDTO in messagDTO.ExternalEmails)
                     {
-                        x.Id,
-                        x.FirstName,
-                        x.LastName,
-                        x.Email
-                    })
-                });
+                        ExternalEmails externalEmail;
+                        if (emailDTO.Id.HasValue)
+                        {
+                            externalEmail = await _externalEmailRepo.GetById(emailDTO.Id.Value);
+                            if (externalEmail == null)
+                            {
+                                return BadRequest("one or more external Email not found");
+                            }
+                            
+                        }
+                        else
+                        {
+                            externalEmail = new ExternalEmails
+                            {
+                                FirstName = emailDTO.FirstName,
+                                LastName = emailDTO.LastName,
+                                Email = emailDTO.Email
+                            };
+
+                            await _externalEmailRepo.Add(externalEmail);
+                        }
+
+                        ExternalEmailsList.Add(externalEmail);
+                    }
+                   
+
+                    var messageSender = new MessageSender
+                    {
+                        Message = messagDTO.Message,
+                        MessageSenderExternalEmails = ExternalEmailsList.Select(x => new MessageSenderExternalEmail
+                        {
+                            ExternalEmailId = x.Id
+                        }).ToList()
+                    };
+                    await _messageSenderRepo.Add(messageSender);
+                }
+
+
+                return Ok("success");
             }
             catch (Exception ex)
             {

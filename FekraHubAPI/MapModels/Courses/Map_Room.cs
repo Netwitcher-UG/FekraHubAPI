@@ -10,7 +10,7 @@ namespace FekraHubAPI.MapModels.Courses
         [StringLength(50)]
         public string Name { get; set; }
 
-        public int? LocationID { get; set; }
+        public int LocationID { get; set; }
 
         public void Mapping(Profile profile)
         {

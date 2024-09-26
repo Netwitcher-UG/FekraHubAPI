@@ -115,11 +115,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         }
 
-
+        //====================================================================== later
         // PUT: api/Locations/5
-        
+        [Authorize(Policy = "ManageLocations")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl , [FromForm] List<string> rooms)
+        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl , [FromForm] List<string>? rooms)
         {
             try
             {
@@ -137,14 +137,6 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _mapper.Map(locationMdl, locationEntity);
                 await _locationRepository.Update(locationEntity);
 
-                await _roomRepository.DeleteRange(x => x.LocationID == id);
-                List<Room> room = new List<Room>();
-                foreach (var r in rooms)
-                {
-                    room.Add(new Room { Name = r, LocationID = locationEntity.Id });
-                }
-                await _roomRepository.ManyAdd(room);
-
 
                 return Ok(new
                 {
@@ -154,7 +146,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     locationEntity.Street,
                     locationEntity.StreetNr,
                     locationEntity.ZipCode,
-                    Room = room.Select(r => new
+                    Room = locationEntity.room.Select(r => new
                     {
                         r.Id,
                         r.Name

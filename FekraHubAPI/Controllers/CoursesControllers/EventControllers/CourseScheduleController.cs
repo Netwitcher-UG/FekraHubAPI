@@ -126,7 +126,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     return BadRequest("course not found");
                 }
-
+                if (TimeSpan.Parse(courseSchedMdl.EndTime) < TimeSpan.Parse(courseSchedMdl.StartTime))
+                {
+                    return BadRequest("The start and end times must be correct");
+                }
                 bool courses = await _courseScheduleRepository.DataExist(
                          singlePredicate: x => x.CourseID == courseSchedMdl.CourseID &&
                          x.DayOfWeek == courseSchedMdl.DayOfWeek && (
@@ -191,7 +194,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     return BadRequest("course not found");
                 }
-
+                if (TimeSpan.Parse(courseSchedMdl.EndTime) < TimeSpan.Parse(courseSchedMdl.StartTime))
+                {
+                    return BadRequest("The start and end times must be correct");
+                }
                 bool courses = await _courseScheduleRepository.DataExist(
                                 singlePredicate: x => x.CourseID == courseSchedMdl.CourseID &&
                                 x.DayOfWeek == courseSchedMdl.DayOfWeek &&(

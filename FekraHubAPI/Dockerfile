@@ -31,4 +31,7 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 COPY libs/linux/libwkhtmltox.so /app/libs/linux/libwkhtmltox.so
+
+COPY Controllers/1.png /app/Controllers/1.png
+
 ENTRYPOINT ["dotnet", "FekraHubAPI.dll"]

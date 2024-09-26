@@ -189,32 +189,41 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
           
         }
 
-
+        public class UploadFilesDTO {
+            public int courseId { get; set; }
+            public int UploadTypeId { get; set; }
+            public List<IFormFile> files    { get; set; }
+        }
         [Authorize(Policy = "ManageFile")]
         [HttpPost]
-        public async Task<IActionResult> UploadFiles([FromForm] int courseId, [FromForm] int UploadTypeId, [FromForm] List<IFormFile> files)
+        public async Task<IActionResult> UploadFiles([FromForm] UploadFilesDTO uploadFilesDTO )
         {
+         
 
             try
             {
-                var course = await _courseRepository.GetById(courseId);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                var course = await _courseRepository.GetById(uploadFilesDTO.courseId);
                 if (course == null)
                 {
-                    return NotFound("Course not found.");
+                    return BadRequest("Course not found.");
                 }
-                var Type = await _uploadTypeRepository.GetById(UploadTypeId);
+                var Type = await _uploadTypeRepository.GetById(uploadFilesDTO.UploadTypeId);
                 if (Type == null)
                 {
-                    return NotFound("Type not found.");
+                    return BadRequest("Type not found.");
                 }
 
-                if (files == null || !files.Any() )
+                if (uploadFilesDTO.files == null || !uploadFilesDTO.files.Any() )
                 {
-                    return NotFound("files not exist.");
+                    return BadRequest("files not exist.");
                 }
 
 
-                foreach (var file in files)
+                foreach (var file in uploadFilesDTO.files)
                 {
                     if (file.Length > 0)
                     {
@@ -228,7 +237,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
                         var upload = new Upload
                         {
-                            UploadTypeid = UploadTypeId
+                            UploadTypeid = uploadFilesDTO.UploadTypeId
                             ,
                             file = fileBytes,
                             FileName = file.FileName,
@@ -241,7 +250,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         await _uploadRepository.Add(upload);
                     }
                 }
-                await _emailSender.SendToParentsNewFiles(courseId);
+                await _emailSender.SendToParentsNewFiles(uploadFilesDTO.courseId);
 
                 return Ok("Files uploaded successfully.");
             }

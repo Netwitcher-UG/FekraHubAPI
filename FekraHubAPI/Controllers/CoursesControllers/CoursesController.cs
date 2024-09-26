@@ -330,7 +330,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 if (courseEntity == null)
                 {
-                    return NotFound();
+                    return BadRequest("Course not found");
                 }
                 courseEntity.Teacher.Clear();
                 courseEntity.Teacher = Teacher;
@@ -397,7 +397,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var courseEntity = await _courseRepository.DataExist(x=>x.Id == id);
                 if (!courseEntity)
                 {
-                    return NotFound();
+                    return BadRequest("Course not found");
                 }
                 var studentExist = await _studentRepository.DataExist(n => n.CourseID == id);
                 if (studentExist)
@@ -429,7 +429,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var course = await _courseRepository.GetById(courseID);
                 if (course == null)
                 {
-                    return NotFound("Course not found");
+                    return BadRequest("Course not found");
                 }
                 var students = await _studentRepository.GetRelationList(
                     where:s => studentIds.Contains(s.Id),
@@ -437,7 +437,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 if (!students.Any())
                 {
-                    return NotFound("No students found with the provided IDs");
+                    return BadRequest("No students found with the provided IDs");
                 }
 
                 foreach (var student in students)

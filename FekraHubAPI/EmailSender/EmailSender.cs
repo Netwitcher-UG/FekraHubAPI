@@ -251,27 +251,8 @@ a[x-apple-data-detectors],
           <td align=""center"" style=""padding:0;Margin:0"">
            <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-header-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px"">
              <tr class=""es-mobile-hidden"">
-              <td align=""left"" style=""padding:0;Margin:0;padding-top:20px;padding-right:20px;padding-left:20px""><!--[if mso]><table style=""width:560px"" cellpadding=""0"" cellspacing=""0""><tr><td style=""width:270px"" valign=""top""><![endif]-->
-               <table cellpadding=""0"" cellspacing=""0"" align=""left"" class=""es-left"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:left"">
-                 <tr>
-                  <td align=""left"" class=""es-m-p20b"" style=""padding:0;Margin:0;width:270px"">
-                   <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                     <tr>
-                      <td align=""left"" style=""padding:0;Margin:0""><h2 style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:78px !important;color:#333333"">{schoolName}</h2></td>
-                     </tr>
-                   </table></td>
-                 </tr>
-               </table><!--[if mso]></td><td style=""width:20px""></td><td style=""width:270px"" valign=""top""><![endif]-->
-               <table cellpadding=""0"" cellspacing=""0"" align=""right"" class=""es-right"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:right"">
-                 <tr>
-                  <td align=""left"" style=""padding:0;Margin:0;width:270px"">
-                   <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                     <tr>
-                      <td align=""right"" style=""padding:0;Margin:0;font-size:0""><img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
-                     </tr>
-                   </table></td>
-                 </tr>
-               </table><!--[if mso]></td></tr></table><![endif]--></td>
+             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
+
              </tr>
            </table></td>
          </tr>
@@ -279,21 +260,9 @@ a[x-apple-data-detectors],
        <table  cellpadding=""0"" cellspacing=""0"" class=""es-header es-desk-hidden hiddenHeader"" role=""none"" style=""display:none;overflow:hidden;width:100%;max-height:0;line-height:0;mso-hide:all;mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;background-color:transparent;background-repeat:repeat;background-position:center top"">
          <tr>
           
-              <td align=""left"" valign=""middle"" style=""padding:0;Margin:0;"">
-               <table width=""45%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                 <tr>
-                  <td valign=""middle"" align=""left"" style=""padding:0;Margin:0;padding-left:10px;"">
-<h3 style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:31px;color:#333333"">{schoolName}</h3></td>
-                 </tr>
-               </table>
-            </td>
-            <td align=""right"" valign=""middle"" style=""padding:0;Margin:0;"">
-                <table width=""45%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                 <tr>
-                  <td align=""right"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
-                 </tr>
-               </table>
-            </td>
+             
+   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
+
             
          </tr>
        </table><!--<![endif]-->
@@ -311,7 +280,11 @@ a[x-apple-data-detectors],
                   <td align=""left"" style=""padding:0;Margin:0;width:600px"">
                    <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
                      <tr>
-                      <td align=""center"" class=""es-text-4746"" style=""padding:0;Margin:0;padding-bottom:35px""><p class=""es-text-mobile-size-14"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">© 2024 <a target=""_blank"" href=""https://netwitcher.com"" style=""mso-line-height-rule:exactly;text-decoration:none;color:#333333;font-size:14px;line-height:21px"">NetWitcher</a>. Alle Rechte vorbehalten.</p></td>
+                      <td align=""center"" class=""es-text-4746"" style=""padding:0;Margin:0;padding-bottom:35px"">
+<p class=""es-text-mobile-size-14"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><table><tr><td>powered by</td><td> <img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo2"" alt=""Logo"" width=""50px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td></tr></table></p>
+
+<p class=""es-text-mobile-size-14"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">© 2024 <a target=""_blank"" href=""https://netwitcher.com"" style=""mso-line-height-rule:exactly;text-decoration:none;color:#333333;font-size:14px;line-height:21px"">NetWitcher</a>. Alle Rechte vorbehalten.</p>
+                      </td>
                      </tr>
                    </table></td>
                  </tr>

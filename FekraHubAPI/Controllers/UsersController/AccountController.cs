@@ -66,35 +66,23 @@ namespace FekraHubAPI.Controllers.UsersController
             _schoolInfoRepo = schoolInfoRepo;
             _logger = logger;
         }
-        //[AllowAnonymous]
-        //[HttpGet("testing")]
-        //public async Task<IActionResult> Testing(string email)
-        //{
-        //    using (var client = new SmtpClient())
-        //    {
-        //        var user = await _userManager.FindByEmailAsync(email);
-        //        var school = await _db.SchoolInfos.SingleOrDefaultAsync();
-        //        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        //        _ = Task.Run(async() => await _emailSender.SendConfirmationEmail(user, token, school));
 
-
-
-        //        //var message = new MimeMessage();
-        //        //message.From.Add(new MailboxAddress("SchoolName", "abog9022@gmail.com"));
-        //        //message.Subject = "Failed to use school email";
-        //        //message.Body = new TextPart("plain")
-        //        //{
-        //        //    Text = $"Failed to send email by xxx.\nNow we use alternative email."
-        //        //};
-        //        //message.Bcc.Add(new MailboxAddress("", "basel.slaby2@gmail.com"));
-        //        //message.Bcc.Add(new MailboxAddress("", email));
-        //        //await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.Auto);
-        //        //await client.AuthenticateAsync("abog9022@gmail.com", "xhuzbgwifkyajsms");
-        //        //await client.SendAsync(message);
-        //        //await client.DisconnectAsync(true);
-        //        return Ok();
-        //    }
-        //}
+        [AllowAnonymous]
+        [HttpPost("teeest")]
+        public async Task<IActionResult> test(IFormFile imagePNG)
+        {
+            string LogoBase64 = "";
+            using (var memoryStream = new MemoryStream())
+            {
+                imagePNG.CopyTo(memoryStream);
+                byte[] fileBytes = memoryStream.ToArray();
+                LogoBase64 = Convert.ToBase64String(fileBytes);
+            }
+            var OldSchoolInfo = (await _schoolInfoRepo.GetAll()).First();
+            OldSchoolInfo.LogoBase64 = LogoBase64;
+            await _schoolInfoRepo.Update(OldSchoolInfo);
+            return Ok("Success");
+        }
         [HttpGet]
         public async Task<IActionResult> GetAccount()
         {

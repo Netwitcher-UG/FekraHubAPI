@@ -7,6 +7,7 @@ using FekraHubAPI.MapModels.SchoolInfo;
 using FekraHubAPI.Repositories.Interfaces;
 using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -445,8 +446,8 @@ namespace FekraHubAPI.Controllers
 
         //}
         [AllowAnonymous]
-        [HttpGet("SchoolLogo")]
-        public async Task<IActionResult> SchoolLogo()
+        [HttpGet("SchoolLogo1")]
+        public async Task<IActionResult> SchoolLogo1()
         {
             try
             {
@@ -455,6 +456,25 @@ namespace FekraHubAPI.Controllers
                     asNoTracking:true
                     );
                 var imageBytes = Convert.FromBase64String(logoBase64 ?? "");
+                return File(imageBytes, "image/jpeg");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+        [AllowAnonymous]
+        [HttpGet("SchoolLogo2")]
+        public IActionResult SchoolLogo2()
+        {
+            try
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(),"Controllers", "1.png");
+
+                var imageBytes = System.IO.File.ReadAllBytes(filePath);
+
                 return File(imageBytes, "image/jpeg");
             }
             catch (Exception ex)

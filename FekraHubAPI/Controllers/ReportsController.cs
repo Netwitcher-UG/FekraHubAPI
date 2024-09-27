@@ -146,7 +146,7 @@ namespace FekraHubAPI.Controllers
                     );
                 if (!query.Any())
                 {
-                    return NotFound("No reports found.");
+                    return BadRequest("No reports found.");
                 }
 
                 var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
@@ -333,7 +333,7 @@ namespace FekraHubAPI.Controllers
 
                 if (!query.Any())
                 {
-                    return NotFound("No reports found.");
+                    return BadRequest("No reports found.");
                 }
                 var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
 
@@ -402,7 +402,7 @@ namespace FekraHubAPI.Controllers
                     asNoTracking:true);
                 if (!result.Any())
                 {
-                    return NotFound("No reports found.");
+                    return BadRequest("No reports found.");
                 }
 
                 return Ok(result);
@@ -458,7 +458,7 @@ namespace FekraHubAPI.Controllers
                 var student = await _studentRepo.GetById(report.Student.Id);
                 if (student == null)
                 {
-                    return NotFound("Student not found");
+                    return BadRequest("Student not found");
                 }
                 if (student.ParentID != ParentId)
                 {

@@ -800,7 +800,7 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             try
             {
-                var UserID =  _applicationUserRepository.GetUserIDFromToken(User);
+                var UserID = _applicationUserRepository.GetUserIDFromToken(User);
                 if (UserID == id)
                 {
                     return BadRequest("You can not deactivate your account");

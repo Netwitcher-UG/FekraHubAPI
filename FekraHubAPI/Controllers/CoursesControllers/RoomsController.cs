@@ -74,7 +74,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var room = await _roomRepository.GetById(id);
                 if (room == null)
                 {
-                    return NotFound();
+                    return BadRequest("Room not found");
                 }
                 return Ok(room);
             }
@@ -102,7 +102,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var roomEntity = await _roomRepository.GetById(id);
                 if (roomEntity == null)
                 {
-                    return NotFound();
+                    return BadRequest("Room not found");
                 }
 
                 _mapper.Map(room, roomEntity);
@@ -141,7 +141,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     roomEntity.Id,
                     roomEntity.Name,
-                    Location = roomEntity.Location == null  ? null : new { roomEntity.Location.Id, roomEntity.Location.Name },
+                    Location = roomEntity.Location == null  ? null : new { roomEntity.Location.Id, roomEntity.Location.Name }
                 });
             }
             catch (Exception ex)
@@ -162,7 +162,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var room = await _roomRepository.DataExist(x=> x.Id == id);
                 if (!room)
                 {
-                    return NotFound();
+                    return BadRequest("Room not found");
                 }
                 var CourseExist = await _CourseRepository.DataExist(n => n.RoomId == id);
                 if (CourseExist)

@@ -40,7 +40,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     asNoTracking:true);
                 if (locations == null)
                 {
-                    return NotFound("no locations found");
+                    return BadRequest("no locations found");
                 }
                 return Ok(locations);
             }
@@ -102,7 +102,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var location = await _locationRepository.GetById(id);
                 if (location == null)
                 {
-                    return NotFound();
+                    return BadRequest("Location not found");
                 }
                 return Ok(new { location.Id, location.Name, location.City, location.Street, location.StreetNr, location.ZipCode });
 
@@ -115,11 +115,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         }
 
-
+        //====================================================================== later
         // PUT: api/Locations/5
-        
+        [Authorize(Policy = "ManageLocations")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl , [FromForm] List<string> rooms)
+        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl , [FromForm] List<string>? rooms)
         {
             try
             {
@@ -131,19 +131,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var locationEntity = await _locationRepository.GetById(id);
                 if (locationEntity == null)
                 {
-                    return NotFound();
+                    return BadRequest("Location not found");
                 }
 
                 _mapper.Map(locationMdl, locationEntity);
                 await _locationRepository.Update(locationEntity);
-
-                await _roomRepository.DeleteRange(x => x.LocationID == id);
-                List<Room> room = new List<Room>();
-                foreach (var r in rooms)
-                {
-                    room.Add(new Room { Name = r, LocationID = locationEntity.Id });
-                }
-                await _roomRepository.ManyAdd(room);
 
 
                 return Ok(new
@@ -154,7 +146,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     locationEntity.Street,
                     locationEntity.StreetNr,
                     locationEntity.ZipCode,
-                    Room = room.Select(r => new
+                    Room = locationEntity.room.Select(r => new
                     {
                         r.Id,
                         r.Name
@@ -219,7 +211,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var location = await _locationRepository.DataExist(x=>x.Id == id);
                 if (!location)
                 {
-                    return NotFound();
+                    return BadRequest("Location not found");
                 }
                 var roomExist = await _roomRepository.DataExist(n => n.LocationID == id);
                 if (roomExist)

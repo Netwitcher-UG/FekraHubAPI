@@ -251,7 +251,7 @@ a[x-apple-data-detectors],
           <td align=""center"" style=""padding:0;Margin:0"">
            <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-header-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px"">
              <tr class=""es-mobile-hidden"">
-             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
+             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
 
              </tr>
            </table></td>
@@ -261,7 +261,7 @@ a[x-apple-data-detectors],
          <tr>
           
              
-   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
+   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
 
             
          </tr>
@@ -281,7 +281,7 @@ a[x-apple-data-detectors],
                    <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
                      <tr>
                       <td align=""center"" class=""es-text-4746"" style=""padding:0;Margin:0;padding-bottom:35px"">
-<p class=""es-text-mobile-size-14"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><table><tr><td>powered by</td><td> <img src=""https://api.fekrahub.com/api/SchoolInfo/SchoolLogo2"" alt=""Logo"" width=""50px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td></tr></table></p>
+<p class=""es-text-mobile-size-14"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><table><tr><td>powered by</td><td> <img src=""https://devapi.fekrahub.com/api/SchoolInfo/SchoolLogo2"" alt=""Logo"" width=""50px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td></tr></table></p>
 
 <p class=""es-text-mobile-size-14"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">© 2024 <a target=""_blank"" href=""https://netwitcher.com"" style=""mso-line-height-rule:exactly;text-decoration:none;color:#333333;font-size:14px;line-height:21px"">NetWitcher</a>. Alle Rechte vorbehalten.</p>
                       </td>
@@ -597,7 +597,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte Damen und Herren</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">{school.SchoolName} möchte Ihnen einige neue Informationen über Ihre Schule mitteilen ,</p>
@@ -685,7 +685,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte Damen und Herren</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">{school.SchoolName} möchte Ihnen einige neue Informationen über Ihre Schule mitteilen,</p>
@@ -758,7 +758,7 @@ a[x-apple-data-detectors],
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
                 .SingleAsync();
             var emails = await _userManager.Users
-                        .Where(u => u.EmailConfirmed == true && _context.Courses.Where(c => corsesId.Contains(c.Id))
+                        .Where(u => u.EmailConfirmed == true && u.ActiveUser == true && _context.Courses.Where(c => corsesId.Contains(c.Id))
                                                      .SelectMany(c => c.Teacher)
                                                      .Select(t => t.Id)
                                                      .Union(
@@ -789,7 +789,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte Damen und Herren</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;white-space:nowrap"">{school.SchoolName} möchte Ihnen einige neue Informationen über unseren Schüler mitteilen</p>
@@ -845,8 +845,8 @@ a[x-apple-data-detectors],
             var students = await _context.Students
             .Where(x => x.CourseID == coursId)
             .Include(x => x.User)
-            .Where(x => x.User.EmailConfirmed == true)
-            .Select(z => z.User.Email)
+            .Where(x => x.User.EmailConfirmed == true&&x.User.ActiveUser == true)
+            .Select(z =>  z.User.Email  )
             .ToListAsync();
 
             var content = @$"
@@ -865,7 +865,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte Damen und Herren</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
@@ -921,7 +921,7 @@ a[x-apple-data-detectors],
                 .SingleAsync();
 
             var Secretaries = await _userManager.Users
-                         .Where(user => user.EmailConfirmed == true && _context.UserRoles
+                         .Where(user => user.EmailConfirmed == true && user.ActiveUser == true && _context.UserRoles
                             .Where(x => x.RoleId == "2")
                             .Select(x => x.UserId).Contains(user.Id))
                          .Select(x => x.Email)
@@ -942,7 +942,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte Damen und Herren</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
@@ -993,7 +993,7 @@ a[x-apple-data-detectors],
                 .SingleAsync();
 
             var Secretaries = await _userManager.Users
-                         .Where(user => user.EmailConfirmed == true && _context.UserRoles
+                         .Where(user => user.EmailConfirmed == true && user.ActiveUser == true && _context.UserRoles
                             .Where(x => x.RoleId == "2")
                             .Select(x => x.UserId).Contains(user.Id))
                          .Select(x => x.Email)
@@ -1014,7 +1014,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte Damen und Herren</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
@@ -1065,8 +1065,8 @@ a[x-apple-data-detectors],
                 .SingleAsync();
             var parentIds = students.Select(s => s.ParentID).Distinct().ToList();
             var parents = await _userManager.Users
-                .Where(x => x.EmailConfirmed == true && parentIds.Contains(x.Id))
-                .Select(x => x.Email)
+                .Where(x => x.EmailConfirmed == true && x.ActiveUser == true && parentIds.Contains(x.Id))
+                .Select(x =>x.Email )
                 .ToListAsync();
 
 
@@ -1087,7 +1087,7 @@ a[x-apple-data-detectors],
                              <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
                             </tr>
                             <tr>
-                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte</h2></td>
+                             <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Sehr geehrte Damen und Herren</h2></td>
                             </tr>
                             <tr>
                              <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">

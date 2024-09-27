@@ -25,7 +25,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
     public class UploadController : ControllerBase
     {
 
-        
+
         private readonly IRepository<Course> _courseRepository;
         private readonly IRepository<Upload> _uploadRepository;
         private readonly IRepository<Student> _studentRepository;
@@ -51,7 +51,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
         [Authorize(Policy = "ManageFile")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search , int? studentId)
+        public async Task<ActionResult<IEnumerable<Upload>>> GetUpload(string? search, int? studentId)
         {
             try
             {
@@ -83,9 +83,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
-             
-                
+
+
+
 
         }
         [Authorize(Policy = "ManageFile")]
@@ -109,12 +109,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
-           
+
         }
 
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("GetUploadForPerant")]
-        public async Task<ActionResult<IEnumerable<Upload>>> GetUploadForPerant(string? search , [Required] int studentID)
+        public async Task<ActionResult<IEnumerable<Upload>>> GetUploadForPerant(string? search, [Required] int studentID)
         {
 
             try
@@ -138,7 +138,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                     {
                         !string.IsNullOrEmpty(search) ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Name.Contains(search))) : null,
                     }.Where(x => x != null).Cast<Expression<Func<Upload, bool>>>().ToList(),
-                    include:x=>x.Include(c=>c.Courses),
+                    include: x => x.Include(c => c.Courses),
                     selector: x => new
                     {
                         x.Id,
@@ -152,9 +152,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         x.FileName,
                         x.Date
                     },
-                    asNoTracking:true);
+                    asNoTracking: true);
 
-              
+
 
                 return Ok(result);
             }
@@ -163,7 +163,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
-          
+
         }
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("FileForPernt")]
@@ -186,35 +186,45 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
-          
+
         }
 
-
+        public class UploadFilesDTO
+        {
+            public int courseId { get; set; }
+            public int UploadTypeId { get; set; }
+            public List<IFormFile> files { get; set; }
+        }
         [Authorize(Policy = "ManageFile")]
         [HttpPost]
-        public async Task<IActionResult> UploadFiles([FromForm] int courseId, [FromForm] int UploadTypeId, [FromForm] List<IFormFile> files)
+        public async Task<IActionResult> UploadFiles([FromForm] UploadFilesDTO uploadFilesDTO)
         {
+        
 
             try
             {
-                var course = await _courseRepository.GetById(courseId);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                var course = await _courseRepository.GetById(uploadFilesDTO.courseId);
                 if (course == null)
                 {
-                    return NotFound("Course not found.");
+                    return BadRequest("Course not found.");
                 }
-                var Type = await _uploadTypeRepository.GetById(UploadTypeId);
+                var Type = await _uploadTypeRepository.GetById(uploadFilesDTO.UploadTypeId);
                 if (Type == null)
                 {
-                    return NotFound("Type not found.");
+                    return BadRequest("Type not found.");
                 }
 
-                if (files == null || !files.Any() )
+                if (uploadFilesDTO.files == null || !uploadFilesDTO.files.Any())
                 {
-                    return NotFound("files not exist.");
+                    return BadRequest("files not exist.");
                 }
 
 
-                foreach (var file in files)
+                foreach (var file in uploadFilesDTO.files)
                 {
                     if (file.Length > 0)
                     {
@@ -228,7 +238,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
                         var upload = new Upload
                         {
-                            UploadTypeid = UploadTypeId
+                            UploadTypeid = uploadFilesDTO.UploadTypeId
                             ,
                             file = fileBytes,
                             FileName = file.FileName,
@@ -241,7 +251,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                         await _uploadRepository.Add(upload);
                     }
                 }
-                await _emailSender.SendToParentsNewFiles(courseId);
+                await _emailSender.SendToParentsNewFiles(uploadFilesDTO.courseId);
 
                 return Ok("Files uploaded successfully.");
             }
@@ -254,7 +264,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         }
 
 
-    
+
 
 
 
@@ -265,7 +275,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
             try
             {
-                var upload = await _uploadRepository.DataExist(X=>X.Id == id);
+                var upload = await _uploadRepository.DataExist(X => X.Id == id);
                 if (!upload)
                 {
                     return NotFound();
@@ -281,7 +291,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "UploadController", ex.Message));
                 return BadRequest(ex.Message);
             }
-          
+
         }
 
 

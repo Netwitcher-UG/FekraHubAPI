@@ -68,6 +68,19 @@ namespace FekraHubAPI.Data
                 .WithMany(ms => ms.UserMessages)
                 .HasForeignKey(um => um.MessageSenderId);
 
+            builder.Entity<MessageSenderExternalEmail>()
+            .HasKey(me => new { me.MessageSenderId, me.ExternalEmailId });
+
+            builder.Entity<MessageSenderExternalEmail>()
+                .HasOne(me => me.MessageSender)
+                .WithMany(ms => ms.MessageSenderExternalEmails)
+                .HasForeignKey(me => me.MessageSenderId);
+
+            builder.Entity<MessageSenderExternalEmail>()
+                .HasOne(me => me.ExternalEmail)
+                .WithMany(e => e.MessageSenderExternalEmails)
+                .HasForeignKey(me => me.ExternalEmailId);
+
 
             builder.Entity<CourseAttendance>()
                .HasOne(ca => ca.Course)
@@ -152,6 +165,7 @@ namespace FekraHubAPI.Data
 
 
         }
+        public DbSet<ExternalEmails> ExternalEmails { get; set; }
         public DbSet<SchoolInfo> SchoolInfos { get; set; }
         public DbSet<AspNetPermissions> AspNetPermissions { get; set; }
         public DbSet<Course> Courses { get; set; }
@@ -184,5 +198,6 @@ namespace FekraHubAPI.Data
         public DbSet<AttendanceDate> AttendanceDates { get; set; }
         public DbSet<CourseAttendance> CoursesAttendances { get; set; }
         public DbSet<MessageSender> MessageSenders { get; set; }
+        
     }
 }

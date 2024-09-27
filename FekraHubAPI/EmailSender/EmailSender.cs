@@ -251,7 +251,7 @@ a[x-apple-data-detectors],
           <td align=""center"" style=""padding:0;Margin:0"">
            <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-header-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px"">
              <tr class=""es-mobile-hidden"">
-             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo2"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
+             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
 
              </tr>
            </table></td>
@@ -261,7 +261,7 @@ a[x-apple-data-detectors],
          <tr>
           
              
-   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo2"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
+   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
 
             
          </tr>
@@ -281,7 +281,7 @@ a[x-apple-data-detectors],
                    <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
                      <tr>
                       <td align=""center"" class=""es-text-4746"" style=""padding:0;Margin:0;padding-bottom:35px"">
-<p class=""es-text-mobile-size-14"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><table><tr><td>powered by</td><td> <img src=""https://devapi.fekrahub.com/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""50px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td></tr></table></p>
+<p class=""es-text-mobile-size-14"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><table><tr><td>powered by</td><td> <img src=""https://devapi.fekrahub.com/api/SchoolInfo/SchoolLogo2"" alt=""Logo"" width=""50px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td></tr></table></p>
 
 <p class=""es-text-mobile-size-14"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">© 2024 <a target=""_blank"" href=""https://netwitcher.com"" style=""mso-line-height-rule:exactly;text-decoration:none;color:#333333;font-size:14px;line-height:21px"">NetWitcher</a>. Alle Rechte vorbehalten.</p>
                       </td>

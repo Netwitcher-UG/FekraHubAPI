@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 {
-    [Authorize(Roles = "Admin")]
+   
     [Route("api/[controller]")]
     [ApiController]
     public class CourseScheduleController : ControllerBase

@@ -59,10 +59,10 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
                 IEnumerable<AttendanceStatus> attendanceStatus = await _attendanceStatusRepo.GetAll();
-                if (!attendanceStatus.Any())
-                {
-                    return Ok("There are no attendance status");
-                }
+                //if (!attendanceStatus.Any())
+                //{
+                //    return Ok(new List<AttendanceStatus>());
+                //}
                 return Ok(attendanceStatus);
             }
             catch (Exception ex)

@@ -800,6 +800,7 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             try
             {
+
                 var UserID =  _applicationUserRepository.GetUserIDFromToken(User);
                 if (UserID == id)
                 {
@@ -810,6 +811,23 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     return NotFound($" account id {id} not exists !");
                 }
+
+                var Tech = await _applicationUserRepository.IsTeacherIDExists(id);
+                if (Tech)
+                {
+                    var teacherCourses = await _applicationUserRepository.GetRelationList(
+                        where : x => x.Id == id ,
+                        include: x => x.Include(e => e.Course),
+                        selector : x => x
+                        );
+                    foreach (var i in teacherCourses )
+                    {
+                        i.Course = new List<Course>();
+                    }
+                    _db.ApplicationUser.RemoveRange(teacherCourses);
+                
+                }
+
                 user.ActiveUser = activate;
                 _db.ApplicationUser.Update(user);
                 await _db.SaveChangesAsync();

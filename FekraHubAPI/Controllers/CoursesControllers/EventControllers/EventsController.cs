@@ -8,6 +8,8 @@ using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using System;
 
 
 namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
@@ -16,18 +18,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
     [ApiController]
     public class EventsController : ControllerBase
     {
+        private readonly IRepository<Course> _courseRepository;
         private readonly IRepository<Event> _eventRepository;
         private readonly IRepository<CourseSchedule> _ScheduleRepository;
         private readonly ILogger<AuthorizationUsersController> _logger;
         private readonly IMapper _mapper;
         private readonly IEmailSender _emailSender;
-        public EventsController(IRepository<Event> eventRepository
+        public EventsController(IRepository<Event> eventRepository,
+            IRepository<Course> courseRepository
            , IMapper mapper,
             IRepository<CourseSchedule> ScheduleRepository,
             ILogger<AuthorizationUsersController> logger, IEmailSender emailSender)
         {
+            _courseRepository = courseRepository;
             _eventRepository = eventRepository;
             _mapper = mapper;
+            _ScheduleRepository = ScheduleRepository;
             _ScheduleRepository = ScheduleRepository;
             _logger = logger;
             _emailSender = emailSender;
@@ -40,6 +46,30 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
+                var courses = await _courseRepository.GetRelationList(
+                   manyWhere: new List<Expression<Func<Course, bool>>?>
+                {
+            courseId != null  && courseId.Any() ? (Expression<Func<Course, bool>>)(x => courseId.Contains(x.Id) ) : null,
+                  }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
+                    include: x => x.Include(c => c.CourseSchedule),
+                   selector: sa => new
+                   {
+                       id = sa.Id,
+                       name = sa.Name,
+                       startDate = sa.StartDate,
+                       endDate = sa.EndDate,
+                       CourseSchedule = sa.CourseSchedule.Select(z => new
+                       {
+                           z.Id,
+                           z.DayOfWeek,
+                           z.StartTime,
+                           z.EndTime,
+                       })
+                   }, asNoTracking: true);
+
+
+
+
 
                 var CourseWorkingDay = courseId == null || courseId.Count == 0 ? null : await _ScheduleRepository.GetRelationList(
                         where: x => courseId.Contains(x.Course.Id),
@@ -47,7 +77,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                         asNoTracking: true);
                 var eventE = await _eventRepository.GetRelationList(
                     where: courseId == null || courseId.Count == 0 ? null : x => x.CourseSchedule.Any(z => CourseWorkingDay.Contains(z.Id)),
-                    include:x=> x.Include(z=>z.EventType).Include(c=>c.CourseSchedule),
+                    include: x => x.Include(z => z.EventType).Include(c => c.CourseSchedule),
                 selector: x => new
                 {
                     x.Id,
@@ -78,7 +108,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 asNoTracking: true);
 
 
-                return Ok(eventE);
+                return Ok(new {eventE, courses});
             }
             catch (Exception ex)
             {
@@ -145,8 +175,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             {
                 var schedule = await _ScheduleRepository.GetRelationList(
                     where:n => scheduleId.Contains(n.Id),
-                    selector: x=>x,
-                    asNoTracking: true);
+                    selector: x=>x);
 
             if (!ModelState.IsValid)
             {
@@ -201,10 +230,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
+                 var serverDate = DateTime.Now;
+                if (eventMdl.StartDate < serverDate || eventMdl.EndDate < serverDate)
+                {
+                    return BadRequest("The start date or end date must be greater than the current date");
+                }
+
+
                 var schedule = await _ScheduleRepository.GetRelationList(
                     where:n => scheduleId.Contains(n.Id),
-                    selector:x=>x,
-                    asNoTracking:true);
+                    selector:x=>x);
 
                 if (!ModelState.IsValid)
                 {

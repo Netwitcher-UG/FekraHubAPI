@@ -365,7 +365,7 @@ namespace FekraHubAPI.Controllers
                 var student = await _studentRepo.GetById(studentId);
                 if (student == null)
                 {
-                    return NotFound("Student not found");
+                    return BadRequest("Student not found");
                 }
                 if (student.ParentID != ParentId)
                 {
@@ -613,20 +613,26 @@ namespace FekraHubAPI.Controllers
         {
             try
             {
-                var reports = await _reportRepo.GetRelationList(
+                if(ReportIds == null || !ReportIds.Any())
+                {
+                    return BadRequest("No reports selected");
+                }
+                var reports = await _reportRepo.GetRelationAsQueryable(
                     where:x => ReportIds.Contains(x.Id) && x.Improved == null,
+                    include:x=>x.Include(z=>z.Student),
                     selector:x=>x);
                 if (!reports.Any())
                 {
                     return BadRequest("This reports not found");
                 }
+                List<Student> students = reports.Select(x => x.Student).ToList();
                 foreach (var report in reports)
                 {
                     report.Improved = true;
                 }
                 await _reportRepo.ManyUpdate(reports);
 
-                List<Student> students = reports.Select(x => x.Student).ToList();
+                
                 await _emailSender.SendToParentsNewReportsForStudents(students);
                 return Ok(reports.Select(x => new {
                     x.Id,

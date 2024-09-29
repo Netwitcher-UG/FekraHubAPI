@@ -284,9 +284,22 @@ namespace FekraHubAPI.Controllers.Students
             {
                 string userId = _studentContractRepo.GetUserIDFromToken(User);
                 bool Teacher = await _studentContractRepo.IsTeacherIDExists(userId);
-                var course = await _courseRepo.GetById(courseId);
+                var course = await _courseRepo.GetRelationSingle(
+                    where: x => x.Id == courseId,
+                    include: x => x.Include(x=>x.Teacher ),
+                    selector:x=>x,
+                    returnType:QueryReturnType.SingleOrDefault
+                    );
                 if (course != null)
                 {
+                    if (DateTime.Now.Date < course.StartDate.Date)
+                    {
+                        return BadRequest("The course has not started yet");
+                    }
+                    else if (DateTime.Now.Date > course.EndDate.Date)
+                    {
+                        return BadRequest("The course is over");
+                    }
                     if (Teacher)
                     {
                         var teacherIds = course.Teacher.Select(z => z.Id);
@@ -304,12 +317,29 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     return NotFound("Course not found");
                 }
+                if (DateTime.Now.Date < course.StartDate.Date)
+                {
+                    return BadRequest("The course has not started yet");
+                }
+                else if (DateTime.Now.Date > course.EndDate.Date)
+                {
+                    return BadRequest("The course is over");
+                }
                 var att = await _attendanceDateRepo.GetRelationSingle(
                     where:x => x.Date.Date == DateTime.Now.Date, 
                     selector: x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id),
                     returnType:QueryReturnType.SingleOrDefault,
                     asNoTracking:true
                     ) ;
+                var workingDays = await _courseScheduleRepo.GetRelationList(
+                    where: x => x.CourseID == courseId,
+                    selector: z => z.DayOfWeek,
+                    asNoTracking: true);
+                bool isTodayIsWorkingDay = workingDays.Contains(DateTime.Now.DayOfWeek.ToString());
+                if (!isTodayIsWorkingDay)
+                {
+                    return Ok(new { IsTodayAWorkDay = isTodayIsWorkingDay, CourseAttendance = att, students = new List<Student>() { } });
+                }
                 var students = await _studentRepo.GetRelationList(
                     manyWhere: new List<Expression<Func<Student, bool>>?>
                         {
@@ -349,11 +379,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 
 
-                var workingDays = await _courseScheduleRepo.GetRelationList(
-                    where:x => x.CourseID == courseId,
-                    selector: z => z.DayOfWeek,
-                    asNoTracking:true);
-                bool isTodayIsWorkingDay = workingDays.Contains(DateTime.Now.DayOfWeek.ToString());
+                
                 
                 return Ok(new { IsTodayAWorkDay = isTodayIsWorkingDay, CourseAttendance = att, students });
             }

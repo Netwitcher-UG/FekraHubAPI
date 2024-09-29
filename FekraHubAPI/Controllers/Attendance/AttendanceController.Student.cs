@@ -219,6 +219,14 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     return BadRequest("Course not found");
                 }
+                if ( DateTime.Now.Date < course.StartDate.Date)
+                {
+                    return BadRequest("The course has not started yet");
+                }else if (DateTime.Now.Date > course.EndDate.Date)
+                {
+                    return BadRequest("The course is over");
+                }
+               
                 // for teacher
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
                 bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);

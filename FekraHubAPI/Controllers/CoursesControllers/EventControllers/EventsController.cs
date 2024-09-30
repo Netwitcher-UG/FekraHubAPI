@@ -174,17 +174,34 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
                 var schedule = await _ScheduleRepository.GetRelationList(
                     where:n => scheduleId.Contains(n.Id),
                     selector: x=>x);
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            
+                var serverDate = DateTime.Now.Date;
+                if (eventMdl.StartDate.Date < serverDate || eventMdl.EndDate.Date < serverDate)
+                {
+                    return BadRequest("The start date or end date must be greater than the current date");
+                }
+                var courseIds = schedule.Select(z => z.CourseID).Distinct().ToList();
+                var courseValid = await _courseRepository.GetRelationList(
+                    where: x => courseIds.Contains(x.Id)
+                    && eventMdl.StartDate.Date >= x.StartDate.Date
+                    && eventMdl.EndDate.Date <= x.EndDate.Date,
+                    selector: x => x);
 
+                bool isValid = courseValid.Count() == courseIds.Count();
+                if (!isValid)
+                {
+                    return BadRequest("Check the start or end date of the courses");
+                }
 
-            Event? eventEntity = await _eventRepository.GetRelationSingle(
+                Event? eventEntity = await _eventRepository.GetRelationSingle(
                 where: n => n.Id == id,
                 returnType:QueryReturnType.SingleOrDefault,
                 include:x=>x.Include(e => e.CourseSchedule),
@@ -231,21 +248,37 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                 var serverDate = DateTime.Now;
-                if (eventMdl.StartDate < serverDate || eventMdl.EndDate < serverDate)
-                {
-                    return BadRequest("The start date or end date must be greater than the current date");
-                }
-
-
-                var schedule = await _ScheduleRepository.GetRelationList(
-                    where:n => scheduleId.Contains(n.Id),
-                    selector:x=>x);
-
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
+                if (eventMdl.StartDate.Date > eventMdl.EndDate.Date)
+                {
+                    return BadRequest("Invalid event date");
+                }
+                var serverDate = DateTime.Now.Date;
+                if (eventMdl.StartDate.Date < serverDate || eventMdl.EndDate.Date < serverDate)
+                {
+                    return BadRequest("The start date or end date must be greater than the current date");
+                }
+                
+
+                var schedule = await _ScheduleRepository.GetRelationList(
+                    where:n => scheduleId.Contains(n.Id),
+                    selector:x=>x);
+                var courseIds = schedule.Select(z => z.CourseID).Distinct().ToList();
+                var courseValid = await _courseRepository.GetRelationList(
+                    where: x => courseIds.Contains(x.Id)  
+                    && eventMdl.StartDate.Date >= x.StartDate.Date 
+                    && eventMdl.EndDate.Date <= x.EndDate.Date,   
+                    selector: x => x);
+
+                bool isValid = courseValid.Count() == courseIds.Count();
+                if (!isValid)
+                {
+                    return BadRequest("Check the start or end date of the courses");
+                }
+               
 
                 var eventEntity = new Event
                 {

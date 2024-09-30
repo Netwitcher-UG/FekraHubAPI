@@ -235,7 +235,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
                     if (!user.ActiveUser)
                     {
-                        return BadRequest("You must activate your account");
+                        return StatusCode(409, "Your account is not active , Contact administrator");
                     }
                     if (!user.EmailConfirmed)
                     {

@@ -19,6 +19,7 @@ namespace FekraHubAPI.Controllers.Attendance
         private readonly IRepository<TeacherAttendance> _teacherAttendanceRepo;
         private readonly IRepository<StudentAttendance> _studentAttendanceRepo;
         private readonly IRepository<Course> _coursRepo;
+        private readonly IRepository<Event> _eventRepo;
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<AttendanceStatus> _attendanceStatusRepo;
         private readonly IRepository<AttendanceDate> _attendanceDateRepo;
@@ -37,7 +38,7 @@ namespace FekraHubAPI.Controllers.Attendance
             IRepository<AttendanceDate> attendanceDateRepo,
             IRepository<CourseAttendance> courseAttendanceRepo,
             IRepository<CourseSchedule> courseScheduleRepo,
-            ILogger<AuthorizationUsersController> logger)
+            ILogger<AuthorizationUsersController> logger, IRepository<Event> eventRepo)
         {
             _teacherAttendanceRepo = teacherAttendanceRepo;
             _studentAttendanceRepo = studentAttendanceRepo;
@@ -50,6 +51,8 @@ namespace FekraHubAPI.Controllers.Attendance
             _courseAttendanceRepo = courseAttendanceRepo;
             _courseScheduleRepo = courseScheduleRepo;
             _logger = logger;
+            _eventRepo = eventRepo;
+
         }
 
         [Authorize(Policy = "ManageAttendanceStatus")]

@@ -96,7 +96,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var courseSched = await _courseScheduleRepository.GetById(id);
                 if (courseSched == null)
                 {
-                    return NotFound();
+                    return BadRequest("This Course Schedule not found");
                 }
                 return Ok(courseSched);
             }
@@ -266,7 +266,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventType = await _courseScheduleRepository.DataExist(x => x.Id == id);
                 if (!eventType)
                 {
-                    return NotFound();
+                    return BadRequest("This Course Schedule not found");
                 }
 
                 await _courseScheduleRepository.Delete(id);

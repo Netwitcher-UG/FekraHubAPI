@@ -46,26 +46,26 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         {
             try
             {
-                var courses = await _courseRepository.GetRelationList(
-                   manyWhere: new List<Expression<Func<Course, bool>>?>
-                {
-            courseId != null  && courseId.Any() ? (Expression<Func<Course, bool>>)(x => courseId.Contains(x.Id) ) : null,
-                  }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
-                    include: x => x.Include(c => c.CourseSchedule),
-                   selector: sa => new
-                   {
-                       id = sa.Id,
-                       name = sa.Name,
-                       startDate = sa.StartDate,
-                       endDate = sa.EndDate,
-                       CourseSchedule = sa.CourseSchedule.Select(z => new
-                       {
-                           z.Id,
-                           z.DayOfWeek,
-                           z.StartTime,
-                           z.EndTime,
-                       })
-                   }, asNoTracking: true);
+            //    var courses = await _courseRepository.GetRelationList(
+            //       manyWhere: new List<Expression<Func<Course, bool>>?>
+            //    {
+            //courseId != null  && courseId.Any() ? (Expression<Func<Course, bool>>)(x => courseId.Contains(x.Id) ) : null,
+            //      }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
+            //        include: x => x.Include(c => c.CourseSchedule),
+            //       selector: sa => new
+            //       {
+            //           id = sa.Id,
+            //           name = sa.Name,
+            //           startDate = sa.StartDate,
+            //           endDate = sa.EndDate,
+            //           CourseSchedule = sa.CourseSchedule.Select(z => new
+            //           {
+            //               z.Id,
+            //               z.DayOfWeek,
+            //               z.StartTime,
+            //               z.EndTime,
+            //           })
+            //       }, asNoTracking: true);
 
 
 
@@ -108,7 +108,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 asNoTracking: true);
 
 
-                return Ok(new {eventE, courses});
+                //return Ok(new {eventE, courses});
+                return Ok(eventE);
             }
             catch (Exception ex)
             {

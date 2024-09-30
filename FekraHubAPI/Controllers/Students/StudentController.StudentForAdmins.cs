@@ -23,6 +23,7 @@ namespace FekraHubAPI.Controllers.Students
         private readonly IRepository<StudentContract> _studentContractRepo;
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<Course> _courseRepo;
+        private readonly IRepository<Event> _eventRepo;
         private readonly IRepository<CourseSchedule> _courseScheduleRepo;
         private readonly IRepository<AttendanceDate> _attendanceDateRepo;
         private readonly IContractMaker _contractMaker;
@@ -33,10 +34,10 @@ namespace FekraHubAPI.Controllers.Students
         public StudentController(IRepository<StudentContract> studentContractRepo, IContractMaker contractMaker,
             IRepository<Student> studentRepo, IRepository<Course> courseRepo,
             IEmailSender emailSender, IMapper mapper,
-            UserManager<ApplicationUser> userManager, 
+            UserManager<ApplicationUser> userManager,
             IRepository<AttendanceDate> attendanceDateRepo,
             IRepository<CourseSchedule> courseScheduleRepo,
-            ILogger<StudentController> logger)
+            ILogger<StudentController> logger, IRepository<Event> eventRepo)
         {
             _studentContractRepo = studentContractRepo;
             _contractMaker = contractMaker;
@@ -48,6 +49,7 @@ namespace FekraHubAPI.Controllers.Students
             _attendanceDateRepo = attendanceDateRepo;
             _courseScheduleRepo = courseScheduleRepo;
             _logger = logger;
+            _eventRepo = eventRepo;
         }
 
         [Authorize(Policy = "GetStudentsCourse")]
@@ -57,10 +59,10 @@ namespace FekraHubAPI.Controllers.Students
             try
             {
                 var students = await _studentRepo.GetRelationSingle(
-                    where:x => x.Id == id,
-                    include:x=>x.Include(u=>u.User).Include(z=>z.Course).ThenInclude(z => z.Teacher)
-                    .Include(z => z.Course.Room).ThenInclude(z=>z.Location).Include(z=>z.Course.Upload)
-                    .Include(z=>z.Report).Include(z => z.Invoices),
+                    where: x => x.Id == id,
+                    include: x => x.Include(u => u.User).Include(z => z.Course).ThenInclude(z => z.Teacher)
+                    .Include(z => z.Course.Room).ThenInclude(z => z.Location).Include(z => z.Course.Upload)
+                    .Include(z => z.Report).Include(z => z.Invoices),
                     selector: z => new
                     {
                         z.Id,
@@ -160,8 +162,8 @@ namespace FekraHubAPI.Controllers.Students
 
 
                     },
-                    returnType:QueryReturnType.SingleOrDefault,
-                    asNoTracking:true);
+                    returnType: QueryReturnType.SingleOrDefault,
+                    asNoTracking: true);
                 if (students == null)
                 {
                     return NotFound("This student is not found");
@@ -170,7 +172,7 @@ namespace FekraHubAPI.Controllers.Students
                 var Teacher = await _studentContractRepo.IsTeacherIDExists(userId);
                 if (Teacher)
                 {
-                    if (!students.course.Teacher.Select(x=>x.Id).Contains(userId))
+                    if (!students.course.Teacher.Select(x => x.Id).Contains(userId))
                     {
                         return BadRequest("This student isn't in your course");
                     }
@@ -180,7 +182,7 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     return NotFound("This student does't have registred parents");
                 }
-               
+
                 return Ok(students);
             }
             catch (Exception ex)
@@ -188,7 +190,7 @@ namespace FekraHubAPI.Controllers.Students
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
 
         [Authorize(Policy = "GetStudentsCourse")]
@@ -221,11 +223,11 @@ namespace FekraHubAPI.Controllers.Students
                     }
                     else
                     {
-                         corsesHaveTeacher = await _courseRepo.GetRelationList(
-                            where: x => x.Teacher.Select(z => z.Id).Contains(userId),
-                            selector: z => z.Id,
-                            asNoTracking: true);
-                        
+                        corsesHaveTeacher = await _courseRepo.GetRelationList(
+                           where: x => x.Teacher.Select(z => z.Id).Contains(userId),
+                           selector: z => z.Id,
+                           asNoTracking: true);
+
                     }
                 }
                 var Allstudents = await _studentRepo.GetRelationAsQueryable(
@@ -235,8 +237,8 @@ namespace FekraHubAPI.Controllers.Students
                         courseId != null ? (Expression<Func<Student, bool>>)(x => x.CourseID == courseId) : null,
                         corsesHaveTeacher != null ? (Expression<Func<Student, bool>>)(x => corsesHaveTeacher.Contains(x.Course.Id)) : null
                     }.Where(x => x != null).Cast<Expression<Func<Student, bool>>>().ToList(),
-                include:x=>x.Include(z=>z.User).Include(z=>z.Course),
-                orderBy:x=>x.Id,
+                include: x => x.Include(z => z.User).Include(z => z.Course),
+                orderBy: x => x.Id,
                 selector: x => new
                 {
                     x.Id,
@@ -261,11 +263,11 @@ namespace FekraHubAPI.Controllers.Students
                     },
                     parent = x.User == null ? null : new { x.ParentID, x.User.FirstName, x.User.LastName, x.User.Email, x.User.City, x.User.Street, x.User.StreetNr, x.User.ZipCode }
                 },
-                asNoTracking:true
+                asNoTracking: true
                 );
 
                 var studentsAll = await _studentRepo.GetPagedDataAsync(Allstudents, paginationParameters);
-                
+
                 return Ok(new { studentsAll.TotalCount, studentsAll.PageSize, studentsAll.TotalPages, studentsAll.CurrentPage, students = studentsAll.Data });
 
             }
@@ -274,7 +276,7 @@ namespace FekraHubAPI.Controllers.Students
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet("studentForAttendance")]
@@ -286,37 +288,37 @@ namespace FekraHubAPI.Controllers.Students
                 bool Teacher = await _studentContractRepo.IsTeacherIDExists(userId);
                 var course = await _courseRepo.GetRelationSingle(
                     where: x => x.Id == courseId,
-                    include: x => x.Include(x=>x.Teacher ),
-                    selector:x=>x,
-                    returnType:QueryReturnType.SingleOrDefault
+                    include: x => x.Include(x => x.Teacher),
+                    selector: x => x,
+                    returnType: QueryReturnType.SingleOrDefault
                     );
-                if (course != null)
+                if (course == null)
                 {
-                    if (DateTime.Now.Date < course.StartDate.Date)
+                    return BadRequest("Course not found");
+                }
+                var today = DateTime.Now.Date;
+                var courseScheduleIds = await _courseScheduleRepo.GetRelationList(
+                    where: x => x.CourseID == courseId, selector: x => x.Id);
+                var eventIsExist = await _eventRepo.DataExist(x => today >= x.StartDate.Date && today <= x.EndDate.Date &&
+                x.CourseSchedule.Any(cs => courseScheduleIds.Contains(cs.Id)));
+                if (eventIsExist)
+                {
+                    return BadRequest("Today there is an event");
+                }
+                if (Teacher)
+                {
+                    var teacherIds = course.Teacher.Select(z => z.Id);
+                    if (teacherIds == null)
                     {
-                        return BadRequest("The course has not started yet");
+                        return BadRequest("This course does not have any teachers");
                     }
-                    else if (DateTime.Now.Date > course.EndDate.Date)
+                    if (!teacherIds.Contains(userId))
                     {
-                        return BadRequest("The course is over");
-                    }
-                    if (Teacher)
-                    {
-                        var teacherIds = course.Teacher.Select(z => z.Id);
-                        if (teacherIds == null)
-                        {
-                            return BadRequest("This course does not have any teachers");
-                        }
-                        if (!teacherIds.Contains(userId))
-                        {
-                            return BadRequest("You are not in this course");
-                        }
+                        return BadRequest("You are not in this course");
                     }
                 }
-                else
-                {
-                    return NotFound("Course not found");
-                }
+
+
                 if (DateTime.Now.Date < course.StartDate.Date)
                 {
                     return BadRequest("The course has not started yet");
@@ -326,11 +328,11 @@ namespace FekraHubAPI.Controllers.Students
                     return BadRequest("The course is over");
                 }
                 var att = await _attendanceDateRepo.GetRelationSingle(
-                    where:x => x.Date.Date == DateTime.Now.Date, 
+                    where: x => x.Date.Date == DateTime.Now.Date,
                     selector: x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id),
-                    returnType:QueryReturnType.SingleOrDefault,
-                    asNoTracking:true
-                    ) ;
+                    returnType: QueryReturnType.SingleOrDefault,
+                    asNoTracking: true
+                    );
                 var workingDays = await _courseScheduleRepo.GetRelationList(
                     where: x => x.CourseID == courseId,
                     selector: z => z.DayOfWeek,
@@ -346,7 +348,7 @@ namespace FekraHubAPI.Controllers.Students
                         x => x.CourseID == courseId,
                         search != null ? (Expression<Func<Student, bool>>)(x => x.FirstName.Contains(search) || x.LastName.Contains(search)) : null
                         }.Where(x => x != null).Cast<Expression<Func<Student, bool>>>().ToList(),
-                    orderBy:x=>x.Id,
+                    orderBy: x => x.Id,
                     selector: x => new
                     {
                         x.Id,
@@ -377,10 +379,10 @@ namespace FekraHubAPI.Controllers.Students
                     }
                     );
 
-                
 
-                
-                
+
+
+
                 return Ok(new { IsTodayAWorkDay = isTodayIsWorkingDay, CourseAttendance = att, students });
             }
             catch (Exception ex)
@@ -388,7 +390,7 @@ namespace FekraHubAPI.Controllers.Students
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
     }
 }

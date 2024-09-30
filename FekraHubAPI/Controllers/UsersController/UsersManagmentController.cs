@@ -149,7 +149,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
         [Authorize(Policy = "GetEmployee")]
         [HttpGet("GetEmployee")]
-        public async Task<IActionResult> GetEmployee([FromQuery]List<string>? RoleName)
+        public async Task<IActionResult> GetEmployee([FromQuery]List<string>? RoleName, bool IsActive)
         {
             try
             {
@@ -183,7 +183,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     .ToListAsync();
 
                 var users = await _db.ApplicationUser
-                    .Where(u => userIds.Contains(u.Id))
+                    .Where(u => userIds.Contains(u.Id) && u.ActiveUser == IsActive)
                     .ToListAsync();
 
                 var userRoles = await _db.UserRoles
@@ -402,7 +402,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
         [Authorize(Policy = "GetParent")]
         [HttpGet("GetPerent")]
-        public async Task<IActionResult> GetPerent()
+        public async Task<IActionResult> GetPerent(bool IsActive)
         {
             try
             {
@@ -416,7 +416,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     allUsers = await _applicationUsersServices.GetAllNonAdminUsersAsync();
                 }
 
-                allUsers = allUsers.Where(x => _userManager.IsInRoleAsync(x, "Parent").Result)
+                allUsers = allUsers.Where(x => _userManager.IsInRoleAsync(x, "Parent").Result && x.ActiveUser == IsActive)
                     .ToList();
 
                 var data = allUsers.Select(x => new
@@ -800,7 +800,8 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             try
             {
-                var UserID = _applicationUserRepository.GetUserIDFromToken(User);
+
+                var UserID =  _applicationUserRepository.GetUserIDFromToken(User);
                 if (UserID == id)
                 {
                     return BadRequest("You can not deactivate your account");
@@ -810,6 +811,23 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     return NotFound($" account id {id} not exists !");
                 }
+
+                var Tech = await _applicationUserRepository.IsTeacherIDExists(id);
+                if (Tech)
+                {
+                    var teacherCourses = await _applicationUserRepository.GetRelationList(
+                        where : x => x.Id == id ,
+                        include: x => x.Include(e => e.Course),
+                        selector : x => x
+                        );
+                    foreach (var i in teacherCourses )
+                    {
+                        i.Course = new List<Course>();
+                    }
+                    _db.ApplicationUser.RemoveRange(teacherCourses);
+                
+                }
+
                 user.ActiveUser = activate;
                 _db.ApplicationUser.Update(user);
                 await _db.SaveChangesAsync();

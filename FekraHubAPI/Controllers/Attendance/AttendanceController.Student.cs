@@ -228,15 +228,15 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     return BadRequest("Course not found");
                 }
-                if (DateTime.Now.Date < course.StartDate.Date)
+               
+                if (today < course.StartDate.Date)
                 {
                     return BadRequest("The course has not started yet");
                 }
-                else if (DateTime.Now.Date > course.EndDate.Date)
+                if (today > course.EndDate.Date)
                 {
                     return BadRequest("The course is over");
                 }
-
                 // for teacher
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
                 bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
@@ -289,14 +289,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
                 // date now if exist in database or not  (add if not)
 
-                if (today < course.StartDate.Date)
-                {
-                    return BadRequest("The course has not started yet");
-                }
-                if (today > course.EndDate.Date)
-                {
-                    return BadRequest("The course is over");
-                }
+                
                 var existingDate = await _attendanceDateRepo.GetRelationSingle(
                     where: x => x.Date.Date == today,
                     selector: x => x,
@@ -376,6 +369,12 @@ namespace FekraHubAPI.Controllers.Attendance
                 if (Student == null)
                 {
                     return BadRequest("Student not found");
+                }
+                
+                var course = await _coursRepo.DataExist(x=> x.Id == Student.CourseID && date.Date >= x.StartDate.Date && date.Date <= x.EndDate.Date);
+                if (!course)
+                {
+                    return BadRequest("This date is not in the course schedule");
                 }
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(where: x => x.CourseID == Student.CourseID, selector: x => x.Id);
                 var eventIsExist = await _eventRepo.DataExist(x => date.Date >= x.StartDate.Date && date.Date <= x.EndDate.Date &&

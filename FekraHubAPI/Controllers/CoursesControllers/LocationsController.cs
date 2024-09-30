@@ -99,12 +99,32 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                var location = await _locationRepository.GetById(id);
-                if (location == null)
+                var location = await _locationRepository.GetRelationSingle(
+                    where:x=>x.Id == id,
+                    include:x=>x.Include(z=>z.room),
+                    returnType:QueryReturnType.SingleOrDefault,
+                    selector: x => new
+                    {
+                        x.Id,
+                        x.Name,
+                        x.City,
+                        x.Street,
+                        x.ZipCode,
+                        x.StreetNr,
+                        room = x.room == null ? null : x.room.Select(z=>new
+                        {
+                            z.Id,
+                            z.Name
+                        })
+                        
+                    },
+                    asNoTracking:true
+                    );
+                if (location == null )
                 {
                     return BadRequest("Location not found");
                 }
-                return Ok(new { location.Id, location.Name, location.City, location.Street, location.StreetNr, location.ZipCode });
+                return Ok(location);
 
             }
             catch (Exception ex)
@@ -114,12 +134,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
 
         }
-
+        public class Map_RoomLocation
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+        }
+        public class LocationRoomDTO
+        {
+            public int Id { get; set; }
+            public Map_location locationMdl { get; set; }
+            public List<Map_RoomLocation> rooms { get; set; }
+        }
         //====================================================================== later
         // PUT: api/Locations/5
         [Authorize(Policy = "ManageLocations")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, [FromForm] Map_location locationMdl , [FromForm] List<string>? rooms)
+        public async Task<IActionResult> PutLocation([FromBody] LocationRoomDTO locationRoomDTO)
         {
             try
             {
@@ -128,15 +158,35 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     return BadRequest(ModelState);
                 }
 
-                var locationEntity = await _locationRepository.GetById(id);
+                var locationEntity = await _locationRepository.GetRelationSingle(
+                     where: x => x.Id == locationRoomDTO.Id,
+                    include: x => x.Include(z => z.room),
+                    returnType: QueryReturnType.SingleOrDefault,
+                    selector: x => x
+                    );
+                
                 if (locationEntity == null)
                 {
                     return BadRequest("Location not found");
                 }
 
-                _mapper.Map(locationMdl, locationEntity);
+                _mapper.Map(locationRoomDTO.locationMdl, locationEntity);
                 await _locationRepository.Update(locationEntity);
 
+                var oldRooms = await _roomRepository.GetRelationList(
+                    where: x=> locationRoomDTO.rooms.Select(z=>z.Id).Contains(x.Id),
+                    selector:x=>x
+                    );
+                foreach (var newRoom in locationRoomDTO.rooms)
+                {
+                    var oldRoom = oldRooms.FirstOrDefault(x => x.Id == newRoom.Id);
+
+                    if (oldRoom != null)
+                    {
+                        oldRoom.Name = newRoom.Name;
+                    }
+                }
+                await _roomRepository.ManyUpdate(oldRooms);
 
                 return Ok(new
                 {

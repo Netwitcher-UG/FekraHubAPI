@@ -149,7 +149,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
         [Authorize(Policy = "GetEmployee")]
         [HttpGet("GetEmployee")]
-        public async Task<IActionResult> GetEmployee([FromQuery]List<string>? RoleName, bool IsActive)
+        public async Task<IActionResult> GetEmployee([FromQuery]List<string>? RoleName, bool IsActive = true)
         {
             try
             {
@@ -402,7 +402,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
         [Authorize(Policy = "GetParent")]
         [HttpGet("GetPerent")]
-        public async Task<IActionResult> GetPerent(bool IsActive)
+        public async Task<IActionResult> GetPerent(bool IsActive = true)
         {
             try
             {

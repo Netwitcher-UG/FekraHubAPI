@@ -152,7 +152,7 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize(Policy = "MessageSender")]
         [HttpPost("UserMessages")]
-        public async Task<IActionResult> GetUserMessages([FromBody] MessagDTO messagDTO)
+        public async Task<IActionResult> GetUserMessages([FromForm] MessagDTO messagDTO)
         {
             try
             {

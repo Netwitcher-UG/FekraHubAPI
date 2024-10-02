@@ -20,7 +20,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         private readonly IRepository<CourseSchedule> _courseScheduleRepository;
         private readonly ILogger<CourseScheduleController> _logger;
         private readonly IMapper _mapper;
-        public CourseScheduleController(IRepository<CourseSchedule> courseScheduleRepository,
+        public CourseScheduleController( IRepository<CourseSchedule> courseScheduleRepository,
             IRepository<Course> courseRepository, IMapper mapper,
             ILogger<CourseScheduleController> logger)
         {
@@ -37,7 +37,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             try
             {
                 var result = await _courseScheduleRepository.GetRelationList(
-                    include: x => x.Include(z => z.Course),
+                    include:x=>x.Include(z=>z.Course),
                     selector: z => new
                     {
                         z.Id,
@@ -56,7 +56,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CourseScheduleController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
 
         private string[] Days()
@@ -73,7 +73,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             };
 
 
-            return daysOfWeek;
+            return daysOfWeek ;
         }
 
         [HttpGet("daysOfWeek")]
@@ -96,7 +96,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var courseSched = await _courseScheduleRepository.GetById(id);
                 if (courseSched == null)
                 {
-                    return NotFound();
+                    return BadRequest("This Course Schedule not found");
                 }
                 return Ok(courseSched);
             }
@@ -105,7 +105,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CourseScheduleController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
 
 
@@ -121,7 +121,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     return BadRequest(ModelState);
                 }
 
-                var course = await _courseRepository.GetById(courseSchedMdl.CourseID ?? 0);
+                var course= await _courseRepository.GetById(courseSchedMdl.CourseID ?? 0);
                 if (course == null)
                 {
                     return BadRequest("course not found");
@@ -177,7 +177,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CourseScheduleController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
         [Authorize(Policy = "ManageCourseSchedule")]
         [HttpPost]
@@ -200,11 +200,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 }
                 bool courses = await _courseScheduleRepository.DataExist(
                                 singlePredicate: x => x.CourseID == courseSchedMdl.CourseID &&
-                                x.DayOfWeek == courseSchedMdl.DayOfWeek && (
+                                x.DayOfWeek == courseSchedMdl.DayOfWeek &&(
 
                                 (TimeSpan.Parse(courseSchedMdl.StartTime) >= x.StartTime &&
                                 TimeSpan.Parse(courseSchedMdl.StartTime) <= x.EndTime) ||
-
+                                
                                 (TimeSpan.Parse(courseSchedMdl.EndTime) <= x.EndTime &&
                                 TimeSpan.Parse(courseSchedMdl.EndTime) >= x.StartTime) ||
 
@@ -219,7 +219,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     {
                         return BadRequest("This day is not correct");
                     }
-
+                    
                     var courseSchedule = new CourseSchedule
                     {
                         DayOfWeek = courseSchedMdl.DayOfWeek,
@@ -237,7 +237,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                         courseSchedule.DayOfWeek,
                         courseSchedule.StartTime,
                         courseSchedule.EndTime,
-                        Course = courseSchedule.Course == null ? null :
+                        Course = courseSchedule.Course == null ? null : 
                         new { courseSchedule.Course.Id, courseSchedule.Course.Name },
                     });
                 }
@@ -251,7 +251,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CourseScheduleController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
 
 
         }
@@ -266,7 +266,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventType = await _courseScheduleRepository.DataExist(x => x.Id == id);
                 if (!eventType)
                 {
-                    return NotFound();
+                    return BadRequest("This Course Schedule not found");
                 }
 
                 await _courseScheduleRepository.Delete(id);
@@ -278,7 +278,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CourseScheduleController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
+            
         }
     }
 }

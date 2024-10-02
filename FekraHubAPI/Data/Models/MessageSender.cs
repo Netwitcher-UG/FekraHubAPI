@@ -6,6 +6,7 @@ namespace FekraHubAPI.Data.Models
     {
         [Key]
         public int Id { get; set; }
+        public string? Subject { get; set; }
         [Required]
         public string Message { get; set; }
         public DateTime Date { get; set; } = DateTime.Now;

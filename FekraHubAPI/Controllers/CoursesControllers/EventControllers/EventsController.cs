@@ -294,7 +294,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     StartDate = eventMdl.StartDate,
                     EndDate = eventMdl.EndDate,
                     StartTime = startTime,
-                    EndTime = startTime,
+                    EndTime = endTime,
                     TypeID = eventMdl.TypeID,
                     CourseSchedule = schedule
 

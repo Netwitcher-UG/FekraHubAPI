@@ -102,6 +102,7 @@ namespace FekraHubAPI.Controllers
                     selector: x => new
                     {
                         x.Id,
+                        x.Subject,
                         x.Message,
                         x.Date,
                     },

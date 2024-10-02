@@ -53,6 +53,7 @@ namespace FekraHubAPI.Controllers
                 selector: x => new
                 {
                     x.Id,
+                    x.Subject,
                     x.Message,
                     x.Date,
                     User = x.UserMessages.Select(z => new
@@ -116,6 +117,7 @@ namespace FekraHubAPI.Controllers
                     selector: x => new
                     {
                         x.Id,
+                        x.Subject,
                         x.Message,
                         x.Date,
                     },
@@ -328,6 +330,7 @@ namespace FekraHubAPI.Controllers
                 }
                 var messageSender = new MessageSender
                 {
+                    Subject = messagDTO.Subject,
                     Message = messagDTO.Message,
                     UserMessages = uniqueUsers.Select(user => new UserMessage
                     {

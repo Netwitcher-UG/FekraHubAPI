@@ -211,14 +211,19 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
             {
                 return NotFound();
             }
-            eventEntity.CourseSchedule.Clear();
+                eventEntity.CourseSchedule.Clear();
+                eventEntity.CourseSchedule = schedule;
+
+                eventEntity.EventName = eventMdl.EventName;
+                eventEntity.Description = eventMdl.Description;
+                eventEntity.StartDate = eventMdl.StartDate;
+                eventEntity.EndDate = eventMdl.EndDate;
+                eventEntity.StartTime = new TimeSpan(eventMdl.StartDate.Hour, eventMdl.StartDate.Minute, 0);
+                eventEntity.EndTime = new TimeSpan(eventMdl.EndDate.Hour, eventMdl.EndDate.Minute, 0);
+                eventEntity.TypeID = eventMdl.TypeID;
 
 
-            eventEntity.CourseSchedule = schedule;
-
-
-            _mapper.Map(eventMdl, eventEntity);
-            await _eventRepository.Update(eventEntity);
+                await _eventRepository.Update(eventEntity);
 
 
                 return Ok(new
@@ -278,16 +283,18 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     return BadRequest("Check the start or end date of the courses");
                 }
-               
 
+
+                var startTime = new TimeSpan(eventMdl.StartDate.Hour, eventMdl.StartDate.Minute, 0);
+                var endTime = new TimeSpan(eventMdl.EndDate.Hour, eventMdl.EndDate.Minute, 0);
                 var eventEntity = new Event
                 {
                     EventName = eventMdl.EventName,
                     Description = eventMdl.Description,
                     StartDate = eventMdl.StartDate,
                     EndDate = eventMdl.EndDate,
-                    StartTime = eventMdl.StartDate.TimeOfDay,
-                    EndTime = eventMdl.EndDate.TimeOfDay,
+                    StartTime = startTime,
+                    EndTime = startTime,
                     TypeID = eventMdl.TypeID,
                     CourseSchedule = schedule
 

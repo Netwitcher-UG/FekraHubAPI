@@ -43,11 +43,11 @@ namespace FekraHubAPI.Controllers
 
         [Authorize(Policy = "MessageSender")]
         [HttpGet]
-        public async Task<IActionResult> GetMessages([FromQuery] PaginationParameters paginationParameters)
+        public async Task<IActionResult> GetMessages()
         {
             try
             {
-                var Allmessages = await _messageSenderRepo.GetRelationAsQueryable(
+                var Messages = await _messageSenderRepo.GetRelationAsQueryable(
                 include: x => x.Include(z => z.UserMessages).ThenInclude(z => z.User)
                 .Include(z => z.MessageSenderExternalEmails).ThenInclude(z => z.ExternalEmail),
                 selector: x => new
@@ -73,8 +73,8 @@ namespace FekraHubAPI.Controllers
                 },
                 asNoTracking: true
                 );
-                var messages = await _messageSenderRepo.GetPagedDataAsync(Allmessages, paginationParameters);
-                return Ok(new { messages.TotalCount, messages.PageSize, messages.TotalPages, messages.CurrentPage, Messages = messages.Data });
+                
+                return Ok( Messages);
             }
             catch (Exception ex)
             {

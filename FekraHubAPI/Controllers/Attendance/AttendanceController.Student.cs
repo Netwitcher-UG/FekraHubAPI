@@ -54,7 +54,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 else
                 {
-                    return NotFound("No attendance records found.");
+                    return BadRequest("No attendance records found.");
                 }
             }
             catch (Exception ex)
@@ -115,7 +115,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 else
                 {
-                    return NotFound("No attendance records found.");
+                    return BadRequest("No attendance records found.");
                 }
             }
             catch (Exception ex)
@@ -189,7 +189,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 else
                 {
-                    return NotFound("No attendance records found.");
+                    return BadRequest("No attendance records found.");
                 }
             }
             catch (Exception ex)
@@ -261,7 +261,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
                 if (!workingDays.Any())
                 {
-                    return NotFound("Course working days are not recorded in the school system");
+                    return BadRequest("Course working days are not recorded in the school system");
                 }
                 if (!workingDays.Contains(DateTime.Now.DayOfWeek.ToString().ToLower()))
                 {
@@ -459,7 +459,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     returnType: QueryReturnType.SingleOrDefault);
                 if (studentAttendance == null)
                 {
-                    return NotFound("Student Attendance not found.");
+                    return BadRequest("Student Attendance not found.");
                 }
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
                 bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
@@ -509,7 +509,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking: true);
                 if (studentAttendance == null)
                 {
-                    return NotFound("Student Attendance not found.");
+                    return BadRequest("Student Attendance not found.");
                 }
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
                 bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);

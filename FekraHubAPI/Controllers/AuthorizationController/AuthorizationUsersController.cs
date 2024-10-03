@@ -113,7 +113,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
                 var role = await _roleManager.FindByNameAsync(RoleName);
                 if (role == null)
                 {
-                    return NotFound("Role not found.");
+                    return BadRequest("Role not found.");
                 }
                 var validPermissions = PermissionsName.Where(x => PermissionsEnum.CheckPermissionExist(x)).ToList();
                 if (validPermissions.Count() != PermissionsName.Count())

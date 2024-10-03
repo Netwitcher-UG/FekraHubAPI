@@ -157,7 +157,7 @@ namespace FekraHubAPI.Controllers
                 var userId = _invoiceRepository.GetUserIDFromToken(User);
                 if (userId != student.ParentID)
                 {
-                    return NotFound("This is not your child's information.");
+                    return BadRequest("This is not your child's information.");
                 }
                 var result = await _invoiceRepository.GetRelationList(
                 where: x => x.Studentid == studentId,
@@ -179,7 +179,7 @@ namespace FekraHubAPI.Controllers
                 );
                 if (!result.Any())
                 {
-                    return NotFound("No invoices found");
+                    return BadRequest("No invoices found");
                 }
                
 
@@ -230,7 +230,7 @@ namespace FekraHubAPI.Controllers
                 var student = await _studentRepository.GetById(studentId);
                 if (student == null)
                 {
-                    return NotFound("student not found.");
+                    return BadRequest("student not found.");
                 }
 
                 if (invoiceFile.Length > 0)
@@ -254,7 +254,7 @@ namespace FekraHubAPI.Controllers
                     await _invoiceRepository.Add(upload);
                 }
 
-                return Ok("invoice File uploaded successfully.");
+                return Ok("invoice File added successfully.");
 
             }
             catch (Exception ex)
@@ -273,7 +273,7 @@ namespace FekraHubAPI.Controllers
                 var student = await _studentRepository.DataExist(x=>x.Id == studentId);
                 if (!student)
                 {
-                    return NotFound("student not found.");
+                    return BadRequest("student not found.");
                 }
 
                 var invoiceEntity = await _invoiceRepository.GetById(invoiceId);
@@ -296,7 +296,7 @@ namespace FekraHubAPI.Controllers
                     await _invoiceRepository.Update(invoiceEntity);
                 }
 
-                return Ok("invoice File edited successfully.");
+                return Ok("invoice File uploaded  successfully.");
             }
             catch (Exception ex)
             {

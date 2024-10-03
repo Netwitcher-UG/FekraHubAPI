@@ -58,7 +58,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 
                 if (courses == null)
                 {
-                    return NotFound("no course found");
+                    return BadRequest("No course found");
                 }
                 return Ok(courses);
             }
@@ -173,7 +173,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 if (courses == null)
                 {
-                    return NotFound();
+                    return BadRequest("Course not found");
                 }
                 return Ok(courses);
             }

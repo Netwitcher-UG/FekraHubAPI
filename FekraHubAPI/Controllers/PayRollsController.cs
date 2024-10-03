@@ -39,7 +39,7 @@ namespace FekraHubAPI.Controllers
 
                 if (user == null)
                 {
-                    return NotFound("User not found.");
+                    return BadRequest("User not found.");
                 }
                 var payrollsExists = await _payRollRepository.DataExist(x=> x.UserID == UserID && x.Timestamp.Month == DateTime.Now.Month);
                 if (payrollsExists)
@@ -92,7 +92,7 @@ namespace FekraHubAPI.Controllers
                 var PayRollEntity = await _payRollRepository.DataExist(x=>x.Id == id);
                 if (!PayRollEntity)
                 {
-                    return NotFound();
+                    return BadRequest("File not found");
                 }
 
                 await _payRollRepository.Delete(id);

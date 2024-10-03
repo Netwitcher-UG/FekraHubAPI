@@ -90,7 +90,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var user = await _db.ApplicationUser.FindAsync(UserId);
             if (user == null)
             {
-                return NotFound($"user not exists!");
+                return BadRequest($"user not found!");
             }
             return Ok(user);
         }

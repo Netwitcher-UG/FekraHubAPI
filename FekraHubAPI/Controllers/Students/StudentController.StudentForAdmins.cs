@@ -180,7 +180,7 @@ namespace FekraHubAPI.Controllers.Students
                 var parent = await _userManager.Users.AnyAsync(x => x.Id == students.Parent.Id);
                 if (!parent)
                 {
-                    return NotFound("This student does't have registred parents");
+                    return BadRequest("This student does't have registred parents");
                 }
 
                 return Ok(students);
@@ -217,7 +217,7 @@ namespace FekraHubAPI.Controllers.Students
                         }
                         else
                         {
-                            return NotFound("Course not found");
+                            return BadRequest("Course not found");
                         }
 
                     }

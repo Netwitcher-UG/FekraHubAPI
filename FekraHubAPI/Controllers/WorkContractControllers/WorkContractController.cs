@@ -138,7 +138,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 var WorkContractEntity = await _workContractRepository.GetById(id);
                 if (WorkContractEntity == null)
                 {
-                    return NotFound();
+                    return BadRequest("WorkContract not found");
                 }
                 await _workContractRepository.Delete(id);
                 return Ok();

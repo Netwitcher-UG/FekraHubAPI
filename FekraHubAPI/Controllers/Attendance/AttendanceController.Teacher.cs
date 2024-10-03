@@ -45,7 +45,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 else
                 {
-                    return NotFound("No attendance records found.");
+                    return BadRequest("No attendance records found.");
                 }
             }
             catch (Exception ex)
@@ -140,7 +140,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 else
                 {
-                    return NotFound("No attendance records found.");
+                    return BadRequest("No attendance records found.");
                 }
             }
             catch (Exception ex)
@@ -188,7 +188,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     selector: x => x.DayOfWeek.ToLower());
                 if (!workingDays.Any())
                 {
-                    return NotFound("Course working days are not recorded in the school system");
+                    return BadRequest("Course working days are not recorded in the school system");
                 }
                 if (!workingDays.Contains(teacherAttendance.Date.DayOfWeek.ToString().ToLower()))
                 {
@@ -237,7 +237,7 @@ namespace FekraHubAPI.Controllers.Attendance
                
                 if (teacherAttendance == null)
                 {
-                    return NotFound("Teacher Attendance not found.");
+                    return BadRequest("Teacher Attendance not found.");
                 }
                 teacherAttendance.StatusID = statusId;
                 await _teacherAttendanceRepo.Update(teacherAttendance);
@@ -266,7 +266,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 var TeacherAtt = await _teacherAttendanceRepo.GetById(id);
                 if (TeacherAtt == null)
                 {
-                    return NotFound("Teacher Attendance not found.");
+                    return BadRequest("Teacher Attendance not found.");
                 }
                 await _teacherAttendanceRepo.Delete(id);
                 return Ok("Delete success");

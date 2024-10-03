@@ -128,7 +128,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var userId = _uploadRepository.GetUserIDFromToken(User);
                 if (userId != student.ParentID)
                 {
-                    return NotFound("This is not your child's information.");
+                    return BadRequest("This is not your child's information.");
                 }
 
                 var courseID = student.CourseID;
@@ -277,7 +277,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var upload = await _uploadRepository.DataExist(X=>X.Id == id);
                 if (!upload)
                 {
-                    return NotFound();
+                    return BadRequest("File not found");
                 }
 
 

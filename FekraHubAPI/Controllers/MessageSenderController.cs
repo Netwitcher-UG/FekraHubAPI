@@ -218,7 +218,7 @@ namespace FekraHubAPI.Controllers
                     var role = await _roleManager.FindByNameAsync(messagDTO.Role);
                     if (role == null)
                     {
-                        return NotFound(new { Message = "Role not found" });
+                        return BadRequest("Role not found");
                     }
 
                     var usersInRole = (await _userManager.GetUsersInRoleAsync(messagDTO.Role)).ToList();

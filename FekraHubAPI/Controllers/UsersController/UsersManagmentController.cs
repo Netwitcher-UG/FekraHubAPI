@@ -465,14 +465,14 @@ namespace FekraHubAPI.Controllers.UsersController
                 var user = await _userManager.FindByIdAsync(id);
                 if (user == null)
                 {
-                    return NotFound($"user not exists!");
+                    return BadRequest($"user not found!");
                 }
 
                 var isAdmin = await _userManager.IsInRoleAsync(user, DefaultRole.Admin);
 
                 if (userRole != DefaultRole.Admin && isAdmin)
                 {
-                    return BadRequest("Cant Access This User");
+                    return BadRequest("Can't Access This User");
                 }
                 var data = new
                 {
@@ -638,7 +638,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var account = await _db.ApplicationUser.FindAsync(id);
                 if (account == null)
                 {
-                    return NotFound($" account id {id} not exists !");
+                    return BadRequest($" account id {id} not exists !");
                 }
 
                 var currentRoles = await _userManager.GetRolesAsync(account);
@@ -746,7 +746,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var account = await _db.ApplicationUser.FindAsync(id);
                 if (account == null)
                 {
-                    return NotFound($" account id {id} not exists !");
+                    return BadRequest($" account id {id} not exists !");
                 }
 
                 if (accountUpdate.ImageUser != null && accountUpdate.ImageUser.Length != 0)
@@ -809,7 +809,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var user = await _db.ApplicationUser.FindAsync(id);
                 if (user == null)
                 {
-                    return NotFound($" account id {id} not exists !");
+                    return BadRequest($" account id {id} not exists !");
                 }
 
                 var Tech = await _applicationUserRepository.IsTeacherIDExists(id);
@@ -896,7 +896,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     .AsNoTracking().Select(x => x.RoleId).SingleOrDefaultAsync();
                 if (userRole == null)
                 {
-                    return BadRequest("Role not exist");
+                    return BadRequest("Role not found");
                 }
                 var role = await _db.Roles.Where(x=>x.Id == userRole).AsNoTracking().Select(x=>x.Name).SingleOrDefaultAsync();
                 if (userRole == "4")

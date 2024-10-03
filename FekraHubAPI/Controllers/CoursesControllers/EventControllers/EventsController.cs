@@ -340,7 +340,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventType = await _eventRepository.DataExist(x=>x.Id == id);
                 if (!eventType)
                 {
-                    return NotFound();
+                    return BadRequest("Event not found");
                 }
 
                 await _eventRepository.Delete(id);

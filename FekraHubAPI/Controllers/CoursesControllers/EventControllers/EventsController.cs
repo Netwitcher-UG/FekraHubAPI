@@ -278,8 +278,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     return BadRequest("Check the start or end date of the courses");
                 }
-               
 
+                var startTime = new TimeSpan(eventMdl.StartDate.Hour, eventMdl.StartDate.Minute, 0);
+                var endTime = new TimeSpan(eventMdl.EndDate.Hour, eventMdl.EndDate.Minute, 0);
                 var eventEntity = new Event
                 {
                     EventName = eventMdl.EventName,

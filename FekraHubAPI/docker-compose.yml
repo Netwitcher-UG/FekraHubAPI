@@ -11,4 +11,4 @@ services:
       - "8081:443"
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__develpConn: "Server=db6561.public.databaseasp.net,1433; Database=db6561; User Id=db6561; Password=Dq7?y#Y4X3+x; Encrypt=False; MultipleActiveResultSets=True;"
+      ConnectionStrings__develpConn: "Server=db7844.public.databaseasp.net; Database=db7844; User Id=db7844; Password=o-4D=8BqTg2+; Encrypt=False; MultipleActiveResultSets=True;"

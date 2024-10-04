@@ -149,8 +149,8 @@ namespace FekraHubAPI.Controllers
             //public List<ExternalEmailsDTO>? ExternalEmails { get; set; }
             public List<string>? Emails { get; set; }
             public List<IFormFile>? Files { get; set; }
-            public string? Role { get; set; }
-            public int? CourseId { get; set; }
+            public List<string>? Role { get; set; }
+            public List<int>? CourseId { get; set; }
 
         }
         [Authorize(Policy = "MessageSender")]
@@ -210,49 +210,58 @@ namespace FekraHubAPI.Controllers
 
                     }
                 }
-                
-                
-                
-                if (messagDTO.Role != null)
-                {
-                    var role = await _roleManager.FindByNameAsync(messagDTO.Role);
-                    if (role == null)
-                    {
-                        return NotFound(new { Message = "Role not found" });
-                    }
 
-                    var usersInRole = (await _userManager.GetUsersInRoleAsync(messagDTO.Role)).ToList();
-                    if (usersInRole == null || !usersInRole.Any())
+
+
+                if (messagDTO.Role != null && messagDTO.Role.Any())
+                {
+                    foreach (var roleName in messagDTO.Role)
                     {
-                        return BadRequest("User not found");
-                    }
-                    else
-                    {
-                        allUsers.AddRange(usersInRole);
-                        usersInRole.ForEach(x => finaleEmails.Add(x.Email));
+                        var role = await _roleManager.FindByNameAsync(roleName);
+                        if (role == null)
+                        {
+                            return BadRequest($"Role '{roleName}' not found");
+                        }
+
+                        var usersInRole = (await _userManager.GetUsersInRoleAsync(roleName)).ToList();
+                        if (usersInRole == null || !usersInRole.Any())
+                        {
+                            return BadRequest($"No users found for role '{roleName}'");
+                        }
+                        else
+                        {
+                            allUsers.AddRange(usersInRole);
+                            usersInRole.ForEach(x => finaleEmails.Add(x.Email));
+                        }
                     }
                 }
-                if (messagDTO.CourseId != null)
+
+                if (messagDTO.CourseId != null && messagDTO.CourseId.Any())
                 {
-                    var Parents = await _studentRepo.GetRelationList(
-                        where: x => x.CourseID == messagDTO.CourseId,
-                        include: x => x.Include(z => z.User),
-                        selector: x => x.User,
-                        asNoTracking: true
+                    foreach (var courseId in messagDTO.CourseId)
+                    {
+                        var parents = await _studentRepo.GetRelationList(
+                            where: x => x.CourseID == courseId,
+                            include: x => x.Include(z => z.User),
+                            selector: x => x.User,
+                            asNoTracking: true
                         );
-                    if (Parents == null || !Parents.Any())
-                    {
-                        return BadRequest("User not found");
-                    }
-                    else
-                    {
-                        allUsers.AddRange(Parents);
-                        Parents.ForEach(x => finaleEmails.Add(x.Email));
+
+                        if (parents == null || !parents.Any())
+                        {
+                            return BadRequest($"No users found for Course ID {courseId}");
+                        }
+                        else
+                        {
+                            allUsers.AddRange(parents);
+                            parents.ForEach(x => finaleEmails.Add(x.Email));
+                        }
                     }
                 }
 
-                
-                
+
+
+
                 List<ApplicationUser> uniqueUsers = allUsers
                 .GroupBy(user => user.Email)
                 .Select(group => group.First())

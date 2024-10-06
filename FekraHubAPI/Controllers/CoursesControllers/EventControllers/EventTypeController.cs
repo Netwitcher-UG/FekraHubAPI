@@ -62,7 +62,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventType = await _eventTypeRepository.GetById(id);
                 if (eventType == null)
                 {
-                    return BadRequest("Event type not found");
+                    return BadRequest("Veranstaltungstyp nicht gefunden.");//Event type not found
                 }
                 return Ok(new { eventType.Id, eventType.TypeTitle });
             }
@@ -90,7 +90,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventTypeEntity = await _eventTypeRepository.GetById(id);
                 if (eventTypeEntity == null)
                 {
-                    return BadRequest("Event type not found");
+                    return BadRequest("Veranstaltungstyp nicht gefunden.");//Event type not found
                 }
 
                 _mapper.Map(eventTypeMdl, eventTypeEntity);
@@ -138,7 +138,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventType = await _eventTypeRepository.DataExist(x => x.Id == id);
                 if (!eventType)
                 {
-                    return BadRequest("Event type not found");
+                    return BadRequest("Veranstaltungstyp nicht gefunden.");//Event type not found
                 }
 
                 await _eventTypeRepository.Delete(id);

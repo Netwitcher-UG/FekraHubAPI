@@ -96,7 +96,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var courseSched = await _courseScheduleRepository.GetById(id);
                 if (courseSched == null)
                 {
-                    return BadRequest("This Course Schedule not found");
+                    return BadRequest("Dieser Kursplan wurde nicht gefunden.");//This Course Schedule not found
                 }
                 return Ok(courseSched);
             }
@@ -124,11 +124,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var course= await _courseRepository.GetById(courseSchedMdl.CourseID ?? 0);
                 if (course == null)
                 {
-                    return BadRequest("course not found");
+                    return BadRequest("Kurs nicht gefunden.");//course not found
                 }
                 if (TimeSpan.Parse(courseSchedMdl.EndTime) < TimeSpan.Parse(courseSchedMdl.StartTime))
                 {
-                    return BadRequest("The start and end times must be correct");
+                    return BadRequest("Die Start- und Endzeiten müssen korrekt sein.");//The start and end times must be correct
                 }
                 bool courses = await _courseScheduleRepository.DataExist(
                          singlePredicate: x => x.CourseID == courseSchedMdl.CourseID &&
@@ -145,19 +145,19 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                          );
                 if (courses)
                 {
-                    return BadRequest("This schedule is already scheduled for this course");
+                    return BadRequest("Dieser Zeitplan ist bereits für diesen Kurs geplant.");//This schedule is already scheduled for this course
                 }
 
                 var daysWeek = Days();
                 if (!daysWeek.Contains(courseSchedMdl.DayOfWeek))
                 {
-                    return BadRequest("This day is not correct");
+                    return BadRequest("Dieser Tag ist nicht korrekt.");//This day is not correct
                 }
 
                 var courseScheduleEntity = await _courseScheduleRepository.GetById(id);
                 if (courseScheduleEntity == null)
                 {
-                    return BadRequest("course Schedule not found");
+                    return BadRequest("Kursplan nicht gefunden.");//course Schedule not found
                 }
 
                 _mapper.Map(courseSchedMdl, courseScheduleEntity);
@@ -192,11 +192,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var course = await _courseRepository.GetById(courseSchedMdl.CourseID ?? 0);
                 if (course == null)
                 {
-                    return BadRequest("course not found");
+                    return BadRequest("Kurs nicht gefunden.");//course not found
                 }
                 if (TimeSpan.Parse(courseSchedMdl.EndTime) < TimeSpan.Parse(courseSchedMdl.StartTime))
                 {
-                    return BadRequest("The start and end times must be correct");
+                    return BadRequest("Die Start- und Endzeiten müssen korrekt sein.");//The start and end times must be correct
                 }
                 bool courses = await _courseScheduleRepository.DataExist(
                                 singlePredicate: x => x.CourseID == courseSchedMdl.CourseID &&
@@ -217,7 +217,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     var daysWeek = Days();
                     if (!daysWeek.Contains(courseSchedMdl.DayOfWeek))
                     {
-                        return BadRequest("This day is not correct");
+                        return BadRequest("Dieser Tag ist nicht korrekt.");//This day is not correct
                     }
                     
                     var courseSchedule = new CourseSchedule
@@ -243,7 +243,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 }
                 else
                 {
-                    return BadRequest("This schedule is already scheduled for this course");
+                    return BadRequest("Dieser Zeitplan ist bereits für diesen Kurs geplant.");//This schedule is already scheduled for this course
                 }
             }
             catch (Exception ex)
@@ -266,7 +266,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventType = await _courseScheduleRepository.DataExist(x => x.Id == id);
                 if (!eventType)
                 {
-                    return BadRequest("This Course Schedule not found");
+                    return BadRequest("Dieser Kursplan wurde nicht gefunden.");//This Course Schedule not found
                 }
 
                 await _courseScheduleRepository.Delete(id);

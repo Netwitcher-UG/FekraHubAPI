@@ -107,18 +107,18 @@ namespace FekraHubAPI.Controllers.AuthorizationController
             {
                 if (string.IsNullOrEmpty(RoleName) || PermissionsName == null || !PermissionsName.Any())
                 {
-                    return BadRequest("RoleName or PermissionsName cannot be null or empty.");
+                    return BadRequest("Rollenname oder Berechtigungsname dürfen nicht null oder leer sein.");//RoleName or PermissionsName cannot be null or empty.
                 }
 
                 var role = await _roleManager.FindByNameAsync(RoleName);
                 if (role == null)
                 {
-                    return BadRequest("Role not found.");
+                    return BadRequest("Rolle nicht gefunden.");//Role not found.
                 }
                 var validPermissions = PermissionsName.Where(x => PermissionsEnum.CheckPermissionExist(x)).ToList();
                 if (validPermissions.Count() != PermissionsName.Count())
                 {
-                    return BadRequest("One ore more permissions not valid");
+                    return BadRequest("Eine oder mehrere Berechtigungen sind ungültig.");//One ore more permissions not valid
                 }
                 var roleClaims = await _roleManager.GetClaimsAsync(role);
                 var currentPermissions = roleClaims.Select(c => c.Value).ToList();
@@ -134,7 +134,7 @@ namespace FekraHubAPI.Controllers.AuthorizationController
                     await _roleManager.AddClaimAsync(role, new Claim(permission, permission));
                 }
 
-                return Ok("Permissions updated successfully.");
+                return Ok("Berechtigungen erfolgreich aktualisiert.");//Permissions updated successfully.
             }
             catch (Exception ex)
             {

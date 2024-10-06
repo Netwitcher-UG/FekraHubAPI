@@ -26,13 +26,13 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking: true);
                 if (student == null)
                 {
-                    return BadRequest("Student not found");
+                    return BadRequest("Student nicht gefunden.");//Student not found
                 }
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
 
                 if (student.ParentID != userId)
                 {
-                    return BadRequest("This student is not your child");
+                    return BadRequest("Dieser Schüler ist nicht Ihr Kind.");//This student is not your child
                 }
                 var result = await _studentAttendanceRepo.GetRelationList(
                        where: x => x.StudentID == Id,
@@ -54,7 +54,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 else
                 {
-                    return BadRequest("No attendance records found.");
+                    return BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");//No attendance records found.
                 }
             }
             catch (Exception ex)
@@ -78,7 +78,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking: true);
                 if (student == null)
                 {
-                    return BadRequest("Student not found");
+                    return BadRequest("Student nicht gefunden.");//Student not found
                 }
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
                 bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
@@ -90,7 +90,7 @@ namespace FekraHubAPI.Controllers.Attendance
                         asNoTracking: true);
                     if (!course.Any())
                     {
-                        return BadRequest("This student is not in your course");
+                        return BadRequest("Dieser Schüler ist nicht in Ihrem Kurs.");//This student is not in your course
                     }
 
                 }
@@ -115,7 +115,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 else
                 {
-                    return BadRequest("No attendance records found.");
+                    return BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");//No attendance records found.
                 }
             }
             catch (Exception ex)
@@ -142,7 +142,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 var course = await _coursRepo.GetById(courseId);
                 if (course == null)
                 {
-                    return BadRequest($"No Course found");
+                    return BadRequest($"Kein Kurs gefunden.");//No Course found
 
                 }
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
@@ -156,7 +156,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking: true);
                     if (teacherCourse == null)
                     {
-                        return BadRequest("This is not your course");
+                        return BadRequest("Dies ist nicht Ihr Kurs.");//This is not your course
                     }
 
                 }
@@ -189,7 +189,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 else
                 {
-                    return BadRequest("No attendance records found.");
+                    return BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");//No attendance records found.
                 }
             }
             catch (Exception ex)
@@ -215,7 +215,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 x.CourseSchedule.Any(cs => courseScheduleIds.Contains(cs.Id)));
                 if (eventIsExist)
                 {
-                    return BadRequest("Today there is an event");
+                    return BadRequest("Heute gibt es eine Veranstaltung.");//Today there is an event
                 }
 
                 // course exist or not
@@ -226,16 +226,16 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking: true);
                 if (course == null)
                 {
-                    return BadRequest("Course not found");
+                    return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
                
                 if (today < course.StartDate.Date)
                 {
-                    return BadRequest("The course has not started yet");
+                    return BadRequest("Der Kurs hat noch nicht begonnen.");//The course has not started yet
                 }
                 if (today > course.EndDate.Date)
                 {
-                    return BadRequest("The course is over");
+                    return BadRequest("Der Kurs ist beendet.");//The course is over
                 }
                 // for teacher
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
@@ -249,7 +249,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking: true);
                     if (teacherCourse == null)
                     {
-                        return BadRequest("This is not your course");
+                        return BadRequest("Dies ist nicht Ihr Kurs.");//This is not your course
                     }
 
                 }
@@ -261,11 +261,11 @@ namespace FekraHubAPI.Controllers.Attendance
 
                 if (!workingDays.Any())
                 {
-                    return BadRequest("Course working days are not recorded in the school system");
+                    return BadRequest("Die Arbeitstage des Kurses sind nicht im Schulsystem verzeichnet.");//Course working days are not recorded in the school system
                 }
                 if (!workingDays.Contains(DateTime.Now.DayOfWeek.ToString().ToLower()))
                 {
-                    return BadRequest("Today was not registered as a working day for this course");
+                    return BadRequest("Heute wurde nicht als Arbeitstag für diesen Kurs registriert.");//Today was not registered as a working day for this course
                 }
                 // student ids are in this course or not
                 if (studentAttendance != null && studentAttendance.Any())
@@ -283,7 +283,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
                     if (studentsInList)
                     {
-                        return BadRequest("Some students do not belong to the course.");
+                        return BadRequest("Einige Schüler gehören nicht zu diesem Kurs.");//Some students do not belong to the course.
                     }
                 }
 
@@ -319,7 +319,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking: true);
                 if (CourseAttExist)
                 {
-                    return BadRequest("This course has an attendance today");
+                    return BadRequest("Dieser Kurs hat heute eine Anwesenheit.");//This course has an attendance today
                 }
                 // finaly add student and course attendance
                 var newAttendance = new List<StudentAttendance>();
@@ -368,45 +368,29 @@ namespace FekraHubAPI.Controllers.Attendance
                 var Student = await _studentRepo.GetById(studentId);
                 if (Student == null)
                 {
-                    return BadRequest("Student not found");
+                    return BadRequest("Student nicht gefunden.");//Student not found
                 }
                 
                 var course = await _coursRepo.DataExist(x=> x.Id == Student.CourseID && date.Date >= x.StartDate.Date && date.Date <= x.EndDate.Date);
                 if (!course)
                 {
-                    return BadRequest("This date is not in the course schedule");
+                    return BadRequest("Dieses Datum ist nicht im Kursplan enthalten.");//This date is not in the course schedule
                 }
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(where: x => x.CourseID == Student.CourseID, selector: x => x.Id);
                 var eventIsExist = await _eventRepo.DataExist(x => date.Date >= x.StartDate.Date && date.Date <= x.EndDate.Date &&
                 x.CourseSchedule.Any(cs => courseScheduleIds.Contains(cs.Id)));
                 if (eventIsExist)
                 {
-                    return BadRequest("On this date there is an event");
+                    return BadRequest("An diesem Datum gibt es eine Veranstaltung.");//On this date there is an event
                 }
                 var schedule = await _courseScheduleRepo.DataExist(
                    x => x.CourseID == Student.CourseID && x.DayOfWeek.ToLower() == date.DayOfWeek.ToString().ToLower()
                     );
                 if (!schedule)
                 {
-                    return BadRequest("This date is not a working day for this student");
+                    return BadRequest("Dieses Datum ist kein Arbeitstag für diesen Schüler.");//This date is not a working day for this student
                 }
 
-                //var courseAtt = await _attendanceDateRepo.GetRelationSingle(
-
-                //                    where: x => x.Date.Date == date.Date,
-                //                    selector: x => x ==null?null: x.CourseAttendance.Select(z=>z.CourseId).ToList(),
-                //                    returnType:QueryReturnType.SingleOrDefault,asNoTracking:true);
-                //if (courseAtt == null)
-                //{
-                //    return BadRequest("This date is not a working day");
-                //}
-                //else
-                //{
-                //    if (!courseAtt.Contains(Student.CourseID ?? 0))
-                //    {
-                //        return BadRequest("This date is not a working day");
-                //    }
-                //}
 
 
 
@@ -415,12 +399,12 @@ namespace FekraHubAPI.Controllers.Attendance
                     selector: x => x, asNoTracking: true)).Any();
                 if (StudentAttendanceExist)
                 {
-                    return BadRequest("This student has an attendance on this date");
+                    return BadRequest("Dieser Schüler hat an diesem Datum eine Anwesenheit.");//This student has an attendance on this date
                 }
                 bool statusExist = await _attendanceStatusRepo.GetById(statusId) == null;
                 if (statusExist)
                 {
-                    return BadRequest("Status not found");
+                    return BadRequest("Status nicht gefunden.");//Status not found
                 }
                 var newAtt = new StudentAttendance
                 {
@@ -459,7 +443,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     returnType: QueryReturnType.SingleOrDefault);
                 if (studentAttendance == null)
                 {
-                    return BadRequest("Student Attendance not found.");
+                    return BadRequest("Schüleranwesenheit nicht gefunden.");//Student Attendance not found.
                 }
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
                 bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
@@ -473,7 +457,7 @@ namespace FekraHubAPI.Controllers.Attendance
                         asNoTracking: true);
                     if (!teacherIds)
                     {
-                        return BadRequest("This attendance is not for your student attendance");
+                        return BadRequest("Diese Anwesenheit gehört nicht zu Ihrer Schüleranwesenheit.");//This attendance is not for your student attendance
                     }
 
                 }
@@ -509,7 +493,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking: true);
                 if (studentAttendance == null)
                 {
-                    return BadRequest("Student Attendance not found.");
+                    return BadRequest("Schüleranwesenheit nicht gefunden.");//Student Attendance not found.
                 }
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
                 bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
@@ -524,13 +508,13 @@ namespace FekraHubAPI.Controllers.Attendance
                         );
                     if (!teacherIds)
                     {
-                        return BadRequest("This attendance is not for your student attendance");
+                        return BadRequest("Diese Anwesenheit gehört nicht zu Ihrer Schüleranwesenheit.");//This attendance is not for your student attendance
                     }
 
                 }
 
                 await _studentAttendanceRepo.Delete(id);
-                return Ok("Delete success");
+                return Ok("Erfolgreich gelöscht");//Delete success
             }
             catch (Exception ex)
             {

@@ -58,7 +58,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 
                 if (courses == null)
                 {
-                    return BadRequest("No course found");
+                    return BadRequest("Kein Kurs gefunden.");//No course found
                 }
                 return Ok(courses);
             }
@@ -173,7 +173,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 if (courses == null)
                 {
-                    return BadRequest("Course not found");
+                    return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
                 return Ok(courses);
             }
@@ -215,8 +215,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                             asNoTracking:true);
                         if (room == null)
                         {
-                            return BadRequest("The RoomId does not exist");
-                        }
+                            return BadRequest("Raum nicht gefunden");//Room not found
+                }
                         
                         var courseEntity = new Course
                         {
@@ -320,7 +320,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                                     
                 if (room == null)
                 {
-                    return BadRequest("The RoomId does not exist");
+                    return BadRequest("Raum nicht gefunden");//Room not found
                 }
                 var courseEntity = await _courseRepository.GetRelationSingle(
                     where: n => n.Id == id,
@@ -330,7 +330,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 if (courseEntity == null)
                 {
-                    return BadRequest("Course not found");
+                    return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
                 courseEntity.Teacher.Clear();
                 courseEntity.Teacher = Teacher;
@@ -397,16 +397,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var courseEntity = await _courseRepository.DataExist(x=>x.Id == id);
                 if (!courseEntity)
                 {
-                    return BadRequest("Course not found");
+                    return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
                 var studentExist = await _studentRepository.DataExist(n => n.CourseID == id);
                 if (studentExist)
                 {
-                    return BadRequest("This course contains students !!");
+                    return BadRequest("Dieser Kurs enthält Schüler!!");//This course contains students !!
                 }
                 await _courseScheduleRepository.DeleteRange(n => n.CourseID == id);
                 await _courseRepository.Delete(id);
-                return Ok("Delete success");
+                return Ok("Erfolgreich gelöscht");//Deleted success
             }
             catch (Exception ex)
             {
@@ -423,13 +423,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 if (courseID <= 0 || studentIds == null || !studentIds.Any())
                 {
-                    return BadRequest("Invalid course ID or student list");
+                    return BadRequest("Ungültige Kurs-ID oder Schülerliste.");//Invalid course ID or student list
                 }
 
                 var course = await _courseRepository.GetById(courseID);
                 if (course == null)
                 {
-                    return BadRequest("Course not found");
+                    return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
                 var students = await _studentRepository.GetRelationList(
                     where:s => studentIds.Contains(s.Id),
@@ -437,7 +437,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 if (!students.Any())
                 {
-                    return BadRequest("No students found with the provided IDs");
+                    return BadRequest("Keine Schüler mit den angegebenen IDs gefunden.");//No students found with the provided IDs
                 }
 
                 foreach (var student in students)

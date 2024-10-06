@@ -83,7 +83,7 @@ namespace FekraHubAPI.Controllers
                 var student = await _studentRepository.DataExist(x=> x.Id == studentId);
                 if (!student)
                 {
-                    return BadRequest("Student not found");
+                    return BadRequest("Schüler nicht gefunden.");//Student not found
                 }
                
                 var result = await _invoiceRepository.GetRelationList(
@@ -128,7 +128,7 @@ namespace FekraHubAPI.Controllers
                     asNoTracking:true);
                 if (query == null)
                 {
-                    return BadRequest("file not found");
+                    return BadRequest("Datei nicht gefunden.");//file not found
                 }
 
 
@@ -152,12 +152,12 @@ namespace FekraHubAPI.Controllers
                 var student = await _studentRepository.GetById(studentId);
                 if (student == null)
                 {
-                    return BadRequest("Student not found");
+                    return BadRequest("Schüler nicht gefunden.");//Student not found
                 }
                 var userId = _invoiceRepository.GetUserIDFromToken(User);
                 if (userId != student.ParentID)
                 {
-                    return BadRequest("This is not your child's information.");
+                    return BadRequest("Dies sind nicht die Informationen Ihres Kindes.");//This is not your child's information.
                 }
                 var result = await _invoiceRepository.GetRelationList(
                 where: x => x.Studentid == studentId,
@@ -179,7 +179,7 @@ namespace FekraHubAPI.Controllers
                 );
                 if (!result.Any())
                 {
-                    return BadRequest("No invoices found");
+                    return BadRequest("Keine Rechnungen gefunden.");//No invoices found
                 }
                
 
@@ -207,7 +207,7 @@ namespace FekraHubAPI.Controllers
                     asNoTracking:true);
                 if (query == null)
                 {
-                    return BadRequest("file not found");
+                    return BadRequest("Datei nicht gefunden.");//file not found
                 }
 
                 var result = Convert.ToBase64String(query.file);
@@ -230,7 +230,7 @@ namespace FekraHubAPI.Controllers
                 var student = await _studentRepository.GetById(studentId);
                 if (student == null)
                 {
-                    return BadRequest("student not found.");
+                    return BadRequest("Schüler nicht gefunden.");//student not found.
                 }
 
                 if (invoiceFile.Length > 0)
@@ -254,7 +254,7 @@ namespace FekraHubAPI.Controllers
                     await _invoiceRepository.Add(upload);
                 }
 
-                return Ok("invoice File added successfully.");
+                return Ok("Rechnungsdatei erfolgreich hochgeladen.");//invoice File added successfully.
 
             }
             catch (Exception ex)
@@ -273,7 +273,7 @@ namespace FekraHubAPI.Controllers
                 var student = await _studentRepository.DataExist(x=>x.Id == studentId);
                 if (!student)
                 {
-                    return BadRequest("student not found.");
+                    return BadRequest("Schüler nicht gefunden.");//student not found.
                 }
 
                 var invoiceEntity = await _invoiceRepository.GetById(invoiceId);
@@ -296,7 +296,7 @@ namespace FekraHubAPI.Controllers
                     await _invoiceRepository.Update(invoiceEntity);
                 }
 
-                return Ok("invoice File uploaded  successfully.");
+                return Ok("Rechnungsdatei erfolgreich hochgeladen.");//invoice File uploaded  successfully.
             }
             catch (Exception ex)
             {
@@ -314,13 +314,13 @@ namespace FekraHubAPI.Controllers
                 var invoice = await _invoiceRepository.DataExist(x=> x.Id == id);
                 if (!invoice)
                 {
-                    return NotFound();
+                    return BadRequest("Datei nicht gefunden.");//File not found
                 }
 
                 
                 await _invoiceRepository.Delete(id);
 
-                return Ok("Delete success");
+                return Ok("Erfolgreich gelöscht");//Delete success
             }
             catch (Exception ex)
             {

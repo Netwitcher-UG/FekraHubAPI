@@ -98,7 +98,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var query = await _uploadRepository.GetById(Id);
                 if (query == null)
                 {
-                    return BadRequest("file not found");
+                    return BadRequest("Datei nicht gefunden.");//file not found
                 }
                 var result = Convert.ToBase64String(query.file);
 
@@ -122,13 +122,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var student = await _studentRepository.GetById(studentID);
                 if (student == null)
                 {
-                    return BadRequest("Student not found");
+                    return BadRequest("Schüler nicht gefunden.");//Student not found
                 }
 
                 var userId = _uploadRepository.GetUserIDFromToken(User);
                 if (userId != student.ParentID)
                 {
-                    return BadRequest("This is not your child's information.");
+                    return BadRequest("Dies sind nicht die Informationen Ihres Kindes.");//This is not your child's information.
                 }
 
                 var courseID = student.CourseID;
@@ -175,7 +175,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var query = await _uploadRepository.GetById(Id);
                 if (query == null)
                 {
-                    return BadRequest("file not found");
+                    return BadRequest("Datei nicht gefunden.");//file not found
                 }
                 var result = Convert.ToBase64String(query.file);
 
@@ -209,17 +209,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var course = await _courseRepository.GetById(uploadFilesDTO.courseId);
                 if (course == null)
                 {
-                    return BadRequest("Course not found.");
+                    return BadRequest("Kurs nicht gefunden.");//Course not found.
                 }
                 var Type = await _uploadTypeRepository.GetById(uploadFilesDTO.UploadTypeId);
                 if (Type == null)
                 {
-                    return BadRequest("Type not found.");
+                    return BadRequest("Typ nicht gefunden.");//Type not found.
                 }
 
                 if (uploadFilesDTO.files == null || !uploadFilesDTO.files.Any() )
                 {
-                    return BadRequest("files not exist.");
+                    return BadRequest("Datei nicht gefunden.");//files not found.
                 }
 
 
@@ -252,7 +252,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 }
                 await _emailSender.SendToParentsNewFiles(uploadFilesDTO.courseId);
 
-                return Ok("Files uploaded successfully.");
+                return Ok("Dateien erfolgreich hochgeladen.");//Files uploaded successfully.
             }
             catch (Exception ex)
             {
@@ -277,13 +277,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var upload = await _uploadRepository.DataExist(X=>X.Id == id);
                 if (!upload)
                 {
-                    return BadRequest("File not found");
+                    return BadRequest("Datei nicht gefunden.");//File not found
                 }
 
 
                 await _uploadRepository.Delete(id);
 
-                return Ok("Delete success");
+                return Ok("Erfolgreich gelöscht");//Deleted success
             }
             catch (Exception ex)
             {

@@ -246,7 +246,7 @@ namespace FekraHubAPI.Controllers
                 }
                 else
                 {
-                    return Ok("You cant add email sender info before adding the basic info");
+                    return Ok("Sie können keine E-Mail-Absenderinformationen hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add email sender info before adding the basic info
                 }
             }
             catch (Exception ex)
@@ -297,7 +297,7 @@ namespace FekraHubAPI.Controllers
                 }
                 else
                 {
-                    return Ok("You cant add report keys before adding the basic info");
+                    return Ok("Sie können keine Berichtsschlüssel hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add report keys before adding the basic info
 
                 }
             }
@@ -349,7 +349,7 @@ namespace FekraHubAPI.Controllers
                 }
                 else
                 {
-                    return Ok("You cant add contract and policy before adding the basic info");
+                    return Ok("Sie können keinen Vertrag und keine Richtlinie hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add contract and policy before adding the basic info
 
                 }
             }

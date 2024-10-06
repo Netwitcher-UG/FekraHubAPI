@@ -39,18 +39,18 @@ namespace FekraHubAPI.Controllers
 
                 if (user == null)
                 {
-                    return BadRequest("User not found.");
+                    return BadRequest("Benutzer nicht gefunden.");//User not found.
                 }
                 var payrollsExists = await _payRollRepository.DataExist(x=> x.UserID == UserID && x.Timestamp.Month == DateTime.Now.Month);
                 if (payrollsExists)
                 {
-                    return BadRequest("You have a payrolls in this month");
+                    return BadRequest("Sie haben diesen Monat eine Gehaltsabrechnung.");//You have a payrolls in this month
                 }
                 var isTeacher = await _payRollRepository.IsTeacherIDExists(user.Id);
                 var isSecretariat = await _payRollRepository.IsSecretariatIDExists(user.Id);
                 if (!(isTeacher || isSecretariat))
                 {
-                    return BadRequest("User Must Have Teacher Or Secrtaria Role");
+                    return BadRequest("Benutzer muss die Rolle Lehrer oder Sekretär haben.");//User Must Have Teacher Or Secrtaria Role
                 }
                 if (file.Length > 0)
                 {
@@ -92,7 +92,7 @@ namespace FekraHubAPI.Controllers
                 var PayRollEntity = await _payRollRepository.DataExist(x=>x.Id == id);
                 if (!PayRollEntity)
                 {
-                    return BadRequest("File not found");
+                    return BadRequest("Datei nicht gefunden.");//File not found
                 }
 
                 await _payRollRepository.Delete(id);

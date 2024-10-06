@@ -54,7 +54,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var uploadType = await _uploadTypeRepository.GetById(id);
                 if (uploadType == null)
                 {
-                    return BadRequest("This type not found");
+                    return BadRequest("Dieser Typ wurde nicht gefunden.");//This type not found
                 }
                 return Ok(uploadType);
             }
@@ -82,7 +82,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var uploadTypeEntity = await _uploadTypeRepository.GetById(id);
                 if (uploadTypeEntity == null)
                 {
-                    return BadRequest("This type not found");
+                    return BadRequest("Dieser Typ wurde nicht gefunden.");//This type not found
                 }
 
                 _mapper.Map(uploadTypeMdl, uploadTypeEntity);
@@ -140,12 +140,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                 var uploadType = await _uploadTypeRepository.DataExist(X=>X.Id == id);
                 if (!uploadType)
                 {
-                    return BadRequest("This type not found");
+                    return BadRequest("Dieser Typ wurde nicht gefunden.");//This type not found
                 }
 
                 await _uploadTypeRepository.Delete(id);
 
-                return Ok("Delete success");
+                return Ok("Erfolgreich gelöscht");//Deleted success
             }
             catch (Exception ex)
             {

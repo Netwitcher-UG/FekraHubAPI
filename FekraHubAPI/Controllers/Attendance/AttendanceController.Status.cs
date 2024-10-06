@@ -83,7 +83,7 @@ namespace FekraHubAPI.Controllers.Attendance
             {
                 if (status == null)
                 {
-                    return BadRequest("Please enter a status");
+                    return BadRequest("Bitte geben Sie einen Status ein.");//Please enter a status
                 }
                 var statuses = await _attendanceStatusRepo.GetRelationSingle(
                     where: s => s.Title.ToLower() == status.ToLower(),
@@ -92,7 +92,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking:true);
                 if (statuses != null)
                 {
-                    return BadRequest("This status is already exists");
+                    return BadRequest("Dieser Status existiert bereits.");//This status is already exists
                 }
                 AttendanceStatus attendanceStatus = new AttendanceStatus()
                 {
@@ -120,11 +120,11 @@ namespace FekraHubAPI.Controllers.Attendance
                 var attendanceStatus = await _attendanceStatusRepo.GetById(id);
                 if (attendanceStatus == null)
                 {
-                    return NotFound("The status with the provided ID does not exist.");
+                    return BadRequest("Der Status mit der angegebenen ID existiert nicht.");//The status with the provided ID does not exist.
                 }
                 await _attendanceStatusRepo.Delete(attendanceStatus.Id);
 
-                return Ok($"{attendanceStatus.Title} deleted successfully.");
+                return Ok($"{attendanceStatus.Title} erfolgreich gelöscht.");//deleted successfully.
             }
             catch (Exception ex)
             {

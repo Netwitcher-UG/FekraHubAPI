@@ -43,7 +43,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 if (string.IsNullOrEmpty(parentId))
                 {
-                    return Unauthorized("Parent not found.");
+                    return Unauthorized("Elternteil nicht gefunden.");//Parent not found.
                 }
 
                 var students = await _studentRepo.GetRelationList(
@@ -122,7 +122,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 if (string.IsNullOrEmpty(parentId))
                 {
-                    return Unauthorized("Parent not found.");
+                    return Unauthorized("Elternteil nicht gefunden.");//Parent not found.
                 }
 
                 var students = await _studentRepo.GetRelationSingle(
@@ -215,7 +215,7 @@ namespace FekraHubAPI.Controllers.Students
                     asNoTracking:true);
                 if (students == null)
                 {
-                    return NotFound("This student is not found");
+                    return BadRequest("Dieser Schüler wurde nicht gefunden");//This student is not found
                 }
                
 
@@ -249,9 +249,9 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     if (string.IsNullOrEmpty(userId))
                     {
-                        return Unauthorized("User not found.");
+                        return Unauthorized("Benutzer nicht gefunden.");//User not found.
                     }
-                    return BadRequest("Invalid student ID");
+                    return BadRequest("Ungültige Schüler-ID.");//Invalid student ID
                 };
                 student.Nationality = Nationality;
                 student.Street = Street;
@@ -261,7 +261,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 await _studentRepo.Update(student);
 
-                return Ok("Student Data is updated");
+                return Ok("Schülerdaten wurden aktualisiert.");//Student Data is updated
             }
             catch (Exception ex)
             {

@@ -160,9 +160,24 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     course.Room,
                     course.Location,
 
-                    Teacher = teachers.FirstOrDefault(t => t.courseId == course.id)?.Teacher,
+                    Teacher = teachers.Where(t => t.courseId == course.id)
+                      .SelectMany(t => t.Teacher?.Select(z => new
+                      {
+                          z.Id,
+                          z.FirstName,
+                          z.LastName
+                      }) ?? Enumerable.Empty<object>()) 
+                      .ToList(),
 
-                    CourseSchedule = courseSchedules.FirstOrDefault(cs => cs.courseId == course.id)?.CourseSchedule
+                    CourseSchedule = courseSchedules.Where(cs => cs.courseId == course.id)
+                                    .SelectMany(cs => cs.CourseSchedule?.Select(x => new
+                                    {
+                                        x.Id,
+                                        x.DayOfWeek,
+                                        x.StartTime,
+                                        x.EndTime
+                                    }) ?? Enumerable.Empty<object>())
+                                    .ToList()
                 });
 
                 return Ok(finalCourses);

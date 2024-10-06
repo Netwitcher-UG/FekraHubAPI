@@ -67,22 +67,22 @@ namespace FekraHubAPI.Controllers.UsersController
             _logger = logger;
         }
 
-        [AllowAnonymous]
-        [HttpPost("teeest")]
-        public async Task<IActionResult> test(IFormFile imagePNG)
-        {
-            string LogoBase64 = "";
-            using (var memoryStream = new MemoryStream())
-            {
-                imagePNG.CopyTo(memoryStream);
-                byte[] fileBytes = memoryStream.ToArray();
-                LogoBase64 = Convert.ToBase64String(fileBytes);
-            }
-            var OldSchoolInfo = (await _schoolInfoRepo.GetAll()).First();
-            OldSchoolInfo.LogoBase64 = LogoBase64;
-            await _schoolInfoRepo.Update(OldSchoolInfo);
-            return Ok("Success");
-        }
+        //[AllowAnonymous]
+        //[HttpPost("teeest")]
+        //public async Task<IActionResult> test(IFormFile imagePNG)
+        //{
+        //    string LogoBase64 = "";
+        //    using (var memoryStream = new MemoryStream())
+        //    {
+        //        imagePNG.CopyTo(memoryStream);
+        //        byte[] fileBytes = memoryStream.ToArray();
+        //        LogoBase64 = Convert.ToBase64String(fileBytes);
+        //    }
+        //    var OldSchoolInfo = (await _schoolInfoRepo.GetAll()).First();
+        //    OldSchoolInfo.LogoBase64 = LogoBase64;
+        //    await _schoolInfoRepo.Update(OldSchoolInfo);
+        //    return Ok("Erfolg");//Success
+        //}
         [HttpGet]
         public async Task<IActionResult> GetAccount()
         {
@@ -90,7 +90,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var user = await _db.ApplicationUser.FindAsync(UserId);
             if (user == null)
             {
-                return NotFound($"user not exists!");
+                return BadRequest($"Benutzer nicht gefunden.");//user not found!
             }
             return Ok(user);
         }
@@ -159,7 +159,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 return Ok();
 
             }
-            return BadRequest($"{email} is not registered !");
+            return BadRequest($"{email} ist nicht registriert!");//{email} is not registered !
         }
         
 
@@ -208,10 +208,10 @@ namespace FekraHubAPI.Controllers.UsersController
                     return Ok(ModelState);
                 }
                 return StatusCode(StatusCodes.Status200OK,
-                    new Response { Status = "Success", Message = $"Password has been changed" });
+                    new Response { Status = "Success", Message = $"Passwort wurde geändert." });//Password has been changed
             }
             return StatusCode(StatusCodes.Status400BadRequest,
-                    new Response { Status = "Error", Message = $"Could not change password , please try again." });
+                    new Response { Status = "Error", Message = $"Passwort konnte nicht geändert werden, bitte versuchen Sie es erneut." });//Could not change password , please try again.
 
         }
 
@@ -230,18 +230,18 @@ namespace FekraHubAPI.Controllers.UsersController
                     ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
                     if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
                     {
-                        return Unauthorized("Email or password is invalid");
+                        return Unauthorized("E-Mail oder Passwort ist ungültig.");//Email or password is invalid
                     }
 
                     if (!user.ActiveUser)
                     {
-                        return BadRequest( "Your account is not active , Contact administrator");
+                        return BadRequest("Ihr Konto ist nicht aktiv, bitte wenden Sie sich an den Administrator.");//Your account is not active , Contact administrator
                     }
                     if (!user.EmailConfirmed)
                     {
                         
                         await _emailSender.SendConfirmationEmail(user);
-                        return StatusCode(409, "Your account not confirmed . The confirm link has been sent to your email");
+                        return StatusCode(409, "Ihr Konto wurde nicht bestätigt. Der Bestätigungslink wurde an Ihre E-Mail gesendet.");//Your account not confirmed . The confirm link has been sent to your email
                     }
 
                     var claims = new List<Claim>
@@ -326,7 +326,7 @@ namespace FekraHubAPI.Controllers.UsersController
             var IsEmailExists = await _userManager.FindByEmailAsync(user.email);
             if (IsEmailExists != null)
             {
-                return BadRequest($"Email {user.email} is already token.");
+                return BadRequest($"{user.email} ist bereits vergeben.");//Email {user.email} is already token.
             }
 
             using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
@@ -375,7 +375,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             {
                                 
                                 await _emailSender.SendConfirmationEmail(ThisNewUser);
-                                return Ok($"Success!! . Please go to your email message box and confirm your email");
+                                return Ok($"Erfolg!! Bitte gehen Sie zu Ihrem E-Mail-Postfach und bestätigen Sie Ihre E-Mail.");//Success!! . Please go to your email message box and confirm your email
                             }
 
                            
@@ -424,12 +424,12 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             if (string.IsNullOrEmpty(ID) || string.IsNullOrEmpty(Token))
             {
-                return BadRequest("Invalid or expired link.");
+                return BadRequest("Ungültiger oder abgelaufener Link.");//Invalid or expired link.
             }
             var user = await _userManager.FindByIdAsync(ID);
             if (user == null)
             {
-                return BadRequest("User not found.");
+                return BadRequest("Benutzer nicht gefunden.");//User not found.
             }
             if(user.EmailConfirmed == true)
             {
@@ -457,7 +457,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
             if (string.IsNullOrEmpty(token))
             {
-                return Unauthorized("Token is required");
+                return Unauthorized("Token ist erforderlich.");//Token is required
             }
 
             var tokenValidationParameters = new TokenValidationParameters
@@ -478,7 +478,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var userId = principal.FindFirstValue("id");
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("Invalid token: Missing user ID");
+                    return Unauthorized("Ungültiger Token: Benutzer-ID fehlt.");//Invalid token: Missing user ID
                 }
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user != null)
@@ -490,18 +490,18 @@ namespace FekraHubAPI.Controllers.UsersController
                     }
                     else
                     {
-                        return Unauthorized("Invalid token");
+                        return Unauthorized("Ungültiger Token.");//Invalid token
                     }
                 }
                 else
                 {
-                    return Unauthorized("Invalid token");
+                    return Unauthorized("Ungültiger Token.");//Invalid token
                 }
 
             }
             catch (SecurityTokenException)
             {
-                return Unauthorized("Invalid token");
+                return Unauthorized("Ungültiger Token.");//Invalid token
             }
         }
         

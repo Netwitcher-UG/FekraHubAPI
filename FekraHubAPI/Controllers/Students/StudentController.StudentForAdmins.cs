@@ -166,7 +166,7 @@ namespace FekraHubAPI.Controllers.Students
                     asNoTracking: true);
                 if (students == null)
                 {
-                    return NotFound("This student is not found");
+                    return BadRequest("Dieser Schüler wurde nicht gefunden.");//This student is not found
                 }
                 var userId = _studentContractRepo.GetUserIDFromToken(User);
                 var Teacher = await _studentContractRepo.IsTeacherIDExists(userId);
@@ -174,13 +174,13 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     if (!students.course.Teacher.Select(x => x.Id).Contains(userId))
                     {
-                        return BadRequest("This student isn't in your course");
+                        return BadRequest("Dieser Schüler ist nicht in Ihrem Kurs.");//This student isn't in your course
                     }
                 }
                 var parent = await _userManager.Users.AnyAsync(x => x.Id == students.Parent.Id);
                 if (!parent)
                 {
-                    return NotFound("This student does't have registred parents");
+                    return BadRequest("Dieser Schüler hat keine registrierten Eltern.");//This student does't have registred parents
                 }
 
                 return Ok(students);
@@ -212,12 +212,12 @@ namespace FekraHubAPI.Controllers.Students
                             var teacherIds = course.Teacher.Select(x => x.Id);
                             if (!teacherIds.Contains(userId))
                             {
-                                return BadRequest("You are not in this course");
+                                return BadRequest("Sie sind nicht in diesem Kurs.");//You are not in this course
                             }
                         }
                         else
                         {
-                            return NotFound("Course not found");
+                            return BadRequest("Kurs nicht gefunden.");//Course not found
                         }
 
                     }
@@ -294,7 +294,7 @@ namespace FekraHubAPI.Controllers.Students
                     );
                 if (course == null)
                 {
-                    return BadRequest("Course not found");
+                    return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
                 var today = DateTime.Now.Date;
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(
@@ -303,29 +303,29 @@ namespace FekraHubAPI.Controllers.Students
                 x.CourseSchedule.Any(cs => courseScheduleIds.Contains(cs.Id)));
                 if (eventIsExist)
                 {
-                    return BadRequest("Today there is an event");
+                    return BadRequest("Heute gibt es eine Veranstaltung.");//Today there is an event
                 }
                 if (Teacher)
                 {
                     var teacherIds = course.Teacher.Select(z => z.Id);
                     if (teacherIds == null)
                     {
-                        return BadRequest("This course does not have any teachers");
+                        return BadRequest("Dieser Kurs hat keine Lehrer.");//This course does not have any teachers
                     }
                     if (!teacherIds.Contains(userId))
                     {
-                        return BadRequest("You are not in this course");
+                        return BadRequest("Sie sind nicht in diesem Kurs.");//You are not in this course
                     }
                 }
 
 
                 if (DateTime.Now.Date < course.StartDate.Date)
                 {
-                    return BadRequest("The course has not started yet");
+                    return BadRequest("Der Kurs hat noch nicht begonnen.");//The course has not started yet
                 }
                 else if (DateTime.Now.Date > course.EndDate.Date)
                 {
-                    return BadRequest("The course is over");
+                    return BadRequest("Der Kurs ist vorbei.");//The course is over
                 }
                 var att = await _attendanceDateRepo.GetRelationSingle(
                     where: x => x.Date.Date == DateTime.Now.Date,

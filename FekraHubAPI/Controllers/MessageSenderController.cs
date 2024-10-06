@@ -165,7 +165,7 @@ namespace FekraHubAPI.Controllers
                 }
                 if ((messagDTO.Emails == null || !messagDTO.Emails.Any()) && messagDTO.Role == null && messagDTO.CourseId == null )
                 {
-                    return BadRequest("There are no emails to send notifications to.");
+                    return BadRequest("Es gibt keine E-Mails, an die Benachrichtigungen gesendet werden können.");//There are no emails to send notifications to.
                 }
                 List<string> finaleEmails = new List<string>();
                 List<ApplicationUser> allUsers = new List<ApplicationUser>();
@@ -220,13 +220,13 @@ namespace FekraHubAPI.Controllers
                         var role = await _roleManager.FindByNameAsync(roleName);
                         if (role == null)
                         {
-                            return BadRequest($"Role '{roleName}' not found");
+                            return BadRequest($"Rolle '{roleName}' nicht gefunden");//Role '{roleName}' not found
                         }
 
                         var usersInRole = (await _userManager.GetUsersInRoleAsync(roleName)).ToList();
                         if (usersInRole == null || !usersInRole.Any())
                         {
-                            return BadRequest($"No users found for role '{roleName}'");
+                            return BadRequest($"Keine Benutzer für die Rolle '{roleName}' gefunden");//No users found for role '{roleName}'
                         }
                         else
                         {
@@ -249,7 +249,7 @@ namespace FekraHubAPI.Controllers
 
                         if (parents == null || !parents.Any())
                         {
-                            return BadRequest($"No users found for Course ID {courseId}");
+                            return BadRequest($"Keine Benutzer für die Kurs-ID {courseId} gefunden");//No users found for Course ID {courseId}
                         }
                         else
                         {
@@ -388,7 +388,7 @@ namespace FekraHubAPI.Controllers
                 await _messageSenderRepo.Add(messageSender);
 
 
-                return Ok("success");
+                return Ok("Erfolg");//success
             }
             catch (Exception ex)
             {
@@ -545,29 +545,6 @@ a[x-apple-data-detectors],
             </td>
          </tr>
        </table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

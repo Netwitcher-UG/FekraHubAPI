@@ -81,7 +81,7 @@ namespace FekraHubAPI.Controllers.Students
                 var query = await _studentContractRepo.GetById(contractId);
                 if (query == null)
                 {
-                    return BadRequest("file not found");
+                    return BadRequest("Datei nicht gefunden.");//file not found
                 }
                 var result = Convert.ToBase64String(query.File);
 

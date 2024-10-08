@@ -72,6 +72,77 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
           
         }
+        [Authorize]
+        [HttpGet("CourseForCalender")]
+        public async Task<IActionResult> GetCourseForCalender(int courseId, DateTime date)
+        {
+            var course = await _courseScheduleRepository.GetRelationList(
+                where: x => x.CourseID == courseId,
+                include: x => x.Include(z => z.Course),
+                selector: x => new
+                {
+                    CourseId = x.Course.Id,
+                    x.Course.Name,
+                    StartDate = x.Course.StartDate.Date,
+                    EndDate = x.Course.EndDate.Date,
+                    x.StartTime,
+                    x.EndTime,
+                    x.Id,
+                    x.DayOfWeek 
+                },
+                asNoTracking: true
+            );
+
+            if (course == null || !course.Any())
+            {
+                return BadRequest("course not found");
+            }
+
+            var courseDetails = course.FirstOrDefault();
+            if (date.Date < courseDetails.StartDate || date.Date > courseDetails.EndDate)
+            {
+                return BadRequest("The specified date is outside the course date range.");
+            }
+
+            var filteredCourseSchedules = new List<object>();
+
+            foreach (var schedule in course)
+            {
+                var startOfMonth = new DateTime(date.Year, date.Month, 1);
+
+                var daysInMonth = Enumerable.Range(0, DateTime.DaysInMonth(date.Year, date.Month))
+                                            .Select(day => startOfMonth.AddDays(day))
+                                            .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
+                                                        d >= schedule.StartDate && d <= schedule.EndDate) 
+                                            .ToList();
+
+                foreach (var day in daysInMonth)
+                {
+                    filteredCourseSchedules.Add(new
+                    {
+                        CourseId = schedule.CourseId,
+                        schedule.Name,
+                        StartDate = day.Date.Date,  
+                        EndDate = day.Date.Date,   
+                        StartTime = schedule.StartTime,
+                        EndTime = schedule.EndTime,
+                        schedule.Id,
+                        schedule.DayOfWeek
+                    });
+                }
+            }
+
+            if (!filteredCourseSchedules.Any())
+            {
+                return BadRequest("No course schedules found for the specified month.");
+            }
+
+            return Ok(filteredCourseSchedules);
+        }
+
+
+
+
         // GET: api/Course
         [Authorize(Policy = "GetCourse")]
         [HttpGet]

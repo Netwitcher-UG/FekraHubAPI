@@ -76,7 +76,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("CourseForCalender")]
         public async Task<IActionResult> GetCourseForCalender(int courseId, DateTime date)
         {
-            var course = await _courseScheduleRepository.GetRelationList(
+            var courseSchedule = await _courseScheduleRepository.GetRelationList(
                 where: x => x.CourseID == courseId,
                 include: x => x.Include(z => z.Course),
                 selector: x => new
@@ -93,20 +93,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 asNoTracking: true
             );
 
-            if (course == null || !course.Any())
+            if (courseSchedule == null || !courseSchedule.Any())
             {
                 return BadRequest("course not found");
             }
 
-            var courseDetails = course.FirstOrDefault();
-            if (date.Date < courseDetails.StartDate || date.Date > courseDetails.EndDate)
+            var courseDetails = courseSchedule.FirstOrDefault();
+            if (date.Year < courseDetails.StartDate.Year || date.Year > courseDetails.EndDate.Year ||
+                (date.Year == courseDetails.StartDate.Year && date.Month < courseDetails.StartDate.Month) ||
+                (date.Year == courseDetails.EndDate.Year && date.Month > courseDetails.EndDate.Month))
             {
-                return BadRequest("The specified date is outside the course date range.");
+                return BadRequest("The specified month is outside the course date range.");
             }
 
             var filteredCourseSchedules = new List<object>();
 
-            foreach (var schedule in course)
+            foreach (var schedule in courseSchedule)
             {
                 var startOfMonth = new DateTime(date.Year, date.Month, 1);
 

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Constract;
+using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Controllers.AuthorizationController;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
@@ -28,6 +29,7 @@ namespace FekraHubAPI.Controllers.Attendance
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<AuthorizationUsersController> _logger;
+        private readonly IContractMaker _contractMaker;
 
         public AttendanceController(IRepository<TeacherAttendance> teacherAttendanceRepo,
             IRepository<StudentAttendance> studentAttendanceRepo,
@@ -38,7 +40,8 @@ namespace FekraHubAPI.Controllers.Attendance
             IRepository<AttendanceDate> attendanceDateRepo,
             IRepository<CourseAttendance> courseAttendanceRepo,
             IRepository<CourseSchedule> courseScheduleRepo,
-            ILogger<AuthorizationUsersController> logger, IRepository<Event> eventRepo)
+            ILogger<AuthorizationUsersController> logger, IRepository<Event> eventRepo,
+            IContractMaker contractMaker)
         {
             _teacherAttendanceRepo = teacherAttendanceRepo;
             _studentAttendanceRepo = studentAttendanceRepo;
@@ -52,8 +55,36 @@ namespace FekraHubAPI.Controllers.Attendance
             _courseScheduleRepo = courseScheduleRepo;
             _logger = logger;
             _eventRepo = eventRepo;
-
+            _contractMaker = contractMaker;
         }
+
+
+
+        [AllowAnonymous]
+        [HttpGet("test")]
+        public async Task<IActionResult> testPDF(int courseId , DateTime date)
+        {
+            var course = await _coursRepo.GetRelationSingle(
+                where:x=>x.Id == courseId,
+                include:x=>x.Include(z=>z.Student).ThenInclude(z=>z.StudentAttendance).ThenInclude(z=>z.AttendanceStatus)
+                .Include(z=>z.Room).Include(z=>z.CourseSchedule).Include(z=>z.Teacher),
+                selector:x=> x,
+                
+                returnType:QueryReturnType.FirstOrDefault
+                );
+            if (course == null)
+            {
+                return BadRequest("course not found");//////////////////
+            }
+            var student = await _studentRepo.GetById(61);
+            var pdf = await _contractMaker.AttendanceReport(course,date);
+            byte[] pdfBytes = Convert.FromBase64String(pdf);
+
+            return File(pdfBytes, "application/pdf", "contract.pdf");
+        }
+
+
+
 
         [Authorize(Policy = "ManageAttendanceStatus")]
         [HttpGet("AttendanceStatus")]

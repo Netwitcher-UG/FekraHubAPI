@@ -16,14 +16,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
     public class EventTypeController : ControllerBase
     {
         private readonly IRepository<EventType> _eventTypeRepository;
+        private readonly IRepository<Event> _eventRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<EventTypeController> _logger;
         public EventTypeController(IRepository<EventType> eventTypeRepository, IMapper mapper,
-            ILogger<EventTypeController> logger)
+            ILogger<EventTypeController> logger, IRepository<Event> eventRepository)
         {
             _eventTypeRepository = eventTypeRepository;
             _mapper = mapper;
             _logger = logger;
+            _eventRepository = eventRepository;
         }
 
         [Authorize(Policy = "ManageEventTypes")]
@@ -140,7 +142,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     return BadRequest("Veranstaltungstyp nicht gefunden.");//Event type not found
                 }
-
+                var InEventExist = await _eventRepository.DataExist(x=>x.TypeID == id);
+                if (InEventExist)
+                {
+                    return BadRequest("Dieser Typ kann nicht gelöscht werden, da er verwendet wird");//You cannot delete this type because it is in use
+                }
                 await _eventTypeRepository.Delete(id);
 
                 return Ok("Delete success");

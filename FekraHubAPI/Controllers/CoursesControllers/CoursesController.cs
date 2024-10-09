@@ -76,7 +76,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         [HttpGet("CourseForCalender")]
         public async Task<IActionResult> GetCourseForCalender(int? courseId, DateTime? date)
         {
-            var courseSchedule = await _courseScheduleRepository.GetRelationList(
+            try
+            {
+                var courseSchedule = await _courseScheduleRepository.GetRelationList(
                 where: x => courseId == null || x.CourseID == courseId,
                 include: x => x.Include(z => z.Course),
                 selector: x => new
@@ -93,69 +95,75 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 asNoTracking: true
             );
 
-            if (courseSchedule == null || !courseSchedule.Any())
-            {
-                return BadRequest("Course not found.");
-            }
-
-            var filteredCourseSchedules = new List<object>();
-
-            foreach (var schedule in courseSchedule)
-            {
-                if (date == null)
+                if (courseSchedule == null || !courseSchedule.Any())
                 {
-                    var daysInRange = Enumerable.Range(0, (schedule.EndDate - schedule.StartDate).Days + 1)
-                                                .Select(x => schedule.StartDate.AddDays(x))
-                                                .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek)
-                                                .ToList();
+                    return BadRequest("Die Kurse wurden nicht gefunden.");//Course not found.
+                }
 
-                    foreach (var day in daysInRange)
+                var filteredCourseSchedules = new List<object>();
+
+                foreach (var schedule in courseSchedule)
+                {
+                    if (date == null)
                     {
-                        filteredCourseSchedules.Add(new
+                        var daysInRange = Enumerable.Range(0, (schedule.EndDate - schedule.StartDate).Days + 1)
+                                                    .Select(x => schedule.StartDate.AddDays(x))
+                                                    .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek)
+                                                    .ToList();
+
+                        foreach (var day in daysInRange)
                         {
-                            CourseId = schedule.CourseId,
-                            schedule.Name,
-                            StartDate = day.Date,
-                            EndDate = day.Date,
-                            StartTime = schedule.StartTime,
-                            EndTime = schedule.EndTime,
-                            schedule.Id,
-                            schedule.DayOfWeek
-                        });
+                            filteredCourseSchedules.Add(new
+                            {
+                                CourseId = schedule.CourseId,
+                                schedule.Name,
+                                StartDate = day.Date,
+                                EndDate = day.Date,
+                                StartTime = schedule.StartTime,
+                                EndTime = schedule.EndTime,
+                                schedule.Id,
+                                schedule.DayOfWeek
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var startOfMonth = new DateTime(date.Value.Year, date.Value.Month, 1);
+                        var daysInMonth = Enumerable.Range(0, DateTime.DaysInMonth(date.Value.Year, date.Value.Month))
+                                                    .Select(day => startOfMonth.AddDays(day))
+                                                    .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
+                                                                d >= schedule.StartDate && d <= schedule.EndDate)
+                                                    .ToList();
+
+                        foreach (var day in daysInMonth)
+                        {
+                            filteredCourseSchedules.Add(new
+                            {
+                                CourseId = schedule.CourseId,
+                                schedule.Name,
+                                StartDate = day.Date,
+                                EndDate = day.Date,
+                                StartTime = schedule.StartTime,
+                                EndTime = schedule.EndTime,
+                                schedule.Id,
+                                schedule.DayOfWeek
+                            });
+                        }
                     }
                 }
-                else
+
+                if (!filteredCourseSchedules.Any())
                 {
-                    var startOfMonth = new DateTime(date.Value.Year, date.Value.Month, 1);
-                    var daysInMonth = Enumerable.Range(0, DateTime.DaysInMonth(date.Value.Year, date.Value.Month))
-                                                .Select(day => startOfMonth.AddDays(day))
-                                                .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
-                                                            d >= schedule.StartDate && d <= schedule.EndDate)
-                                                .ToList();
-
-                    foreach (var day in daysInMonth)
-                    {
-                        filteredCourseSchedules.Add(new
-                        {
-                            CourseId = schedule.CourseId,
-                            schedule.Name,
-                            StartDate = day.Date,
-                            EndDate = day.Date,
-                            StartTime = schedule.StartTime,
-                            EndTime = schedule.EndTime,
-                            schedule.Id,
-                            schedule.DayOfWeek
-                        });
-                    }
+                    return BadRequest("Es wurden keine Kurspläne gefunden.");//No course schedules found.
                 }
-            }
 
-            if (!filteredCourseSchedules.Any())
+                return Ok(filteredCourseSchedules);
+            }
+            catch (Exception ex)
             {
-                return BadRequest("No course schedules found.");
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
+                return BadRequest(ex.Message);
             }
-
-            return Ok(filteredCourseSchedules);
         }
 
 

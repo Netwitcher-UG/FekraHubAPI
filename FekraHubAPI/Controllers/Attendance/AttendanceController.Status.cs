@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace FekraHubAPI.Controllers.Attendance
@@ -60,9 +62,9 @@ namespace FekraHubAPI.Controllers.Attendance
 
 
 
-        [AllowAnonymous]
-        [HttpGet("test")]
-        public async Task<IActionResult> testPDF(int courseId , DateTime date)
+        [Authorize]
+        [HttpGet("ExportAttendanceReport")]
+        public async Task<IActionResult> ExportMonthlyAttendanceReportPDF([Required]int courseId , DateTime? date)
         {
             var course = await _coursRepo.GetRelationSingle(
                 where:x=>x.Id == courseId,
@@ -70,18 +72,83 @@ namespace FekraHubAPI.Controllers.Attendance
                 .Include(z=>z.Room).Include(z=>z.CourseSchedule).Include(z=>z.Teacher),
                 selector:x=> x,
                 
-                returnType:QueryReturnType.FirstOrDefault
+                returnType:QueryReturnType.FirstOrDefault,
+                asNoTracking:true
                 );
             if (course == null)
             {
-                return BadRequest("course not found");//////////////////
+                return BadRequest("Die Kurse wurden nicht gefunden.");//course not found
             }
-            var student = await _studentRepo.GetById(61);
-            var pdf = await _contractMaker.AttendanceReport(course,date);
-            byte[] pdfBytes = Convert.FromBase64String(pdf);
+            string? pdf;
+            if(!date.HasValue)
+            {
+                pdf = await _contractMaker.AttendanceReport(course);
+            }
+            else
+            {
+                pdf = await _contractMaker.MonthlyAttendanceReport(course, date.Value);
+            }
+            
+           
 
-            return File(pdfBytes, "application/pdf", "contract.pdf");
+            return Ok(pdf);
         }
+        [Authorize]
+        [HttpGet("CourseWorkingDates")]
+        public async Task<IActionResult> CourseWorkingDates([Required] int courseId)
+        {
+            var course = await _coursRepo.GetRelationSingle(
+                where: x => x.Id == courseId,
+                include: x => x.Include(z => z.CourseSchedule),
+                selector: x => x,
+
+                returnType: QueryReturnType.FirstOrDefault,
+                asNoTracking: true
+                );
+            if (course == null)
+            {
+                return BadRequest("Die Kurse wurden nicht gefunden.");//course not found
+            }
+            if (course.StartDate == null || course.EndDate == null)
+            {
+                return BadRequest("Start or End date is missing.");
+            }
+
+            DateTime startDate = course.StartDate;
+            DateTime endDate = course.EndDate < DateTime.Now ? course.EndDate : DateTime.Now;
+
+            var workingDays = course.CourseSchedule.Select(x => x.DayOfWeek).ToList();
+
+            if (workingDays.Count == 0)
+            {
+                return BadRequest("Keine Arbeitstage im Kursplan gefunden.");//No working days found in the course schedule.
+            }
+
+            var workingDates = new List<DateTime>();
+
+            for (var date = startDate; date <= endDate; date = date.AddDays(1))
+            {
+                
+                if (workingDays.Contains(date.DayOfWeek.ToString()))
+                {
+                    workingDates.Add(date);
+                }
+            }
+
+
+            var groupedDates = workingDates
+                    .GroupBy(d => new { d.Year, d.Month })
+                    .Select(g => new
+                    {
+                        key = $"{g.Key.Month:D2}.{g.Key.Year}",  
+                        value = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("yyyy-MM-dd")  
+                    })
+                    .ToList();
+
+            return Ok(groupedDates);
+        }
+
+    
 
 
 

@@ -72,6 +72,7 @@ namespace FekraHubAPI.Controllers.Students
                         z.Nationality,
                         z.Note,
                         z.Gender,
+                        z.ActiveStudent,
                         city = z.City ?? "Like parent",
                         Street = z.Street ?? "Like parent",
                         StreetNr = z.StreetNr ?? "Like parent",
@@ -248,6 +249,7 @@ namespace FekraHubAPI.Controllers.Students
                     x.Nationality,
                     x.Note,
                     x.Gender,
+                    x.ActiveStudent,
                     city = x.City ?? "Like parent",
                     Street = x.Street ?? "Like parent",
                     StreetNr = x.StreetNr ?? "Like parent",
@@ -345,7 +347,9 @@ namespace FekraHubAPI.Controllers.Students
                 var students = await _studentRepo.GetRelationList(
                     manyWhere: new List<Expression<Func<Student, bool>>?>
                         {
+                        
                         x => x.CourseID == courseId,
+                        x => x.ActiveStudent == true,
                         search != null ? (Expression<Func<Student, bool>>)(x => x.FirstName.Contains(search) || x.LastName.Contains(search)) : null
                         }.Where(x => x != null).Cast<Expression<Func<Student, bool>>>().ToList(),
                     orderBy: x => x.Id,
@@ -391,6 +395,15 @@ namespace FekraHubAPI.Controllers.Students
                 return BadRequest(ex.Message);
             }
 
+        }
+        [Authorize(Policy = "GetStudentsCourse")]
+        [HttpPatch("ActiveStudent")]
+        public async Task<IActionResult> ActiveStudent([Required]int id,[Required]bool active)
+        {
+            var student = await _studentRepo.GetById(id);
+            student.ActiveStudent = active;
+            await _studentRepo.Update(student);
+            return Ok("Erfolg");//success
         }
     }
 }

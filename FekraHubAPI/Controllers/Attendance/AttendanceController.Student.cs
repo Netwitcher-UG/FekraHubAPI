@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using FekraHubAPI.Constract;
 using System.ComponentModel.DataAnnotations;
 using FekraHubAPI.Repositories.Interfaces;
+using System.Linq;
 
 namespace FekraHubAPI.Controllers.Attendance
 {
@@ -228,6 +229,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
+
                
                 if (today < course.StartDate.Date)
                 {
@@ -271,20 +273,34 @@ namespace FekraHubAPI.Controllers.Attendance
                 if (studentAttendance != null && studentAttendance.Any())
                 {
                     var studentsIdInCourse = await _studentRepo.GetRelationList(
-                        where: x => x.CourseID == courseId,
-                        selector: x => x.Id,
+                        where: x => x.CourseID == courseId && studentAttendance.Select(z=>z.StudentID).Contains(x.Id),
+                        selector: x => x,
                         asNoTracking: true);
+                   
 
-
-
-                    var studentsInList = studentAttendance
-                        .Any(sa => !studentsIdInCourse.Contains(sa.StudentID));
-
-
-                    if (studentsInList)
+                    if (studentsIdInCourse.Count() != studentAttendance.Count())
                     {
                         return BadRequest("Einige Schüler gehören nicht zu diesem Kurs.");//Some students do not belong to the course.
                     }
+                    var notCreatedAt = studentsIdInCourse.Where(x => x.CreatedAt == null).ToList();
+                    if (notCreatedAt.Any())
+                    {
+                        var studentIds = notCreatedAt.Select(x => x.Id).ToList();
+                        var attendanceData = await _studentAttendanceRepo.GetRelationList(
+                            where: x => studentIds.Contains(x.StudentID??0),
+                            selector: x => new { x.StudentID, x.date },
+                            asNoTracking: true
+                        );
+
+                        foreach (var student in notCreatedAt)
+                        {
+                            var attendance = attendanceData.FirstOrDefault(a => a.StudentID == student.Id);
+                            student.CreatedAt = attendance?.date ?? DateTime.Now;
+                        }
+
+                        await _studentRepo.ManyUpdate(notCreatedAt);
+                    }
+
                 }
 
                 // date now if exist in database or not  (add if not)

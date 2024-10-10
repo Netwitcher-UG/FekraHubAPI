@@ -294,7 +294,10 @@ namespace FekraHubAPI.Controllers.Attendance
 
                         foreach (var student in notCreatedAt)
                         {
-                            var attendance = attendanceData.FirstOrDefault(a => a.StudentID == student.Id);
+                            var attendance = attendanceData
+                                            .Where(a => a.StudentID == student.Id)
+                                            .OrderBy(a => a.date) 
+                                            .FirstOrDefault();
                             student.CreatedAt = attendance?.date ?? DateTime.Now;
                         }
 

@@ -1,4 +1,4 @@
-using FekraHubAPI.Data.Models;
+ï»¿using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -146,7 +146,44 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             
         }
+        [Authorize(Policy = "GetUsers")]
+        [HttpGet("GetAllUsersWithRole")]
+        public async Task<IActionResult> GetUsersWithRole()
+        {
+            try
+            {
 
+                var rolesToFetch = new[] { DefaultRole.Admin, DefaultRole.Secretariat, DefaultRole.Teacher, DefaultRole.Parent };
+
+                var allUsersInRoles = new List<object>(); 
+
+                
+                foreach (var role in rolesToFetch)
+                {
+
+                    var usersInRole = await _userManager.GetUsersInRoleAsync(role);
+
+
+                    allUsersInRoles.AddRange(usersInRole.Select(user => new
+                    {
+                        user.Id,
+                        user.FirstName,
+                        user.LastName,
+                        user.Email,
+                        Role = role
+                    }));
+
+                }
+
+                return Ok(allUsersInRoles);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
         [Authorize(Policy = "GetEmployee")]
         [HttpGet("GetEmployee")]
         public async Task<IActionResult> GetEmployee([FromQuery]List<string>? RoleName, bool IsActive = true)
@@ -472,7 +509,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
                 if (userRole != DefaultRole.Admin && isAdmin)
                 {
-                    return BadRequest("Zugriff auf diesen Benutzer nicht möglich.");//Can't Access This User
+                    return BadRequest("Zugriff auf diesen Benutzer nicht mÃ¶glich.");//Can't Access This User
                 }
                 var data = new
                 {
@@ -652,7 +689,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     var addResult = await _userManager.AddToRoleAsync(account, accountUpdate.Role);
                     if (!addResult.Succeeded)
                     {
-                        throw new Exception($"Hinzufügen des Benutzers zur Rolle {accountUpdate.Role} fehlgeschlagen.");//Failed to add user to role {accountUpdate.Role}
+                        throw new Exception($"HinzufÃ¼gen des Benutzers zur Rolle {accountUpdate.Role} fehlgeschlagen.");//Failed to add user to role {accountUpdate.Role}
                     }
                 }
 
@@ -804,7 +841,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var UserID =  _applicationUserRepository.GetUserIDFromToken(User);
                 if (UserID == id)
                 {
-                    return BadRequest("Sie können Ihr Konto nicht deaktivieren.");//You can not deactivate your account
+                    return BadRequest("Sie kÃ¶nnen Ihr Konto nicht deaktivieren.");//You can not deactivate your account
                 }
                 var user = await _db.ApplicationUser.FindAsync(id);
                 if (user == null)
@@ -1078,7 +1115,7 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             public string? Email { get; set; }
             public string? Password { get; set; } = null!;
-            [Compare("Password", ErrorMessage = "Das Passwort und das Bestätigungspasswort stimmen nicht überein.")]//The password and confirmation, password do not match.
+            [Compare("Password", ErrorMessage = "Das Passwort und das BestÃ¤tigungspasswort stimmen nicht Ã¼berein.")]//The password and confirmation, password do not match.
             public string? ConfirmPassword { get; set; } = null!;
             public bool AreAllFieldsNull()
             {
@@ -1143,7 +1180,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     {
                         await _emailSender.SendConfirmationEmail(user);
                     }
-                    return Ok("Erfolgreich aktualisiert. Bitte gehen Sie zu Ihrem E-Mail-Postfach und bestätigen Sie Ihre E-Mail.");//Updated successfully. Please go to your email message box and confirm your email
+                    return Ok("Erfolgreich aktualisiert. Bitte gehen Sie zu Ihrem E-Mail-Postfach und bestÃ¤tigen Sie Ihre E-Mail.");//Updated successfully. Please go to your email message box and confirm your email
                 }
                 return Ok("Benutzerpasswort erfolgreich aktualisiert.");//User password updated successfully.
             }

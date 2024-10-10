@@ -23,13 +23,14 @@ namespace FekraHubAPI.Controllers
         private readonly IRepository<ApplicationUser> _UserRepo;
         private readonly IRepository<SchoolInfo> _schoolInfoRepo;
         private readonly IRepository<Student> _studentRepo;
+        private readonly IRepository<Course> _courseRepo;
         private readonly ILogger<MessageSenderController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         public MessageSenderController(IRepository<MessageSender> messageSenderRepo,
             IRepository<ApplicationUser> userRepo, IRepository<SchoolInfo> schoolInfoRepo, ILogger<MessageSenderController> logger,
-            UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager ,
-            IRepository<Student> studentRepo, IRepository<ExternalEmails> externalEmailRepo)
+            UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager,
+            IRepository<Student> studentRepo, IRepository<ExternalEmails> externalEmailRepo, IRepository<Course> courseRepo)
         {
             _messageSenderRepo = messageSenderRepo;
             _UserRepo = userRepo;
@@ -39,6 +40,7 @@ namespace FekraHubAPI.Controllers
             _roleManager = roleManager;
             _studentRepo = studentRepo;
             _externalEmailRepo = externalEmailRepo;
+            _courseRepo = courseRepo;
         }
 
         [Authorize(Policy = "MessageSender")]
@@ -74,8 +76,8 @@ namespace FekraHubAPI.Controllers
                 },
                 asNoTracking: true
                 );
-                
-                return Ok( Messages);
+
+                return Ok(Messages);
             }
             catch (Exception ex)
             {
@@ -92,12 +94,12 @@ namespace FekraHubAPI.Controllers
             try
             {
                 var ISUserds = await _messageSenderRepo.DataExist(x => x.UserMessages.Select(z => z.User.Email).Contains(Email));
-                var ISExternal = await _externalEmailRepo.DataExist(m=> m.Email == Email);
+                var ISExternal = await _externalEmailRepo.DataExist(m => m.Email == Email);
 
                 if (ISUserds)
                 {
                     var messages = await _messageSenderRepo.GetRelationList(
-                        include:x=> x.Include(z=>z.UserMessages).ThenInclude(z=>z.User),
+                        include: x => x.Include(z => z.UserMessages).ThenInclude(z => z.User),
                     where: x => x.UserMessages.Select(z => z.User.Email).Contains(Email),
                     selector: x => new
                     {
@@ -124,7 +126,7 @@ namespace FekraHubAPI.Controllers
                     },
                     asNoTracking: true
                     );
-                        return Ok(messages);
+                    return Ok(messages);
                 }
                 return Ok(new List<MessageSender>() { });
             }
@@ -133,7 +135,7 @@ namespace FekraHubAPI.Controllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "MessageSenderController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
+
         }
         //public class ExternalEmailsDTO
         //{
@@ -163,7 +165,7 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest(ModelState);
                 }
-                if ((messagDTO.Emails == null || !messagDTO.Emails.Any()) && messagDTO.Role == null && messagDTO.CourseId == null )
+                if ((messagDTO.Emails == null || !messagDTO.Emails.Any()) && messagDTO.Role == null && messagDTO.CourseId == null)
                 {
                     return BadRequest("Es gibt keine E-Mails, an die Benachrichtigungen gesendet werden können.");//There are no emails to send notifications to.
                 }
@@ -238,6 +240,17 @@ namespace FekraHubAPI.Controllers
 
                 if (messagDTO.CourseId != null && messagDTO.CourseId.Any())
                 {
+                    var teachers = await _courseRepo.GetRelationSingle(
+                        where: x => messagDTO.CourseId.Contains(x.Id),
+                        selector: x => x.Teacher.ToList(),
+                        asNoTracking: true
+                        );
+                    if (teachers != null && teachers.Any())
+                    {
+                        allUsers.AddRange(teachers);
+                        teachers.ForEach(x => finaleEmails.Add(x.Email));
+                    }
+
                     foreach (var courseId in messagDTO.CourseId)
                     {
                         var parents = await _studentRepo.GetRelationList(
@@ -302,7 +315,7 @@ namespace FekraHubAPI.Controllers
                 var bodyBuilder = new BodyBuilder
                 {
 
-                    HtmlBody = MessageLayout( messagDTO.Message, schoolInfo.SchoolName)
+                    HtmlBody = MessageLayout(messagDTO.Message, schoolInfo.SchoolName)
                 };
 
                 if (messagDTO.Files != null && messagDTO.Files.Any())
@@ -363,7 +376,7 @@ namespace FekraHubAPI.Controllers
                                 selector: x => x,
                                 returnType: QueryReturnType.FirstOrDefault
                             );
-                           
+
                         }
                         else
                         {
@@ -395,7 +408,7 @@ namespace FekraHubAPI.Controllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "MessageSenderController", ex.Message));
                 return BadRequest(ex.Message);
             }
-           
+
         }
         private string MessageLayout(string contentHtml, string schoolName)
         {

@@ -94,7 +94,26 @@ namespace FekraHubAPI.Data
                 .HasForeignKey(ca => ca.AttendanceDateId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            //Delete This code before publishing the application and add new migration
+
+
+            builder.Entity<NotificationUser>()
+           .HasKey(nu => new { nu.NotificationId, nu.UserId });
+
+            builder.Entity<NotificationUser>()
+                .HasOne(nu => nu.Notifications)
+                .WithMany(n => n.NotificationUsers)
+                .HasForeignKey(nu => nu.NotificationId);
+
+            builder.Entity<NotificationUser>()
+                .HasOne(nu => nu.ApplicationUsers)
+                .WithMany(u => u.NotificationUsers)
+                .HasForeignKey(nu => nu.UserId);
+
+            builder.Entity<NotificationUser>()
+                .Property(nu => nu.Read)
+                .HasDefaultValue(false);
+
+
             builder.Entity<SchoolInfo>().HasData(
                 new SchoolInfo()
                 {
@@ -198,6 +217,8 @@ namespace FekraHubAPI.Data
         public DbSet<AttendanceDate> AttendanceDates { get; set; }
         public DbSet<CourseAttendance> CoursesAttendances { get; set; }
         public DbSet<MessageSender> MessageSenders { get; set; }
-        
+        public DbSet<Notifications> Notifications { get; set; }
+        public DbSet<NotificationUser> NotificationUser { get; set; }
+
     }
 }

@@ -44,14 +44,20 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         }
         [Authorize]
         [HttpGet("GetCoursesName")]
-        public async Task<IActionResult> GetCoursesName()
+        public async Task<IActionResult> GetCoursesName(bool? IsAttendance = false)
         {
             try
             {
                 var userId = _courseRepository.GetUserIDFromToken(User);
                 var Teacher = await _courseRepository.IsTeacherIDExists(userId);
+
                 var courses = await _courseRepository.GetRelationList(
-                    where: Teacher ? z => z.Teacher.Select(n => n.Id).Contains(userId) : null,
+                     manyWhere: new List<Expression<Func<Course, bool>>?>
+                        {
+                        Teacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Select(n => n.Id).Contains(userId)) : null,
+                        IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.Now.Date && x.EndDate.Date >= DateTime.Now.Date) : null
+                    }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
+
                     selector: x => new { x.Id, x.Name },
                     asNoTracking:true
                     );

@@ -79,6 +79,10 @@ namespace FekraHubAPI.Controllers.Attendance
             {
                 return BadRequest("Die Kurse wurden nicht gefunden.");//course not found
             }
+            if(course.Student.Count == 0)
+            {
+                return BadRequest("In diesem Kurs sind keine Schüler registriert");//no student in course
+            }
             string? pdf;
             if(!date.HasValue)
             {

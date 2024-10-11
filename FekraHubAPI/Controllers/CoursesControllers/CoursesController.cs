@@ -54,8 +54,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var courses = await _courseRepository.GetRelationList(
                      manyWhere: new List<Expression<Func<Course, bool>>?>
                         {
+
                         Teacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Select(n => n.Id).Contains(userId)) : null,
-                        IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.Now.Date && x.EndDate.Date >= DateTime.Now.Date) : null
+                        IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.Now.Date && x.EndDate.Date >= DateTime.Now.Date) : null,
+                        (Expression<Func<Course, bool>>)(z => z.Student.Count() > 0)
                     }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
 
                     selector: x => new { x.Id, x.Name },

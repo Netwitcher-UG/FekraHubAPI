@@ -1,4 +1,7 @@
 ﻿using FekraHubAPI.Data;
+using FekraHubAPI.Data.Models;
+using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Crypto;
 
 namespace FekraHubAPI.CleanTables
 {
@@ -40,6 +43,26 @@ namespace FekraHubAPI.CleanTables
                         context.Users.RemoveRange(unconfirmedUsers);
                         await context.SaveChangesAsync();
                     }
+
+                    //notifications
+                    var notificationsToDelete = await context.NotificationUser
+                        .Where(x => x.Notifications.Date <= thresholdDate)
+                        .ToListAsync();
+                    if (notificationsToDelete.Any())
+                    {
+                        var notificationIds = notificationsToDelete.Select(x => x.NotificationId).ToList();
+
+                        context.NotificationUser.RemoveRange(notificationsToDelete);
+
+                        var notifications = await context.Notifications
+                            .Where(n => notificationIds.Contains(n.Id))
+                            .ToListAsync();
+
+                        context.Notifications.RemoveRange(notifications);
+
+                        await context.SaveChangesAsync();
+                    }
+
                 }
                 catch (Exception) { }
             }

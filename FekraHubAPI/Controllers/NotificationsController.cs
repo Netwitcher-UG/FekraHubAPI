@@ -41,6 +41,7 @@ namespace FekraHubAPI.Controllers
                      {
                          x.Notifications.Id,
                          x.Notifications.Notification,
+                         x.Notifications.Date,
                          x.Read
                      },
                      asNoTracking:true,

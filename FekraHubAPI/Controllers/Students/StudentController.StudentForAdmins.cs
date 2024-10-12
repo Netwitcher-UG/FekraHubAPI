@@ -305,7 +305,7 @@ namespace FekraHubAPI.Controllers.Students
                 x.CourseSchedule.Any(cs => courseScheduleIds.Contains(cs.Id)));
                 if (eventIsExist)
                 {
-                    return BadRequest("Heute gibt es eine Veranstaltung.");//Today there is an event
+                    return Ok(new { IsTodayAWorkDay = false, CourseAttendance = false, students = new List<Student>() { } });
                 }
                 if (Teacher)
                 {

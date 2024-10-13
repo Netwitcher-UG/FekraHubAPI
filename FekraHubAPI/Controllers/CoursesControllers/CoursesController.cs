@@ -374,20 +374,46 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         {
                             return BadRequest(ModelState);
                         }
-                       
-                        
+                        foreach (var schedule in mapCourseSchedule.courseSchedule)
+                        {
+                            if (TimeSpan.Parse(schedule.StartTime) >= TimeSpan.Parse(schedule.EndTime))
+                            {
+                                return BadRequest("Die Startzeit muss vor der Endzeit liegen.");//Start time must be before end time.
+                            }
+                        }
+                        for (int i = 0; i < mapCourseSchedule.courseSchedule.Count; i++)
+                        {
+                            var schedule1 = mapCourseSchedule.courseSchedule[i];
+                            for (int j = i + 1; j < mapCourseSchedule.courseSchedule.Count; j++)
+                            {
+                                var schedule2 = mapCourseSchedule.courseSchedule[j];
+
+                                if (schedule1.DayOfWeek == schedule2.DayOfWeek)
+                                {
+                                    var start1 = TimeSpan.Parse(schedule1.StartTime);
+                                    var end1 = TimeSpan.Parse(schedule1.EndTime);
+                                    var start2 = TimeSpan.Parse(schedule2.StartTime);
+                                    var end2 = TimeSpan.Parse(schedule2.EndTime);
+
+                                    if (start1 < end2 && start2 < end1)
+                                    {
+                                        return BadRequest($"Die Zeitpläne für den gleichen Tag ({schedule1.DayOfWeek}) überschneiden sich.");//Schedules for the same day ({schedule1.DayOfWeek}) are overlapping.
+                                    }
+                                }
+                            }
+                        }
 
 
                         var room = await _roomRepo.GetRelationSingle(
-                            where:x => x.Id == mapCourseSchedule.course.RoomId,
-                            include:x=>x.Include(l=>l.Location),
-                            selector: x => new { x.Id, x.Name, Location = new { x.Location.Id, x.Location.Name } },
-                            returnType:QueryReturnType.SingleOrDefault,
-                            asNoTracking:true);
-                        if (room == null)
-                        {
-                            return BadRequest("Raum nicht gefunden");//Room not found
-                }
+                                    where:x => x.Id == mapCourseSchedule.course.RoomId,
+                                    include:x=>x.Include(l=>l.Location),
+                                    selector: x => new { x.Id, x.Name, Location = new { x.Location.Id, x.Location.Name } },
+                                    returnType:QueryReturnType.SingleOrDefault,
+                                    asNoTracking:true);
+                                if (room == null)
+                                {
+                                    return BadRequest("Raum nicht gefunden");//Room not found
+                        }
                         
                         var courseEntity = new Course
                         {
@@ -481,7 +507,34 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 {
                     return BadRequest(ModelState);
                 }
+                foreach (var schedule in courseData.courseSchedule)
+                {
+                    if (TimeSpan.Parse(schedule.StartTime) >= TimeSpan.Parse(schedule.EndTime))
+                    {
+                        return BadRequest("Die Startzeit muss vor der Endzeit liegen.");//Start time must be before end time.
+                    }
+                }
+                for (int i = 0; i < courseData.courseSchedule.Count; i++)
+                {
+                    var schedule1 = courseData.courseSchedule[i];
+                    for (int j = i + 1; j < courseData.courseSchedule.Count; j++)
+                    {
+                        var schedule2 = courseData.courseSchedule[j];
 
+                        if (schedule1.DayOfWeek == schedule2.DayOfWeek)
+                        {
+                            var start1 = TimeSpan.Parse(schedule1.StartTime);
+                            var end1 = TimeSpan.Parse(schedule1.EndTime);
+                            var start2 = TimeSpan.Parse(schedule2.StartTime);
+                            var end2 = TimeSpan.Parse(schedule2.EndTime);
+
+                            if (start1 < end2 && start2 < end1)
+                            {
+                                return BadRequest($"Die Zeitpläne für den gleichen Tag ({schedule1.DayOfWeek}) überschneiden sich.");//Schedules for the same day ({schedule1.DayOfWeek}) are overlapping.
+                            }
+                        }
+                    }
+                }
                 var room = await _roomRepo.GetRelationSingle(
                     where: x => x.Id == courseData.course.RoomId,
                     include: x => x.Include(l => l.Location),

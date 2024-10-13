@@ -107,7 +107,7 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             var course = await _coursRepo.GetRelationSingle(
                 where: x => x.Id == courseId,
-                include: x => x.Include(z => z.CourseSchedule),
+                include: x => x.Include(z => z.CourseSchedule).Include(z=>z.Student),
                 selector: x => x,
 
                 returnType: QueryReturnType.FirstOrDefault,
@@ -117,9 +117,9 @@ namespace FekraHubAPI.Controllers.Attendance
             {
                 return BadRequest("Die Kurse wurden nicht gefunden.");//course not found
             }
-            if (course.StartDate == null || course.EndDate == null)
+            if(course.Student.ToList().Count() == 0)
             {
-                return BadRequest("Start or End date is missing.");
+                return BadRequest(new List<object>());
             }
 
             DateTime startDate = course.StartDate;
@@ -129,7 +129,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
             if (workingDays.Count == 0)
             {
-                return BadRequest("Keine Arbeitstage im Kursplan gefunden.");//No working days found in the course schedule.
+                return BadRequest(new List<object>());
             }
 
             var workingDates = new List<DateTime>();

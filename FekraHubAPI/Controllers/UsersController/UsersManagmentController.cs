@@ -55,6 +55,24 @@ namespace FekraHubAPI.Controllers.UsersController
             _logger = logger;
 
         }
+        [Authorize]
+        [HttpGet("AllRoles")]
+        public async Task<IActionResult> GetAllRoles()
+        {
+            try
+            {
+                var roles = typeof(DefaultRole).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+                                   .Select(f => f.GetValue(null)?.ToString())
+                                   .ToList();
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
         [Authorize(Policy = "GetUsers")]
         [HttpGet("PaginationParameters")]
         public async Task<IActionResult> PaginationParameters([FromQuery] PaginationParameters paginationParameters)

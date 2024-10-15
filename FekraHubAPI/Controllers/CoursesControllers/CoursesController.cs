@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
+using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Implementations;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -29,10 +31,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         private readonly IMapper _mapper;
         private readonly IRepository<Room> _roomRepo;
         private readonly ILogger<CoursesController> _logger;
+        private readonly IServiceProvider _serviceProvider;
         public CoursesController(IRepository<Course> courseRepository,
               IRepository<ApplicationUser> teacherRepository,
             IRepository<Student> studentRepository, IMapper mapper, IRepository<Room> roomRepo,
-            ILogger<CoursesController> logger, IRepository<CourseSchedule> courseScheduleRepository)
+            ILogger<CoursesController> logger, IRepository<CourseSchedule> courseScheduleRepository, IServiceProvider serviceProvider)
         {
             _courseRepository = courseRepository;
             _studentRepository = studentRepository;
@@ -41,6 +44,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _roomRepo = roomRepo;
             _logger = logger;
             _courseScheduleRepository = courseScheduleRepository;
+            _serviceProvider = serviceProvider;
         }
         [Authorize]
         [HttpGet("GetCoursesName")]
@@ -49,25 +53,25 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             try
             {
                 var userId = _courseRepository.GetUserIDFromToken(User);
-                var Teacher = await _courseRepository.IsTeacherIDExists(userId);
+                var isTeacher = await _courseRepository.IsTeacherIDExists(userId);
 
                 var courses = await _courseRepository.GetRelationList(
-                     manyWhere: new List<Expression<Func<Course, bool>>?>
-                        {
-
-                        Teacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Select(n => n.Id).Contains(userId)) : null,
-                        IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.Now.Date && x.EndDate.Date >= DateTime.Now.Date) : null,
-                        (Expression<Func<Course, bool>>)(z => z.Student.Count() > 0)
+                    manyWhere: new List<Expression<Func<Course, bool>>?>
+                    {
+                isTeacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Any(n => n.Id == userId)) : null,
+                IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.Now.Date && x.EndDate.Date >= DateTime.Now.Date) : null,
+                (Expression<Func<Course, bool>>)(z => z.Student.Any())
                     }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
 
                     selector: x => new { x.Id, x.Name },
-                    asNoTracking:true
-                    );
-                
-                if (courses == null)
+                    asNoTracking: true
+                );
+
+                if (!courses.Any())
                 {
-                    return BadRequest("Kein Kurs gefunden.");//No course found
+                    return BadRequest("Kein Kurs gefunden."); // No course found
                 }
+
                 return Ok(courses);
             }
             catch (Exception ex)
@@ -87,32 +91,32 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             try
             {
                 var courseSchedule = await _courseScheduleRepository.GetRelationList(
-                where: x => courseId == null || x.CourseID == courseId,
-                include: x => x.Include(z => z.Course),
-                selector: x => new
-                {
-                    CourseId = x.Course.Id,
-                    x.Course.Name,
-                    StartDate = x.Course.StartDate.Date,
-                    EndDate = x.Course.EndDate.Date,
-                    x.StartTime,
-                    x.EndTime,
-                    x.Id,
-                    x.DayOfWeek
-                },
-                asNoTracking: true
-            );
+             where: x => !courseId.HasValue || x.CourseID == courseId.Value,
+             include: x => x.Include(z => z.Course),
+             selector: x => new
+             {
+                 CourseId = x.Course.Id,
+                 x.Course.Name,
+                 StartDate = x.Course.StartDate.Date,
+                 EndDate = x.Course.EndDate.Date,
+                 x.StartTime,
+                 x.EndTime,
+                 x.Id,
+                 x.DayOfWeek
+             },
+             asNoTracking: true
+         );
 
-                if (courseSchedule == null || !courseSchedule.Any())
+                if (!courseSchedule.Any())
                 {
-                    return BadRequest("Die Kurse wurden nicht gefunden.");//Course not found.
+                    return BadRequest("Die Kurse wurden nicht gefunden."); // Course not found
                 }
 
                 var filteredCourseSchedules = new List<object>();
 
                 foreach (var schedule in courseSchedule)
                 {
-                    if (date == null)
+                    if (!date.HasValue)
                     {
                         var daysInRange = Enumerable.Range(0, (schedule.EndDate - schedule.StartDate).Days + 1)
                                                     .Select(x => schedule.StartDate.AddDays(x))
@@ -162,7 +166,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 if (!filteredCourseSchedules.Any())
                 {
-                    return BadRequest("Es wurden keine Kurspläne gefunden.");//No course schedules found.
+                    return BadRequest("Es wurden keine Kurspläne gefunden."); // No course schedules found
                 }
 
                 return Ok(filteredCourseSchedules);
@@ -186,17 +190,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             try
             {
                 var userId = _courseRepository.GetUserIDFromToken(User);
-                var Teacher = await _courseRepository.IsTeacherIDExists(userId);
+                var isTeacher = await _courseRepository.IsTeacherIDExists(userId);
 
-                var courses = await _courseRepository.GetRelationList(
+                var coursesQuery = _courseRepository.GetRelationList(
                     manyWhere: new List<Expression<Func<Course, bool>>?>
                     {
-                        search != null ? (Expression<Func<Course, bool>>)(x => x.Name.Contains(search)) : null,
-                        Teacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Select(n => n.Id).Contains(userId)) : null,
+                search != null ? (Expression<Func<Course, bool>>)(x => x.Name.Contains(search)) : null,
+                isTeacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Any(n => n.Id == userId)) : null,
                     }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
-
                     include: x => x.Include(r => r.Room).ThenInclude(l => l.Location),
-
                     selector: sa => new
                     {
                         id = sa.Id,
@@ -206,53 +208,69 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         capacity = sa.Capacity,
                         startDate = sa.StartDate,
                         endDate = sa.EndDate,
-
                         Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
                         Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name }
                     },
                     asNoTracking: true
                 );
 
+                var courses = await coursesQuery;
+                if (!courses.Any()) return Ok(Enumerable.Empty<object>());
+
                 var courseIds = courses.Select(c => c.id).ToList();
 
-                var teachers = await _courseRepository.GetRelationList(
-                    manyWhere: new List<Expression<Func<Course, bool>>>
+                var teachersTask = Task.Run(async () =>
+                {
+                    using (var scope = _serviceProvider.CreateScope())
                     {
-                        x => courseIds.Contains(x.Id)
-                    },
-                    include: x => x.Include(t => t.Teacher),
-                    selector: sa => new
-                    {
-                        courseId = sa.Id,
-                        Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
-                        {
-                            z.Id,
-                            z.FirstName,
-                            z.LastName
-                        })
-                    },
-                    asNoTracking: true
-                );
+                        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                        return await context.Courses
+                            .Where(x => courseIds.Contains(x.Id))
+                            .Include(x => x.Teacher)
+                            .Select(sa => new
+                            {
+                                courseId = sa.Id,
+                                Teacher = sa.Teacher == null ? null : sa.Teacher.Select(z => new
+                                {
+                                    z.Id,
+                                    z.FirstName,
+                                    z.LastName
+                                })
+                            })
+                            .AsNoTracking()
+                            .ToListAsync();
+                    }
+                });
 
-                var courseSchedules = await _courseRepository.GetRelationList(
-                    manyWhere: new List<Expression<Func<Course, bool>>>
+                var courseSchedulesTask = Task.Run(async () =>
+                {
+                    using (var scope = _serviceProvider.CreateScope())
                     {
-                        x => courseIds.Contains(x.Id)
-                    },
-                    include: x => x.Include(c => c.CourseSchedule),
-                    selector: sa => new
-                    {
-                        courseId = sa.Id,
-                        CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
-                        {
-                            x.Id,
-                            x.DayOfWeek,
-                            x.StartTime,
-                            x.EndTime
-                        })
-                    },
-                    asNoTracking: true
-                );
+                        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                        return await context.Courses
+                            .Where(x => courseIds.Contains(x.Id))
+                            .Include(x => x.CourseSchedule)
+                            .Select(sa => new
+                            {
+                                courseId = sa.Id,
+                                CourseSchedule = sa.CourseSchedule == null ? null : sa.CourseSchedule.Select(x => new
+                                {
+                                    x.Id,
+                                    x.DayOfWeek,
+                                    x.StartTime,
+                                    x.EndTime
+                                })
+                            })
+                            .AsNoTracking()
+                            .ToListAsync();
+                    }
+                });
+
+                // انتظار تنفيذ المهام المتوازية
+                await Task.WhenAll(teachersTask, courseSchedulesTask).ConfigureAwait(false);
+
+                var teachers = await teachersTask;
+                var courseSchedules = await courseSchedulesTask;
 
                 var finalCourses = courses.Select(course => new
                 {
@@ -267,23 +285,23 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     course.Location,
 
                     Teacher = teachers.Where(t => t.courseId == course.id)
-                      .SelectMany(t => t.Teacher?.Select(z => new
-                      {
-                          z.Id,
-                          z.FirstName,
-                          z.LastName
-                      }) ?? Enumerable.Empty<object>()) 
-                      .ToList(),
+                        .SelectMany(t => t.Teacher?.Select(z => new
+                        {
+                            z.Id,
+                            z.FirstName,
+                            z.LastName
+                        }) ?? Enumerable.Empty<object>())
+                        .ToList(),
 
                     CourseSchedule = courseSchedules.Where(cs => cs.courseId == course.id)
-                                    .SelectMany(cs => cs.CourseSchedule?.Select(x => new
-                                    {
-                                        x.Id,
-                                        x.DayOfWeek,
-                                        x.StartTime,
-                                        x.EndTime
-                                    }) ?? Enumerable.Empty<object>())
-                                    .ToList()
+                        .SelectMany(cs => cs.CourseSchedule?.Select(x => new
+                        {
+                            x.Id,
+                            x.DayOfWeek,
+                            x.StartTime,
+                            x.EndTime
+                        }) ?? Enumerable.Empty<object>())
+                        .ToList()
                 });
 
                 return Ok(finalCourses);

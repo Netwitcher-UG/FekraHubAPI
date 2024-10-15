@@ -21,42 +21,30 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
                 var student = await _studentRepo.GetRelationSingle(
-                    where: x => x.Id == Id,
-                    selector: x => x,
-                    returnType: QueryReturnType.SingleOrDefault,
-                    asNoTracking: true);
-                if (student == null)
-                {
-                    return BadRequest("Student nicht gefunden.");//Student not found
-                }
+           where: x => x.Id == Id,
+           selector: x => new { x.Id, x.ParentID },
+           returnType: QueryReturnType.SingleOrDefault,
+           asNoTracking: true);
+
+                if (student == null) return BadRequest("Student nicht gefunden.");
+
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
+                if (student.ParentID != userId) return BadRequest("Dieser Schüler ist nicht Ihr Kind.");
 
-                if (student.ParentID != userId)
-                {
-                    return BadRequest("Dieser Schüler ist nicht Ihr Kind.");//This student is not your child
-                }
                 var result = await _studentAttendanceRepo.GetRelationList(
-                       where: x => x.StudentID == Id,
-                       include: q => q.Include(x => x.Course).Include(x => x.Student).Include(x => x.AttendanceStatus),
-                       orderBy: x => x.date,
-                       selector: sa => new
-                       {
-                           id = sa.Id,
-                           Date = sa.date,
-                           course = new { sa.Course.Id, sa.Course.Name },
-                           student = new { sa.Student.Id, sa.Student.FirstName, sa.Student.LastName },
-                           AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
-                       },
-                       asNoTracking: true);
+                    where: x => x.StudentID == Id,
+                    include: q => q.Include(x => x.Course).Include(x => x.AttendanceStatus),
+                    orderBy: x => x.date,
+                    selector: sa => new
+                    {
+                        id = sa.Id,
+                        Date = sa.date,
+                        course = new { sa.Course.Id, sa.Course.Name },
+                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
+                    },
+                    asNoTracking: true);
 
-                if (result.Any())
-                {
-                    return Ok(result);
-                }
-                else
-                {
-                    return BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");//No attendance records found.
-                }
+                return result.Any() ? Ok(result) : BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");
             }
             catch (Exception ex)
             {
@@ -73,31 +61,29 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
                 var student = await _studentRepo.GetRelationSingle(
-                    where: x => x.Id == Id,
-                    selector: x => x,
-                    returnType: QueryReturnType.SingleOrDefault,
-                    asNoTracking: true);
-                if (student == null)
-                {
-                    return BadRequest("Student nicht gefunden.");//Student not found
-                }
+             where: x => x.Id == Id,
+             selector: x => new { x.Id, x.CourseID },
+             returnType: QueryReturnType.SingleOrDefault,
+             asNoTracking: true);
+
+                if (student == null) return BadRequest("Student nicht gefunden.");
+
                 string userId = _studentAttendanceRepo.GetUserIDFromToken(User);
                 bool Teacher = await _studentAttendanceRepo.IsTeacherIDExists(userId);
+
                 if (Teacher)
                 {
                     var course = await _coursRepo.GetRelationList(
-                        where: x => x.Teacher.Select(x => x.Id).Contains(userId) && x.Id == student.CourseID,
-                        selector: x => x,
+                        where: x => x.Teacher.Select(t => t.Id).Contains(userId) && x.Id == student.CourseID,
+                        selector: x => new { x.Id },
                         asNoTracking: true);
-                    if (!course.Any())
-                    {
-                        return BadRequest("Dieser Schüler ist nicht in Ihrem Kurs.");//This student is not in your course
-                    }
 
+                    if (!course.Any()) return BadRequest("Dieser Schüler ist nicht in Ihrem Kurs.");
                 }
+
                 var results = await _studentAttendanceRepo.GetRelationList(
                     where: x => x.StudentID == Id,
-                    include: q => q.Include(x => x.Course).Include(x => x.Student).Include(x => x.AttendanceStatus),
+                    include: q => q.Include(x => x.Course).Include(x => x.AttendanceStatus),
                     orderBy: x => x.date,
                     selector: sa => new
                     {
@@ -109,15 +95,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     },
                     asNoTracking: true);
 
-                if (results.Any())
-                {
-
-                    return Ok(results);
-                }
-                else
-                {
-                    return BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");//No attendance records found.
-                }
+                return results.Any() ? Ok(results) : BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");
             }
             catch (Exception ex)
             {

@@ -1,4 +1,4 @@
-using AutoMapper;
+ï»¿using AutoMapper;
 using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data.Models;
@@ -266,12 +266,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var roomExist = await _roomRepository.DataExist(n => n.LocationID == id);
                 if (roomExist)
                 {
-                    return BadRequest("Dieser Standort enthält Räume!!");//This Location contains Rooms !!
+                    return BadRequest("Dieser Standort enthÃ¤lt RÃ¤ume!!");//This Location contains Rooms !!
                 }
 
                 await _locationRepository.Delete(id);
 
-                return Ok("Erfolgreich gelöscht");//Deleted success
+                return Ok("Erfolgreich gelÃ¶scht");//Deleted success
 
             }
             catch (Exception ex)

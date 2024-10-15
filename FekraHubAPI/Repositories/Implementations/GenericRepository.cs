@@ -119,35 +119,32 @@ namespace FekraHubAPI.Repositories.Implementations
                 throw new ArgumentException("Selector must be provided.");
             }
 
-            return await Task.FromResult(query.Select(selector));
+            return query.Select(selector);
         }
         public async Task<List<TResult>> GetRelationList<TResult>(
-                        Expression<Func<T, bool>>? where = null,
-                        List<Expression<Func<T, bool>>>? manyWhere = null,
-                        Expression<Func<T, TResult>>? selector = null,
-                        Func<IQueryable<T>, IQueryable<T>>? include = null,
-                        Expression<Func<T, object>>? orderBy = null,
-                        bool asNoTracking = false)
+     Expression<Func<T, bool>>? where = null,
+     List<Expression<Func<T, bool>>>? manyWhere = null,
+     Expression<Func<T, TResult>>? selector = null,
+     Func<IQueryable<T>, IQueryable<T>>? include = null,
+     Expression<Func<T, object>>? orderBy = null,
+     bool asNoTracking = false)
         {
             IQueryable<T> query = _dbSet.AsQueryable();
+
             if (asNoTracking)
             {
-                query = query.AsNoTracking();
+                query = query.AsNoTrackingWithIdentityResolution();
             }
+
             if (where != null)
             {
                 query = query.Where(where);
             }
 
-            if (manyWhere != null)
+            if (manyWhere != null && manyWhere.Any())
             {
-                foreach (var predicate in manyWhere)
-                {
-                    if (predicate != null)
-                    {
-                        query = query.Where(predicate);
-                    }
-                }
+                var combinedWhere = CombinePredicates(manyWhere);
+                query = query.Where(combinedWhere);
             }
 
             if (include != null)
@@ -167,43 +164,43 @@ namespace FekraHubAPI.Repositories.Implementations
 
             return await query.Select(selector).ToListAsync();
         }
+
         public async Task<TResult?> GetRelationSingle<TResult>(
-                Expression<Func<T, bool>>? where = null,
-                List<Expression<Func<T, bool>>>? manyWhere = null,
-                Expression<Func<T, TResult>>? selector = null,
-                Func<IQueryable<T>, IQueryable<T>>? include = null,
-                QueryReturnType? returnType = QueryReturnType.FirstOrDefault,
-                bool asNoTracking = false)
+            Expression<Func<T, bool>>? where = null,
+            List<Expression<Func<T, bool>>>? manyWhere = null,
+            Expression<Func<T, TResult>>? selector = null,
+            Func<IQueryable<T>, IQueryable<T>>? include = null,
+            QueryReturnType? returnType = QueryReturnType.FirstOrDefault,
+            bool asNoTracking = false)
         {
             IQueryable<T> query = _dbSet.AsQueryable();
+
             if (asNoTracking)
             {
-                query = query.AsNoTracking();
+                query = query.AsNoTrackingWithIdentityResolution();
             }
+
             if (where != null)
             {
                 query = query.Where(where);
             }
 
-            if (manyWhere != null)
+            if (manyWhere != null && manyWhere.Any())
             {
-                foreach (var predicate in manyWhere)
-                {
-                    if (predicate != null)
-                    {
-                        query = query.Where(predicate);
-                    }
-                }
+                var combinedWhere = CombinePredicates(manyWhere);
+                query = query.Where(combinedWhere);
             }
+
             if (include != null)
             {
                 query = include(query);
             }
-            
-            if(selector == null)
+
+            if (selector == null)
             {
                 throw new ArgumentException("Selector must be provided.");
             }
+
             try
             {
                 switch (returnType)
@@ -223,6 +220,43 @@ namespace FekraHubAPI.Repositories.Implementations
             catch (InvalidCastException ex)
             {
                 throw new InvalidOperationException("The result type does not match the expected type. Check your selector or return type.", ex);
+            }
+        }
+
+        private Expression<Func<T, bool>> CombinePredicates(List<Expression<Func<T, bool>>> predicates)
+        {
+            if (predicates == null || !predicates.Any())
+            {
+                return x => true; 
+            }
+
+            var firstPredicate = predicates.First();
+            var body = firstPredicate.Body;
+            var param = firstPredicate.Parameters[0];
+
+            foreach (var predicate in predicates.Skip(1))
+            {
+                var visitor = new ReplaceParameterVisitor(predicate.Parameters[0], param);
+                body = Expression.AndAlso(body, visitor.Visit(predicate.Body));
+            }
+
+            return Expression.Lambda<Func<T, bool>>(body, param);
+        }
+
+        private class ReplaceParameterVisitor : ExpressionVisitor
+        {
+            private readonly ParameterExpression _oldParameter;
+            private readonly ParameterExpression _newParameter;
+
+            public ReplaceParameterVisitor(ParameterExpression oldParameter, ParameterExpression newParameter)
+            {
+                _oldParameter = oldParameter;
+                _newParameter = newParameter;
+            }
+
+            protected override Expression VisitParameter(ParameterExpression node)
+            {
+                return node == _oldParameter ? _newParameter : base.VisitParameter(node);
             }
         }
         public async Task ManyAdd(List<T> entity)

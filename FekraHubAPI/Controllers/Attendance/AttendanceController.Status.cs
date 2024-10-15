@@ -64,7 +64,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
         [Authorize]
         [HttpGet("ExportAttendanceReport")]
-        public async Task<IActionResult> ExportMonthlyAttendanceReportPDF([Required]int courseId , DateTime? date)
+        public async Task<IActionResult> ExportMonthlyAttendanceReportPDF([Required]int courseId , DateTime? date)//////////////////////////////////////////
         {
             var course = await _coursRepo.GetRelationSingle(
                 where:x=>x.Id == courseId,
@@ -105,55 +105,68 @@ namespace FekraHubAPI.Controllers.Attendance
         [HttpGet("CourseWorkingDates")]
         public async Task<IActionResult> CourseWorkingDates([Required] int courseId)
         {
-            var course = await _coursRepo.GetRelationSingle(
-                where: x => x.Id == courseId,
-                include: x => x.Include(z => z.CourseSchedule).Include(z=>z.Student),
-                selector: x => x,
-
-                returnType: QueryReturnType.FirstOrDefault,
-                asNoTracking: true
+            
+            try
+            {
+                var course = await _coursRepo.GetRelationSingle(
+                    where: x => x.Id == courseId,
+                    include: x => x.Include(z => z.CourseSchedule),
+                    selector: x => new
+                    {
+                        x.StartDate,
+                        x.EndDate,
+                        StudentsCount = x.Student.Count(), 
+                        CourseSchedule = x.CourseSchedule.Select(cs => cs.DayOfWeek)
+                    },
+                    returnType: QueryReturnType.FirstOrDefault,
+                    asNoTracking: true
                 );
-            if (course == null)
-            {
-                return BadRequest("Die Kurse wurden nicht gefunden.");//course not found
-            }
-            if(course.Student.ToList().Count() == 0)
-            {
-                return BadRequest(new List<object>());
-            }
 
-            DateTime startDate = course.StartDate;
-            DateTime endDate = course.EndDate < DateTime.Now ? course.EndDate : DateTime.Now;
-
-            var workingDays = course.CourseSchedule.Select(x => x.DayOfWeek).ToList();
-
-            if (workingDays.Count == 0)
-            {
-                return BadRequest(new List<object>());
-            }
-
-            var workingDates = new List<DateTime>();
-
-            for (var date = startDate; date <= endDate; date = date.AddDays(1))
-            {
-                
-                if (workingDays.Contains(date.DayOfWeek.ToString()))
+                if (course == null)
                 {
-                    workingDates.Add(date);
+                    return BadRequest("Die Kurse wurden nicht gefunden."); 
                 }
-            }
 
+                if (course.StudentsCount == 0)
+                {
+                    return BadRequest(new List<object>()); 
+                }
 
-            var groupedDates = workingDates
+                DateTime startDate = course.StartDate;
+                DateTime endDate = course.EndDate < DateTime.Now ? course.EndDate : DateTime.Now;
+
+                var workingDays = course.CourseSchedule.ToList();
+
+                if (workingDays.Count == 0)
+                {
+                    return BadRequest(new List<object>()); 
+                }
+
+                var workingDates = new List<DateTime>();
+                for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                {
+                    if (workingDays.Contains(date.DayOfWeek.ToString()))
+                    {
+                        workingDates.Add(date);
+                    }
+                }
+
+                var groupedDates = workingDates
                     .GroupBy(d => new { d.Year, d.Month })
                     .Select(g => new
                     {
-                        key = $"{g.Key.Month:D2}.{g.Key.Year}",  
-                        value = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("yyyy-MM-dd")  
+                        key = $"{g.Key.Month:D2}.{g.Key.Year}",
+                        value = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("yyyy-MM-dd")
                     })
                     .ToList();
 
-            return Ok(groupedDates);
+                return Ok(groupedDates);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
+            }
         }
 
     

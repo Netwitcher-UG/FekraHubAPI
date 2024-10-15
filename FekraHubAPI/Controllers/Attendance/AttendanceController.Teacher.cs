@@ -27,26 +27,20 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
                 var result = await _teacherAttendanceRepo.GetRelationList(
-                    where: x => x.TeacherID == Id,
-                    include:x=>x.Include(z=>z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
-                    orderBy: x => x.date,
-                    selector: sa => new
-                    {
-                        id = sa.Id,
-                        Date = sa.date,
-                        course = new { sa.Course.Id, sa.Course.Name },
-                        Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
-                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
-                    },
-                    asNoTracking: true);
-                if (result.Any())
-                {
-                    return Ok(result);
-                }
-                else
-                {
-                    return BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");//No attendance records found.
-                }
+             where: x => x.TeacherID == Id,
+             include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
+             orderBy: x => x.date,
+             selector: sa => new
+             {
+                 id = sa.Id,
+                 Date = sa.date,
+                 course = new { sa.Course.Id, sa.Course.Name },
+                 Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
+                 AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
+             },
+             asNoTracking: true);
+
+                return result.Any() ? Ok(result) : BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");
             }
             catch (Exception ex)
             {
@@ -64,16 +58,18 @@ namespace FekraHubAPI.Controllers.Attendance
                 var Teacher = await _userManager.FindByIdAsync(id);
                 if (Teacher == null)
                 {
-                    return BadRequest("Lehrer nicht gefunden.");//Teacher not found
+                    return BadRequest("Lehrer nicht gefunden.");
                 }
+
                 var isTeacher = await _teacherAttendanceRepo.IsTeacherIDExists(id);
                 if (!isTeacher)
                 {
-                    return BadRequest("Die ID gehört nicht zu einem Lehrer.");//The Id does not belong to a teacher
+                    return BadRequest("Die ID gehört nicht zu einem Lehrer.");
                 }
+
                 var teacherAttendance = await _teacherAttendanceRepo.GetRelationList(
                     where: x => x.TeacherID == id,
-                    include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
+                    include: x => x.Include(z => z.Course).Include(at => at.AttendanceStatus),
                     orderBy: x => x.date,
                     selector: sa => new
                     {
@@ -83,9 +79,9 @@ namespace FekraHubAPI.Controllers.Attendance
                         AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
                     },
                     asNoTracking: true);
-                
+
                 return Ok(new { Teacher = new { Teacher.Id, Teacher.FirstName, Teacher.LastName }, teacherAttendance });
-                
+
             }
             catch (Exception ex)
             {
@@ -109,39 +105,32 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-               
-              
-                var result = await _teacherAttendanceRepo.GetRelationList(
-                    manyWhere: new List<Expression<Func<TeacherAttendance, bool>>?>
-                    {
-                        teacherId != null ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.TeacherID == teacherId) : null,
-                        coursId.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.CourseID == coursId) : null,
-                        startDate.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date >= startDate.Value) : null,
-                        endDate.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date <= endDate.Value) : null,
-                        year.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Year == year.Value) : null,
-                        month.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Month == month.Value) : null,
-                        dateTime.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(sa => sa.date.Date == dateTime.Value.Date) : null,
-                    }.Where(x => x != null).Cast<Expression<Func<TeacherAttendance, bool>>>().ToList(),
-                    orderBy: ta => ta.date,
-                    include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
-                    selector: sa => new
-                    {
-                        id = sa.Id,
-                        Date = sa.date,
-                        course = new { sa.Course.Id, sa.Course.Name },
-                        Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
-                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }
-                    },
-                    asNoTracking: true);
 
-                if (result.Any())
-                {
-                    return Ok(result);
-                }
-                else
-                {
-                    return BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");//No attendance records found.
-                }
+
+                var result = await _teacherAttendanceRepo.GetRelationList(
+            manyWhere: new List<Expression<Func<TeacherAttendance, bool>>?>
+            {
+                teacherId != null ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.TeacherID == teacherId) : null,
+                coursId.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.CourseID == coursId) : null,
+                startDate.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date >= startDate.Value) : null,
+                endDate.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date <= endDate.Value) : null,
+                year.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Year == year.Value) : null,
+                month.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Month == month.Value) : null,
+                dateTime.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(sa => sa.date.Date == dateTime.Value.Date) : null,
+            }.Where(x => x != null).Cast<Expression<Func<TeacherAttendance, bool>>>().ToList(),
+            orderBy: ta => ta.date,
+            include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
+            selector: sa => new
+            {
+                id = sa.Id,
+                Date = sa.date,
+                course = new { sa.Course.Id, sa.Course.Name },
+                Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
+                AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }
+            },
+            asNoTracking: true);
+
+                return result.Any() ? Ok(result) : BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");
             }
             catch (Exception ex)
             {

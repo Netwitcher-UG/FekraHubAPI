@@ -276,7 +276,7 @@ namespace FekraHubAPI.Controllers.Attendance
                                             .Where(a => a.StudentID == student.Id)
                                             .OrderBy(a => a.date) 
                                             .FirstOrDefault();
-                            student.CreatedAt = attendance?.date ?? DateTime.Now;
+                            student.CreatedAt = attendance?.date ?? DateTime.Now.Date;
                         }
 
                         await _studentRepo.ManyUpdate(notCreatedAt);

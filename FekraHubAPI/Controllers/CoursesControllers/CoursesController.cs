@@ -64,7 +64,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
 
                     selector: x => new { x.Id, x.Name },
-                    asNoTracking: true
+                    asNoTracking: true,
+                    orderBy:x=>x.Id
                 );
 
                 if (!courses.Any())
@@ -91,21 +92,22 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             try
             {
                 var courseSchedule = await _courseScheduleRepository.GetRelationList(
-             where: x => !courseId.HasValue || x.CourseID == courseId.Value,
-             include: x => x.Include(z => z.Course),
-             selector: x => new
-             {
-                 CourseId = x.Course.Id,
-                 x.Course.Name,
-                 StartDate = x.Course.StartDate.Date,
-                 EndDate = x.Course.EndDate.Date,
-                 x.StartTime,
-                 x.EndTime,
-                 x.Id,
-                 x.DayOfWeek
-             },
-             asNoTracking: true
-         );
+                    where: x => !courseId.HasValue || x.CourseID == courseId.Value,
+                    include: x => x.Include(z => z.Course),
+                    selector: x => new
+                    {
+                        CourseId = x.Course.Id,
+                        x.Course.Name,
+                        StartDate = x.Course.StartDate.Date,
+                        EndDate = x.Course.EndDate.Date,
+                        x.StartTime,
+                        x.EndTime,
+                        x.Id,
+                        x.DayOfWeek
+                    },
+                    asNoTracking: true,
+                    orderBy: x => x.Id
+                );
 
                 if (!courseSchedule.Any())
                 {
@@ -114,25 +116,31 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 var filteredCourseSchedules = new List<object>();
 
+                // تحديد حدود الفترة المطلوبة: 1 سبتمبر إلى 1 يونيو من السنة التالية
+                var startFilter = new DateTime(DateTime.Now.Year, 9, 1); // 1 سبتمبر للسنة الحالية
+                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1); // 1 يونيو للسنة التالية
+
                 foreach (var schedule in courseSchedule)
                 {
                     if (!date.HasValue)
                     {
                         var daysInRange = Enumerable.Range(0, (schedule.EndDate - schedule.StartDate).Days + 1)
                                                     .Select(x => schedule.StartDate.AddDays(x))
-                                                    .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek)
+                                                    .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
+                                                                d >= startFilter && d < endFilter) // فلترة التواريخ ضمن الفترة المحددة
                                                     .ToList();
 
                         foreach (var day in daysInRange)
                         {
+                            var startDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.StartTime.Hours, schedule.StartTime.Minutes, 0);
+                            var endDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.EndTime.Hours, schedule.EndTime.Minutes, 0);
+
                             filteredCourseSchedules.Add(new
                             {
                                 CourseId = schedule.CourseId,
                                 schedule.Name,
-                                StartDate = day.Date,
-                                EndDate = day.Date,
-                                StartTime = schedule.StartTime,
-                                EndTime = schedule.EndTime,
+                                StartDateTime = startDateTime,
+                                EndDateTime = endDateTime,
                                 schedule.Id,
                                 schedule.DayOfWeek
                             });
@@ -144,19 +152,21 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         var daysInMonth = Enumerable.Range(0, DateTime.DaysInMonth(date.Value.Year, date.Value.Month))
                                                     .Select(day => startOfMonth.AddDays(day))
                                                     .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
-                                                                d >= schedule.StartDate && d <= schedule.EndDate)
+                                                                d >= startFilter && d < endFilter &&
+                                                                d >= schedule.StartDate && d <= schedule.EndDate) // فلترة التواريخ ضمن الفترة المحددة
                                                     .ToList();
 
                         foreach (var day in daysInMonth)
                         {
+                            var startDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.StartTime.Hours, schedule.StartTime.Minutes, 0);
+                            var endDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.EndTime.Hours, schedule.EndTime.Minutes, 0);
+
                             filteredCourseSchedules.Add(new
                             {
                                 CourseId = schedule.CourseId,
                                 schedule.Name,
-                                StartDate = day.Date,
-                                EndDate = day.Date,
-                                StartTime = schedule.StartTime,
-                                EndTime = schedule.EndTime,
+                                StartDateTime = startDateTime,
+                                EndDateTime = endDateTime,
                                 schedule.Id,
                                 schedule.DayOfWeek
                             });
@@ -177,6 +187,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return BadRequest(ex.Message);
             }
         }
+
 
 
 
@@ -211,7 +222,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         Room = sa.Room == null ? null : new { sa.Room.Id, sa.Room.Name },
                         Location = sa.Room == null || sa.Room.Location == null ? null : new { sa.Room.Location.Id, sa.Room.Location.Name }
                     },
-                    asNoTracking: true
+                    asNoTracking: true,
+                    orderBy:x=>x.Id
                 );
 
                 var courses = await coursesQuery;
@@ -392,6 +404,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         {
                             return BadRequest(ModelState);
                         }
+                        if(mapCourseSchedule.course.StartDate.Date >= mapCourseSchedule.course.EndDate.Date)
+                        {
+                            return BadRequest("Ungültiges Datum: Das Startdatum ist größer als das Enddatum.");//Invalid date: Start date is greater than end date
+                        }
                         foreach (var schedule in mapCourseSchedule.courseSchedule)
                         {
                             if (TimeSpan.Parse(schedule.StartTime) >= TimeSpan.Parse(schedule.EndTime))
@@ -469,31 +485,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                         await _courseScheduleRepository.ManyAdd(courseSchedules);
 
-                        return Ok(new
-                        {
-                            id = courseEntity.Id,
-                            name = courseEntity.Name,
-                            price = courseEntity.Price,
-                            lessons = courseEntity.Lessons,
-                            capacity = courseEntity.Capacity,
-                            startDate = courseEntity.StartDate,
-                            endDate = courseEntity.EndDate,
-                            Room = new { room.Id, room.Name },
-                            Location = new {room.Location.Id, room.Location.Name },
-                            Teacher = courseEntity.Teacher == null ? null : courseEntity.Teacher.Select(z => new
-                            {
-                                z.Id,
-                                z.FirstName,
-                                z.LastName
-                            }),
-                            courseSchedule = courseSchedules.Select(x => new
-                            {
-                                x.Id,
-                                x.DayOfWeek,
-                                x.StartTime,
-                                x.EndTime,
-                            })
-                        });
+                        return Ok("Erfolgreich hinzugefügt.");//added success
                     }
                     catch (Exception ex)
                     {
@@ -524,6 +516,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
+                }
+                if (courseData.course.StartDate.Date >= courseData.course.EndDate.Date)
+                {
+                    return BadRequest("Ungültiges Datum: Das Startdatum ist größer als das Enddatum.");//Invalid date: Start date is greater than end date
                 }
                 foreach (var schedule in courseData.courseSchedule)
                 {

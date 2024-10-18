@@ -74,7 +74,8 @@ namespace FekraHubAPI.Controllers
                     })
 
                 },
-                asNoTracking: true
+                asNoTracking: true,
+                orderBy:x=>x.Date
                 );
 
                 return Ok(Messages);

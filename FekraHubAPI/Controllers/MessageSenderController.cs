@@ -352,8 +352,12 @@ namespace FekraHubAPI.Controllers
                     }
 
                 }
+                var germanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+                var germanTime = TimeZoneInfo.ConvertTime(DateTime.Now, germanTimeZone);
+
                 var messageSender = new MessageSender
                 {
+                    Date = germanTime,
                     Subject = messagDTO.Subject,
                     Message = messagDTO.Message,
                     UserMessages = uniqueUsers.Select(user => new UserMessage

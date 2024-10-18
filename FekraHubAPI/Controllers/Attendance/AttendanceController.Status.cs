@@ -132,8 +132,8 @@ namespace FekraHubAPI.Controllers.Attendance
                     return BadRequest(new List<object>()); 
                 }
 
-                DateTime startDate = course.StartDate;
-                DateTime endDate = course.EndDate < DateTime.Now ? course.EndDate : DateTime.Now;
+                DateTime startDate = course.StartDate.Date;
+                DateTime endDate = course.EndDate.Date < DateTime.Now.Date ? course.EndDate.Date : DateTime.Now.Date;
 
                 var workingDays = course.CourseSchedule.ToList();
 

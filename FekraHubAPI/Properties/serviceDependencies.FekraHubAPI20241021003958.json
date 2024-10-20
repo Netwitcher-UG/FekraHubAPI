@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "apis1": {
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ApiManagement/service/FekraHubAPIapi/apis/FekraHubAPI",
+      "type": "apis.azure"
+    },
+    "mssql1": {
+      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Web/sites/FekraHubAPI20241021003958/providers/Microsoft.ServiceLinker/linkers/ConnectionStringsdevelpConn_11B506B63E",
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/netwitcher/databases/NW-FekraHub-DEV",
+      "type": "mssql.azure",
+      "connectionId": "ConnectionStrings:develpConn",
+      "dynamicId": null
+    }
+  }
+}

@@ -1,5 +1,6 @@
 using AutoMapper;
 using FekraHubAPI.Data.Models;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FekraHubAPI.MapModels.Courses
@@ -7,7 +8,7 @@ namespace FekraHubAPI.MapModels.Courses
     public class Map_PayRoll : IMapFrom<PayRoll>
     {
 
-
+        [Required]
         public byte[] File { get; set; }
 
         public DateTime Timestamp { get; set; } = DateTime.Now;

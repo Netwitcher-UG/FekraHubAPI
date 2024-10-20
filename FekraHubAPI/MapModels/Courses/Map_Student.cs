@@ -6,7 +6,9 @@ namespace FekraHubAPI.MapModels.Courses
 {
     public class Map_Student : IMapFrom<Student>
     {
+        [Required]
         public string FirstName { get; set; }
+        [Required]
         public string LastName { get; set; }
         public string Gender { get; set; }
         public DateTime Birthday { get; set; }

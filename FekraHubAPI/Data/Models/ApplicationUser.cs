@@ -48,5 +48,6 @@ namespace FekraHubAPI.Data.Models
         public ICollection<WorkContract> WorkContract { get; set; }
         public ICollection<PayRoll> PayRoll { get; set; }
         public ICollection<UserMessage> UserMessages { get; set; }
+        public ICollection<NotificationUser> NotificationUsers { get; set; }
     }
 }

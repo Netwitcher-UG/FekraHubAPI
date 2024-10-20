@@ -26,6 +26,10 @@ namespace FekraHubAPI.Controllers.Students
         private readonly IRepository<Event> _eventRepo;
         private readonly IRepository<CourseSchedule> _courseScheduleRepo;
         private readonly IRepository<AttendanceDate> _attendanceDateRepo;
+        private readonly IRepository<Room> _roomRepo;
+        private readonly IRepository<Report> _reportRepo;
+        private readonly IRepository<Invoice> _invoiceRepo;
+        private readonly IRepository<Upload> _uploadRepo;
         private readonly IContractMaker _contractMaker;
         private readonly IEmailSender _emailSender;
         private readonly IMapper _mapper;
@@ -37,7 +41,9 @@ namespace FekraHubAPI.Controllers.Students
             UserManager<ApplicationUser> userManager,
             IRepository<AttendanceDate> attendanceDateRepo,
             IRepository<CourseSchedule> courseScheduleRepo,
-            ILogger<StudentController> logger, IRepository<Event> eventRepo)
+            ILogger<StudentController> logger, IRepository<Event> eventRepo,
+            IRepository<Room> roomRepo, IRepository<Report> reportRepo,
+            IRepository<Invoice> invoiceRepo, IRepository<Upload> uploadRepo)
         {
             _studentContractRepo = studentContractRepo;
             _contractMaker = contractMaker;
@@ -50,6 +56,10 @@ namespace FekraHubAPI.Controllers.Students
             _courseScheduleRepo = courseScheduleRepo;
             _logger = logger;
             _eventRepo = eventRepo;
+            _roomRepo = roomRepo;
+            _reportRepo = reportRepo;
+            _invoiceRepo = invoiceRepo;
+            _uploadRepo = uploadRepo;
         }
 
         [Authorize(Policy = "GetStudentsCourse")]
@@ -58,115 +68,188 @@ namespace FekraHubAPI.Controllers.Students
         {
             try
             {
-                var students = await _studentRepo.GetRelationSingle(
-                    where: x => x.Id == id,
-                    include: x => x.Include(u => u.User).Include(z => z.Course).ThenInclude(z => z.Teacher)
-                    .Include(z => z.Course.Room).ThenInclude(z => z.Location).Include(z => z.Course.Upload)
-                    .Include(z => z.Report).Include(z => z.Invoices),
-                    selector: z => new
-                    {
-                        z.Id,
-                        z.FirstName,
-                        z.LastName,
-                        z.Birthday,
-                        z.Nationality,
-                        z.Note,
-                        z.Gender,
-                        city = z.City ?? "Like parent",
-                        Street = z.Street ?? "Like parent",
-                        StreetNr = z.StreetNr ?? "Like parent",
-                        ZipCode = z.ZipCode ?? "Like parent",
-                        Parent = new
-                        {
-                            z.User.Id,
-                            z.User.FirstName,
-                            z.User.LastName,
-                            z.User.Email,
-                            z.User.PhoneNumber,
-                            z.User.EmergencyPhoneNumber,
-                            z.User.Street,
-                            z.User.StreetNr,
-                            z.User.ZipCode,
-                            z.User.City,
-                            z.User.Nationality,
-                            z.User.Birthplace,
-                            z.User.Birthday,
-                            z.User.Gender,
-                            z.User.Job,
-                            z.User.Graduation
-                        },
-                        course = z.Course == null ? null : new
-                        {
-                            z.Course.Id,
-                            z.Course.Name,
-                            z.Course.Capacity,
-                            startDate = z.Course.StartDate.Date,
-                            EndDate = z.Course.EndDate.Date,
-                            z.Course.Price,
-                            Teacher = z.Course.Teacher.Select(x => new
+                var student = await _studentRepo.GetRelationSingle(
+                            where: x => x.Id == id,
+                            selector: z => new
+                            {
+                                z.Id,
+                                z.FirstName,
+                                z.LastName,
+                                z.Birthday,
+                                z.Nationality,
+                                z.Note,
+                                z.Gender,
+                                z.ActiveStudent,
+                                City = z.City ?? "Like parent",
+                                Street = z.Street ?? "Like parent",
+                                StreetNr = z.StreetNr ?? "Like parent",
+                                ZipCode = z.ZipCode ?? "Like parent",
+                                z.ParentID
+                            },
+                            returnType: QueryReturnType.SingleOrDefault,
+                            asNoTracking: true
+                        );
+
+                var parent = await _userManager.Users
+                            .Where(x => x.Id == student.ParentID)
+                            .Select(x => new
                             {
                                 x.Id,
                                 x.FirstName,
-                                x.LastName
-
+                                x.LastName,
+                                x.Email,
+                                x.PhoneNumber,
+                                x.EmergencyPhoneNumber,
+                                x.Street,
+                                x.StreetNr,
+                                x.ZipCode,
+                                x.City,
+                                x.Nationality,
+                                x.Birthplace,
+                                x.Birthday,
+                                x.Gender,
+                                x.Job,
+                                x.Graduation
                             })
-                        },
-                        Room = z.Course == null ? null : new
+                            .AsNoTracking()
+                            .SingleOrDefaultAsync();
+                var course = await _courseRepo.GetRelationSingle(
+                                where: c => c.Student.Any(s => s.Id == id),
+                                include: c => c.Include(x => x.Teacher),
+                                selector: c => new
+                                {
+                                    c.Id,
+                                    c.Name,
+                                    c.Capacity,
+                                    StartDate = c.StartDate.Date,
+                                    EndDate = c.EndDate.Date,
+                                    c.Price,
+                                    Teacher = c.Teacher.Select(t => new
+                                    {
+                                        t.Id,
+                                        t.FirstName,
+                                        t.LastName
+                                    })
+                                },
+                                returnType: QueryReturnType.SingleOrDefault,
+                                asNoTracking: true
+                            );
+                var room = await _courseRepo.GetRelationSingle(
+                                where: r => r.Id == course.Id,
+                                include: r => r.Include(x => x.Room).ThenInclude(x=>x.Location),
+                                selector: r => new
+                                {
+                                    room = new
+                                    {
+                                        r.Id,
+                                        r.Name
+                                    },
+                                    Location = r.Room.Location == null ? null : new
+                                    {
+                                        r.Room.Location.Id,
+                                        r.Room.Location.Name,
+                                        r.Room.Location.City,
+                                        r.Room.Location.Street,
+                                        r.Room.Location.ZipCode,
+                                        r.Room.Location.StreetNr
+                                    }
+                                },
+                                returnType: QueryReturnType.SingleOrDefault,
+                                asNoTracking: true
+                            );
+                var reports = await _reportRepo.GetRelationList(
+                                    where: r => r.StudentId == id && r.CreationDate >= DateTime.Now.AddDays(-30),
+                                    selector: r => new
+                                    {
+                                        r.Id,
+                                        r.data,
+                                        r.CreationDate,
+                                        TeacherId = r.UserId,
+                                        TeacherFirstName = r.User.FirstName,
+                                        TeacherLastName = r.User.LastName
+                                    },asNoTracking:true
+                                    );
+                var uploads = await _uploadRepo.GetRelationList(
+                                    where: u => u.Courses.Any(c => c.Id == course.Id) && u.Date >= DateTime.Now.AddDays(-30),
+                                    selector: u => new
+                                    {
+                                        u.Id,
+                                        u.FileName,
+                                        u.Date,
+                                        UploadType = u.UploadType.TypeTitle
+                                    },
+                                    asNoTracking: true
+                                );
+                var invoices = await _invoiceRepo.GetRelationList(
+                                    where: i => i.Studentid == id && i.Date >= DateTime.Now.AddDays(-30),
+                                    selector: i => new
+                                    {
+                                        i.Id,
+                                        i.FileName,
+                                        i.Date
+                                    },
+                                    asNoTracking: true
+                                );
+
+
+               var students =  new
+                    {
+                        student.Id,
+                        student.FirstName,
+                        student.LastName,
+                        student.Birthday,
+                        student.Nationality,
+                        student.Note,
+                        student.Gender,
+                        student.ActiveStudent,
+                        city = student.City ?? "Like parent",
+                        Street = student.Street ?? "Like parent",
+                        StreetNr = student.StreetNr ?? "Like parent",
+                        ZipCode = student.ZipCode ?? "Like parent",
+                        Parent = new
                         {
-                            z.Course.Room.Id,
-                            z.Course.Room.Name
+                            parent.Id,
+                            parent.FirstName,
+                            parent.LastName,
+                            parent.Email,
+                            parent.PhoneNumber,
+                            parent.EmergencyPhoneNumber,
+                            parent.Street,
+                            parent.StreetNr,
+                            parent.ZipCode,
+                            parent.City,
+                            parent.Nationality,
+                            parent.Birthplace,
+                            parent.Birthday,
+                            parent.Gender,
+                            parent.Job,
+                            parent.Graduation
                         },
-                        Location = z.Course == null ? null : new
+                        course = course == null ? null : new
                         {
-                            z.Course.Room.Location.Id,
-                            z.Course.Room.Location.Name,
-                            z.Course.Room.Location.City,
-                            z.Course.Room.Location.Street,
-                            z.Course.Room.Location.ZipCode,
-                            z.Course.Room.Location.StreetNr
+                            course.Id,
+                            course.Name,
+                            course.Capacity,
+                            startDate = course.StartDate.Date,
+                            EndDate = course.EndDate.Date,
+                            course.Price,
+                            Teacher = course.Teacher
                         },
+                        Room = room == null ? null : room.room,
+                        Location = room == null ? null : room.Location,
                         News = new
                         {
-                            Report = z.Report == null ? null : z.Report
-                            .Where(x => x.CreationDate >= DateTime.Now.AddDays(-30))
-                            .Select(z => new
-                            {
-                                z.Id,
-                                z.data,
-                                z.CreationDate,
-                                z.CreationDate.Year,
-                                z.CreationDate.Month,
-                                TeacherId = z.UserId,
-                                TeacherFirstName = z.User == null ? null : z.User.FirstName,
-                                TeacherLastName = z.User == null ? null : z.User.LastName,
-                            }).ToList(),
-                            WorkSheet = z.Course == null || z.Course.Upload == null ? null : z.Course.Upload
-                                .Where(upload => upload.Date >= DateTime.Now.AddDays(-30))
-                                .Select(upload => new
-                                {
-                                    upload.Id,
-                                    upload.FileName,
-                                    upload.Date,
-                                    upload.UploadType.TypeTitle
-                                })
-                                .ToList(),
-                            Invoice = z.Invoices == null ? null : z.Invoices
-                            .Where(x => x.Date >= DateTime.Now.AddDays(-30))
-                            .Select(z => new
-                            {
-                                z.Id,
-                                z.FileName,
-                                z.Date,
-                            }).ToList()
+                            Report = reports == null ? null : reports,
+                            WorkSheet = uploads == null ? null : uploads
+                                ,
+                            Invoice = invoices == null ? null : invoices
                         }
 
 
-                    },
-                    returnType: QueryReturnType.SingleOrDefault,
-                    asNoTracking: true);
+                    };
                 if (students == null)
                 {
-                    return NotFound("This student is not found");
+                    return BadRequest("Dieser Schüler wurde nicht gefunden.");//This student is not found
                 }
                 var userId = _studentContractRepo.GetUserIDFromToken(User);
                 var Teacher = await _studentContractRepo.IsTeacherIDExists(userId);
@@ -174,13 +257,13 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     if (!students.course.Teacher.Select(x => x.Id).Contains(userId))
                     {
-                        return BadRequest("This student isn't in your course");
+                        return BadRequest("Dieser Schüler ist nicht in Ihrem Kurs.");//This student isn't in your course
                     }
                 }
-                var parent = await _userManager.Users.AnyAsync(x => x.Id == students.Parent.Id);
-                if (!parent)
+                var parents = await _userManager.Users.AnyAsync(x => x.Id == students.Parent.Id);
+                if (!parents)
                 {
-                    return NotFound("This student does't have registred parents");
+                    return BadRequest("Dieser Schüler hat keine registrierten Eltern.");//This student does't have registred parents
                 }
 
                 return Ok(students);
@@ -212,12 +295,12 @@ namespace FekraHubAPI.Controllers.Students
                             var teacherIds = course.Teacher.Select(x => x.Id);
                             if (!teacherIds.Contains(userId))
                             {
-                                return BadRequest("You are not in this course");
+                                return BadRequest("Sie sind nicht in diesem Kurs.");//You are not in this course
                             }
                         }
                         else
                         {
-                            return NotFound("Course not found");
+                            return BadRequest("Kurs nicht gefunden.");//Course not found
                         }
 
                     }
@@ -248,6 +331,7 @@ namespace FekraHubAPI.Controllers.Students
                     x.Nationality,
                     x.Note,
                     x.Gender,
+                    x.ActiveStudent,
                     city = x.City ?? "Like parent",
                     Street = x.Street ?? "Like parent",
                     StreetNr = x.StreetNr ?? "Like parent",
@@ -294,7 +378,7 @@ namespace FekraHubAPI.Controllers.Students
                     );
                 if (course == null)
                 {
-                    return BadRequest("Course not found");
+                    return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
                 var today = DateTime.Now.Date;
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(
@@ -303,29 +387,29 @@ namespace FekraHubAPI.Controllers.Students
                 x.CourseSchedule.Any(cs => courseScheduleIds.Contains(cs.Id)));
                 if (eventIsExist)
                 {
-                    return BadRequest("Today there is an event");
+                    return Ok(new { IsTodayAWorkDay = false, CourseAttendance = false, students = new List<Student>() { } });
                 }
                 if (Teacher)
                 {
                     var teacherIds = course.Teacher.Select(z => z.Id);
                     if (teacherIds == null)
                     {
-                        return BadRequest("This course does not have any teachers");
+                        return BadRequest("Dieser Kurs hat keine Lehrer.");//This course does not have any teachers
                     }
                     if (!teacherIds.Contains(userId))
                     {
-                        return BadRequest("You are not in this course");
+                        return BadRequest("Sie sind nicht in diesem Kurs.");//You are not in this course
                     }
                 }
 
 
                 if (DateTime.Now.Date < course.StartDate.Date)
                 {
-                    return BadRequest("The course has not started yet");
+                    return BadRequest("Der Kurs hat noch nicht begonnen.");//The course has not started yet
                 }
                 else if (DateTime.Now.Date > course.EndDate.Date)
                 {
-                    return BadRequest("The course is over");
+                    return BadRequest("Der Kurs ist vorbei.");//The course is over
                 }
                 var att = await _attendanceDateRepo.GetRelationSingle(
                     where: x => x.Date.Date == DateTime.Now.Date,
@@ -345,7 +429,9 @@ namespace FekraHubAPI.Controllers.Students
                 var students = await _studentRepo.GetRelationList(
                     manyWhere: new List<Expression<Func<Student, bool>>?>
                         {
+                        
                         x => x.CourseID == courseId,
+                        x => x.ActiveStudent == true,
                         search != null ? (Expression<Func<Student, bool>>)(x => x.FirstName.Contains(search) || x.LastName.Contains(search)) : null
                         }.Where(x => x != null).Cast<Expression<Func<Student, bool>>>().ToList(),
                     orderBy: x => x.Id,
@@ -391,6 +477,15 @@ namespace FekraHubAPI.Controllers.Students
                 return BadRequest(ex.Message);
             }
 
+        }
+        [Authorize(Policy = "GetStudentsCourse")]
+        [HttpPatch("ActiveStudent")]
+        public async Task<IActionResult> ActiveStudent([Required]int id,[Required]bool active)
+        {
+            var student = await _studentRepo.GetById(id);
+            student.ActiveStudent = active;
+            await _studentRepo.Update(student);
+            return Ok("Erfolg");//success
         }
     }
 }

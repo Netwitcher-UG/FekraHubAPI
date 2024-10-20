@@ -16,14 +16,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
     public class EventTypeController : ControllerBase
     {
         private readonly IRepository<EventType> _eventTypeRepository;
+        private readonly IRepository<Event> _eventRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<EventTypeController> _logger;
         public EventTypeController(IRepository<EventType> eventTypeRepository, IMapper mapper,
-            ILogger<EventTypeController> logger)
+            ILogger<EventTypeController> logger, IRepository<Event> eventRepository)
         {
             _eventTypeRepository = eventTypeRepository;
             _mapper = mapper;
             _logger = logger;
+            _eventRepository = eventRepository;
         }
 
         [Authorize(Policy = "ManageEventTypes")]
@@ -62,7 +64,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventType = await _eventTypeRepository.GetById(id);
                 if (eventType == null)
                 {
-                    return NotFound();
+                    return BadRequest("Veranstaltungstyp nicht gefunden.");//Event type not found
                 }
                 return Ok(new { eventType.Id, eventType.TypeTitle });
             }
@@ -90,7 +92,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventTypeEntity = await _eventTypeRepository.GetById(id);
                 if (eventTypeEntity == null)
                 {
-                    return NotFound();
+                    return BadRequest("Veranstaltungstyp nicht gefunden.");//Event type not found
                 }
 
                 _mapper.Map(eventTypeMdl, eventTypeEntity);
@@ -138,9 +140,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventType = await _eventTypeRepository.DataExist(x => x.Id == id);
                 if (!eventType)
                 {
-                    return NotFound();
+                    return BadRequest("Veranstaltungstyp nicht gefunden.");//Event type not found
                 }
-
+                var InEventExist = await _eventRepository.DataExist(x=>x.TypeID == id);
+                if (InEventExist)
+                {
+                    return BadRequest("Dieser Typ kann nicht gelöscht werden, da er verwendet wird");//You cannot delete this type because it is in use
+                }
                 await _eventTypeRepository.Delete(id);
 
                 return Ok("Delete success");

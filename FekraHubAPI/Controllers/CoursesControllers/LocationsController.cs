@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data.Models;
@@ -40,7 +40,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     asNoTracking:true);
                 if (locations == null)
                 {
-                    return BadRequest("no locations found");
+                    return BadRequest("Keine Standorte gefunden.");//no locations found
                 }
                 return Ok(locations);
             }
@@ -122,7 +122,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     );
                 if (location == null )
                 {
-                    return BadRequest("Location not found");
+                    return BadRequest("Standort nicht gefunden.");//Location not found
                 }
                 return Ok(location);
 
@@ -167,7 +167,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 
                 if (locationEntity == null)
                 {
-                    return BadRequest("Location not found");
+                    return BadRequest("Standort nicht gefunden.");//Location not found
                 }
 
                 _mapper.Map(locationRoomDTO.locationMdl, locationEntity);
@@ -261,17 +261,17 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var location = await _locationRepository.DataExist(x=>x.Id == id);
                 if (!location)
                 {
-                    return BadRequest("Location not found");
+                    return BadRequest("Standort nicht gefunden.");//Location not found
                 }
                 var roomExist = await _roomRepository.DataExist(n => n.LocationID == id);
                 if (roomExist)
                 {
-                    return BadRequest("This Location contains Rooms !!");
+                    return BadRequest("Dieser Standort enthält Räume!!");//This Location contains Rooms !!
                 }
 
                 await _locationRepository.Delete(id);
 
-                return Ok("Delete success");
+                return Ok("Erfolgreich gelöscht");//Deleted success
 
             }
             catch (Exception ex)

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Constract;
+using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Controllers.AuthorizationController;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.Courses;
@@ -8,6 +9,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace FekraHubAPI.Controllers.Attendance
@@ -28,6 +31,7 @@ namespace FekraHubAPI.Controllers.Attendance
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<AuthorizationUsersController> _logger;
+        private readonly IContractMaker _contractMaker;
 
         public AttendanceController(IRepository<TeacherAttendance> teacherAttendanceRepo,
             IRepository<StudentAttendance> studentAttendanceRepo,
@@ -38,7 +42,8 @@ namespace FekraHubAPI.Controllers.Attendance
             IRepository<AttendanceDate> attendanceDateRepo,
             IRepository<CourseAttendance> courseAttendanceRepo,
             IRepository<CourseSchedule> courseScheduleRepo,
-            ILogger<AuthorizationUsersController> logger, IRepository<Event> eventRepo)
+            ILogger<AuthorizationUsersController> logger, IRepository<Event> eventRepo,
+            IContractMaker contractMaker)
         {
             _teacherAttendanceRepo = teacherAttendanceRepo;
             _studentAttendanceRepo = studentAttendanceRepo;
@@ -52,8 +57,122 @@ namespace FekraHubAPI.Controllers.Attendance
             _courseScheduleRepo = courseScheduleRepo;
             _logger = logger;
             _eventRepo = eventRepo;
-
+            _contractMaker = contractMaker;
         }
+
+
+
+        [Authorize]
+        [HttpGet("ExportAttendanceReport")]
+        public async Task<IActionResult> ExportMonthlyAttendanceReportPDF([Required]int courseId , DateTime? date)//////////////////////////////////////////
+        {
+            var course = await _coursRepo.GetRelationSingle(
+                where:x=>x.Id == courseId,
+                include:x=>x.Include(z=>z.Student).ThenInclude(z=>z.StudentAttendance).ThenInclude(z=>z.AttendanceStatus)
+                .Include(z=>z.Room).Include(z=>z.CourseSchedule).Include(z=>z.Teacher),
+                selector:x=> x,
+                
+                returnType:QueryReturnType.FirstOrDefault,
+                asNoTracking:true
+                );
+            if (course == null)
+            {
+                return BadRequest("Die Kurse wurden nicht gefunden.");//course not found
+            }
+            if(course.Student.Count == 0)
+            {
+                return BadRequest("In diesem Kurs sind keine Schüler registriert");//no student in course
+            }
+            if (course.CourseSchedule.Count == 0)
+            {
+                return BadRequest("Es ist keine Anwesenheit für diesen Kurs registriert.");
+            }
+            string? pdf;
+            if(!date.HasValue)
+            {
+                pdf = await _contractMaker.AttendanceReport(course);
+            }
+            else
+            {
+                pdf = await _contractMaker.MonthlyAttendanceReport(course, date.Value);
+            }
+            
+           
+
+            return Ok(pdf);
+        }
+        [Authorize]
+        [HttpGet("CourseWorkingDates")]
+        public async Task<IActionResult> CourseWorkingDates([Required] int courseId)
+        {
+            
+            try
+            {
+                var course = await _coursRepo.GetRelationSingle(
+                    where: x => x.Id == courseId,
+                    include: x => x.Include(z => z.CourseSchedule),
+                    selector: x => new
+                    {
+                        x.StartDate,
+                        x.EndDate,
+                        StudentsCount = x.Student.Count(), 
+                        CourseSchedule = x.CourseSchedule.Select(cs => cs.DayOfWeek)
+                    },
+                    returnType: QueryReturnType.FirstOrDefault,
+                    asNoTracking: true
+                );
+
+                if (course == null)
+                {
+                    return BadRequest("Die Kurse wurden nicht gefunden."); 
+                }
+
+                if (course.StudentsCount == 0)
+                {
+                    return BadRequest(new List<object>()); 
+                }
+
+                DateTime startDate = course.StartDate.Date;
+                DateTime endDate = course.EndDate.Date < DateTime.Now.Date ? course.EndDate.Date : DateTime.Now.Date;
+
+                var workingDays = course.CourseSchedule.ToList();
+
+                if (workingDays.Count == 0)
+                {
+                    return BadRequest(new List<object>()); 
+                }
+
+                var workingDates = new List<DateTime>();
+                for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                {
+                    if (workingDays.Contains(date.DayOfWeek.ToString()))
+                    {
+                        workingDates.Add(date);
+                    }
+                }
+
+                var groupedDates = workingDates
+                    .GroupBy(d => new { d.Year, d.Month })
+                    .Select(g => new
+                    {
+                        key = $"{g.Key.Month:D2}.{g.Key.Year}",
+                        value = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("yyyy-MM-dd")
+                    })
+                    .ToList();
+
+                return Ok(groupedDates);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
+
+    
+
+
+
 
         [Authorize(Policy = "ManageAttendanceStatus")]
         [HttpGet("AttendanceStatus")]
@@ -83,7 +202,7 @@ namespace FekraHubAPI.Controllers.Attendance
             {
                 if (status == null)
                 {
-                    return BadRequest("Please enter a status");
+                    return BadRequest("Bitte geben Sie einen Status ein.");//Please enter a status
                 }
                 var statuses = await _attendanceStatusRepo.GetRelationSingle(
                     where: s => s.Title.ToLower() == status.ToLower(),
@@ -92,7 +211,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     asNoTracking:true);
                 if (statuses != null)
                 {
-                    return BadRequest("This status is already exists");
+                    return BadRequest("Dieser Status existiert bereits.");//This status is already exists
                 }
                 AttendanceStatus attendanceStatus = new AttendanceStatus()
                 {
@@ -120,11 +239,11 @@ namespace FekraHubAPI.Controllers.Attendance
                 var attendanceStatus = await _attendanceStatusRepo.GetById(id);
                 if (attendanceStatus == null)
                 {
-                    return NotFound("The status with the provided ID does not exist.");
+                    return BadRequest("Der Status mit der angegebenen ID existiert nicht.");//The status with the provided ID does not exist.
                 }
                 await _attendanceStatusRepo.Delete(attendanceStatus.Id);
 
-                return Ok($"{attendanceStatus.Title} deleted successfully.");
+                return Ok($"{attendanceStatus.Title} erfolgreich gelöscht.");//deleted successfully.
             }
             catch (Exception ex)
             {

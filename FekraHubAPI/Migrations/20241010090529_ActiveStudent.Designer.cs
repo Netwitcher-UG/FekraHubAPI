@@ -4,6 +4,7 @@ using FekraHubAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FekraHubAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241010090529_ActiveStudent")]
+    partial class ActiveStudent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -699,46 +702,6 @@ namespace FekraHubAPI.Migrations
                     b.HasIndex("ExternalEmailId");
 
                     b.ToTable("MessageSenderExternalEmail");
-                });
-
-            modelBuilder.Entity("FekraHubAPI.Data.Models.NotificationUser", b =>
-                {
-                    b.Property<int>("NotificationId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("Read")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.HasKey("NotificationId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("NotificationUser");
-                });
-
-            modelBuilder.Entity("FekraHubAPI.Data.Models.Notifications", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Notification")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.PayRoll", b =>
@@ -2169,25 +2132,6 @@ namespace FekraHubAPI.Migrations
                     b.Navigation("MessageSender");
                 });
 
-            modelBuilder.Entity("FekraHubAPI.Data.Models.NotificationUser", b =>
-                {
-                    b.HasOne("FekraHubAPI.Data.Models.Notifications", "Notifications")
-                        .WithMany("NotificationUsers")
-                        .HasForeignKey("NotificationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "ApplicationUsers")
-                        .WithMany("NotificationUsers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUsers");
-
-                    b.Navigation("Notifications");
-                });
-
             modelBuilder.Entity("FekraHubAPI.Data.Models.PayRoll", b =>
                 {
                     b.HasOne("FekraHubAPI.Data.Models.ApplicationUser", "User")
@@ -2474,11 +2418,6 @@ namespace FekraHubAPI.Migrations
                     b.Navigation("UserMessages");
                 });
 
-            modelBuilder.Entity("FekraHubAPI.Data.Models.Notifications", b =>
-                {
-                    b.Navigation("NotificationUsers");
-                });
-
             modelBuilder.Entity("FekraHubAPI.Data.Models.Room", b =>
                 {
                     b.Navigation("Course");
@@ -2509,8 +2448,6 @@ namespace FekraHubAPI.Migrations
 
             modelBuilder.Entity("FekraHubAPI.Data.Models.ApplicationUser", b =>
                 {
-                    b.Navigation("NotificationUsers");
-
                     b.Navigation("PayRoll");
 
                     b.Navigation("Report");

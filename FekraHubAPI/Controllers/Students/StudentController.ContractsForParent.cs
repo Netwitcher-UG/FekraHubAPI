@@ -25,7 +25,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 if (string.IsNullOrEmpty(parentId))
                 {
-                    return Unauthorized("User not found.");
+                    return Unauthorized("Benutzer nicht gefunden.");//User not found.
                 }
 
                 var studentEntity = new Student
@@ -64,7 +64,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("User ID not found in token.");
+                    return Unauthorized("Benutzer-ID nicht im Token gefunden.");//User ID not found in token.
                 }
                 if (!ModelState.IsValid)
                 {
@@ -89,7 +89,7 @@ namespace FekraHubAPI.Controllers.Students
                 await _contractMaker.ConverterHtmlToPdf(studentEntity);
                 await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
                 await _emailSender.SendToAdminNewStudent(studentEntity);
-                return Ok("welcomes your son to our family . A copy of the contract was sent to your email");
+                return Ok("Begrüßt Ihren Sohn in unserer Familie. Eine Kopie des Vertrags wurde an Ihre E-Mail gesendet.");//welcomes your son to our family . A copy of the contract was sent to your email
             }
             catch (Exception ex)
             {
@@ -108,7 +108,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("User not found.");
+                    return Unauthorized("Benutzer nicht gefunden.");//User not found.
                 }
                 var contracts = await _studentContractRepo.GetRelationList(
                     where: x => x.Student.ParentID == userId,
@@ -141,7 +141,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("User not found.");
+                    return Unauthorized("Benutzer nicht gefunden.");//User not found.
                 }
                 var parentId = userId;
                 var contracts = await _studentContractRepo.GetRelationList(
@@ -173,7 +173,7 @@ namespace FekraHubAPI.Controllers.Students
                 var query = await _studentContractRepo.GetById(contractId);
                 if (query == null)
                 {
-                    return BadRequest("file not found");
+                    return BadRequest("Datei nicht gefunden.");//file not found
                 }
                 var result = Convert.ToBase64String(query.File);
 

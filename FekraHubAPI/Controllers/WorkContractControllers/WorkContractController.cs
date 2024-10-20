@@ -43,7 +43,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 var WorkContract = await _workContractRepository.GetById(workContractID);
                 if (WorkContract == null )
                 {
-                    return BadRequest("WorkContract Not Fount");
+                    return BadRequest("Arbeitsvertrag nicht gefunden.");//WorkContract Not Fount
 
                 }
                 var data = new {WorkContract.Id , WorkContract.File ,  WorkContract.TeacherID};
@@ -86,7 +86,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 var user = await _userManager.FindByIdAsync(UserID);
                 if (user == null)
                 {
-                    return BadRequest("User Not Found");
+                    return BadRequest("Benutzer nicht gefunden.");//User Not Found
                 }
                 var isTeacher = await _workContractRepository.IsTeacherIDExists(user.Id);
                 var isSecretariat = await _workContractRepository.IsSecretariat(user);
@@ -94,7 +94,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
 
                 if (!(isTeacher || isSecretariat))
                 {
-                    return BadRequest("User Must Have Teacher Or Secrtaria Role");
+                    return BadRequest("Benutzer muss die Rolle Lehrer oder Sekretär haben.");//User Must Have Teacher Or Secrtaria Role
                 }
                 foreach (var file in files)
                 {
@@ -138,7 +138,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                 var WorkContractEntity = await _workContractRepository.GetById(id);
                 if (WorkContractEntity == null)
                 {
-                    return NotFound();
+                    return BadRequest("Arbeitsvertrag nicht gefunden.");//WorkContract not found
                 }
                 await _workContractRepository.Delete(id);
                 return Ok();

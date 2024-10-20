@@ -102,7 +102,7 @@ namespace FekraHubAPI.Controllers
 
                         if (teacherIds != null && !teacherIds.Contains(userId))
                         {
-                            return BadRequest("You are not in this course");
+                            return BadRequest("Sie sind nicht in diesem Kurs.");//You are not in this course
                         }
 
 
@@ -146,7 +146,7 @@ namespace FekraHubAPI.Controllers
                     );
                 if (!query.Any())
                 {
-                    return BadRequest("No reports found.");
+                    return BadRequest("Keine Berichte gefunden.");//No reports found.
                 }
 
                 var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
@@ -174,12 +174,12 @@ namespace FekraHubAPI.Controllers
             var Teacher = await _Users.FindByIdAsync(id); 
             if (Teacher == null)
             {
-                return BadRequest("Teacher not found");
+                return BadRequest("Lehrer nicht gefunden.");//Teacher not found
             }
             var isTeacher = await _reportRepo.IsTeacherIDExists(id);
             if (!isTeacher)
             {
-                return BadRequest("The Id does not belong to a teacher");
+                return BadRequest("Die Report-ID gehört nicht zu einem Lehrer.");//The ReportId does not belong to a teacher
             }
             var teacherReports = await _reportRepo.GetRelationList(
                 where: x=> x.UserId == id ,
@@ -245,7 +245,7 @@ namespace FekraHubAPI.Controllers
 
                 if (report == null)
                 {
-                    return BadRequest($"no report has an ID {id}");
+                    return BadRequest($"Kein Bericht hat die ID {id}.");//no report has an ID {id}
                 }
                 var userId = _reportRepo.GetUserIDFromToken(User);
                 var Teacher = await _reportRepo.IsTeacherIDExists(userId);
@@ -253,7 +253,7 @@ namespace FekraHubAPI.Controllers
                 {
                     if (report.TeacherId != userId)
                     {
-                        return BadRequest("This report is not for you");
+                        return BadRequest("Dieser Bericht ist nicht für Sie.");//This report is not for you
                     }
                 }
                 return Ok(report);
@@ -333,7 +333,7 @@ namespace FekraHubAPI.Controllers
 
                 if (!query.Any())
                 {
-                    return BadRequest("No reports found.");
+                    return BadRequest("Keine Berichte gefunden.");//No reports found.
                 }
                 var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
 
@@ -365,11 +365,11 @@ namespace FekraHubAPI.Controllers
                 var student = await _studentRepo.GetById(studentId);
                 if (student == null)
                 {
-                    return BadRequest("Student not found");
+                    return BadRequest("Schüler nicht gefunden");//Student not found
                 }
                 if (student.ParentID != ParentId)
                 {
-                    return BadRequest("This student is not the User's child");
+                    return BadRequest("Dieser Schüler ist nicht das Kind des Benutzers.");//This student is not the User's child
                 }
                 var result = await _reportRepo.GetRelationList(
                     where: x => x.StudentId == studentId && x.Improved == true,
@@ -402,7 +402,7 @@ namespace FekraHubAPI.Controllers
                     asNoTracking:true);
                 if (!result.Any())
                 {
-                    return BadRequest("No reports found.");
+                    return BadRequest("Keine Berichte gefunden.");//No reports found.
                 }
 
                 return Ok(result);
@@ -452,17 +452,17 @@ namespace FekraHubAPI.Controllers
                     asNoTracking:true);
                 if (report == null)
                 {
-                    return BadRequest($"no report has an ID {id}");
+                    return BadRequest($"Kein Bericht hat die ID {id}.");//no report has an ID {id}
                 }
                 var ParentId = _reportRepo.GetUserIDFromToken(User);
                 var student = await _studentRepo.GetById(report.Student.Id);
                 if (student == null)
                 {
-                    return BadRequest("Student not found");
+                    return BadRequest("Schüler nicht gefunden");//Student not found
                 }
                 if (student.ParentID != ParentId)
                 {
-                    return BadRequest("This student is not the User's child");
+                    return BadRequest("Dieser Schüler ist nicht das Kind des Benutzers.");//This student is not the User's child
                 }
 
                 return Ok(report);
@@ -499,13 +499,13 @@ namespace FekraHubAPI.Controllers
 
                 if (reports)
                 {
-                    return BadRequest($"There is a report for a student on this month");
+                    return BadRequest($"Es gibt diesen Monat einen Bericht für einen Schüler.");//There is a report for a student on this month
                 }
                 var userId = _reportRepo.GetUserIDFromToken(User);
 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("User ID not found in token.");
+                    return Unauthorized("Benutzer-ID nicht im Token gefunden.");//User ID not found in token.
                 }
                 List<Report> AllReports = map_Report.Select(map => new Report
                 {
@@ -547,11 +547,11 @@ namespace FekraHubAPI.Controllers
                 var report = await _reportRepo.GetById(ReportId);
                 if (report == null)
                 {
-                    return BadRequest("This report not found");
+                    return BadRequest("Dieser Bericht wurde nicht gefunden.");//This report not found
                 }
                 if (report.Improved == false)
                 {
-                    return BadRequest("This report needs to updates first");
+                    return BadRequest("Dieser Bericht muss zuerst aktualisiert werden.");//This report needs to updates first
                 }
                 report.Improved = true;
                 await _reportRepo.Update(report);
@@ -583,7 +583,7 @@ namespace FekraHubAPI.Controllers
                 var report = await _reportRepo.GetById(ReportId);
                 if (report == null)
                 {
-                    return BadRequest("This report not found");
+                    return BadRequest("Dieser Bericht wurde nicht gefunden.");//This report not found
                 }
                 report.Improved = false;
                 await _reportRepo.Update(report);
@@ -615,7 +615,7 @@ namespace FekraHubAPI.Controllers
             {
                 if(ReportIds == null || !ReportIds.Any())
                 {
-                    return BadRequest("No reports selected");
+                    return BadRequest("Keine Berichte ausgewählt.");//No reports selected
                 }
                 var reports = await _reportRepo.GetRelationAsQueryable(
                     where:x => ReportIds.Contains(x.Id) && x.Improved == null,
@@ -623,7 +623,7 @@ namespace FekraHubAPI.Controllers
                     selector:x=>x);
                 if (!reports.Any())
                 {
-                    return BadRequest("This reports not found");
+                    return BadRequest("Dieser Bericht wurde nicht gefunden.");//This reports not found
                 }
                 List<Student> students = reports.Select(x => x.Student).ToList();
                 foreach (var report in reports)
@@ -661,11 +661,11 @@ namespace FekraHubAPI.Controllers
                 var report = await _reportRepo.GetById(map_Report_Update.Id);
                 if (report == null)
                 {
-                    return BadRequest("This report not found");
+                    return BadRequest("Dieser Bericht wurde nicht gefunden.");//This report not found
                 }
                 if (report.Improved == true)
                 {
-                    return BadRequest("This report has already been approved");
+                    return BadRequest("Dieser Bericht wurde bereits genehmigt");//This report has already been approved
                 }
                 report.Improved = null;
                 report.data = map_Report_Update.Data;
@@ -698,11 +698,11 @@ namespace FekraHubAPI.Controllers
                 var report = await _reportRepo.GetById(reportId);
                 if (report == null)
                 {
-                    return BadRequest("no report found");
+                    return BadRequest("Keine Berichte gefunden.");//no report found
                 }
                 if (report.Improved != true)
                 {
-                    return BadRequest("this report was not approved");
+                    return BadRequest("Dieser Bericht wurde nicht genehmigt.");//this report was not approved
                 }
                 var reportBase64 = await _exportPDF.ExportReport(reportId);
 

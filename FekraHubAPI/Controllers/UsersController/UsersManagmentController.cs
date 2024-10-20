@@ -1,4 +1,4 @@
-using FekraHubAPI.Data.Models;
+﻿using FekraHubAPI.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,6 +53,24 @@ namespace FekraHubAPI.Controllers.UsersController
             _applicationUsersServices = applicationUsersServices;
             _emailSender = emailSender;
             _logger = logger;
+
+        }
+        [Authorize]
+        [HttpGet("AllRoles")]
+        public async Task<IActionResult> GetAllRoles()
+        {
+            try
+            {
+                var roles = typeof(DefaultRole).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+                                   .Select(f => f.GetValue(null)?.ToString())
+                                   .ToList();
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
+                return BadRequest(ex.Message);
+            }
 
         }
         [Authorize(Policy = "GetUsers")]
@@ -146,7 +164,44 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             
         }
+        [Authorize(Policy = "GetUsers")]
+        [HttpGet("GetAllUsersWithRole")]
+        public async Task<IActionResult> GetUsersWithRole()
+        {
+            try
+            {
 
+                var rolesToFetch = new[] { DefaultRole.Admin, DefaultRole.Secretariat, DefaultRole.Teacher, DefaultRole.Parent };
+
+                var allUsersInRoles = new List<object>(); 
+
+                
+                foreach (var role in rolesToFetch)
+                {
+
+                    var usersInRole = await _userManager.GetUsersInRoleAsync(role);
+
+
+                    allUsersInRoles.AddRange(usersInRole.Select(user => new
+                    {
+                        user.Id,
+                        user.FirstName,
+                        user.LastName,
+                        user.Email,
+                        Role = role
+                    }));
+
+                }
+
+                return Ok(allUsersInRoles);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
         [Authorize(Policy = "GetEmployee")]
         [HttpGet("GetEmployee")]
         public async Task<IActionResult> GetEmployee([FromQuery]List<string>? RoleName, bool IsActive = true)
@@ -164,12 +219,12 @@ namespace FekraHubAPI.Controllers.UsersController
 
                     if (!roleIds.Any())
                     {
-                        return BadRequest("RoleNames not found");
+                        return BadRequest("Rollennamen nicht gefunden.");//RoleNames not found
                     }
 
                     if (roleIds.Any(x => x != "1" && x != "2" && x != "4"))
                     {
-                        return BadRequest("One or more RoleNames is not an employee");
+                        return BadRequest("Einer oder mehrere Rollennamen sind kein Mitarbeiter.");//One or more RoleNames is not an employee
                     }
                 }
                 else
@@ -465,14 +520,14 @@ namespace FekraHubAPI.Controllers.UsersController
                 var user = await _userManager.FindByIdAsync(id);
                 if (user == null)
                 {
-                    return NotFound($"user not exists!");
+                    return BadRequest($"Benutzer nicht gefunden.");//user not found!
                 }
 
                 var isAdmin = await _userManager.IsInRoleAsync(user, DefaultRole.Admin);
 
                 if (userRole != DefaultRole.Admin && isAdmin)
                 {
-                    return BadRequest("Cant Access This User");
+                    return BadRequest("Zugriff auf diesen Benutzer nicht möglich.");//Can't Access This User
                 }
                 var data = new
                 {
@@ -524,7 +579,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var IsEmailExists = await _userManager.FindByEmailAsync(user.Email);
                 if (IsEmailExists != null)
                 {
-                    return BadRequest($"Email {user.Email} is already token.");
+                    return BadRequest($"{user.Email} ist bereits vergeben.");//Email {user.Email} is already token.
                 }
 
                 using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
@@ -577,7 +632,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             else
                             {
                                 transaction.Rollback();
-                                return BadRequest("Role Not Found");
+                                return BadRequest("Rolle nicht gefunden.");//Role Not Found
                             }
 
 
@@ -638,7 +693,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var account = await _db.ApplicationUser.FindAsync(id);
                 if (account == null)
                 {
-                    return NotFound($" account id {id} not exists !");
+                    return BadRequest($"Konto-ID {id} existiert nicht!");//account id {id} not exists !
                 }
 
                 var currentRoles = await _userManager.GetRolesAsync(account);
@@ -647,12 +702,12 @@ namespace FekraHubAPI.Controllers.UsersController
                     var removeResult = await _userManager.RemoveFromRolesAsync(account, currentRoles);
                     if (!removeResult.Succeeded)
                     {
-                        throw new Exception("Failed to remove user's current roles");
+                        throw new Exception("Entfernen der aktuellen Rollen des Benutzers fehlgeschlagen.");//Failed to remove user's current roles
                     }
                     var addResult = await _userManager.AddToRoleAsync(account, accountUpdate.Role);
                     if (!addResult.Succeeded)
                     {
-                        throw new Exception($"Failed to add user to role {accountUpdate.Role}");
+                        throw new Exception($"Hinzufügen des Benutzers zur Rolle {accountUpdate.Role} fehlgeschlagen.");//Failed to add user to role {accountUpdate.Role}
                     }
                 }
 
@@ -746,7 +801,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var account = await _db.ApplicationUser.FindAsync(id);
                 if (account == null)
                 {
-                    return NotFound($" account id {id} not exists !");
+                    return BadRequest($"Konto-ID {id} existiert nicht!");// account id {id} not exists !
                 }
 
                 if (accountUpdate.ImageUser != null && accountUpdate.ImageUser.Length != 0)
@@ -784,7 +839,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 account.Graduation = accountUpdate.Graduation;
 
                 _db.SaveChanges();
-                return Ok("success");
+                return Ok("Erfolg");//success
             }
             catch (Exception ex)
             {
@@ -804,12 +859,12 @@ namespace FekraHubAPI.Controllers.UsersController
                 var UserID =  _applicationUserRepository.GetUserIDFromToken(User);
                 if (UserID == id)
                 {
-                    return BadRequest("You can not deactivate your account");
+                    return BadRequest("Sie können Ihr Konto nicht deaktivieren.");//You can not deactivate your account
                 }
                 var user = await _db.ApplicationUser.FindAsync(id);
                 if (user == null)
                 {
-                    return NotFound($" account id {id} not exists !");
+                    return BadRequest($"Konto-ID {id} existiert nicht!");// account id {id} not exists !
                 }
 
                 var Tech = await _applicationUserRepository.IsTeacherIDExists(id);
@@ -833,9 +888,9 @@ namespace FekraHubAPI.Controllers.UsersController
                 await _db.SaveChangesAsync();
                 if (activate)
                 {
-                    return Ok("User Activate");
+                    return Ok("Benutzer aktiviert.");//User Activate
                 }
-                return Ok("User Deactivate");
+                return Ok("Benutzer deaktiviert.");//User Deactivate
             }
             catch (Exception ex)
             {
@@ -875,7 +930,7 @@ namespace FekraHubAPI.Controllers.UsersController
 
                 }
                 return StatusCode(StatusCodes.Status400BadRequest,
-                       new Response { Status = "Error", Message = $"Could not send link to email , please try again." });
+                       new Response { Status = "Error", Message = $"Link konnte nicht an die E-Mail gesendet werden, bitte versuchen Sie es erneut." });//Could not send link to email , please try again.
 
             }
             catch (Exception ex)
@@ -896,7 +951,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     .AsNoTracking().Select(x => x.RoleId).SingleOrDefaultAsync();
                 if (userRole == null)
                 {
-                    return BadRequest("Role not exist");
+                    return BadRequest("Rolle nicht gefunden.");//Role not found
                 }
                 var role = await _db.Roles.Where(x=>x.Id == userRole).AsNoTracking().Select(x=>x.Name).SingleOrDefaultAsync();
                 if (userRole == "4")
@@ -1024,7 +1079,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var user = await _db.ApplicationUser.FindAsync(userID);
                 if(user == null)
                 {
-                    return BadRequest("User not found");
+                    return BadRequest("Benutzer nicht gefunden.");//User not found
                 }
                 var img = "";
                 if (userData.Image != null && userData.Image.Length != 0)
@@ -1078,7 +1133,7 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             public string? Email { get; set; }
             public string? Password { get; set; } = null!;
-            [Compare("Password", ErrorMessage = "The password and confirmation, password do not match.")]
+            [Compare("Password", ErrorMessage = "Das Passwort und das Bestätigungspasswort stimmen nicht überein.")]//The password and confirmation, password do not match.
             public string? ConfirmPassword { get; set; } = null!;
             public bool AreAllFieldsNull()
             {
@@ -1103,13 +1158,13 @@ namespace FekraHubAPI.Controllers.UsersController
             {
                 if (accountDTO.AreAllFieldsNull())
                 {
-                    return BadRequest("No data found");
+                    return BadRequest("Keine Daten gefunden.");//No data found
                 }
                 var userID = _applicationUserRepository.GetUserIDFromToken(User);
                 var user = await _db.ApplicationUser.FindAsync(userID);
                 if (user == null)
                 {
-                    return BadRequest("User not found");
+                    return BadRequest("Benutzer nicht gefunden.");//User not found
                 }
                 if (!accountDTO.IsPasswordNull())
                 {
@@ -1125,7 +1180,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     var emailExist = await _userManager.FindByEmailAsync(accountDTO.Email);
                     if (emailExist != null)
                     {
-                        return BadRequest("Email is already in use.");
+                        return BadRequest("E-Mail wird bereits verwendet.");//Email is already in use.
                     }
 
                     user.Email = accountDTO.Email;
@@ -1143,9 +1198,9 @@ namespace FekraHubAPI.Controllers.UsersController
                     {
                         await _emailSender.SendConfirmationEmail(user);
                     }
-                    return Ok("Updated successfully. Please go to your email message box and confirm your email");
+                    return Ok("Erfolgreich aktualisiert. Bitte gehen Sie zu Ihrem E-Mail-Postfach und bestätigen Sie Ihre E-Mail.");//Updated successfully. Please go to your email message box and confirm your email
                 }
-                return Ok("User password updated successfully.");
+                return Ok("Benutzerpasswort erfolgreich aktualisiert.");//User password updated successfully.
             }
             catch (Exception ex)
             {

@@ -42,30 +42,30 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
         // GET: api/Event
         [Authorize(Policy = "GetEvents")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Map_Event>>> GetEvents([FromQuery] List<int>? courseId)
+        public async Task<IActionResult> GetEvents([FromQuery] List<int>? courseId)
         {
             try
             {
-            //    var courses = await _courseRepository.GetRelationList(
-            //       manyWhere: new List<Expression<Func<Course, bool>>?>
-            //    {
-            //courseId != null  && courseId.Any() ? (Expression<Func<Course, bool>>)(x => courseId.Contains(x.Id) ) : null,
-            //      }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
-            //        include: x => x.Include(c => c.CourseSchedule),
-            //       selector: sa => new
-            //       {
-            //           id = sa.Id,
-            //           name = sa.Name,
-            //           startDate = sa.StartDate,
-            //           endDate = sa.EndDate,
-            //           CourseSchedule = sa.CourseSchedule.Select(z => new
-            //           {
-            //               z.Id,
-            //               z.DayOfWeek,
-            //               z.StartTime,
-            //               z.EndTime,
-            //           })
-            //       }, asNoTracking: true);
+                var courses = await _courseRepository.GetRelationList(
+                   manyWhere: new List<Expression<Func<Course, bool>>?>
+                {
+            courseId != null  && courseId.Any() ? (Expression<Func<Course, bool>>)(x => courseId.Contains(x.Id) ) : null,
+                  }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
+                    include: x => x.Include(c => c.CourseSchedule),
+                   selector: sa => new
+                   {
+                       id = sa.Id,
+                       name = sa.Name,
+                       startDate = sa.StartDate,
+                       endDate = sa.EndDate,
+                       CourseSchedule = sa.CourseSchedule.Select(z => new
+                       {
+                           z.Id,
+                           z.DayOfWeek,
+                           z.StartTime,
+                           z.EndTime,
+                       })
+                   }, asNoTracking: true);
 
 
 
@@ -108,8 +108,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 asNoTracking: true);
 
 
-                //return Ok(new {eventE, courses});
-                return Ok(eventE);
+                return Ok(new { Events = eventE, Courses = courses });
+               
             }
             catch (Exception ex)
             {
@@ -186,7 +186,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var serverDate = DateTime.Now.Date;
                 if (eventMdl.StartDate.Date < serverDate || eventMdl.EndDate.Date < serverDate)
                 {
-                    return BadRequest("The start date or end date must be greater than the current date");
+                    return BadRequest("Das Start- oder Enddatum muss nach dem aktuellen Datum liegen.");//The start date or end date must be greater than the current date
                 }
                 var courseIds = schedule.Select(z => z.CourseID).Distinct().ToList();
                 var courseValid = await _courseRepository.GetRelationList(
@@ -198,7 +198,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 bool isValid = courseValid.Count() == courseIds.Count();
                 if (!isValid)
                 {
-                    return BadRequest("Check the start or end date of the courses");
+                    return BadRequest("Überprüfen Sie das Start- oder Enddatum der Kurse.");//Check the start or end date of the courses
                 }
 
                 Event? eventEntity = await _eventRepository.GetRelationSingle(
@@ -259,12 +259,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 }
                 if (eventMdl.StartDate.Date > eventMdl.EndDate.Date)
                 {
-                    return BadRequest("Invalid event date");
+                    return BadRequest("Ungültiges Veranstaltungsdatum.");//Invalid event date
                 }
                 var serverDate = DateTime.Now.Date;
                 if (eventMdl.StartDate.Date < serverDate || eventMdl.EndDate.Date < serverDate)
                 {
-                    return BadRequest("The start date or end date must be greater than the current date");
+                    return BadRequest("Das Start- oder Enddatum muss nach dem aktuellen Datum liegen.");//The start date or end date must be greater than the current date
                 }
                 
 
@@ -281,7 +281,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 bool isValid = courseValid.Count() == courseIds.Count();
                 if (!isValid)
                 {
-                    return BadRequest("Check the start or end date of the courses");
+                    return BadRequest("Überprüfen Sie das Start- oder Enddatum der Kurse.");//Check the start or end date of the courses
                 }
 
 
@@ -340,12 +340,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 var eventType = await _eventRepository.DataExist(x=>x.Id == id);
                 if (!eventType)
                 {
-                    return NotFound();
+                    return BadRequest("Veranstaltung nicht gefunden.");//Event not found
                 }
 
                 await _eventRepository.Delete(id);
 
-                return Ok("Delete success");
+                return Ok("Erfolgreich gelöscht");//Deleted success
             }
             catch (Exception ex)
             {

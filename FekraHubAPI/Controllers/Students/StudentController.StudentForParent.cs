@@ -43,11 +43,11 @@ namespace FekraHubAPI.Controllers.Students
 
                 if (string.IsNullOrEmpty(parentId))
                 {
-                    return Unauthorized("Parent not found.");
+                    return Unauthorized("Elternteil nicht gefunden.");//Parent not found.
                 }
 
                 var students = await _studentRepo.GetRelationList(
-                    where:x => x.ParentID == parentId,
+                    where:x => x.ParentID == parentId && x.ActiveStudent == true,
                     orderBy: x => x.Id,
                     include:x=> x.Include(t => t.Course.Teacher).Include(c=>c.Course).ThenInclude(r=>r.Room).ThenInclude(l=>l.Location),
                     selector: z => new
@@ -122,11 +122,11 @@ namespace FekraHubAPI.Controllers.Students
 
                 if (string.IsNullOrEmpty(parentId))
                 {
-                    return Unauthorized("Parent not found.");
+                    return Unauthorized("Elternteil nicht gefunden.");//Parent not found.
                 }
 
                 var students = await _studentRepo.GetRelationSingle(
-                    where:x => x.ParentID == parentId && x.Id == id,
+                    where:x => x.ParentID == parentId && x.Id == id && x.ActiveStudent == true,
                     returnType:QueryReturnType.SingleOrDefault,
                     include:x=>x.Include(r=>r.Report).Include(c=>c.Course).ThenInclude(u=>u.Upload).Include(i=>i.Invoices)
                     .Include(z=>z.Course.Room).ThenInclude(z=>z.Location).Include(z => z.Course.Teacher),
@@ -215,7 +215,7 @@ namespace FekraHubAPI.Controllers.Students
                     asNoTracking:true);
                 if (students == null)
                 {
-                    return NotFound("This student is not found");
+                    return BadRequest("Dieser Schüler wurde nicht gefunden");//This student is not found
                 }
                
 
@@ -249,9 +249,9 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     if (string.IsNullOrEmpty(userId))
                     {
-                        return Unauthorized("User not found.");
+                        return Unauthorized("Benutzer nicht gefunden.");//User not found.
                     }
-                    return BadRequest("Invalid student ID");
+                    return BadRequest("Ungültige Schüler-ID.");//Invalid student ID
                 };
                 student.Nationality = Nationality;
                 student.Street = Street;
@@ -261,7 +261,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 await _studentRepo.Update(student);
 
-                return Ok("Student Data is updated");
+                return Ok("Schülerdaten wurden aktualisiert.");//Student Data is updated
             }
             catch (Exception ex)
             {

@@ -8,14 +8,14 @@ namespace FekraHubAPI.MapModels.Courses
 {
     public class Map_CourseSchedule : IMapFrom<CourseSchedule>
     {
-
+        [Required]
         public string DayOfWeek { get; set; }
 
 
-
+        [Required]
         public string StartTime { get; set; }
 
-
+        [Required]
         public string EndTime { get; set; }
 
         public int? CourseID { get; set; }

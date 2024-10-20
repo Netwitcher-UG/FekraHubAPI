@@ -1,10 +1,12 @@
 using AutoMapper;
 using FekraHubAPI.Data.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace FekraHubAPI.MapModels.Courses
 {
     public class Map_location : IMapFrom<Location>
     {
+        [Required]
         public string Name { get; set; }
         public string Street { get; set; }
         public string StreetNr { get; set; }

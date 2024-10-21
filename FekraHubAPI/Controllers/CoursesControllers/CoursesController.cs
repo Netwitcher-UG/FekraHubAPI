@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OfficeOpenXml.Drawing;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -85,6 +86,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
           
         }
+        public class CourseScheduleCalender
+        {
+            public int Id { get; set; }
+            public string DayOfWeek { get; set; }
+            public string StartTime { get; set; }
+            public string EndTime { get; set; }
+            public string CourseName { get; set; }
+            public int CourseID { get; set; }
+        }
+
         [Authorize(Policy = "GetCourse")]
         [HttpGet("CourseForCalender")]
         public async Task<IActionResult> GetCourseForCalender(int? courseId, DateTime? date)
@@ -97,7 +108,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     selector: x => new
                     {
                         CourseId = x.Course.Id,
-                        x.Course.Name,
+                        courseName = x.Course.Name,
                         StartDate = x.Course.StartDate.Date,
                         EndDate = x.Course.EndDate.Date,
                         x.StartTime,
@@ -134,15 +145,35 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         {
                             var startDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.StartTime.Hours, schedule.StartTime.Minutes, 0);
                             var endDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.EndTime.Hours, schedule.EndTime.Minutes, 0);
-
+                            var courseScheduleList = new List<object>
+                            {
+                                new
+                                {
+                                    id = schedule.Id,
+                                    dayOfWeek = schedule.DayOfWeek,
+                                    startTime = startDateTime.ToString("HH:mm:ss"),
+                                    endTime = endDateTime.ToString("HH:mm:ss"),
+                                    courseName = schedule.courseName,
+                                    courseID = schedule.CourseId
+                                }
+                            };
                             filteredCourseSchedules.Add(new
                             {
-                                CourseId = schedule.CourseId,
-                                schedule.Name,
-                                StartDateTime = startDateTime,
-                                EndDateTime = endDateTime,
-                                schedule.Id,
-                                schedule.DayOfWeek
+                                id = schedule.CourseId,
+                                eventName = schedule.courseName,
+                                description = "",
+                                startDate = startDateTime.Date,
+                                endDate = endDateTime.Date,
+                                startTime = startDateTime.ToString("HH:mm:ss"),
+                                endTime = endDateTime.ToString("HH:mm:ss"),
+                                eventType = new
+                                {
+                                    id = 0,
+                                    typeTitle = ""
+                                },
+                                courseSchedule = courseScheduleList
+
+
                             });
                         }
                     }
@@ -161,14 +192,35 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                             var startDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.StartTime.Hours, schedule.StartTime.Minutes, 0);
                             var endDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.EndTime.Hours, schedule.EndTime.Minutes, 0);
 
+                            var courseScheduleList = new List<object>
+                            {
+                                new
+                                {
+                                    id = schedule.Id,
+                                    dayOfWeek = schedule.DayOfWeek,
+                                    startTime = startDateTime.ToString("HH:mm:ss"),
+                                    endTime = endDateTime.ToString("HH:mm:ss"),
+                                    courseName = schedule.courseName,
+                                    courseID = schedule.CourseId
+                                }
+                            };
                             filteredCourseSchedules.Add(new
                             {
-                                CourseId = schedule.CourseId,
-                                schedule.Name,
-                                StartDateTime = startDateTime,
-                                EndDateTime = endDateTime,
-                                schedule.Id,
-                                schedule.DayOfWeek
+                                id = schedule.CourseId,
+                                eventName = schedule.courseName,
+                                description = "",
+                                startDate = startDateTime.Date,
+                                endDate = endDateTime.Date,
+                                startTime = startDateTime.ToString("HH:mm:ss"),
+                                endTime = endDateTime.ToString("HH:mm:ss"),
+                                eventType = new
+                                {
+                                    id = 0,
+                                    typeTitle = ""
+                                },
+                                courseSchedule = courseScheduleList
+
+
                             });
                         }
                     }

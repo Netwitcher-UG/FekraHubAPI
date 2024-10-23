@@ -243,210 +243,208 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
         }
 
+        public class EventModel
+        {
+            public int Id { get; set; }
+            public string EventName { get; set; }
+            public string Description { get; set; }
+            public DateTime StartDate { get; set; }
+            public DateTime EndDate { get; set; }
+            public TimeSpan StartTime { get; set; }
+            public TimeSpan EndTime { get; set; }
+            public EventTypeModel EventType { get; set; }
+            public List<CourseScheduleModel> CourseSchedule { get; set; }
+        }
+
+        public class EventTypeModel
+        {
+            public int? Id { get; set; }
+            public string TypeTitle { get; set; }
+        }
+
+        public class CourseScheduleModel
+        {
+            public int Id { get; set; }
+            public string DayOfWeek { get; set; }
+            public TimeSpan StartTime { get; set; }
+            public TimeSpan EndTime { get; set; }
+            public string CourseName { get; set; }
+            public int CourseID { get; set; }
+        }
+
+
+
         [Authorize(Policy = "GetCourse")]
         [HttpGet("CourseEventForCalender")]
-        public async Task<IActionResult> GetCombinedEventsAndCourses2([FromQuery]List<int>? courseId, [FromQuery] DateTime? date)
+        public async Task<IActionResult> GetCourseForCalender2([FromQuery] int? courseId, [FromQuery] DateTime? date, [FromQuery] DateTime? From, [FromQuery] DateTime? To)
         {
             try
             {
-                var CourseWorkingDay = courseId == null || courseId.Count == 0 ? null : await _courseScheduleRepository.GetRelationList(
-                         where: x => courseId.Contains(x.Course.Id),
-                         selector: x => x.Id,
-                         asNoTracking: true);
+                var CourseWorkingDay = courseId == null ? null : await _courseScheduleRepository.GetRelationList(
+                    where: x => courseId == x.Course.Id,
+                    selector: x => x.Id,
+                    asNoTracking: true
+                );
+
                 var eventE = await _eventRepository.GetRelationList(
-                    
-                    manyWhere: new List<Expression<Func<Event, bool>>?>
-                        {
-                        courseId == null || courseId.Count == 0 ? null : (Expression<Func<Event, bool>>)(x => x.CourseSchedule.Any(z => CourseWorkingDay.Contains(z.Id))),
-                        date != null ? (Expression<Func<Event, bool>>)(ta => ta.StartDate.Date <= date.Value.Date && ta.EndDate >= date.Value.Date ) : null
-                        
-                    }.Where(x => x != null).Cast<Expression<Func<Event, bool>>>().ToList(),
+                    where: courseId == null ? null : x => x.CourseSchedule.Any(z => CourseWorkingDay.Contains(z.Id)),
                     include: x => x.Include(z => z.EventType).Include(c => c.CourseSchedule),
-                selector: x => new
-                {
-                    x.Id,
-                    x.EventName,
-                    x.Description,
-                    x.StartDate,
-                    x.EndDate,
-                    x.StartTime,
-                    x.EndTime,
-                    EventType = x.EventType == null ? null : new
+                    selector: x => new EventModel
                     {
-                        x.EventType.Id,
-                        x.EventType.TypeTitle
+                        Id = x.Id,
+                        EventName = x.EventName,
+                        Description = x.Description,
+                        StartDate = x.StartDate.Date, 
+                        EndDate = x.EndDate.Date,      
+                        StartTime = x.StartTime,
+                        EndTime = x.EndTime,
+                        EventType = new EventTypeModel
+                        {
+                            Id = x.EventType.Id,
+                            TypeTitle = x.EventType.TypeTitle
+                        },
+                        CourseSchedule = x.CourseSchedule.Select(z => new CourseScheduleModel
+                        {
+                            Id = z.Id,
+                            DayOfWeek = z.DayOfWeek,
+                            StartTime = z.StartTime,
+                            EndTime = z.EndTime,
+                            CourseName = z.Course.Name,
+                            CourseID = z.Course.Id
+                        }).ToList()
                     },
-                    CourseSchedule = x.CourseSchedule.Select(z => new
-                    {
-                        z.Id,
-                        z.DayOfWeek,
-                        z.StartTime,
-                        z.EndTime,
-                        courseName = z.Course.Name,
-                        courseID = z.Course.Id
-
-                    })
-
-
-                },
-                asNoTracking: true);
-
-
-
-
-
-
-
-
+                    asNoTracking: true
+                );
 
                 var courseSchedule = await _courseScheduleRepository.GetRelationList(
-                   where: x => courseId.Count == 0 || courseId.Contains(x.CourseID ?? 0),
-                    manyWhere: new List<Expression<Func<CourseSchedule, bool>>?>
-                        {
-                        courseId == null || courseId.Count == 0 ? null : (Expression<Func<CourseSchedule, bool>>)(x => courseId.Count == 0 || courseId.Contains(x.CourseID ?? 0)),
-                        date != null ? (Expression<Func<CourseSchedule, bool>>)(ta => ta.Course.StartDate.Date <= date.Value.Date && ta.Course.EndDate >= date.Value.Date ) : null
+                    where: x => !courseId.HasValue || x.CourseID == courseId.Value,
+                    include: x => x.Include(z => z.Course),
+                    selector: x => new
+                    {
+                        CourseId = x.Course.Id,
+                        courseName = x.Course.Name,
+                        StartDate = x.Course.StartDate.Date,
+                        EndDate = x.Course.EndDate.Date,
+                        x.StartTime,
+                        x.EndTime,
+                        x.Id,
+                        x.DayOfWeek
+                    },
+                    asNoTracking: true,
+                    orderBy: x => x.Id
+                );
 
-                    }.Where(x => x != null).Cast<Expression<Func<CourseSchedule, bool>>>().ToList(),
-                   include: x => x.Include(z => z.Course),
-                   selector: x => new
-                   {
-                       CourseId = x.Course.Id,
-                       courseName = x.Course.Name,
-                       StartDate = x.Course.StartDate.Date,
-                       EndDate = x.Course.EndDate.Date,
-                       x.StartTime,
-                       x.EndTime,
-                       x.Id,
-                       x.DayOfWeek
-                   },
-                   asNoTracking: true,
-                   orderBy: x => x.Id
-               );
+                var filteredCourseSchedules = new List<EventModel>();
 
-                //if (!courseSchedule.Any())
-                //{
-                //    return BadRequest("Die Kurse wurden nicht gefunden."); // Course not found
-                //}
-
-                var filteredCourseSchedules = new List<object>();
-
-                // تحديد حدود الفترة المطلوبة: 1 سبتمبر إلى 1 يونيو من السنة التالية
-                var startFilter = new DateTime(DateTime.Now.Year, 9, 1); // 1 سبتمبر للسنة الحالية
-                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1); // 1 يونيو للسنة التالية
+              
+                var startFilter = new DateTime(DateTime.Now.Year, 9, 1); 
+                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1);
 
                 foreach (var schedule in courseSchedule)
                 {
                     if (!date.HasValue)
                     {
                         var daysInRange = Enumerable.Range(0, (schedule.EndDate - schedule.StartDate).Days + 1)
-                                                    .Select(x => schedule.StartDate.AddDays(x))
-                                                    .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
-                                                                d >= startFilter && d < endFilter) // فلترة التواريخ ضمن الفترة المحددة
-                                                    .ToList();
+                            .Select(x => schedule.StartDate.AddDays(x))
+                            .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
+                                        d >= startFilter && d < endFilter) 
+                            .ToList();
 
                         foreach (var day in daysInRange)
                         {
-                            var startDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.StartTime.Hours, schedule.StartTime.Minutes, 0);
-                            var endDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.EndTime.Hours, schedule.EndTime.Minutes, 0);
-                            var courseScheduleList = new List<object>
+                            var startDateTime = day.Date;
+                            var endDateTime = day.Date;
+
+                            filteredCourseSchedules.Add(new EventModel
                             {
-                                new
+                                Id = schedule.CourseId,
+                                EventName = schedule.courseName,
+                                Description = "",
+                                StartDate = startDateTime,
+                                EndDate = endDateTime,
+                                StartTime = schedule.StartTime,
+                                EndTime = schedule.EndTime,
+                                EventType = new EventTypeModel
                                 {
-                                    id = schedule.Id,
-                                    dayOfWeek = schedule.DayOfWeek,
-                                    startTime = startDateTime.ToString("HH:mm:ss"),
-                                    endTime = endDateTime.ToString("HH:mm:ss"),
-                                    courseName = schedule.courseName,
-                                    courseID = schedule.CourseId
-                                }
-                            };
-                            filteredCourseSchedules.Add(new
-                            {
-                                id = schedule.CourseId,
-                                eventName = schedule.courseName,
-                                description = "",
-                                startDate = startDateTime.Date,
-                                endDate = endDateTime.Date,
-                                startTime = startDateTime.ToString("HH:mm:ss"),
-                                endTime = endDateTime.ToString("HH:mm:ss"),
-                                eventType = new
-                                {
-                                    id = 0,
-                                    typeTitle = ""
+                                    Id = 0,
+                                    TypeTitle = ""
                                 },
-                                courseSchedule = courseScheduleList
-
-
-                            });
-                        }
-                    }
-                    else
-                    {
-                        var startOfMonth = new DateTime(date.Value.Year, date.Value.Month, 1);
-                        var daysInMonth = Enumerable.Range(0, DateTime.DaysInMonth(date.Value.Year, date.Value.Month))
-                                                    .Select(day => startOfMonth.AddDays(day))
-                                                    .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
-                                                                d >= startFilter && d < endFilter &&
-                                                                d >= schedule.StartDate && d <= schedule.EndDate) // فلترة التواريخ ضمن الفترة المحددة
-                                                    .ToList();
-
-                        foreach (var day in daysInMonth)
+                                CourseSchedule = new List<CourseScheduleModel>
                         {
-                            var startDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.StartTime.Hours, schedule.StartTime.Minutes, 0);
-                            var endDateTime = new DateTime(day.Year, day.Month, day.Day, schedule.EndTime.Hours, schedule.EndTime.Minutes, 0);
-
-                            var courseScheduleList = new List<object>
+                            new CourseScheduleModel
                             {
-                                new
-                                {
-                                    id = schedule.Id,
-                                    dayOfWeek = schedule.DayOfWeek,
-                                    startTime = startDateTime.ToString("HH:mm:ss"),
-                                    endTime = endDateTime.ToString("HH:mm:ss"),
-                                    courseName = schedule.courseName,
-                                    courseID = schedule.CourseId
-                                }
-                            };
-                            filteredCourseSchedules.Add(new
-                            {
-                                id = schedule.CourseId,
-                                eventName = schedule.courseName,
-                                description = "",
-                                startDate = startDateTime.Date,
-                                endDate = endDateTime.Date,
-                                startTime = startDateTime.ToString("HH:mm:ss"),
-                                endTime = endDateTime.ToString("HH:mm:ss"),
-                                eventType = new
-                                {
-                                    id = 0,
-                                    typeTitle = ""
-                                },
-                                courseSchedule = courseScheduleList
-
-
+                                Id = schedule.Id,
+                                DayOfWeek = schedule.DayOfWeek,
+                                StartTime = schedule.StartTime,
+                                EndTime = schedule.EndTime,
+                                CourseName = schedule.courseName,
+                                CourseID = schedule.CourseId
+                            }
+                        }
                             });
                         }
                     }
                 }
 
-                //if (!filteredCourseSchedules.Any())
-                //{
-                //    return BadRequest("Es wurden keine Kurspläne gefunden."); // No course schedules found
-                //}
-                List<object> x = new List<object>();
-                x.AddRange(eventE);
-                x.AddRange(filteredCourseSchedules);
+             
+                var expandedEvents = new List<EventModel>();
+                foreach (var ev in eventE)
+                {
+                    var daysInEvent = Enumerable.Range(0, (ev.EndDate - ev.StartDate).Days + 1)
+                        .Select(x => ev.StartDate.AddDays(x))
+                        .ToList();
 
-                return Ok(x);
+                    foreach (var day in daysInEvent)
+                    {
+                        var startDateTime = day.Date;
+                        var endDateTime = day.Date;
 
+                        expandedEvents.Add(new EventModel
+                        {
+                            Id = ev.Id,
+                            EventName = ev.EventName,
+                            Description = ev.Description,
+                            StartDate = startDateTime,
+                            EndDate = endDateTime,
+                            StartTime = ev.StartTime,
+                            EndTime = ev.EndTime,
+                            EventType = ev.EventType,
+                            CourseSchedule = ev.CourseSchedule
+                        });
+                    }
+                }
 
+                var combinedResults = filteredCourseSchedules;
+                combinedResults.AddRange(expandedEvents);
+
+                if (date.HasValue)
+                {
+                    combinedResults = combinedResults
+                        .Where(e => e.StartDate.Year == date.Value.Year && e.StartDate.Month == date.Value.Month)
+                        .ToList();
+                }
+
+                if (From.HasValue && To.HasValue)
+                {
+                    var fromMonthStart = new DateTime(From.Value.Year, From.Value.Month, 1); 
+                    var toMonthEnd = new DateTime(To.Value.Year, To.Value.Month, DateTime.DaysInMonth(To.Value.Year, To.Value.Month)); 
+
+                    combinedResults = combinedResults
+                        .Where(e => e.StartDate >= fromMonthStart && e.StartDate <= toMonthEnd)
+                        .ToList();
+                }
+
+                return Ok(combinedResults);
             }
             catch (Exception ex)
             {
-                _logger.LogError(HandleLogFile.handleErrLogFile(User, "EventsAndCoursesController", ex.Message));
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
                 return BadRequest(ex.Message);
             }
         }
+
+
+
 
 
 

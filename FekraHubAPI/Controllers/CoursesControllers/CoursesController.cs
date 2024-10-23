@@ -254,6 +254,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             public TimeSpan EndTime { get; set; }
             public EventTypeModel EventType { get; set; }
             public List<CourseScheduleModel> CourseSchedule { get; set; }
+            public bool IsEvent { get; set; }
         }
 
         public class EventTypeModel
@@ -276,7 +277,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         [Authorize(Policy = "GetCourse")]
         [HttpGet("CourseEventForCalender")]
-        public async Task<IActionResult> GetCourseForCalender2([FromQuery] int? courseId, [FromQuery] DateTime? date, [FromQuery] DateTime? From, [FromQuery] DateTime? To)
+        public async Task<IActionResult> GetCourseForCalender2([FromQuery] int? courseId, [FromQuery] DateTime? From, [FromQuery] DateTime? To)
         {
             try
             {
@@ -294,7 +295,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         Id = x.Id,
                         EventName = x.EventName,
                         Description = x.Description,
-                        StartDate = x.StartDate.Date, 
+                        StartDate = x.StartDate.Date,
                         EndDate = x.EndDate.Date,      
                         StartTime = x.StartTime,
                         EndTime = x.EndTime,
@@ -311,7 +312,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                             EndTime = z.EndTime,
                             CourseName = z.Course.Name,
                             CourseID = z.Course.Id
-                        }).ToList()
+                        }).ToList(),
+                        IsEvent = true  
                     },
                     asNoTracking: true
                 );
@@ -336,18 +338,16 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 var filteredCourseSchedules = new List<EventModel>();
 
-              
                 var startFilter = new DateTime(DateTime.Now.Year, 9, 1); 
-                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1);
+                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1); 
 
                 foreach (var schedule in courseSchedule)
                 {
-                    if (!date.HasValue)
-                    {
+                    
                         var daysInRange = Enumerable.Range(0, (schedule.EndDate - schedule.StartDate).Days + 1)
                             .Select(x => schedule.StartDate.AddDays(x))
                             .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
-                                        d >= startFilter && d < endFilter) 
+                                        d >= startFilter && d < endFilter)
                             .ToList();
 
                         foreach (var day in daysInRange)
@@ -380,13 +380,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                                 CourseName = schedule.courseName,
                                 CourseID = schedule.CourseId
                             }
-                        }
+                        },
+                                IsEvent = false 
                             });
                         }
-                    }
+                    
                 }
 
-             
                 var expandedEvents = new List<EventModel>();
                 foreach (var ev in eventE)
                 {
@@ -409,7 +409,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                             StartTime = ev.StartTime,
                             EndTime = ev.EndTime,
                             EventType = ev.EventType,
-                            CourseSchedule = ev.CourseSchedule
+                            CourseSchedule = ev.CourseSchedule,
+                            IsEvent = true  
                         });
                     }
                 }
@@ -417,17 +418,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var combinedResults = filteredCourseSchedules;
                 combinedResults.AddRange(expandedEvents);
 
-                if (date.HasValue)
-                {
-                    combinedResults = combinedResults
-                        .Where(e => e.StartDate.Year == date.Value.Year && e.StartDate.Month == date.Value.Month)
-                        .ToList();
-                }
+               
+               
 
                 if (From.HasValue && To.HasValue)
                 {
                     var fromMonthStart = new DateTime(From.Value.Year, From.Value.Month, 1); 
-                    var toMonthEnd = new DateTime(To.Value.Year, To.Value.Month, DateTime.DaysInMonth(To.Value.Year, To.Value.Month)); 
+                    var toMonthEnd = new DateTime(To.Value.Year, To.Value.Month, DateTime.DaysInMonth(To.Value.Year, To.Value.Month));
 
                     combinedResults = combinedResults
                         .Where(e => e.StartDate >= fromMonthStart && e.StartDate <= toMonthEnd)
@@ -442,6 +439,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 return BadRequest(ex.Message);
             }
         }
+
 
 
 

@@ -266,11 +266,34 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     return BadRequest("Das Start- oder Enddatum muss nach dem aktuellen Datum liegen.");//The start date or end date must be greater than the current date
                 }
+
+                List<CourseSchedule> schedule = new List<CourseSchedule>();
+                if(schedule == null || !schedule.Any())
+                {
+                    var startDate = eventMdl.StartDate.Date; 
+                    var endDate = eventMdl.EndDate.Date;
+
+                    var daysList = new List<string>();
+
+                    for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                    {
+                        daysList.Add(date.DayOfWeek.ToString());
+                    }
+                    schedule = await _ScheduleRepository.GetRelationList(
+                        where: n => daysList.Contains(n.DayOfWeek) && eventMdl.StartDate.Date >= n.Course.StartDate.Date && eventMdl.EndDate.Date <= n.Course.EndDate.Date,
+                        selector: x => x
+                    );
+                }
+                else
+                {
+                    schedule = await _ScheduleRepository.GetRelationList(
+                    where: n => scheduleId.Contains(n.Id),
+                    selector: x => x);
+                }
                 
 
-                var schedule = await _ScheduleRepository.GetRelationList(
-                    where:n => scheduleId.Contains(n.Id),
-                    selector:x=>x);
+
+
                 var courseIds = schedule.Select(z => z.CourseID).Distinct().ToList();
                 var courseValid = await _courseRepository.GetRelationList(
                     where: x => courseIds.Contains(x.Id)  

@@ -430,19 +430,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         .Where(e => e.StartDate >= fromMonthStart && e.StartDate <= toMonthEnd)
                         .ToList();
                 }
-                var Results = combinedResults
-                    .GroupBy(e => new { e.CourseSchedule.First().CourseID, e.StartDate })
-                    .Where(g => g.Count() > 1)
-                    .ToList();
-
-                if (Results.Any())
-                {
-                    return BadRequest("Error: There are duplicate Data for the same item on the same day.");
-                }
+               
                 var filteredResults = new List<EventModel>();
 
                 var groupedResults = combinedResults
-                    .GroupBy(e => new { e.CourseSchedule.First().CourseID, e.StartDate })
+                    .GroupBy(e => new { e.CourseSchedule.FirstOrDefault()?.CourseID, e.StartDate })
                     .ToList();
 
                 foreach (var group in groupedResults)

@@ -585,7 +585,7 @@ powered by
                    contracts, pdfName + ".pdf");
             var newNotification = new Notifications
             {
-                Notification = "Ihr Kind wurde erfolgreich registriert.",
+                Notification = "Ihr Kind ist registriert.",
             };
             await _notificationsRepo.Add(newNotification);
             var notificationUser = new NotificationUser
@@ -683,7 +683,7 @@ powered by
                    true);
             var newNotification = new Notifications
             {
-                Notification = "Ein neuer Benutzer wurde hinzugefügt.",
+                Notification = "Neuer Benutzer hinzugefügt.",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -799,7 +799,7 @@ powered by
                    school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Schüler registriert", Message(content, school.SchoolName ?? ""), true);
             var newNotification = new Notifications
             {
-                Notification = "Ein neuer Schüler wurde hinzugefügt.",
+                Notification = "Neuer Schüler hinzugefügt.",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -900,7 +900,7 @@ powered by
 
             var newNotification = new Notifications
             {
-                Notification = "Ein neues Event wurde hinzugefügt.",
+                Notification = "Neues Event hinzugefügt.",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -994,7 +994,7 @@ powered by
 
             var newNotification = new Notifications
             {
-                Notification = "Ein neues Arbeitsblatt wurde hinzugefügt.",
+                Notification = "Neues Arbeitsblatt hinzugefügt.",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1084,7 +1084,7 @@ powered by
                 school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .", null, null);
             var newNotification = new Notifications
             {
-                Notification = "Neue Berichte wurden hinzugefügt.",
+                Notification = "Neue Berichte hinzugefügt.",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1172,7 +1172,7 @@ powered by
                 school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Einige Berichte wurden aktualisiert", Message(content, school.SchoolName ?? ""), true, "Einige Berichte wurden aktualisiert .", null, null);
             var newNotification = new Notifications
             {
-                Notification = "Die Berichtsänderung wurde hochgeladen.",
+                Notification = "Berichtsänderung hochgeladen.",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1266,7 +1266,7 @@ powered by
 
             var newNotification = new Notifications
             {
-                Notification = "Neue Berichte wurden hinzugefügt.",
+                Notification = "Neue Berichte hinzugefügt.",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1359,7 +1359,7 @@ powered by
 
                     var newNotification = new Notifications
                     {
-                        Notification = "Ein Bericht wurde abgelehnt.",
+                        Notification = "Bericht abgelehnt.",
                     };
                     await _notificationsRepo.Add(newNotification);
                     var notificationUser = new NotificationUser

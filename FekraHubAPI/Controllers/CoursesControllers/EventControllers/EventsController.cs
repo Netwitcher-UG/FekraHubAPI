@@ -266,9 +266,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     return BadRequest("Das Start- oder Enddatum muss nach dem aktuellen Datum liegen.");//The start date or end date must be greater than the current date
                 }
-
+                
                 List<CourseSchedule> schedule = new List<CourseSchedule>();
-                if(schedule == null || !schedule.Any())
+                if(scheduleId == null || !scheduleId.Any())
                 {
                     var startDate = eventMdl.StartDate.Date; 
                     var endDate = eventMdl.EndDate.Date;
@@ -286,6 +286,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 }
                 else
                 {
+                    var scheduleExist = await _ScheduleRepository.DataExist(x => scheduleId.Contains(x.Id));
+                    if (!scheduleExist)
+                    {
+                        return BadRequest("Es wurden keine Kurspläne gefunden.");// No course schedules found
+                    }
                     schedule = await _ScheduleRepository.GetRelationList(
                     where: n => scheduleId.Contains(n.Id),
                     selector: x => x);

@@ -252,6 +252,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             public DateTime EndDate { get; set; }
             public TimeSpan StartTime { get; set; }
             public TimeSpan EndTime { get; set; }
+            public DateTime StartDateTime => StartDate.Add(StartTime);
+            public DateTime EndDateTime => EndDate.Add(EndTime);
             public EventTypeModel EventType { get; set; }
             public List<CourseScheduleModel> CourseSchedule { get; set; }
             public bool IsEvent { get; set; }

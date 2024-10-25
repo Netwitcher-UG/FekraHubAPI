@@ -130,9 +130,9 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 var filteredCourseSchedules = new List<object>();
 
-                // تحديد حدود الفترة المطلوبة: 1 سبتمبر إلى 1 يونيو من السنة التالية
-                var startFilter = new DateTime(DateTime.Now.Year, 9, 1); // 1 سبتمبر للسنة الحالية
-                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1); // 1 يونيو للسنة التالية
+              
+                var startFilter = new DateTime(DateTime.Now.Year, 9, 1); 
+                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1);
 
                 foreach (var schedule in courseSchedule)
                 {
@@ -141,7 +141,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         var daysInRange = Enumerable.Range(0, (schedule.EndDate - schedule.StartDate).Days + 1)
                                                     .Select(x => schedule.StartDate.AddDays(x))
                                                     .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
-                                                                d >= startFilter && d < endFilter) // فلترة التواريخ ضمن الفترة المحددة
+                                                                d >= startFilter && d < endFilter) 
                                                     .ToList();
 
                         foreach (var day in daysInRange)

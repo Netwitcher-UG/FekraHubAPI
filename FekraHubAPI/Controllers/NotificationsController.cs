@@ -47,8 +47,8 @@ namespace FekraHubAPI.Controllers
                      asNoTracking:true,
                      orderBy:x=>x.NotificationId
                     );
-
-                return Ok(userNotifications);
+                var unReadCount = userNotifications.Where(x => x.Read == false).Count();
+                return Ok(new { userNotifications , unReadCount });
             }
             catch (Exception ex)
             {
@@ -58,21 +58,45 @@ namespace FekraHubAPI.Controllers
         }
         [Authorize]
         [HttpPatch("NotificationsRead")]
-        public async Task<IActionResult> UpdateNotifications([Required]List<int> ids)
+        public async Task<IActionResult> UpdateNotifications(int? id = null,bool AllRead = false)
         {
             try
             {
-                var userId = _notificationsRepo.GetUserIDFromToken(User);
-                var Notifications = await _notificationUserRepo.GetRelationList(
-                    where: x => ids.Contains(x.NotificationId)&& x.UserId == userId,
-                    selector: x => x
-                    );
-                if (Notifications == null || !Notifications.Any())
+                if (!id.HasValue && AllRead == false)
                 {
-                    return BadRequest("Benachrichtigung nicht gefunden.");//notification not found
+                    return BadRequest();
                 }
-                Notifications.ForEach(x => x.Read = true);
-                await _notificationUserRepo.ManyUpdate(Notifications);
+                var userId = _notificationsRepo.GetUserIDFromToken(User);
+                if (id.HasValue)
+                {
+                    
+                    var Notifications = await _notificationUserRepo.GetRelationSingle(
+                        where: x => id == x.NotificationId && x.UserId == userId,
+                        selector: x => x,
+                        returnType: QueryReturnType.FirstOrDefault
+                        );
+                    if (Notifications == null)
+                    {
+                        return BadRequest("Benachrichtigung nicht gefunden.");//notification not found
+                    }
+                    Notifications.Read = true;
+                    await _notificationUserRepo.Update(Notifications);
+                }
+                if (AllRead)
+                {
+                    var AllNotifications = await _notificationUserRepo.GetRelationList(
+                        where: x => x.UserId == userId,
+                        selector: x => x
+                       
+                        );
+                    if (AllNotifications == null)
+                    {
+                        return BadRequest("Benachrichtigung nicht gefunden.");//notification not found
+                    }
+                    AllNotifications.ForEach(x=> x.Read = true);
+                    await _notificationUserRepo.ManyUpdate(AllNotifications);
+                }
+                
                 return Ok();
             }
             catch (Exception ex)

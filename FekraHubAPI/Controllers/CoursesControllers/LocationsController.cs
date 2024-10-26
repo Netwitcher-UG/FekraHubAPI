@@ -51,7 +51,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
             
         }
-        [Authorize(Policy = "ManageLocations")]
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_location>>> GetLocations(string? search)
         {

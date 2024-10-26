@@ -31,7 +31,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _logger = logger;
         }
 
-        [Authorize(Policy = "ManageRoom")]
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Map_Room>>> GetRooms()
         {

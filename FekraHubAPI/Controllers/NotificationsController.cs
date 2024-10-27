@@ -48,7 +48,15 @@ namespace FekraHubAPI.Controllers
                      orderBy:x=>x.NotificationId
                     );
                 var unReadCount = userNotifications.Where(x => x.Read == false).Count();
-                return Ok(new { userNotifications , unReadCount });
+                var Notifications = userNotifications.Select(n => new
+                {
+                    n.Id,
+                    notification = n.Notification.Contains("|") ? n.Notification.Split('|')[0] : null,
+                    Url = n.Notification.Contains("|") ? n.Notification.Split('|')[1] : null,
+                    n.Date,
+                    n.Read
+                }).ToList();
+                return Ok(new { Notifications, unReadCount });
             }
             catch (Exception ex)
             {

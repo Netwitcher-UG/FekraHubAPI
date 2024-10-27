@@ -51,7 +51,7 @@ namespace FekraHubAPI.Controllers
                 var Notifications = userNotifications.Select(n => new
                 {
                     n.Id,
-                    notification = n.Notification.Contains("|") ? n.Notification.Split('|')[0] : null,
+                    notification = n.Notification.Contains("|") ? n.Notification.Split('|')[0] : n.Notification,
                     Url = n.Notification.Contains("|") ? n.Notification.Split('|')[1] : null,
                     n.Date,
                     n.Read

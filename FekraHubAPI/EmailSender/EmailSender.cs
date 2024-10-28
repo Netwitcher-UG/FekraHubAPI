@@ -585,7 +585,7 @@ powered by
                    contracts, pdfName + ".pdf");
             var newNotification = new Notifications
             {
-                Notification = $"Ihr Kind ist registriert.|/children/{studentId}/",
+                Notification = $"Ihr Kind ist registriert.|/children/{studentId}/|RegisteredChild",
             };
             await _notificationsRepo.Add(newNotification);
             var notificationUser = new NotificationUser
@@ -683,7 +683,7 @@ powered by
                true);
             var newNotification = new Notifications
             {
-                Notification = $"Neuer Benutzer hinzugefügt.|/users/parents/",
+                Notification = $"Neuer Benutzer hinzugefügt.|/users/parents/|RegisteredUser",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -799,7 +799,7 @@ powered by
                school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Schüler registriert", Message(content, school.SchoolName ?? ""), true);
             var newNotification = new Notifications
             {
-                Notification = $"Neuer Schüler hinzugefügt.|/students/{student.Id}/",
+                Notification = $"Neuer Schüler hinzugefügt.|/students/{student.Id}/|RegisteredStudent",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -900,7 +900,7 @@ powered by
 
             var newNotification = new Notifications
             {
-                Notification = $"Neues Event hinzugefügt.|/apps/calendar/",
+                Notification = $"Neues Event hinzugefügt.|/apps/calendar/|Event",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -994,7 +994,7 @@ powered by
 
             var newNotification = new Notifications
             {
-                Notification = $"Neues Arbeitsblatt hinzugefügt.|/children/",
+                Notification = $"Neues Arbeitsblatt hinzugefügt.|/children/|File",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1084,7 +1084,7 @@ powered by
             school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .", null, null);
             var newNotification = new Notifications
             {
-                Notification = $"Neue Berichte hinzugefügt.|/reports/",
+                Notification = $"Neue Berichte hinzugefügt.|/reports/|NewReport",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1172,7 +1172,7 @@ powered by
             school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Einige Berichte wurden aktualisiert", Message(content, school.SchoolName ?? ""), true, "Einige Berichte wurden aktualisiert .", null, null);
             var newNotification = new Notifications
             {
-                Notification = $"Berichtsänderung hochgeladen.|/reports/",
+                Notification = $"Berichtsänderung hochgeladen.|/reports/|UpdatedReport",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1266,7 +1266,7 @@ powered by
 
             var newNotification = new Notifications
             {
-                Notification = $"Neue Berichte hinzugefügt.|/children/",
+                Notification = $"Neue Berichte hinzugefügt.|/children/|AcceptedReport",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1360,7 +1360,7 @@ powered by
 
                     var newNotification = new Notifications
                     {
-                        Notification = $"Bericht abgelehnt.|/reports/",
+                        Notification = $"Bericht abgelehnt.|/reports/|NotAcceptedReport",
                     };
                     await _notificationsRepo.Add(newNotification);
                     var notificationUser = new NotificationUser

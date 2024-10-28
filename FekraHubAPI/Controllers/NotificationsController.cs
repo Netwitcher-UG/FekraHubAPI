@@ -53,6 +53,7 @@ namespace FekraHubAPI.Controllers
                     n.Id,
                     notification = n.Notification.Contains("|") ? n.Notification.Split('|')[0] : n.Notification,
                     Url = n.Notification.Contains("|") ? n.Notification.Split('|')[1] : null,
+                    Type = n.Notification.Contains("|") ? n.Notification.Split('|')[2] : null,
                     n.Date,
                     n.Read
                 }).ToList();

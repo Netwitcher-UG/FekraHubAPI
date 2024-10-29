@@ -89,6 +89,86 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
 
         }
+        [Authorize]
+        [HttpGet("GetCoursesNameForCalendar")]
+        public async Task<IActionResult> GetCoursesNameForCalendar()
+        {
+            try
+            {
+                var userId = _courseRepository.GetUserIDFromToken(User);
+                var isTeacher = await _courseRepository.IsTeacherIDExists(userId);
+                if (isTeacher)
+                {
+                    var courses = await _courseRepository.GetRelationList(
+                       where: x => x.Teacher.Select(x=>x.Id).Contains(userId),
+                       selector: x => new { x.Id, x.Name },
+                       asNoTracking: true,
+                       orderBy: x => x.Id
+                       );
+                    if (!courses.Any())
+                    {
+                        return BadRequest("Kein Kurs gefunden."); // No course found
+                    }
+
+                    return Ok(courses);
+                }
+                else
+                {
+                    var courses = await _courseRepository.GetRelationList(
+                       selector: x => new { x.Id, x.Name },
+                       asNoTracking: true,
+                       orderBy: x => x.Id
+                       );
+                    if (!courses.Any())
+                    {
+                        return BadRequest("Kein Kurs gefunden."); // No course found
+                    }
+
+                    return Ok(courses);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
+        [Authorize(Policy = "ManageChildren")]
+        [HttpGet("GetCoursesNameForParent")]
+        public async Task<IActionResult> GetCoursesNameForParent()
+        {
+            try
+            {
+                var userId = _courseRepository.GetUserIDFromToken(User);
+                var CourseId = await _studentRepository.GetRelationList(
+                    where:x=> x.ParentID == userId,
+                    selector:x=>x.CourseID,
+                    asNoTracking:true
+                    );
+                var courses = await _courseRepository.GetRelationList(
+                    where:x=> CourseId.Contains(x.Id),
+                    selector: x => new { x.Id, x.Name },
+                    asNoTracking: true,
+                    orderBy: x => x.Id
+                );
+
+                if (!courses.Any())
+                {
+                    return BadRequest("Kein Kurs gefunden."); // No course found
+                }
+
+                return Ok(courses);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+
+
+
+        }
         public class CourseScheduleCalender
         {
             public int Id { get; set; }
@@ -463,7 +543,202 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             }
         }
 
+        [Authorize(Policy = "ManageChildren")]
+        [HttpGet("CourseEventForPaerantCalender")]
+        public async Task<IActionResult> GetCourseEventForParentCalender2([FromQuery] int? courseId, [FromQuery] DateTime? From, [FromQuery] DateTime? To)
+        {
+            try
+            {
+                var ParentId = _courseScheduleRepository.GetUserIDFromToken(User);
+                var cousesParent = await _studentRepository.GetRelationList(
+                    where: x=> x.ParentID == ParentId ,
+                    selector:x=> x.CourseID,
+                    asNoTracking:true
+                    );
+                if(courseId != null && !cousesParent.Contains(courseId))
+                {
+                    return BadRequest();
+                }
 
+                var CourseWorkingDay = await _courseScheduleRepository.GetRelationList(
+                    where: courseId == null ? x=> cousesParent.Contains( x.CourseID ) : x => courseId == x.Course.Id,
+                    selector: x => x.Id,
+                    asNoTracking: true
+                );
+
+                var eventE = await _eventRepository.GetRelationList(
+                    where:  x => x.CourseSchedule.Any(z => CourseWorkingDay.Contains(z.Id)),
+                    include: x => x.Include(z => z.EventType).Include(c => c.CourseSchedule),
+                    selector: x => new EventModel
+                    {
+                        Id = x.Id,
+                        EventName = x.EventName,
+                        Description = x.Description,
+                        StartDate = x.StartDate.Date,
+                        EndDate = x.EndDate.Date,
+                        StartTime = x.StartTime,
+                        EndTime = x.EndTime,
+                        EventType = new EventTypeModel
+                        {
+                            Id = x.EventType.Id,
+                            TypeTitle = x.EventType.TypeTitle
+                        },
+                        CourseSchedule = x.CourseSchedule.Select(z => new CourseScheduleModel
+                        {
+                            Id = z.Id,
+                            DayOfWeek = z.DayOfWeek,
+                            StartTime = z.StartTime,
+                            EndTime = z.EndTime,
+                            CourseName = z.Course.Name,
+                            CourseID = z.Course.Id
+                        }).ToList(),
+                        IsEvent = true
+                    },
+                    asNoTracking: true
+                );
+
+                var courseSchedule = await _courseScheduleRepository.GetRelationList(
+                    where: courseId == null ? x => cousesParent.Contains(x.CourseID) : x => courseId == x.Course.Id,
+                    include: x => x.Include(z => z.Course),
+                    selector: x => new
+                    {
+                        CourseId = x.Course.Id,
+                        courseName = x.Course.Name,
+                        StartDate = x.Course.StartDate.Date,
+                        EndDate = x.Course.EndDate.Date,
+                        x.StartTime,
+                        x.EndTime,
+                        x.Id,
+                        x.DayOfWeek
+                    },
+                    asNoTracking: true,
+                    orderBy: x => x.Id
+                );
+
+                var filteredCourseSchedules = new List<EventModel>();
+
+                var startFilter = new DateTime(DateTime.Now.Year, 9, 1);
+                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1);
+
+                foreach (var schedule in courseSchedule)
+                {
+
+                    var daysInRange = Enumerable.Range(0, (schedule.EndDate - schedule.StartDate).Days + 1)
+                        .Select(x => schedule.StartDate.AddDays(x))
+                        .Where(d => d.DayOfWeek.ToString() == schedule.DayOfWeek &&
+                                    d >= startFilter && d < endFilter)
+                        .ToList();
+
+                    foreach (var day in daysInRange)
+                    {
+                        var startDateTime = day.Date;
+                        var endDateTime = day.Date;
+
+                        filteredCourseSchedules.Add(new EventModel
+                        {
+                            Id = schedule.CourseId,
+                            EventName = schedule.courseName,
+                            Description = "",
+                            StartDate = startDateTime,
+                            EndDate = endDateTime,
+                            StartTime = schedule.StartTime,
+                            EndTime = schedule.EndTime,
+                            EventType = new EventTypeModel
+                            {
+                                Id = 0,
+                                TypeTitle = ""
+                            },
+                            CourseSchedule = new List<CourseScheduleModel>
+                        {
+                            new CourseScheduleModel
+                            {
+                                Id = schedule.Id,
+                                DayOfWeek = schedule.DayOfWeek,
+                                StartTime = schedule.StartTime,
+                                EndTime = schedule.EndTime,
+                                CourseName = schedule.courseName,
+                                CourseID = schedule.CourseId
+                            }
+                        },
+                            IsEvent = false
+                        });
+                    }
+
+                }
+
+                var expandedEvents = new List<EventModel>();
+                foreach (var ev in eventE)
+                {
+                    var daysInEvent = Enumerable.Range(0, (ev.EndDate - ev.StartDate).Days + 1)
+                        .Select(x => ev.StartDate.AddDays(x))
+                        .ToList();
+
+                    foreach (var day in daysInEvent)
+                    {
+                        var startDateTime = day.Date;
+                        var endDateTime = day.Date;
+
+                        expandedEvents.Add(new EventModel
+                        {
+                            Id = ev.Id,
+                            EventName = ev.EventName,
+                            Description = ev.Description,
+                            StartDate = startDateTime,
+                            EndDate = endDateTime,
+                            StartTime = ev.StartTime,
+                            EndTime = ev.EndTime,
+                            EventType = ev.EventType,
+                            CourseSchedule = ev.CourseSchedule,
+                            IsEvent = true
+                        });
+                    }
+                }
+
+                var combinedResults = filteredCourseSchedules;
+                combinedResults.AddRange(expandedEvents);
+
+
+
+
+                if (From.HasValue && To.HasValue)
+                {
+                    var fromMonthStart = new DateTime(From.Value.Year, From.Value.Month, 1);
+                    var toMonthEnd = new DateTime(To.Value.Year, To.Value.Month, DateTime.DaysInMonth(To.Value.Year, To.Value.Month));
+
+                    combinedResults = combinedResults
+                        .Where(e => e.StartDate >= fromMonthStart && e.StartDate <= toMonthEnd)
+                        .ToList();
+                }
+
+                var filteredResults = new List<EventModel>();
+
+                var groupedResults = combinedResults
+                    .GroupBy(e => new { e.CourseSchedule.FirstOrDefault()?.CourseID, e.StartDate })
+                    .ToList();
+
+                foreach (var group in groupedResults)
+                {
+                    var hasEvent = group.Any(e => e.IsEvent);
+                    var hasCourse = group.Any(e => !e.IsEvent);
+
+                    if (hasEvent && hasCourse)
+                    {
+                        filteredResults.AddRange(group.Where(e => e.IsEvent).ToList());
+                    }
+                    else
+                    {
+                        filteredResults.AddRange(group);
+                    }
+                }
+                filteredResults = filteredResults.OrderBy(e => e.StartDate).ToList();
+                return Ok(filteredResults);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
 
 
 

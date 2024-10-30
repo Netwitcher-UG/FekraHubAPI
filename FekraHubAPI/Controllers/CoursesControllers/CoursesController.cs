@@ -516,23 +516,28 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var filteredResults = new List<EventModel>();
 
                 var groupedResults = combinedResults
-                    .GroupBy(e => new { e.CourseSchedule.FirstOrDefault()?.CourseID, e.StartDate })
-                    .ToList();
+                                .GroupBy(e => new { StartDate = e.StartDate })
+                                .ToList();
 
                 foreach (var group in groupedResults)
                 {
                     var hasEvent = group.Any(e => e.IsEvent);
-                    var hasCourse = group.Any(e => !e.IsEvent);
+                    var courseIDsWithEvent = group.Where(e => e.IsEvent)
+                                                  .SelectMany(e => e.CourseSchedule.Select(cs => cs.CourseID))
+                                                  .Distinct()
+                                                  .ToList();
 
-                    if (hasEvent && hasCourse)
+                    foreach (var item in group)
                     {
-                        filteredResults.AddRange(group.Where(e => e.IsEvent).ToList());
-                    }
-                    else
-                    {
-                        filteredResults.AddRange(group);
+                        if (hasEvent && item.CourseSchedule.Any(cs => courseIDsWithEvent.Contains(cs.CourseID)) && !item.IsEvent)
+                        {
+                            // Skip course items with overlapping events.
+                            continue;
+                        }
+                        filteredResults.Add(item);
                     }
                 }
+
                 filteredResults = filteredResults.OrderBy(e => e.StartDate).ToList();
                 return Ok(filteredResults);
             }

@@ -351,15 +351,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 }
                 else
                 {
-                    var scheduleExist = await _ScheduleRepository.DataExist(x => scheduleId.Contains(x.Id));
-                    if (!scheduleExist)
+                    var courseSchedule = await _courseRepository.GetRelationSingle(where:x => scheduleId.Contains(x.Id),
+                        selector:x=>x.CourseSchedule.ToList());
+                    if (courseSchedule == null || !courseSchedule.Any())
                     {
                         return BadRequest("Es wurden keine Kurspläne gefunden.");
                     }
-                    schedule = await _ScheduleRepository.GetRelationList(
-                        where: n => scheduleId.Contains(n.Id),
-                        selector: x => x
-                    );
+                    schedule = courseSchedule;
                 }
 
                 // جلب معرفات الكورسات من الجدول وإيجاد الدورات الصالحة

@@ -209,14 +209,15 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 }
                 else
                 {
-                   
-                    var courseSchedule = await _courseRepository.GetRelationSingle(where: x => scheduleId.Contains(x.Id),
+
+                    var courseSchedule = await _courseRepository.GetRelationList(where: x => scheduleId.Contains(x.Id),
                         selector: x => x.CourseSchedule.ToList());
+                    var mergedCourseSchedules = courseSchedule.SelectMany(cs => cs).ToList();
                     if (courseSchedule == null || !courseSchedule.Any())
                     {
                         return BadRequest("Es wurden keine Kurspläne gefunden.");
                     }
-                    schedule = courseSchedule;
+                    schedule = mergedCourseSchedules;
                 }
 
                 var courseIds = schedule.Select(z => z.CourseID).Distinct().ToList();
@@ -348,13 +349,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 }
                 else
                 {
-                    var courseSchedule = await _courseRepository.GetRelationSingle(where:x => scheduleId.Contains(x.Id),
+                    var courseSchedule = await _courseRepository.GetRelationList(where:x => scheduleId.Contains(x.Id),
                         selector:x=>x.CourseSchedule.ToList());
+                    var mergedCourseSchedules = courseSchedule.SelectMany(cs => cs).ToList();
                     if (courseSchedule == null || !courseSchedule.Any())
                     {
                         return BadRequest("Es wurden keine Kurspläne gefunden.");
                     }
-                    schedule = courseSchedule;
+                    schedule = mergedCourseSchedules;
                 }
 
               

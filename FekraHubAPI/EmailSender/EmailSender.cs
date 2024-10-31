@@ -257,7 +257,7 @@ a[x-apple-data-detectors],
           <td align=""center"" style=""padding:0;Margin:0"">
            <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-header-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px"">
              <tr class=""es-mobile-hidden"">
-             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;""></td>
+             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://api.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;""></td>
 
              </tr>
            </table></td>
@@ -267,7 +267,7 @@ a[x-apple-data-detectors],
          <tr>
           
              
-   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;""></td>
+   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://api.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;""></td>
 
             
          </tr>
@@ -294,7 +294,7 @@ powered by
 </td>
 
 <td align=""left"" style=""padding:0;Margin:0;width:150px;"" >
-<img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo2"" alt="""" width=""40"" style=""border:0;outline:none;text-decoration:none"">
+<img src=""https://api.fekrahub.app/api/SchoolInfo/SchoolLogo2"" alt="""" width=""40"" style=""border:0;outline:none;text-decoration:none"">
 </td>
 
              </tr>

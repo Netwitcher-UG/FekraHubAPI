@@ -72,7 +72,7 @@ namespace FekraHubAPI.ContractMaker
                 };
                 await _repo.Add(studentContract);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 if (await _studentrepo.IDExists(student.Id))
                 {
@@ -88,8 +88,12 @@ namespace FekraHubAPI.ContractMaker
         }
         public async Task<byte[]> GetContractPdf(int studentId)
         {
-            var AllContracts = await _repo.GetAll();
-            var contract = AllContracts.Where(c => c.StudentID == studentId).First();
+            var contract = await _repo.GetRelationSingle(where: c => c.StudentID == studentId,selector:x=>x,
+                asNoTracking:true,returnType:QueryReturnType.First);
+            if(contract == null)
+            {
+                return new byte[0];
+            }
             return contract.File;
         }
         public async Task<string> ContractHtml(Student student)
@@ -100,7 +104,7 @@ namespace FekraHubAPI.ContractMaker
         private async Task<List<string>> ContractHtmlPage(Student student)
         {
             var schoolInfoLogo = await _schoolInforepo.GetRelationSingle(
-                selector: x => x.LogoBase64,
+                selector: x => new { x.LogoBase64 , x.SchoolName },
                 returnType: QueryReturnType.Single,
                 asNoTracking: true);
             if (schoolInfoLogo == null)
@@ -112,7 +116,7 @@ namespace FekraHubAPI.ContractMaker
             {
                 return new List<string>();
             }
-            List<string> contractPages = (await _contractPagesrepo.GetAll()).Select(x => x.ConPage).ToList();
+            List<string> contractPages = await _contractPagesrepo.GetRelationList(selector:x=>x.ConPage,asNoTracking:true);
 
             contractPages[0] = contractPages[0]
                 .Replace("{student.FirstName}", student.FirstName ?? "")
@@ -129,7 +133,8 @@ namespace FekraHubAPI.ContractMaker
                 .Replace("{parent.Email}", parent.Email ?? "");
             for (var i = 0; i < contractPages.Count(); i++)
             {
-                contractPages[i] = contractPages[i].Replace("{fekrahublogo}", schoolInfoLogo ?? "");
+                contractPages[i] = contractPages[i].Replace("{fekrahublogo}", schoolInfoLogo.LogoBase64 ?? "");
+                contractPages[i] = contractPages[i].Replace("{shoolName}", schoolInfoLogo.SchoolName ?? "");
             }
             return contractPages;
         }

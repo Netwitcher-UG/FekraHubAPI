@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OfficeOpenXml.Drawing;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
@@ -97,6 +98,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 var userId = _courseRepository.GetUserIDFromToken(User);
                 var isTeacher = await _courseRepository.IsTeacherIDExists(userId);
+                var isParent = await _courseRepository.IsParentIDExists(userId);
                 if (isTeacher)
                 {
                     var courses = await _courseRepository.GetRelationList(
@@ -105,6 +107,27 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                        asNoTracking: true,
                        orderBy: x => x.Id
                        );
+                    if (!courses.Any())
+                    {
+                        return BadRequest("Kein Kurs gefunden."); // No course found
+                    }
+
+                    return Ok(courses);
+                }
+                else if (isParent)
+                {
+                    var CourseId = await _studentRepository.GetRelationList(
+                    where: x => x.ParentID == userId,
+                    selector: x => x.CourseID,
+                    asNoTracking: true
+                    );
+                    var courses = await _courseRepository.GetRelationList(
+                        where: x => CourseId.Contains(x.Id),
+                        selector: x => new { x.Id, x.Name },
+                        asNoTracking: true,
+                        orderBy: x => x.Id
+                    );
+
                     if (!courses.Any())
                     {
                         return BadRequest("Kein Kurs gefunden."); // No course found
@@ -357,20 +380,104 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
 
 
-        [Authorize(Policy = "GetCourse")]
+        [Authorize]
         [HttpGet("CourseEventForCalender")]
         public async Task<IActionResult> GetCourseForCalender2([FromQuery] int? courseId, [FromQuery] DateTime? From, [FromQuery] DateTime? To)
         {
             try
             {
-                var CourseWorkingDay = courseId == null ? null : await _courseScheduleRepository.GetRelationList(
-                    where: x => courseId == x.Course.Id,
+                var userId = _courseRepository.GetUserIDFromToken(User);
+                var isTeacher = await _courseRepository.IsTeacherIDExists(userId);
+                var isParent = await _courseRepository.IsParentIDExists(userId);
+                List<int> CourseIds = new List<int>();
+                if (isTeacher)
+                {
+                    var coursesTeacher = await _courseRepository.GetRelationList(
+                        where:x=>x.Teacher.Select(z=>z.Id).Contains(userId),
+                        selector:x=>x.Id,
+                        asNoTracking:true
+                        );
+                    if(courseId != null)
+                    {
+                        if (!coursesTeacher.Contains(courseId ?? 0))
+                        {
+                            return BadRequest();
+                        }
+                        else
+                        {
+                            CourseIds.Add(courseId ?? 0);
+                        }
+
+                    }
+                    else
+                    {
+                        CourseIds.AddRange(coursesTeacher);
+                    }
+                    
+                }
+                else if (isParent)
+                {
+                    var stu = await _studentRepository.GetRelationList(
+                        where:x=>x.ParentID == userId,
+                        selector:x=>x.CourseID,
+                        asNoTracking:true
+                        );
+                    var coursesParent = await _courseRepository.GetRelationList(
+                        where: x => stu.Contains(x.Id),
+                        selector: x => x.Id,
+                        asNoTracking: true
+                        );
+                    if (courseId != null)
+                    {
+                        if (!coursesParent.Contains(courseId ?? 0))
+                        {
+                            return BadRequest();
+                        }
+                        else
+                        {
+                            CourseIds.Add(courseId ?? 0);
+                        }
+
+                    }
+                    else
+                    {
+                        CourseIds.AddRange(coursesParent);
+                    }
+                    
+                }
+                else
+                {
+                    var coursesAll = await _courseRepository.GetRelationList(
+                        selector: x => x.Id,
+                        asNoTracking: true
+                        );
+                    if (courseId != null)
+                    {
+                        if (!coursesAll.Contains(courseId ?? 0))
+                        {
+                            return BadRequest();
+                        }
+                        else
+                        {
+                            CourseIds.Add(courseId ?? 0);
+                        }
+
+                    }
+                    else
+                    {
+                        CourseIds.AddRange(coursesAll);
+                    }
+                    
+                }
+
+                var CourseWorkingDay = await _courseScheduleRepository.GetRelationList(
+                    where: x => CourseIds.Contains(x.Course.Id),
                     selector: x => x.Id,
                     asNoTracking: true
                 );
 
                 var eventE = await _eventRepository.GetRelationList(
-                    where: courseId == null ? null : x => x.CourseSchedule.Any(z => CourseWorkingDay.Contains(z.Id)),
+                    where: x => x.CourseSchedule.Any(z => CourseWorkingDay.Contains(z.Id)),
                     include: x => x.Include(z => z.EventType).Include(c => c.CourseSchedule),
                     selector: x => new EventModel
                     {
@@ -401,7 +508,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 );
 
                 var courseSchedule = await _courseScheduleRepository.GetRelationList(
-                    where: x => !courseId.HasValue || x.CourseID == courseId.Value,
+                    where: x => CourseIds.Contains(x.CourseID ?? 0),
                     include: x => x.Include(z => z.Course),
                     selector: x => new
                     {

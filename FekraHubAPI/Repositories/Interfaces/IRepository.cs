@@ -47,6 +47,7 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task ManyUpdate(IEnumerable<T> entity);
         Task<bool> IDExists(int id);
         Task<bool> IsTeacherIDExists(string userId);
+        Task<bool> IsParentIDExists(string userId);
         Task<bool> IsSecretariatIDExists(string userId);
         Task<bool> IsSecretariat(ApplicationUser user);
         Task<bool> IsTeacher(ApplicationUser user);

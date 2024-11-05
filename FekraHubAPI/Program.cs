@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using DinkToPdf;
 using DinkToPdf.Contracts;
 using FekraHubAPI.CleanTables;
@@ -150,7 +150,11 @@ builder.Services.Configure<FormOptions>(options =>
 
 
 var app = builder.Build();
-
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate(); // يقوم بتطبيق أي هجرات جديدة
+}
 app.UseSwagger();
 app.UseSwaggerUI();
 

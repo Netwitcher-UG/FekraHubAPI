@@ -20,7 +20,7 @@ namespace FekraHubAPI.Controllers.Attendance
             return Ok(x.Select(x => new { x.Id, x.FirstName, x.LastName }));
         }
 
-        //[Authorize(Policy = "GetTeachersAttendance")]
+        [Authorize(Policy = "GetTeachersAttendance")]
         [HttpGet("TeacherAttendance/{Id}")]
         public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendance(string Id)
         {

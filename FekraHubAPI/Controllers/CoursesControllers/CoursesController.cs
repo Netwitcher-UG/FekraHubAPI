@@ -382,7 +382,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         [Authorize]
         [HttpGet("CourseEventForCalender")]
-        public async Task<IActionResult> GetCourseForCalender2([FromQuery] int? courseId, [FromQuery] DateTime? From, [FromQuery] DateTime? To)
+        public async Task<IActionResult> GetCourseForCalender2([FromQuery] List<int>? courseIds, [FromQuery] DateTime? From, [FromQuery] DateTime? To)
         {
             try
             {
@@ -397,16 +397,20 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         selector:x=>x.Id,
                         asNoTracking:true
                         );
-                    if(courseId != null)
+                    if(courseIds != null  && courseIds.Any())
                     {
-                        if (!coursesTeacher.Contains(courseId ?? 0))
+                        foreach(var courseId in courseIds)
                         {
-                            return BadRequest();
+                            if (!coursesTeacher.Contains(courseId))
+                            {
+                                return BadRequest();
+                            }
+                            else
+                            {
+                                CourseIds.Add(courseId);
+                            }
                         }
-                        else
-                        {
-                            CourseIds.Add(courseId ?? 0);
-                        }
+                        
 
                     }
                     else
@@ -427,16 +431,20 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         selector: x => x.Id,
                         asNoTracking: true
                         );
-                    if (courseId != null)
+                    if (courseIds != null && courseIds.Any())
                     {
-                        if (!coursesParent.Contains(courseId ?? 0))
+                        foreach (var courseId in courseIds)
                         {
-                            return BadRequest();
+                            if (!coursesParent.Contains(courseId))
+                            {
+                                return BadRequest();
+                            }
+                            else
+                            {
+                                CourseIds.Add(courseId);
+                            }
                         }
-                        else
-                        {
-                            CourseIds.Add(courseId ?? 0);
-                        }
+                            
 
                     }
                     else
@@ -451,16 +459,20 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                         selector: x => x.Id,
                         asNoTracking: true
                         );
-                    if (courseId != null)
+                    if (courseIds != null && courseIds.Any())
                     {
-                        if (!coursesAll.Contains(courseId ?? 0))
+                        foreach (var courseId in courseIds)
                         {
-                            return BadRequest();
+                            if (!coursesAll.Contains(courseId))
+                            {
+                                return BadRequest();
+                            }
+                            else
+                            {
+                                CourseIds.Add(courseId);
+                            }
                         }
-                        else
-                        {
-                            CourseIds.Add(courseId ?? 0);
-                        }
+                           
 
                     }
                     else

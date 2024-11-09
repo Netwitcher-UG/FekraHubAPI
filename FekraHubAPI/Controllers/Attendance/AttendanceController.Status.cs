@@ -174,7 +174,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
 
 
-        [Authorize(Policy = "ManageAttendanceStatus")]
+        [Authorize]
         [HttpGet("AttendanceStatus")]
         public async Task<ActionResult<IEnumerable<AttendanceStatus>>> GetAttendanceStatus()
         {

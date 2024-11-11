@@ -281,6 +281,12 @@ namespace FekraHubAPI.Repositories.Implementations
 
             return IsTeacher;
         }
+        public async Task<bool> IsParentIDExists(string userId)
+        {
+            var IsTeacher = await _context.UserRoles.AnyAsync(x => x.UserId == userId && x.RoleId == "3");
+
+            return IsTeacher;
+        }
         public async Task<bool> IsSecretariatIDExists(string userId)
         {
             var isSecretariat = await _context.UserRoles.AnyAsync(x => x.UserId == userId && x.RoleId == "2");

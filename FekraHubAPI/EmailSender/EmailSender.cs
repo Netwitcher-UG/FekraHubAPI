@@ -166,7 +166,7 @@ namespace FekraHubAPI.EmailSender
             }
 
         }
-        
+
 
         private string Message(string contentHtml, string schoolName)
         {
@@ -257,7 +257,7 @@ a[x-apple-data-detectors],
           <td align=""center"" style=""padding:0;Margin:0"">
            <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-header-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px"">
              <tr class=""es-mobile-hidden"">
-             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;""></td>
+             <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img src=""https://api.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;""></td>
 
              </tr>
            </table></td>
@@ -267,7 +267,7 @@ a[x-apple-data-detectors],
          <tr>
           
              
-   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;""></td>
+   <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img src=""https://api.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;""></td>
 
             
          </tr>
@@ -294,7 +294,7 @@ powered by
 </td>
 
 <td align=""left"" style=""padding:0;Margin:0;width:150px;"" >
-<img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo2"" alt="""" width=""40"" style=""border:0;outline:none;text-decoration:none"">
+<img src=""https://api.fekrahub.app/api/SchoolInfo/SchoolLogo2"" alt="""" width=""40"" style=""border:0;outline:none;text-decoration:none"">
 </td>
 
              </tr>
@@ -585,7 +585,7 @@ powered by
                    contracts, pdfName + ".pdf");
             var newNotification = new Notifications
             {
-                Notification = "Ihr Kind wurde erfolgreich registriert.",
+                Notification = $"Ihr Kind ist registriert.|/children/{studentId}/",
             };
             await _notificationsRepo.Add(newNotification);
             var notificationUser = new NotificationUser
@@ -678,16 +678,16 @@ powered by
                 </tr>
               </table>
 ";
-                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                   school.SchoolName ?? "", admins.Select(x=>x.Email?? "").ToList(), "Neuer Benutzer registriert", Message(content, school.SchoolName ?? ""),
-                   true);
+            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Benutzer registriert", Message(content, school.SchoolName ?? ""),
+               true);
             var newNotification = new Notifications
             {
-                Notification = "Ein neuer Benutzer wurde hinzugefügt.",
+                Notification = $"Neuer Benutzer hinzugefügt.|/users/parents/",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
-            foreach(var admin in admins)
+            foreach (var admin in admins)
             {
                 var notificationUser = new NotificationUser
                 {
@@ -696,7 +696,7 @@ powered by
                 };
                 notificationUsers.Add(notificationUser);
             }
-            
+
             await _notificationUserRepo.ManyAdd(notificationUsers);
 
         }
@@ -795,11 +795,11 @@ powered by
                 </tr>
               </table>
 ";
-                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                   school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Schüler registriert", Message(content, school.SchoolName ?? ""), true);
+            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Schüler registriert", Message(content, school.SchoolName ?? ""), true);
             var newNotification = new Notifications
             {
-                Notification = "Ein neuer Schüler wurde hinzugefügt.",
+                Notification = $"Neuer Schüler hinzugefügt.|/students/{student.Id}/",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -820,7 +820,7 @@ powered by
         public async Task SendToAllNewEvent(List<int?> corsesId)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
                 .SingleAsync();
             var users = await _userManager.Users
                         .Where(u => u.EmailConfirmed == true && u.ActiveUser == true && _context.Courses.Where(c => corsesId.Contains(c.Id))
@@ -895,12 +895,12 @@ powered by
               </table>
             
 ";
-                    await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                   school.SchoolName ?? "", users.Select(x=>x.Email??"").ToList(), "Neue Veranstaltung", Message(content, school.SchoolName ?? ""), true, "Eine neue Veranstaltung wurde hinzugefügt");
+            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+           school.SchoolName ?? "", users.Select(x => x.Email ?? "").ToList(), "Neue Veranstaltung", Message(content, school.SchoolName ?? ""), true, "Eine neue Veranstaltung wurde hinzugefügt");
 
             var newNotification = new Notifications
             {
-                Notification = "Ein neues Event wurde hinzugefügt.",
+                Notification = $"Neues Event hinzugefügt.|/apps/calendar/",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -929,7 +929,7 @@ powered by
                         .Include(x => x.User)
                         .Where(x => x.User.EmailConfirmed == true && x.User.ActiveUser == true)
                         .Select(z => new { z.User.Id, z.User.Email })
-                        .Distinct() 
+                        .Distinct()
                         .ToListAsync();
 
             var content = @$"
@@ -989,12 +989,12 @@ powered by
               </table>
 
 ";
-                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", students.Select(x=>x.Email??"").ToList(), "Neue Dateien", Message(content, school.SchoolName ?? ""), true, "Eine neue Datei wurde hinzugefügt");
+            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+            school.SchoolName ?? "", students.Select(x => x.Email ?? "").ToList(), "Neue Dateien", Message(content, school.SchoolName ?? ""), true, "Eine neue Datei wurde hinzugefügt");
 
             var newNotification = new Notifications
             {
-                Notification = "Ein neues Arbeitsblatt wurde hinzugefügt.",
+                Notification = $"Neues Arbeitsblatt hinzugefügt.|/children/",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1080,11 +1080,11 @@ powered by
               </table>
 
 ";
-                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .", null, null);
+            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+            school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .", null, null);
             var newNotification = new Notifications
             {
-                Notification = "Neue Berichte wurden hinzugefügt.",
+                Notification = $"Neue Berichte hinzugefügt.|/reports/",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1168,11 +1168,11 @@ powered by
               </table>
 
 ";
-                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Einige Berichte wurden aktualisiert", Message(content, school.SchoolName ?? ""), true, "Einige Berichte wurden aktualisiert .", null, null);
+            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+            school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Einige Berichte wurden aktualisiert", Message(content, school.SchoolName ?? ""), true, "Einige Berichte wurden aktualisiert .", null, null);
             var newNotification = new Notifications
             {
-                Notification = "Die Berichtsänderung wurde hochgeladen.",
+                Notification = $"Berichtsänderung hochgeladen.|/reports/",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1261,12 +1261,12 @@ powered by
 
 
 ";
-                    await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                school.SchoolName ?? "", parents.Select(x => x.Email ?? "").ToList(), "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .");
+            await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+        school.SchoolName ?? "", parents.Select(x => x.Email ?? "").ToList(), "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .");
 
             var newNotification = new Notifications
             {
-                Notification = "Neue Berichte wurden hinzugefügt.",
+                Notification = $"Neue Berichte hinzugefügt.|/children/",
             };
             await _notificationsRepo.Add(newNotification);
             List<NotificationUser> notificationUsers = new List<NotificationUser>();
@@ -1354,13 +1354,13 @@ powered by
               </table>
 
 ";
-                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [teacher.Email], "Ein Bericht wurde abgelehnt.", Message(content, school.SchoolName ?? ""), true,
-                    "Ein Bericht wurde abgelehnt.");
+                    await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+                        school.SchoolName ?? "", [teacher.Email], "Ein Bericht wurde abgelehnt.", Message(content, school.SchoolName ?? ""), true,
+                        "Ein Bericht wurde abgelehnt.");
 
                     var newNotification = new Notifications
                     {
-                        Notification = "Ein Bericht wurde abgelehnt.",
+                        Notification = $"Bericht abgelehnt.|/reports/",
                     };
                     await _notificationsRepo.Add(newNotification);
                     var notificationUser = new NotificationUser

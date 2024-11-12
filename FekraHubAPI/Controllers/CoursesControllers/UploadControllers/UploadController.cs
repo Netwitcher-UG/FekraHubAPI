@@ -55,11 +55,14 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
         {
             try
             {
+                var userId = _courseRepository.GetUserIDFromToken(User);
+                var isTeacher = await _courseRepository.IsTeacherIDExists(userId);
                 var result = await _uploadRepository.GetRelationList(
                     manyWhere: new List<Expression<Func<Upload, bool>>?>
                     {
                         !string.IsNullOrEmpty(search) ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Name.Contains(search))) : null,
-                        studentId != null ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Student.Any(y => y.Id == studentId))) : null
+                        studentId != null ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Student.Any(y => y.Id == studentId))) : null,
+                        isTeacher ? (Expression<Func<Upload, bool>>)(x => x.Courses.Any(z => z.Teacher.Any(c => c.Id == userId))) : null
                     }.Where(x => x != null).Cast<Expression<Func<Upload, bool>>>().ToList(),
                     selector: x => new
                     {

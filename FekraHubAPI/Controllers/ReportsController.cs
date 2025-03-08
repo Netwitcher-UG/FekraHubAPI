@@ -331,10 +331,10 @@ namespace FekraHubAPI.Controllers
                 },
                 asNoTracking:true);
 
-                if (!query.Any())
-                {
-                    return BadRequest("Keine Berichte gefunden.");//No reports found.
-                }
+                //if (!query.Any())
+                //{
+                //    return BadRequest("Keine Berichte gefunden.");//No reports found.
+                //}
                 var res = await _reportRepo.GetPagedDataAsync(query, paginationParameters);
 
                 return Ok(new

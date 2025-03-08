@@ -95,7 +95,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     },
                     asNoTracking: true);
 
-                return results.Any() ? Ok(results) : BadRequest("Keine Anwesenheitsaufzeichnungen gefunden.");
+                return  Ok(results) ;
             }
             catch (Exception ex)
             {

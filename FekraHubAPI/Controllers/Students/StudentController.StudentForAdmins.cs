@@ -134,7 +134,7 @@ namespace FekraHubAPI.Controllers.Students
                                 returnType: QueryReturnType.SingleOrDefault,
                                 asNoTracking: true
                             );
-                var room = await _courseRepo.GetRelationSingle(
+                var room = course == null ? null :await _courseRepo.GetRelationSingle(
                                 where: r => r.Id == course.Id,
                                 include: r => r.Include(x => x.Room).ThenInclude(x=>x.Location),
                                 selector: r => new
@@ -169,7 +169,7 @@ namespace FekraHubAPI.Controllers.Students
                                         TeacherLastName = r.User.LastName
                                     },asNoTracking:true
                                     );
-                var uploads = await _uploadRepo.GetRelationList(
+                var uploads = course == null ? null : await _uploadRepo.GetRelationList(
                                     where: u => u.Courses.Any(c => c.Id == course.Id) && u.Date >= DateTime.Now.AddDays(-30),
                                     selector: u => new
                                     {

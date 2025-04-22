@@ -487,7 +487,8 @@ namespace FekraHubAPI.Controllers.Students
             await _studentRepo.Update(student);
             return Ok("Erfolg");//success
         }
-        
+
+        [Authorize(Roles = "Admin")]
         [HttpPatch("UpdateCourseStudent")]
         public async Task<IActionResult> UpdateCourseStudent(
         [FromForm] int studentId,

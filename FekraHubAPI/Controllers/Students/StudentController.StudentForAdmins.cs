@@ -487,5 +487,33 @@ namespace FekraHubAPI.Controllers.Students
             await _studentRepo.Update(student);
             return Ok("Erfolg");//success
         }
+        
+        [HttpPatch("UpdateCourseStudent")]
+        public async Task<IActionResult> UpdateCourseStudent(
+        [FromForm] int studentId,
+         [FromForm] int? CourseId
+)
+        {
+
+            try
+            {
+                var student = await _studentRepo.GetById(studentId);
+
+                if (student.CourseID != CourseId)
+                {
+                    student.CourseID = CourseId;
+
+                }
+
+                await _studentRepo.Update(student);
+
+                return Ok("Schülerdaten wurden aktualisiert.");//Student Data is updated
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

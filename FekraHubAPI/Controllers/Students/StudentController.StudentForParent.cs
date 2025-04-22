@@ -238,7 +238,9 @@ namespace FekraHubAPI.Controllers.Students
             [FromForm] string? Street,
             [FromForm] string? StreetNr,
             [FromForm] string? ZipCode,
-            [FromForm] string? City
+            [FromForm] string? City 
+            //,
+            //[FromForm] int? CourseId
             )
         {
             try
@@ -258,6 +260,11 @@ namespace FekraHubAPI.Controllers.Students
                 student.StreetNr = StreetNr;
                 student.ZipCode = ZipCode;
                 student.City = City;
+                //if (student.CourseID != CourseId)
+                //{
+                //    student.CourseID = CourseId;
+
+                //}
 
                 await _studentRepo.Update(student);
 

@@ -1,4 +1,3 @@
-using AutoMapper;
 using DinkToPdf;
 using DinkToPdf.Contracts;
 using FekraHubAPI.CleanTables;
@@ -13,20 +12,12 @@ using FekraHubAPI.Filters;
 using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using System;
-using System.Data;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.Claims;
 using System.Text.Json.Serialization;
 using IEmailSender = FekraHubAPI.EmailSender.IEmailSender;
 
@@ -85,11 +76,14 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddHostedService<CleaneUsersTable>();
-builder.WebHost.ConfigureKestrel(options =>
+if (builder.Configuration.GetValue<bool>("isDocker"))
 {
-    options.ListenAnyIP(80); // HTTP
-    options.ListenAnyIP(443);
-});
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(80);
+        options.ListenAnyIP(443);
+    });
+}
 //Adding Authentication 
 builder.Services.AddAuthentication(options =>
 {
@@ -168,4 +162,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://0.0.0.0:80");
+app.Run();

@@ -18,7 +18,6 @@ namespace FekraHubAPI.MapModels.Courses
         public string? StreetNr { get; set; }
         public string? ZipCode { get; set; }
         public string? City { get; set; }
-        public int? CourseID { get; set; }
         public void Mapping(Profile profile)
         {
             profile.CreateMap<Map_Student, Student>();

@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FekraHubAPI.Data.Models
 {
@@ -21,7 +20,7 @@ namespace FekraHubAPI.Data.Models
         public string? StreetNr { get; set; }
         public string? ZipCode { get; set; }
         public string? City { get; set; }
-        public bool ActiveStudent { get; set; } = true;
+        public bool ActiveStudent { get; set; } = false;
         public DateTime? CreatedAt { get; set; }
 
         [ForeignKey("ParentID")]

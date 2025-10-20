@@ -713,7 +713,7 @@ powered by
                     .Select(x => new { x.Id, x.Email })
                     .ToListAsync();
             var user = await _userManager.Users.Where(x => x.Id == student.ParentID).SingleAsync();
-            var courseSelectedName = await _context.Courses.Where(x => x.Id == student.CourseID).SingleAsync();
+            var courseSelectedName = await _context.Courses.Where(x => x.Id == student.CourseID).FirstOrDefaultAsync();
 
 
 
@@ -762,7 +762,7 @@ powered by
                                <li style=""color:#333333;margin:0px 0px 15px;font-size:14px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Stadt : {student.City}</p></li>
                                <li style=""color:#333333;margin:0px 0px 15px;font-size:14px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Straße :{student.Street} {student.StreetNr}</p></li>
                                <li style=""color:#333333;margin:0px 0px 15px;font-size:14px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;"">Postleitzahl (PLZ) : {student.ZipCode}</p></li>
-                               <li style=""color:#333333;margin:0px 0px 15px;font-size:14px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;mso-margin-bottom-alt:15px"">Ausgewählter Kurs {courseSelectedName}</p></li>
+                               <li style=""color:#333333;margin:0px 0px 15px;font-size:14px""><p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px;mso-margin-bottom-alt:15px"">Ausgewählter Kurs {courseSelectedName?.ToString() ?? ""}</p></li>
                               </ul>
                             </td>
                             </tr>

@@ -342,6 +342,8 @@ namespace FekraHubAPI.Controllers
                     {
                         await client.ConnectAsync(schoolInfo.EmailServer, schoolInfo.EmailPortNumber, MailKit.Security.SecureSocketOptions.Auto);
                         await client.AuthenticateAsync(schoolInfo.FromEmail, schoolInfo.Password);
+                        //await client.ConnectAsync("smtp.ionos.de", 587, MailKit.Security.SecureSocketOptions.Auto);
+                        //await client.AuthenticateAsync("info@fekrahub.com", "NW2024!FekraHub");
                         await client.SendAsync(message);
                         await client.DisconnectAsync(true);
                     }

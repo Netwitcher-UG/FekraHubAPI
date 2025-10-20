@@ -33,18 +33,21 @@ namespace FekraHubAPI.Controllers.Students
                     FirstName = student.FirstName,
                     LastName = student.LastName,
                     Nationality = student.Nationality,
-                    Note = student.Note,
+                    Note = student.Note??"",
                     Gender = student.Gender,
                     Birthday = student.Birthday,
                     City = student.City ?? "Like parent",
                     Street = student.Street ?? "Like parent",
                     StreetNr = student.StreetNr ?? "Like parent",
                     ZipCode = student.ZipCode ?? "Like parent",
-                    CourseID = student.CourseID,
+                    CourseID = null,
                     ParentID = parentId,
+                    ActiveStudent = false
                 };
-                var contract = await _contractMaker.ContractHtml(studentEntity);
-                return Ok(contract);
+                await _studentRepo.Add(studentEntity);
+                await _emailSender.SendToAdminNewStudent(studentEntity);
+                //var contract = await _contractMaker.ContractHtml(studentEntity);
+                return Ok();// رسالة تم اضافة الطالب انتظر الموافقة من ادارة المدرسة 
             }
             catch (Exception ex)
             {
@@ -57,7 +60,7 @@ namespace FekraHubAPI.Controllers.Students
         [HttpPost("AcceptedContract")]
         public async Task<IActionResult> AcceptedContract([FromForm] Map_Student student)
         {
-            
+
             try
             {
                 var userId = _courseRepo.GetUserIDFromToken(User);
@@ -83,13 +86,15 @@ namespace FekraHubAPI.Controllers.Students
                     StreetNr = student.StreetNr,
                     ZipCode = student.ZipCode,
                     ParentID = userId,
-                    CourseID = student.CourseID,
+                    CourseID = null,
                 };
-                await _studentRepo.Add(studentEntity);
-                await _contractMaker.ConverterHtmlToPdf(studentEntity);
-                await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
-                await _emailSender.SendToAdminNewStudent(studentEntity);
-                return Ok("Begrüßt Ihren Sohn in unserer Familie. Eine Kopie des Vertrags wurde an Ihre E-Mail gesendet.");//welcomes your son to our family . A copy of the contract was sent to your email
+
+                //await _studentRepo.Add(studentEntity);
+                //await _contractMaker.ConverterHtmlToPdf(studentEntity);
+                //await _emailSender.SendContractEmail(studentEntity.Id, $"{studentEntity.FirstName}_{studentEntity.LastName}_Contract");
+                //await _emailSender.SendToAdminNewStudent(studentEntity);
+                //return Ok("Begrüßt Ihren Sohn in unserer Familie. Eine Kopie des Vertrags wurde an Ihre E-Mail gesendet.");//welcomes your son to our family . A copy of the contract was sent to your email}
+                return Ok();
             }
             catch (Exception ex)
             {

@@ -340,8 +340,7 @@ namespace FekraHubAPI.Controllers
                 message.From.Clear();
                 message.From.Add(new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail));
 
-                message.ReplyTo.Clear();
-                message.ReplyTo.Add(new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail));
+                
                 using (var client = new SmtpClient())
                 {
                     try
@@ -349,17 +348,10 @@ namespace FekraHubAPI.Controllers
                         await client.ConnectAsync(schoolInfo.EmailServer, schoolInfo.EmailPortNumber, MailKit.Security.SecureSocketOptions.Auto);
                         await client.AuthenticateAsync(schoolInfo.FromEmail, schoolInfo.Password);
 
-                        var envelopeSender = message.Sender ?? message.From.Mailboxes.First();
-
-                        var recipients = new List<MailboxAddress>();
-                        recipients.AddRange(message.To.Mailboxes);
-                        recipients.AddRange(message.Cc.Mailboxes);
-                        recipients.AddRange(message.Bcc.Mailboxes);
-
                         if (!message.To.Any())
-                            message.To.Add(new MailboxAddress("Undisclosed recipients", envelopeSender.Address));
+                            message.To.Add(new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail));
 
-                        await client.SendAsync(FormatOptions.Default, message, envelopeSender, recipients);
+                        await client.SendAsync(message);
                         await client.DisconnectAsync(true);
                     }
                     catch (Exception ex)

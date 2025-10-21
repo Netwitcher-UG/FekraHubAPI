@@ -111,7 +111,84 @@ namespace FekraHubAPI.Controllers.Students
             }
             
         }
+        [Authorize(Policy = "ManageChildren")]
+        [HttpGet("ByParent-Pending")]
+        public async Task<IActionResult> GetStudentsByParentPending()
+        {
+            try
+            {
+                var parentId = _courseRepo.GetUserIDFromToken(User);
 
+                if (string.IsNullOrEmpty(parentId))
+                {
+                    return Unauthorized("Elternteil nicht gefunden.");//Parent not found.
+                }
+
+                var students = await _studentRepo.GetRelationList(
+                    where: x => x.ParentID == parentId && x.ActiveStudent == false,
+                    orderBy: x => x.Id,
+                    include: x => x.Include(t => t.Course.Teacher).Include(c => c.Course).ThenInclude(r => r.Room).ThenInclude(l => l.Location),
+                    selector: z => new
+                    {
+                        z.Id,
+                        z.FirstName,
+                        z.LastName,
+                        z.Birthday,
+                        z.Nationality,
+                        z.Note,
+                        z.Gender,
+                        city = z.City ?? "Like parent",
+                        Street = z.Street ?? "Like parent",
+                        StreetNr = z.StreetNr ?? "Like parent",
+                        ZipCode = z.ZipCode ?? "Like parent",
+                        course = z.Course == null ? null : new
+                        {
+                            z.Course.Id,
+                            z.Course.Name,
+                            z.Course.Capacity,
+                            startDate = z.Course.StartDate.Date,
+                            EndDate = z.Course.EndDate.Date,
+                            z.Course.Price,
+                            Teacher = z.Course.Teacher.Select(x => new
+                            {
+                                x.Id,
+                                x.FirstName,
+                                x.LastName
+
+                            })
+                        },
+                        Room = z.Course == null ? null : new
+                        {
+                            z.Course.Room.Id,
+                            z.Course.Room.Name
+                        },
+                        Location = z.Course == null ? null : new
+                        {
+                            z.Course.Room.Location.Id,
+                            z.Course.Room.Location.Name,
+                            z.Course.Room.Location.City,
+                            z.Course.Room.Location.Street,
+                            z.Course.Room.Location.ZipCode,
+                            z.Course.Room.Location.StreetNr
+                        }
+
+
+                    },
+                    asNoTracking: true
+                    );
+
+
+
+
+                return Ok(students);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
         [Authorize(Policy = "ManageChildren")]
         [HttpGet("GetStudentByParent/{id}")]
         public async Task<IActionResult> GetStudentByParent(int id)

@@ -335,15 +335,20 @@ namespace FekraHubAPI.Controllers
                 }
 
                 message.Body = bodyBuilder.ToMessageBody();
+                message.Sender = new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail);
 
+                message.From.Clear();
+                message.From.Add(new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail));
+
+                message.ReplyTo.Clear();
+                message.ReplyTo.Add(new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail));
                 using (var client = new SmtpClient())
                 {
                     try
                     {
                         await client.ConnectAsync(schoolInfo.EmailServer, schoolInfo.EmailPortNumber, MailKit.Security.SecureSocketOptions.Auto);
                         await client.AuthenticateAsync(schoolInfo.FromEmail, schoolInfo.Password);
-                        //await client.ConnectAsync("smtp.ionos.de", 587, MailKit.Security.SecureSocketOptions.Auto);
-                        //await client.AuthenticateAsync("info@fekrahub.com", "NW2024!FekraHub");
+
                         await client.SendAsync(message);
                         await client.DisconnectAsync(true);
                     }

@@ -335,7 +335,13 @@ namespace FekraHubAPI.Controllers
                 }
 
                 message.Body = bodyBuilder.ToMessageBody();
+                message.Sender = new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail);
 
+                message.From.Clear();
+                message.From.Add(new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail));
+
+                message.ReplyTo.Clear();
+                message.ReplyTo.Add(new MailboxAddress(schoolInfo.SchoolName, schoolInfo.FromEmail));
                 using (var client = new SmtpClient())
                 {
                     try

@@ -348,7 +348,17 @@ namespace FekraHubAPI.Controllers
                     {
                         await client.ConnectAsync(schoolInfo.EmailServer, schoolInfo.EmailPortNumber, MailKit.Security.SecureSocketOptions.Auto);
                         await client.AuthenticateAsync(schoolInfo.FromEmail, schoolInfo.Password);
-                        await client.SendAsync(message);
+                        var envelopeSender = message.Sender ?? message.From.Mailboxes.First();
+
+                        var recipients = new List<MailboxAddress>();
+                        recipients.AddRange(message.To.Mailboxes);
+                        recipients.AddRange(message.Cc.Mailboxes);
+                        recipients.AddRange(message.Bcc.Mailboxes);
+
+                        if (!message.To.Any())
+                            message.To.Add(new MailboxAddress("Undisclosed recipients", envelopeSender.Address));
+
+                        await client.SendAsync(FormatOptions.Default, message, envelopeSender, recipients);
                         await client.DisconnectAsync(true);
                     }
                     catch (Exception ex)

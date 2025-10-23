@@ -484,6 +484,63 @@ namespace FekraHubAPI.Controllers
             }
 
         }
+        [AllowAnonymous]
+        [HttpGet("SchoolLogo3")]
+        public IActionResult SchoolLogo3()
+        {
+            try
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Controllers", "3.png");
+
+                var imageBytes = System.IO.File.ReadAllBytes(filePath);
+
+                return File(imageBytes, "image/jpeg");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+        [AllowAnonymous]
+        [HttpGet("SchoolLogo4")]
+        public IActionResult InstagramLogo()
+        {
+            try
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Controllers", "instagram.png");
+
+                var imageBytes = System.IO.File.ReadAllBytes(filePath);
+
+                return File(imageBytes, "image/jpeg");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+        [AllowAnonymous]
+        [HttpGet("SchoolLogo5")]
+        public IActionResult FacebookLogo()
+        {
+            try
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Controllers", "facebook.png");
+
+                var imageBytes = System.IO.File.ReadAllBytes(filePath);
+
+                return File(imageBytes, "image/jpeg");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
         //[AllowAnonymous]
         //[HttpPut("updateTESTING")]
         //public async Task<IActionResult> UpdateFeildsSchoolInfo(string domain)

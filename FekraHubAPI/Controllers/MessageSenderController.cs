@@ -426,7 +426,8 @@ namespace FekraHubAPI.Controllers
         }
         private string MessageLayout(string contentHtml, string schoolName)
         {
-
+            var baseUrl = Environment.GetEnvironmentVariable("FEKRA_API_BASE")
+                  ?? "https://devapi.fekrahub.app";
             string ConstantsMessage = @"
 <!DOCTYPE html
   PUBLIC ""-//W3C//DTD XHTML 1.0 Transitional//EN"" ""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"">
@@ -874,10 +875,7 @@ $@"
                   style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px"">
                   <tr class=""es-mobile-hidden"">
 <td style=""height:20px;""></td>
-                    <td align=""center"" style=""padding:0;Margin:0;font-size:0""><img
-                        src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt="""" width=""80"" class=""adapt-img""
-                        style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;"">
-                    </td>
+                    
 
                   </tr>
                 </table>
@@ -889,10 +887,7 @@ $@"
             <tr>
 
 
-              <td align=""center"" valign=""middle"" style=""padding:0;Margin:0""><img
-                  src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo1"" alt=""Logo"" width=""80px""
-                  style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none;padding-top:10px;"">
-              </td>
+              
 
 
             </tr>
@@ -920,10 +915,11 @@ $@"
                           <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
                             <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation""
                               style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+
                               <tr>
                                 <td align=""center""
                                   style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img
-                                    src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo3"" alt="""" width=""100""
+                                    src=""{baseUrl}/api/SchoolInfo/SchoolLogo3"" alt="""" width=""100""
                                     style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none"">
                                 </td>
                               </tr>
@@ -971,62 +967,14 @@ $@"
                           <td align=""center"" style=""padding:0;Margin:0;width:600px"">
                             <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation""
                               style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                              <tr>
-                                <td align=""center"" class=""es-text-4746"" style=""padding:0;Margin:0;padding-bottom:10px;"">
-                                  <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""""
-                                    role=""none""
-                                    style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:100%"">
-                                    <tr>
-                                      <td align=""right""
-                                        style=""padding:0;Margin:0;padding-right:10px;padding-bottom:10px;width:150px;"">
-                                        powered by
-                                      </td>
-
-                                      <td align=""left"" style=""padding:0;Margin:0;width:150px;"">
-                                        <img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo2"" alt=""""
-                                          width=""40"" style=""border:0;outline:none;text-decoration:none"">
-                                      </td>
-
-                                    </tr>
-                                  </table>
-                                </td>
-                              </tr>
+                              
 
                               <tr>
                                 <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;"">
                                   <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" width=""100%""
                                     style=""table-layout:fixed;width:100%;max-width:600px;Margin:0 auto;"">
                                     <tr>
-                                      <td align=""center"" valign=""top"" width=""33.333%""
-                                        style=""width:33.333%;padding:0 10px 20px;Margin:0;"">
-                                        <p
-                                          style=""Margin:0 0 12px;font-family:arial,'helvetica neue',helvetica,sans-serif;font-size:18px;"">
-                                          Folgen
-                                        </p>
-                                        <table role=""presentation"" cellpadding=""0"" cellspacing=""0""
-                                          style=""Margin:0 auto;"">
-                                          <tr>
-                                            <td style=""padding-right:12px;"">
-                                              <a href=""https://instagram.com"" target=""_blank""
-                                                style=""text-decoration:none;color:inherit;"">
-                                                <img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo4"" width=""24""
-                                                  height=""24"" alt=""Instagram""
-                                                  style=""display:block;border:0;outline:none;text-decoration:none;"">
-                                              </a>
-                                            </td>
-                                            <td>
-                                              <a href=""https://facebook.com"" target=""_blank""
-                                                style=""text-decoration:none;color:inherit;"">
-                                                <img src=""https://devapi.fekrahub.app/api/SchoolInfo/SchoolLogo5"" width=""24"" height=""24""
-                                                  alt=""Facebook""
-                                                  style=""display:block;border:0;outline:none;text-decoration:none;"">
-                                              </a>
-                                            </td>
-                                          </tr>
-                                        </table>
-                                      </td>
 
-                                      <!-- العمود 2: Kontakt -->
                                       <td align=""center"" valign=""top"" width=""33.333%""
                                         style=""width:33.333%;padding:0 10px 20px;Margin:0;"">
                                         <p
@@ -1036,13 +984,38 @@ $@"
                                         <p
                                           style=""Margin:0;font-family:arial,'helvetica neue',helvetica,sans-serif;font-size:16px;line-height:1.6;"">
                                           <a href=""mailto:admin@fekraschule.de""
-                                            style=""text-decoration:none;color:inherit;"">
+                                            style=""text-decoration:none;color:inherit;white-space: nowrap;"">
                                             admin@fekraschule.de
                                           </a><br>
                                           <a href=""tel:+491794169927"" style=""text-decoration:none;color:inherit;"">
                                             Tel. 01794169927
                                           </a>
                                         </p>
+
+                                        <p
+                                          style=""Margin:0 0 12px;font-family:arial,'helvetica neue',helvetica,sans-serif;font-size:18px;margin-top:20px;"">
+                                          Folgen
+                                        </p>
+                                        <!-- تحت عنوان Folgen مباشرة -->
+<table role=""presentation"" cellpadding=""0"" cellspacing=""0"" align=""center""
+       style=""Margin:0 auto; width:auto !important; display:inline-table;"">
+  <tr>
+    <td align=""center""
+        style=""padding:0; Margin:0; font-size:0; line-height:0; white-space:nowrap;"">
+      <a href=""https://instagram.com"" target=""_blank"" style=""text-decoration:none; color:inherit;"">
+        <img src=""{baseUrl}/api/SchoolInfo/SchoolLogo4"" width=""24"" height=""24"" alt=""Instagram""
+             style=""display:inline-block; border:0; outline:none; text-decoration:none;"">
+      </a>
+      <span style=""display:inline-block; width:12px; height:1px; line-height:0;"">&#8203;</span>
+      <a href=""https://facebook.com"" target=""_blank"" style=""text-decoration:none; color:inherit;"">
+        <img src=""{baseUrl}/api/SchoolInfo/SchoolLogo5"" width=""24"" height=""24"" alt=""Facebook""
+             style=""display:inline-block; border:0; outline:none; text-decoration:none;"">
+      </a>
+    </td>
+  </tr>
+</table>
+
+
                                       </td>
 
                                       <!-- العمود 3: Adresse -->
@@ -1064,6 +1037,30 @@ $@"
                                   </table>
                                 </td>
                               </tr>
+
+
+                            <tr>
+                                <td align=""center"" class=""es-text-4746"" style=""padding:0;Margin:0;padding-bottom:10px;"">
+                                  <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""""
+                                    role=""none""
+                                    style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:100%"">
+                                    <tr>
+                                      <td align=""right""
+                                        style=""padding:0;Margin:0;padding-right:10px;padding-bottom:10px;width:150px;font-size: 16px;"">
+                                        powered by
+                                      </td>
+
+                                      <td align=""left"" style=""padding:0;Margin:0;width:150px;"">
+                                        <img src=""{baseUrl}/api/SchoolInfo/SchoolLogo2"" alt=""""
+                                          width=""50"" style=""border:0;outline:none;text-decoration:none"">
+                                      </td>
+
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+
+
 
                               <tr>
                                 <td align=""center"" class=""es-text-4746"" style=""padding:0;Margin:0;padding-bottom:10px;"">

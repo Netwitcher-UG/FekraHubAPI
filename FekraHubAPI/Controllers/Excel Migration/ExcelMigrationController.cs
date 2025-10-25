@@ -1,18 +1,13 @@
-﻿using AutoMapper;
-using FekraHubAPI.Data;
+﻿using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.Repositories.Interfaces;
 using FekraHubAPI.Seeds;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using OfficeOpenXml;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
-using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Constract;
 
 namespace FekraHubAPI.Controllers.Excel_Migration
@@ -39,7 +34,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             _logger = logger;
         }
 
-        [Authorize(Policy = "ManageExcelMigration")]
+        //[Authorize(Policy = "ManageExcelMigration")]
         [HttpPost("UploadData")]
         public async Task<IActionResult> UploadData([Required] IFormFile file)
         {
@@ -60,12 +55,12 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
                         for (int row = 3; row <= 302; row++)
                         {
-                            var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
+                            var email = worksheet.Cells[row, 16].Text.Trim().Replace(" ", "");
                             if (!emailRegex.IsMatch(email) && IsRowValid(worksheet, row))
                             {
                                 return BadRequest($"Error at row {row - 2}: Invalid email format.");
                             }
-                            var dateP = worksheet.Cells[row, 15].Text;
+                            var dateP = worksheet.Cells[row, 17].Text;
                             var dateS = worksheet.Cells[row, 4].Text;
                             
                         }
@@ -73,7 +68,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                         {
                             if (IsRowValid(worksheet, row))
                             {
-                                var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
+                                var email = worksheet.Cells[row, 16].Text.Trim().Replace(" ", "");
                                 var user = await GetUserAsync(email, worksheet, row);
 
                                 if (user != null)
@@ -103,8 +98,8 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                    !string.IsNullOrEmpty(worksheet.Cells[row, 4].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 5].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 7].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 12].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 14].Text);
+                   !string.IsNullOrEmpty(worksheet.Cells[row, 14].Text) &&
+                   !string.IsNullOrEmpty(worksheet.Cells[row, 16].Text);
         }
 
         private async Task<ApplicationUser> GetUserAsync(string email, ExcelWorksheet worksheet, int row)
@@ -115,21 +110,21 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 user = new ApplicationUser
                 {
                     UserName = email,
-                    FirstName = worksheet.Cells[row, 12].Text,
-                    LastName = worksheet.Cells[row, 13].Text,
+                    FirstName = worksheet.Cells[row, 14].Text,
+                    LastName = worksheet.Cells[row, 15].Text,
                     Email = email,
-                    Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 15].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 15].Text),
-                    Birthplace = worksheet.Cells[row, 16].Text,
-                    Nationality = worksheet.Cells[row, 17].Text,
-                    PhoneNumber = worksheet.Cells[row, 18].Text,
-                    EmergencyPhoneNumber = worksheet.Cells[row, 19].Text,
-                    Gender = MaleOrFemail(worksheet.Cells[row, 20].Text.Trim()),
-                    City = worksheet.Cells[row, 21].Text,
-                    Street = worksheet.Cells[row, 22].Text,
-                    StreetNr = worksheet.Cells[row, 23].Text,
-                    ZipCode = worksheet.Cells[row, 24].Text,
-                    Job = worksheet.Cells[row, 25].Text,
-                    Graduation = worksheet.Cells[row, 26].Text,
+                    Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 17].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 17].Text),
+                    Birthplace = worksheet.Cells[row, 18].Text,
+                    Nationality = worksheet.Cells[row, 19].Text,
+                    PhoneNumber = worksheet.Cells[row, 20].Text,
+                    EmergencyPhoneNumber = worksheet.Cells[row, 21].Text,
+                    Gender = worksheet.Cells[row, 22].Text.Trim(),
+                    City = worksheet.Cells[row, 23].Text,
+                    Street = worksheet.Cells[row, 24].Text,
+                    StreetNr = worksheet.Cells[row, 25].Text,
+                    ZipCode = worksheet.Cells[row, 26].Text,
+                    Job = worksheet.Cells[row, 27].Text,
+                    Graduation = worksheet.Cells[row, 28].Text,
                     SecurityStamp = Guid.NewGuid().ToString("D"),
                     NormalizedUserName = email.ToUpper(),
                     NormalizedEmail = email.ToUpper(),
@@ -141,7 +136,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 {
                     try
                     {
-                        var result = await _userManager.CreateAsync(user, "FekraSchule.2024");
+                        var result = await _userManager.CreateAsync(user, "FekraSchule.2025");
                         if (!result.Succeeded)
                         {
                             await transaction.RollbackAsync();
@@ -157,29 +152,18 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
                         await transaction.CommitAsync();
                     }
-                    catch
+                    catch(Exception ex) 
                     {
-                        return null;
+                        await transaction.RollbackAsync();
+                        _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", ex.Message));
+                        throw;
                     }
                 }
             }
 
             return user;
         }
-        private string MaleOrFemail(string gender)
-        {
-            if(gender == "m")
-            {
-                return "male";
-            }else if(gender == "f")
-            {
-                return "female";
-            }
-            else
-            {
-                return gender;
-            }
-        }
+        
         private Student CreateStudent(ExcelWorksheet worksheet, int row, string parentId)
         {
             return new Student
@@ -189,7 +173,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 Birthday = DateTime.Parse(worksheet.Cells[row, 4].Text.Trim()),
                 Nationality = worksheet.Cells[row, 5].Text.Trim(),
                 Note = worksheet.Cells[row, 6].Text.Trim() ?? "",
-                Gender = MaleOrFemail( worksheet.Cells[row, 7].Text.Trim()) ,
+                Gender =  worksheet.Cells[row, 7].Text.Trim() ,
                 City = worksheet.Cells[row, 8].Text.Trim(),
                 Street = worksheet.Cells[row, 9].Text.Trim(),
                 StreetNr = worksheet.Cells[row, 10].Text.Trim(),

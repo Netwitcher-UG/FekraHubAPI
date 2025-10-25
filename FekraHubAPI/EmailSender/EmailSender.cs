@@ -1378,7 +1378,9 @@ $@"
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
                 .SingleAsync();
             var admins = await _userManager.Users
-                    .Where(user => user.EmailConfirmed == true && user.Email == "basel.slaby@gmail.com" && _context.UserRoles
+                    .Where(user => user.EmailConfirmed == true
+                    //&& user.Email == "basel.slaby@gmail.com" 
+                    && _context.UserRoles
                         .Where(role => role.RoleId == "1")
                         .Select(role => role.UserId)
                         .Contains(user.Id))

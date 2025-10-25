@@ -316,6 +316,7 @@ namespace FekraHubAPI.Controllers.Students
                 var Allstudents = await _studentRepo.GetRelationAsQueryable(
                 manyWhere: new List<Expression<Func<Student, bool>>?>
                     {
+                        (Expression<Func<Student, bool>>)(x => x.ActiveStudent == true),
                         search != null ? (Expression<Func<Student, bool>>)(x => x.FirstName.Contains(search) || x.LastName.Contains(search)) : null,
                         courseId != null ? (Expression<Func<Student, bool>>)(x => x.CourseID == courseId) : null,
                         corsesHaveTeacher != null ? (Expression<Func<Student, bool>>)(x => corsesHaveTeacher.Contains(x.Course.Id)) : null
@@ -478,6 +479,53 @@ namespace FekraHubAPI.Controllers.Students
             }
 
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("pending-student")]
+        public async Task<IActionResult> PendingStudents()
+        {
+            var students = await _studentRepo.GetRelationList(
+                where:x=>x.ActiveStudent == false,
+                selector: x => new
+                {
+                    x.Id,
+                    x.FirstName,
+                    x.LastName,
+                    x.Birthday,
+                    x.Nationality,
+                    x.Note,
+                    x.Gender,
+                    city = x.City ?? "Like parent",
+                    Street = x.Street ?? "Like parent",
+                    StreetNr = x.StreetNr ?? "Like parent",
+                    ZipCode = x.ZipCode ?? "Like parent",
+                    Parent = new
+                    {
+                        x.User.Id,
+                        x.User.FirstName,
+                        x.User.LastName,
+                        x.User.Email,
+                        x.User.PhoneNumber,
+                        x.User.EmergencyPhoneNumber,
+                        x.User.Street,
+                        x.User.StreetNr,
+                        x.User.ZipCode,
+                        x.User.City,
+                        x.User.Nationality,
+                        x.User.Birthplace,
+                        x.User.Birthday,
+                        x.User.Gender,
+                        x.User.Job,
+                        x.User.Graduation
+                    },
+                },
+                asNoTracking:true
+                );
+            return Ok( students );
+        }
+
+
+
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpPatch("ActiveStudent")]
         public async Task<IActionResult> ActiveStudent([Required]int id,[Required]bool active)
@@ -499,14 +547,28 @@ namespace FekraHubAPI.Controllers.Students
             try
             {
                 var student = await _studentRepo.GetById(studentId);
-
-                if (student.CourseID != CourseId)
+                if(student == null)
                 {
-                    student.CourseID = CourseId;
-
+                    return BadRequest("Dieser Schüler wurde nicht gefunden.");
                 }
-
-                await _studentRepo.Update(student);
+                if (CourseId != null && CourseId != 0)
+                {
+                    var courseExist = await _courseRepo.DataExist(x => x.Id == CourseId.Value);
+                    if (!courseExist)
+                    {
+                        return BadRequest("Kurs nicht gefunden.");
+                    }
+                    if (student.CourseID != CourseId)
+                    {
+                        student.CourseID = CourseId;
+                        await _studentRepo.Update(student);
+                    }
+                }
+                else
+                {
+                    student.CourseID = null;
+                    await _studentRepo.Update(student);
+                }
 
                 return Ok("Schülerdaten wurden aktualisiert.");//Student Data is updated
             }
@@ -515,6 +577,58 @@ namespace FekraHubAPI.Controllers.Students
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "StudentController", ex.Message));
                 return BadRequest(ex.Message);
             }
+        }
+        public class AcceptStudent
+        {
+            public int StudentId { get; set; }
+            public decimal RegistrationFee { get; set; }
+            public decimal AnnualCourseFee { get; set; }
+            public int? CourseId { get; set; }
+
+
+        }
+        //[Authorize(Roles = "Admin")]
+        [HttpPost("accept-student")]
+        public async Task<IActionResult> acceptStudent([FromBody] AcceptStudent data)
+        {
+            var student = await _studentRepo.GetById(data.StudentId);
+            if (student == null)
+            {
+                return BadRequest("Dieser Schüler wurde nicht gefunden.");
+            }
+            student.ActiveStudent = true;
+            if (data.CourseId != null && data.CourseId != 0)
+            {
+                var courseExist = await _courseRepo.DataExist(x => x.Id == data.CourseId.Value);
+                if (!courseExist)
+                {
+                    return BadRequest("Kurs nicht gefunden.");
+                }
+                student.CourseID = data.CourseId;
+            }
+            else
+            {
+                student.CourseID = null;
+            }
+            
+            await _studentRepo.Update(student);
+
+
+            ////////////////////////////////////////////////////////////////////////////////////////////////
+            return Ok();
+        }
+        //[Authorize(Roles = "Admin")]
+        [HttpPost("reject-student")]
+        public async Task<IActionResult> rejectStudent(int studentId)
+        {
+            var student = await _studentRepo.DataExist(x => x.Id == studentId);
+            if (!student)
+            {
+                return BadRequest("Dieser Schüler wurde nicht gefunden.");
+            }
+            
+            await _studentRepo.Delete(studentId);
+            return Ok();
         }
     }
 }

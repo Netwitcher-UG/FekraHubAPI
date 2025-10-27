@@ -45,7 +45,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
                 var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
+                var count = 0;
                 using (var stream = new MemoryStream())
                 {
                     await file.CopyToAsync(stream);
@@ -55,51 +55,93 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
                         for (int row = 3; row <= 302; row++)
                         {
-                            var email = worksheet.Cells[row, 16].Text.Trim().Replace(" ", "");
-                            if (!emailRegex.IsMatch(email) && IsRowValid(worksheet, row))
+                            var ex = ExcelExceptions(worksheet, row, emailRegex);
+                            if (ex.Count > 0 && ex.Count < 7)
                             {
-                                return BadRequest($"Error at row {row - 2}: Invalid email format.");
+                                return BadRequest(ex);
                             }
-                            var dateP = worksheet.Cells[row, 17].Text;
-                            var dateS = worksheet.Cells[row, 4].Text;
                             
+                            //var dateP = worksheet.Cells[row, 15].Text;
+                            //var dateS = worksheet.Cells[row, 4].Text;
+
                         }
                         for (int row = 3; row <= 302; row++)
                         {
                             if (IsRowValid(worksheet, row))
                             {
-                                var email = worksheet.Cells[row, 16].Text.Trim().Replace(" ", "");
+                                var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
                                 var user = await GetUserAsync(email, worksheet, row);
 
                                 if (user != null)
                                 {
                                     var student = CreateStudent(worksheet, row, user.Id);
                                     await _studentRepository.Add(student);
+                                    count++;
                                 }
                             }
+                            
                         }
                     }
                 }
 
-                return Ok("Success");
+                return Ok($"{count} students have been added");
             }
             catch (Exception ex)
             {
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", ex.Message));
                 return BadRequest(ex.Message);
             }
-            
-        }
 
+        }
+        private List<string> ExcelExceptions(ExcelWorksheet worksheet, int row, Regex regex)
+        {
+            if(IsRowValid(worksheet, row))
+            {
+                return new List<string>();
+            }
+            var ex = new List<string>();
+            if(string.IsNullOrEmpty(worksheet.Cells[row, 2].Text))
+            {
+                ex.Add($"In row ( {row - 2} ) field (student's First Name) : First Name is required");
+            }
+            if(string.IsNullOrEmpty(worksheet.Cells[row, 3].Text))
+            {
+                ex.Add($"In row ( {row - 2} ) field (student's Last Name) : Last Name is required");
+            }
+            if (string.IsNullOrEmpty(worksheet.Cells[row, 4].Text))
+            {
+                ex.Add($"In row ( {row - 2} ) field (student's Birthday) : Birthday is required");
+            }
+            if (string.IsNullOrEmpty(worksheet.Cells[row, 5].Text))
+            {
+                ex.Add($"In row ( {row - 2} ) field (student's Nationality) : Nationality is required");
+            }
+            if (string.IsNullOrEmpty(worksheet.Cells[row, 6].Text))
+            {
+                ex.Add($"In row ( {row - 2} ) field (student's Gender) : Gender is required");
+            }
+            if (string.IsNullOrEmpty(worksheet.Cells[row, 12].Text))
+            {
+                ex.Add($"In row ( {row - 2} ) field (parent's First Name) : First Name is required");
+            }
+            if (string.IsNullOrEmpty(worksheet.Cells[row, 14].Text))
+            {
+                ex.Add($"In row ( {row - 2} ) field (parent's Email) : Email is required");
+            }else if (!regex.IsMatch(worksheet.Cells[row, 14].Text.Trim().Replace(" ", "")))
+            {
+                ex.Add($"In row ( {row - 2} ) field (parent's Email) : Email format is invalid");
+            }
+            return ex;
+        }
         private bool IsRowValid(ExcelWorksheet worksheet, int row)
         {
             return !string.IsNullOrEmpty(worksheet.Cells[row, 2].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 3].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 4].Text) &&
                    !string.IsNullOrEmpty(worksheet.Cells[row, 5].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 7].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 14].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 16].Text);
+                   !string.IsNullOrEmpty(worksheet.Cells[row, 6].Text) &&
+                   !string.IsNullOrEmpty(worksheet.Cells[row, 12].Text) &&
+                   !string.IsNullOrEmpty(worksheet.Cells[row, 14].Text);
         }
 
         private async Task<ApplicationUser> GetUserAsync(string email, ExcelWorksheet worksheet, int row)
@@ -110,21 +152,21 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 user = new ApplicationUser
                 {
                     UserName = email,
-                    FirstName = worksheet.Cells[row, 14].Text,
-                    LastName = worksheet.Cells[row, 15].Text,
+                    FirstName = worksheet.Cells[row, 12].Text,
+                    LastName = worksheet.Cells[row, 13].Text,
                     Email = email,
-                    Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 17].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 17].Text),
-                    Birthplace = worksheet.Cells[row, 18].Text,
-                    Nationality = worksheet.Cells[row, 19].Text,
-                    PhoneNumber = worksheet.Cells[row, 20].Text,
-                    EmergencyPhoneNumber = worksheet.Cells[row, 21].Text,
-                    Gender = worksheet.Cells[row, 22].Text.Trim(),
-                    City = worksheet.Cells[row, 23].Text,
-                    Street = worksheet.Cells[row, 24].Text,
-                    StreetNr = worksheet.Cells[row, 25].Text,
-                    ZipCode = worksheet.Cells[row, 26].Text,
-                    Job = worksheet.Cells[row, 27].Text,
-                    Graduation = worksheet.Cells[row, 28].Text,
+                    Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 15].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 15].Text),
+                    Birthplace = worksheet.Cells[row, 16].Text,
+                    Nationality = worksheet.Cells[row, 17].Text,
+                    PhoneNumber = worksheet.Cells[row, 18].Text,
+                    EmergencyPhoneNumber = worksheet.Cells[row, 19].Text,
+                    Gender = worksheet.Cells[row, 20].Text.Trim(),
+                    City = worksheet.Cells[row, 21].Text,
+                    Street = worksheet.Cells[row, 22].Text,
+                    StreetNr = worksheet.Cells[row, 23].Text,
+                    ZipCode = worksheet.Cells[row, 24].Text,
+                    Job = worksheet.Cells[row, 25].Text,
+                    Graduation = worksheet.Cells[row, 26].Text,
                     SecurityStamp = Guid.NewGuid().ToString("D"),
                     NormalizedUserName = email.ToUpper(),
                     NormalizedEmail = email.ToUpper(),
@@ -136,7 +178,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 {
                     try
                     {
-                        var result = await _userManager.CreateAsync(user, "FekraSchule.2025");
+                        var result = await _userManager.CreateAsync(user, "FekraSchule.2024");
                         if (!result.Succeeded)
                         {
                             await transaction.RollbackAsync();
@@ -152,7 +194,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
                         await transaction.CommitAsync();
                     }
-                    catch(Exception ex) 
+                    catch(Exception ex)
                     {
                         await transaction.RollbackAsync();
                         _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", ex.Message));
@@ -172,12 +214,13 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 LastName = worksheet.Cells[row, 3].Text.Trim(),
                 Birthday = DateTime.Parse(worksheet.Cells[row, 4].Text.Trim()),
                 Nationality = worksheet.Cells[row, 5].Text.Trim(),
-                Note = worksheet.Cells[row, 6].Text.Trim() ?? "",
-                Gender =  worksheet.Cells[row, 7].Text.Trim() ,
-                City = worksheet.Cells[row, 8].Text.Trim(),
-                Street = worksheet.Cells[row, 9].Text.Trim(),
-                StreetNr = worksheet.Cells[row, 10].Text.Trim(),
-                ZipCode = worksheet.Cells[row, 11].Text.Trim(),
+                Gender = worksheet.Cells[row, 6].Text.Trim(),
+                City = worksheet.Cells[row, 7].Text.Trim(),
+                Street = worksheet.Cells[row, 8].Text.Trim(),
+                StreetNr = worksheet.Cells[row, 9].Text.Trim(),
+                ZipCode = worksheet.Cells[row, 10].Text.Trim(),
+                Note = worksheet.Cells[row, 11].Text.Trim() ?? "",
+                ActiveStudent= false,
                 ParentID = parentId
             };
         }
@@ -190,5 +233,5 @@ namespace FekraHubAPI.Controllers.Excel_Migration
     }
 }
 
-    
+
 

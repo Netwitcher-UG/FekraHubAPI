@@ -1,13 +1,11 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Constract;
 using FekraHubAPI.ContractMaker;
-using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -89,6 +87,10 @@ namespace FekraHubAPI.Controllers.Students
                             returnType: QueryReturnType.SingleOrDefault,
                             asNoTracking: true
                         );
+                if( student == null )
+                {
+                    return BadRequest();//////////////////////
+                }
 
                 var parent = await _userManager.Users
                             .Where(x => x.Id == student.ParentID)
@@ -113,6 +115,10 @@ namespace FekraHubAPI.Controllers.Students
                             })
                             .AsNoTracking()
                             .SingleOrDefaultAsync();
+                if(parent == null)
+                {
+                    return BadRequest();///////////////////////////
+                }
                 var course = await _courseRepo.GetRelationSingle(
                                 where: c => c.Student.Any(s => s.Id == id),
                                 include: c => c.Include(x => x.Teacher),
@@ -480,49 +486,7 @@ namespace FekraHubAPI.Controllers.Students
 
         }
 
-        [Authorize(Roles = "Admin")]
-        [HttpGet("pending-student")]
-        public async Task<IActionResult> PendingStudents()
-        {
-            var students = await _studentRepo.GetRelationList(
-                where:x=>x.ActiveStudent == false,
-                selector: x => new
-                {
-                    x.Id,
-                    x.FirstName,
-                    x.LastName,
-                    x.Birthday,
-                    x.Nationality,
-                    x.Note,
-                    x.Gender,
-                    city = x.City ?? "Like parent",
-                    Street = x.Street ?? "Like parent",
-                    StreetNr = x.StreetNr ?? "Like parent",
-                    ZipCode = x.ZipCode ?? "Like parent",
-                    Parent = new
-                    {
-                        x.User.Id,
-                        x.User.FirstName,
-                        x.User.LastName,
-                        x.User.Email,
-                        x.User.PhoneNumber,
-                        x.User.EmergencyPhoneNumber,
-                        x.User.Street,
-                        x.User.StreetNr,
-                        x.User.ZipCode,
-                        x.User.City,
-                        x.User.Nationality,
-                        x.User.Birthplace,
-                        x.User.Birthday,
-                        x.User.Gender,
-                        x.User.Job,
-                        x.User.Graduation
-                    },
-                },
-                asNoTracking:true
-                );
-            return Ok( students );
-        }
+        
 
 
 
@@ -578,6 +542,52 @@ namespace FekraHubAPI.Controllers.Students
                 return BadRequest(ex.Message);
             }
         }
+
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("pending-student")]
+        public async Task<IActionResult> PendingStudents()
+        {
+            var students = await _studentRepo.GetRelationList(
+                where: x => x.ActiveStudent == false,
+                selector: x => new
+                {
+                    x.Id,
+                    x.FirstName,
+                    x.LastName,
+                    x.Birthday,
+                    x.Nationality,
+                    x.Note,
+                    x.Gender,
+                    city = x.City ?? "Like parent",
+                    Street = x.Street ?? "Like parent",
+                    StreetNr = x.StreetNr ?? "Like parent",
+                    ZipCode = x.ZipCode ?? "Like parent",
+                    Parent = new
+                    {
+                        x.User.Id,
+                        x.User.FirstName,
+                        x.User.LastName,
+                        x.User.Email,
+                        x.User.PhoneNumber,
+                        x.User.EmergencyPhoneNumber,
+                        x.User.Street,
+                        x.User.StreetNr,
+                        x.User.ZipCode,
+                        x.User.City,
+                        x.User.Nationality,
+                        x.User.Birthplace,
+                        x.User.Birthday,
+                        x.User.Gender,
+                        x.User.Job,
+                        x.User.Graduation,
+                    },
+                    CanAccept = x.User.EmailConfirmed
+                },
+                asNoTracking: true
+                );
+            return Ok(students);
+        }
         public class AcceptStudent
         {
             public int StudentId { get; set; }
@@ -595,6 +605,15 @@ namespace FekraHubAPI.Controllers.Students
             if (student == null)
             {
                 return BadRequest("Dieser Schüler wurde nicht gefunden.");
+            }
+            var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == student.ParentID);
+            if (parent == null)
+            {
+                return BadRequest();// رسالة بالالماني حساب الاهل غير موجود 
+            }
+            if (!parent.EmailConfirmed)
+            {
+                return BadRequest();// رسالة بالالماني ايميل الاهل غير مؤكد
             }
             student.ActiveStudent = true;
             if (data.CourseId != null && data.CourseId != 0)

@@ -1014,9 +1014,7 @@ $@"
                  <tr>
                   <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
                    <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                     <tr>
-                      <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
-                     </tr>
+                     
                      <tr>
                       <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hallo {user.FirstName} {user.LastName}</h2></td>
                      </tr>
@@ -1091,9 +1089,7 @@ $@"
                  <tr>
                   <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
                    <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                     <tr>
-                      <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
-                     </tr>
+                     
                      <tr>
                       <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hallo {user.FirstName} {user.LastName}</h2></td>
                      </tr>
@@ -1199,9 +1195,7 @@ $@"
                 <tr>
                  <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
                   <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
-                    <tr>
-                     <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px;font-size:0px""><img src=""https://enpbppa.stripocdn.email/content/guids/CABINET_a3448362093fd4087f87ff42df4565c1/images/78501618239341906.png"" alt="""" width=""100"" style=""display:block;font-size:14px;border:0;outline:none;text-decoration:none""></td>
-                    </tr>
+                    
                     <tr>
                      <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hallo {parent.FirstName} {parent.LastName}</h2></td>
                     </tr>
@@ -2118,5 +2112,87 @@ oder rufen Sie uns an unter <a target=""_blank"" href="""" style=""mso-line-heig
             }
         }
 
+        public async Task SendConfirmationEmailFromExcel(ApplicationUser user, string password)
+        {
+            var school = await _context.SchoolInfos
+               .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
+               .SingleOrDefaultAsync();
+            if (school != null)
+            {
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var confirmationLink = $"{school.UrlDomain}/confirm-user?ID={user.Id}&Token={token}";
+                var content = $@"
+
+ <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
+         <tr>
+          <td align=""center"" style=""padding:0;Margin:0"">
+           <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-content-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px"">
+             <tr>
+              <td align=""left"" style=""Margin:0;padding-right:20px;padding-left:20px;padding-top:30px;padding-bottom:10px"">
+               <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                 <tr>
+                  <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
+                   <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                     
+                     <tr>
+                      <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Hallo {user.FirstName} {user.LastName}</h2></td>
+                     </tr>
+                     <tr>
+                      <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
+<p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Willkommen bei {school.SchoolName} ! , Danke, dass Sie Ihr Konto bestätigt haben, &nbsp;</p>
+<p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Die Aktivierungsschaltfläche ist<strong> 7 Tage </strong>lang gültig .</p>
+<p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Bitte aktivieren Sie die E-Mail, bevor dieser Zeitraum abläuft. &nbsp;</p>
+<p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Um die Bestätigung abzuschließen, klicken Sie bitte auf die Bestätigungsschaltfläche. &nbsp;</p>
+</td>
+                     </tr>
+                     <tr>
+                      <td align=""center"" style=""padding:20px;Margin:0;font-size:0"">
+                       <table cellpadding=""0"" cellspacing=""0"" border=""0"" width=""5%"" height=""100%"" class=""es-spacer"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                         <tr>
+                          <td style=""padding:0;Margin:0;width:100%;margin:0px;background:none;height:1px""></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+             <tr>
+              <td align=""left"" style=""padding:0;Margin:0;padding-right:20px;padding-left:20px;padding-bottom:30px"">
+               <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                 <tr>
+                  <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
+                   <table cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;border-radius:5px"" role=""presentation"">
+                     <tr>
+                      <td align=""center"" style=""padding:0;Margin:0;padding-bottom:10px;padding-top:10px""><span class=""es-button-border"" style=""border-style:solid;border-color:#2CB543;background:#5C68E2;border-width:0px;display:inline-block;border-radius:6px;width:auto""><a href=""{confirmationLink}"" target=""_blank"" class=""es-button"" style=""mso-style-priority:100 !important;text-decoration:none !important;mso-line-height-rule:exactly;color:#FFFFFF;font-size:20px;padding:10px 30px 10px 30px;display:inline-block;background:#5C68E2;border-radius:6px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:24px;width:auto;text-align:center;letter-spacing:0;mso-padding-alt:0;mso-border-alt:10px solid #5C68E2;padding-left:30px;padding-right:30px""> Bestätigen</a></span></td>
+                     </tr>
+                     <tr>
+                      <td align=""center"" style=""padding:20px;Margin:0;font-size:0"">
+                       <table height=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"" width=""5%"" class=""es-spacer"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                         <tr>
+                          <td style=""padding:0;Margin:0;height:1px;width:100%;margin:0px;background:none""></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                     <tr>
+                      <td align=""left"" class=""es-m-p0r es-m-p0l es-text-5335"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><span class=""es-text-mobile-size-14 es-override-size"">Hast du eine Frage?</span></p><p class=""es-text-mobile-size-10 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">Schreiben Sie uns eine E-Mail an <a target=""_blank"" href="""" style=""mso-line-height-rule:exactly;text-decoration:underline;color:#5C68E2;font-size:14px""> Admin@fekraschule.de </a> oder rufen Sie uns an unter  <a target=""_blank"" href="""" style=""mso-line-height-rule:exactly;text-decoration:underline;color:#5C68E2;font-size:14px;line-height:21px""> 01794169927 </a> .</p><p style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><br></p><p style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><span class=""es-text-mobile-size-12 es-override-size"">Vielen Dank für Ihre Zeit.</span></p></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table></td>
+         </tr>
+       </table>
+
+ ";
+
+                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+                    school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail", Message(content, school.SchoolName ?? ""), true);
+
+
+            }
+
+        }
     }
 }

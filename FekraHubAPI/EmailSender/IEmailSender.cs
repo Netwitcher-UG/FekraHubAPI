@@ -20,5 +20,7 @@ namespace FekraHubAPI.EmailSender
         Task SendToParentsNewReportsForStudents(List<Student> students);
         Task SendToTeacherReportsForStudentsNotAccepted(int studentId, string teacherId);
 
+        Task SendConfirmationEmailFromExcel(ApplicationUser user, string password);
+
     }
 }

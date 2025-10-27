@@ -21,10 +21,11 @@ namespace FekraHubAPI.Controllers.Excel_Migration
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _db;
         private readonly ILogger<ExcelMigrationController> _logger;
+        private readonly EmailSender.IEmailSender _emailSender;
         public ExcelMigrationController(IRepository<Student> studentRepository,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager, ApplicationDbContext db,
-            ILogger<ExcelMigrationController> logger
+            ILogger<ExcelMigrationController> logger, EmailSender.IEmailSender emailSender
              )
         {
             _db = db;
@@ -32,6 +33,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             _userManager = userManager;
             _roleManager = roleManager;
             _logger = logger;
+            _emailSender = emailSender;
         }
 
         //[Authorize(Policy = "ManageExcelMigration")]
@@ -178,7 +180,8 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 {
                     try
                     {
-                        var result = await _userManager.CreateAsync(user, "FekraSchule.2024");
+                        var pass = "FekraSchule.2024";
+                        var result = await _userManager.CreateAsync(user, pass);
                         if (!result.Succeeded)
                         {
                             await transaction.RollbackAsync();
@@ -193,6 +196,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                         }
 
                         await transaction.CommitAsync();
+                        await _emailSender.SendConfirmationEmailFromExcel(user, pass);
                     }
                     catch(Exception ex)
                     {

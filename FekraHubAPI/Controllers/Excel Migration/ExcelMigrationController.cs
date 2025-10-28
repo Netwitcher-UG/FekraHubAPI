@@ -35,7 +35,20 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             _logger = logger;
             _emailSender = emailSender;
         }
+        [HttpGet("download-excelFile")]
+        public IActionResult DownloadExcel()
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Controllers", "students.xlsx");
 
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("file not found");
+
+            var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            var fileName = "students.xlsx";
+
+            var fileBytes = System.IO.File.ReadAllBytes(filePath);
+            return File(fileBytes, contentType, fileName);
+        }
         //[Authorize(Policy = "ManageExcelMigration")]
         [HttpPost("UploadData")]
         public async Task<IActionResult> UploadData([Required] IFormFile file)

@@ -36,5 +36,6 @@ COPY Controllers/1.png /app/Controllers/1.png
 COPY Controllers/3.png /app/Controllers/3.png
 COPY Controllers/facebook.png /app/Controllers/facebook.png
 COPY Controllers/instagram.png /app/Controllers/instagram.png
+COPY Controllers/students.xlsx /app/Controllers/students.xlsx
 
 ENTRYPOINT ["dotnet", "FekraHubAPI.dll"]

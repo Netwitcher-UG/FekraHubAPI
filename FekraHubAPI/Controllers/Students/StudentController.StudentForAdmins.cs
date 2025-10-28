@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
+using System.Net;
 
 namespace FekraHubAPI.Controllers.Students
 {
@@ -636,18 +637,25 @@ namespace FekraHubAPI.Controllers.Students
             ////////////////////////////////////////////////////////////////////////////////////////////////
             return Ok();
         }
+        public class RejectData
+        {
+            public int StudentId { get; set; }
+            public string? Reason { get; set; }
+        }
         //[Authorize(Roles = "Admin")]
         [HttpPost("reject-student")]
-        public async Task<IActionResult> rejectStudent(int studentId)
+        public async Task<IActionResult> rejectStudent([FromBody] RejectData rejectData)
         {
-            var student = await _studentRepo.DataExist(x => x.Id == studentId);
+            var student = await _studentRepo.DataExist(x => x.Id == rejectData.StudentId);
             if (!student)
             {
                 return BadRequest("Dieser Schüler wurde nicht gefunden.");
             }
             
-            await _studentRepo.Delete(studentId);
+            await _studentRepo.Delete(rejectData.StudentId);
             return Ok();
         }
+
+        
     }
 }

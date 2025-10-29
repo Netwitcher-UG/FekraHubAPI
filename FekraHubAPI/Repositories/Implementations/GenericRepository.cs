@@ -65,6 +65,11 @@ namespace FekraHubAPI.Repositories.Implementations
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task Delete(T entity)
+        {
+            _dbSet.Remove(entity);
+            await _context.SaveChangesAsync();
+        }
         public async Task DeleteRange(Expression<Func<T, bool>> singlePredicate)
         {
             var entity = await _dbSet.Where(singlePredicate).ToListAsync();

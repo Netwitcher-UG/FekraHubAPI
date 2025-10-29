@@ -60,7 +60,64 @@ namespace FekraHubAPI.Controllers.Students
             _invoiceRepo = invoiceRepo;
             _uploadRepo = uploadRepo;
         }
-
+        [HttpGet("[action]")]
+        public async Task<IActionResult> TestEmailSender(int num)
+        {
+            var parent = await _userManager.Users.SingleAsync(x=>x.Email == "abog5461@gmail.com");
+            var student= await _studentRepo.GetRelationSingle(where:x=>x.ParentID == parent!.Id,
+                selector:x=>x,
+                asNoTracking:true);
+            switch (num)
+            {
+                case 0:
+                    await _emailSender.SendConfirmationEmail(parent);
+                    break;
+                case 1:
+                    await _emailSender.SendConfirmationEmailWithPassword(parent, "12345");
+                    break;
+                case 2:
+                    await _emailSender.SendContractEmail(student!.Id, "test");
+                    break;
+                case 3:
+                    await _emailSender.SendRestPassword(parent.Email!, "www.google.com");
+                    break;
+                case 4:
+                    await _emailSender.SendToAdminNewParent(parent);
+                    break;
+                case 5:
+                    await _emailSender.SendToAdminNewStudent(student!);
+                    break;
+                case 6:
+                    await _emailSender.SendToAllNewEvent([student!.CourseID]);
+                    break;
+                case 7:
+                    await _emailSender.SendToParentsNewFiles(student!.CourseID ?? 0);
+                    break;
+                case 8:
+                    await _emailSender.SendToSecretaryNewReportsForStudents();
+                    break;
+                case 9:
+                    await _emailSender.SendToSecretaryUpdateReportsForStudents();
+                    break;
+                case 10:
+                    await _emailSender.SendToParentsNewReportsForStudents([student]);
+                    break;
+                case 11:
+                    await _emailSender.SendToTeacherReportsForStudentsNotAccepted(student!.Id, "");
+                    break;
+                case 12:
+                    await _emailSender.SendConfirmationEmailFromExcel(parent, "123456");
+                    break;
+                case 13:
+                    await _emailSender.RejectStudentForParent(parent, "reason");
+                    break;
+                default:
+                    return BadRequest("Invalid number , choose from 0 to 13");
+            }
+            
+            
+            return Ok("Done");
+        }
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet("GetStudent/{id}")]
         public async Task<IActionResult> GetStudent(int id)////////////////////// Profile for admin
@@ -644,15 +701,21 @@ namespace FekraHubAPI.Controllers.Students
         }
         //[Authorize(Roles = "Admin")]
         [HttpPost("reject-student")]
-        public async Task<IActionResult> rejectStudent([FromBody] RejectData rejectData)
+        public async Task<IActionResult> RejectStudent([FromBody] RejectData rejectData)
         {
-            var student = await _studentRepo.DataExist(x => x.Id == rejectData.StudentId);
-            if (!student)
+            var student = await _studentRepo.GetById(rejectData.StudentId);
+            if (student == null)
             {
                 return BadRequest("Dieser Schüler wurde nicht gefunden.");
             }
-            
-            await _studentRepo.Delete(rejectData.StudentId);
+            var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == student.ParentID);
+            if (parent == null)
+            {
+                return BadRequest();// رسالة بالالماني حساب الاهل غير موجود 
+            }
+            await _studentRepo.Delete(student);
+            await _emailSender.RejectStudentForParent(parent, rejectData.Reason ?? "");
+            ///////////////////////////////////////// اشعار
             return Ok();
         }
 

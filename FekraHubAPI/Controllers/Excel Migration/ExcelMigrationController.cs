@@ -71,7 +71,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                         for (int row = 3; row <= 302; row++)
                         {
                             var ex = ExcelExceptions(worksheet, row, emailRegex);
-                            if (ex.Count > 0 && ex.Count < 7)
+                            if (!string.IsNullOrEmpty(ex))
                             {
                                 return BadRequest(ex);
                             }
@@ -108,45 +108,46 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             }
 
         }
-        private List<string> ExcelExceptions(ExcelWorksheet worksheet, int row, Regex regex)
+        private string ExcelExceptions(ExcelWorksheet worksheet, int row, Regex regex)
         {
             if(IsRowValid(worksheet, row))
             {
-                return new List<string>();
+                return "";
             }
-            var ex = new List<string>();
+            
             if(string.IsNullOrEmpty(worksheet.Cells[row, 2].Text))
             {
-                ex.Add($"In row ( {row - 2} ) field (student's First Name) : First Name is required");
+                return  $"In row ( {row - 2} ) field (student's First Name) : First Name is required";
+                 
             }
             if(string.IsNullOrEmpty(worksheet.Cells[row, 3].Text))
             {
-                ex.Add($"In row ( {row - 2} ) field (student's Last Name) : Last Name is required");
+                return $"In row ( {row - 2} ) field (student's Last Name) : Last Name is required";
             }
             if (string.IsNullOrEmpty(worksheet.Cells[row, 4].Text))
             {
-                ex.Add($"In row ( {row - 2} ) field (student's Birthday) : Birthday is required");
+                return $"In row ( {row - 2} ) field (student's Birthday) : Birthday is required";
             }
             if (string.IsNullOrEmpty(worksheet.Cells[row, 5].Text))
             {
-                ex.Add($"In row ( {row - 2} ) field (student's Nationality) : Nationality is required");
+                return $"In row ( {row - 2} ) field (student's Nationality) : Nationality is required";
             }
             if (string.IsNullOrEmpty(worksheet.Cells[row, 6].Text))
             {
-                ex.Add($"In row ( {row - 2} ) field (student's Gender) : Gender is required");
+                return $"In row ( {row - 2} ) field (student's Gender) : Gender is required";
             }
             if (string.IsNullOrEmpty(worksheet.Cells[row, 12].Text))
             {
-                ex.Add($"In row ( {row - 2} ) field (parent's First Name) : First Name is required");
+                return $"In row ( {row - 2} ) field (parent's First Name) : First Name is required";
             }
             if (string.IsNullOrEmpty(worksheet.Cells[row, 14].Text))
             {
-                ex.Add($"In row ( {row - 2} ) field (parent's Email) : Email is required");
+                return $"In row ( {row - 2} ) field (parent's Email) : Email is required";
             }else if (!regex.IsMatch(worksheet.Cells[row, 14].Text.Trim().Replace(" ", "")))
             {
-                ex.Add($"In row ( {row - 2} ) field (parent's Email) : Email format is invalid");
+                return $"In row ( {row - 2} ) field (parent's Email) : Email format is invalid";
             }
-            return ex;
+            return "";
         }
         private bool IsRowValid(ExcelWorksheet worksheet, int row)
         {

@@ -22,6 +22,7 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task Add(T entity);
         Task Update(T entity);
         Task Delete(int id);
+        Task Delete(T entity);
         Task DeleteRange(Expression<Func<T, bool>> singlePredicate);
         Task<IQueryable<TResult>> GetRelationAsQueryable<TResult>(
                         Expression<Func<T, bool>>? where = null,

@@ -31,10 +31,11 @@ namespace FekraHubAPI.EmailSender
         private readonly IRepository<Notifications> _notificationsRepo;
         private readonly IRepository<NotificationUser> _notificationUserRepo;
         private readonly IConfiguration _configuration;
+        private readonly IConfiguration _config;
         public EmailSender(IRepository<SchoolInfo> schoolInfo, UserManager<ApplicationUser> userManager,
             IRepository<Student> studentRepo, IRepository<StudentContract> studentContract, ApplicationDbContext context,
             IConfiguration configuration, IRepository<Course> courseRepo, IRepository<Notifications> notificationsRepo,
-            IRepository<NotificationUser> notificationUserRepo)
+            IRepository<NotificationUser> notificationUserRepo, IConfiguration config)
         {
             _schoolInfo = schoolInfo;
             _userManager = userManager;
@@ -45,11 +46,11 @@ namespace FekraHubAPI.EmailSender
             _courseRepo = courseRepo;
             _notificationsRepo = notificationsRepo;
             _notificationUserRepo = notificationUserRepo;
-
+            _config = config;
         }
 
         private async Task SendEmail(string emailServer, int emailPortNumber, string fromEmail, string password,
-            string SchoolName, List<string> toEmail, string subject, string body,
+            string SchoolName, List<string> toEmail, string subject, string body,string? yourEmail,
             bool isBodyHTML, string? submessage = "", byte[]? pdf = null, string? pdfName = null)
         {
 
@@ -61,11 +62,18 @@ namespace FekraHubAPI.EmailSender
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(SchoolName, FromEmail));
             if (toEmail.Count > 99) { }/////////////////////////////////////////////////////
-            foreach (var email in toEmail)
+            if(!string.IsNullOrEmpty(yourEmail)&& yourEmail != null)
             {
-                message.Bcc.Add(new MailboxAddress("", email));
+                message.Bcc.Add(new MailboxAddress("", yourEmail));
             }
-            //message.Bcc.Add(new MailboxAddress("", "abog5464@gmail.com"));
+            else
+            {
+                foreach (var email in toEmail)
+                {
+                    message.Bcc.Add(new MailboxAddress("", email));
+                }
+            }
+                
 
             message.Subject = subject;
 
@@ -997,7 +1005,7 @@ $@"
         }
 
 
-        public async Task SendConfirmationEmail(ApplicationUser user)
+        public async Task SendConfirmationEmail(ApplicationUser user, string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
@@ -1068,13 +1076,13 @@ $@"
  ";
 
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail", Message(content, school.SchoolName ?? ""), true);
+                    school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail", Message(content, school.SchoolName ?? ""), yourEmail, true);
 
 
             }
 
         }
-        public async Task SendConfirmationEmailWithPassword(ApplicationUser user, string password)
+        public async Task SendConfirmationEmailWithPassword(ApplicationUser user, string password, string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
@@ -1171,14 +1179,14 @@ $@"
 
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
                     school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail",
-                    Message(content, school.SchoolName ?? ""), true, "Bestätigungslink für das Konto + Anmeldedaten");
+                    Message(content, school.SchoolName ?? ""), yourEmail, true, "Bestätigungslink für das Konto + Anmeldedaten");
 
 
 
 
         }
 
-        public async Task SendContractEmail(int studentId, string pdfName)//
+        public async Task SendContractEmail(int studentId, string pdfName, string? yourEmail)//
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -1253,7 +1261,7 @@ $@"
 ";
 
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                  school.SchoolName ?? "", [parent.Email], "Registrierungsbestätigung", Message(content, school.SchoolName ?? ""),
+                  school.SchoolName ?? "", [parent.Email], "Registrierungsbestätigung", Message(content, school.SchoolName ?? ""), yourEmail,
                    true, $"Ein neuer Schüler namens <b>{student.FirstName} {student.LastName}</b> wurde erfolgreich registriert + Kopie des Vertrags",
                    contracts, pdfName + ".pdf");
             var newNotification = new Notifications
@@ -1270,7 +1278,7 @@ $@"
 
         }
 
-        public async Task SendToAdminNewParent(ApplicationUser user)//////////////
+        public async Task SendToAdminNewParent(ApplicationUser user, string? yourEmail)//////////////
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -1353,7 +1361,7 @@ $@"
               </table>
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Benutzer registriert", Message(content, school.SchoolName ?? ""),
+               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Benutzer registriert", Message(content, school.SchoolName ?? ""), yourEmail,
                true);
             var newNotification = new Notifications
             {
@@ -1374,7 +1382,7 @@ $@"
             await _notificationUserRepo.ManyAdd(notificationUsers);
 
         }
-        public async Task SendToAdminNewStudent(Student student)
+        public async Task SendToAdminNewStudent(Student student, string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -1475,7 +1483,7 @@ $@"
               </table>
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Schüler registriert", Message(content, school.SchoolName ?? ""), true);
+               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Schüler registriert", Message(content, school.SchoolName ?? ""), yourEmail, true);
             var newNotification = new Notifications
             {
                 Notification = $"Neuer Schüler hinzugefügt.|/students/{student.Id}/",
@@ -1496,7 +1504,7 @@ $@"
 
         }
 
-        public async Task SendToAllNewEvent(List<int?> corsesId)
+        public async Task SendToAllNewEvent(List<int?> corsesId,string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
@@ -1572,7 +1580,7 @@ $@"
             
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-           school.SchoolName ?? "", users.Select(x => x.Email ?? "").ToList(), "Neue Veranstaltung", Message(content, school.SchoolName ?? ""), true, "Eine neue Veranstaltung wurde hinzugefügt");
+           school.SchoolName ?? "", users.Select(x => x.Email ?? "").ToList(), "Neue Veranstaltung", Message(content, school.SchoolName ?? ""), yourEmail, true, "Eine neue Veranstaltung wurde hinzugefügt");
 
             var newNotification = new Notifications
             {
@@ -1594,7 +1602,7 @@ $@"
 
         }
 
-        public async Task SendToParentsNewFiles(int coursId)
+        public async Task SendToParentsNewFiles(int coursId, string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -1664,7 +1672,7 @@ $@"
 
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-            school.SchoolName ?? "", students.Select(x => x.Email ?? "").ToList(), "Neue Dateien", Message(content, school.SchoolName ?? ""), true, "Eine neue Datei wurde hinzugefügt");
+            school.SchoolName ?? "", students.Select(x => x.Email ?? "").ToList(), "Neue Dateien", Message(content, school.SchoolName ?? ""), yourEmail, true, "Eine neue Datei wurde hinzugefügt");
 
             var newNotification = new Notifications
             {
@@ -1687,7 +1695,7 @@ $@"
 
         }
 
-        public async Task SendToSecretaryNewReportsForStudents()
+        public async Task SendToSecretaryNewReportsForStudents(string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -1753,7 +1761,8 @@ $@"
 
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-            school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .", null, null);
+            school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Neue Berichte",
+            Message(content, school.SchoolName ?? ""), yourEmail, true, "Neue Berichte wurden hinzugefügt .", null, null);
             var newNotification = new Notifications
             {
                 Notification = $"Neue Berichte hinzugefügt.|/reports/",
@@ -1773,7 +1782,7 @@ $@"
             await _notificationUserRepo.ManyAdd(notificationUsers);
 
         }
-        public async Task SendToSecretaryUpdateReportsForStudents()
+        public async Task SendToSecretaryUpdateReportsForStudents(string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -1839,7 +1848,8 @@ $@"
 
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-            school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Einige Berichte wurden aktualisiert", Message(content, school.SchoolName ?? ""), true, "Einige Berichte wurden aktualisiert .", null, null);
+            school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Einige Berichte wurden aktualisiert",
+            Message(content, school.SchoolName ?? ""), yourEmail, true, "Einige Berichte wurden aktualisiert .", null, null);
             var newNotification = new Notifications
             {
                 Notification = $"Berichtsänderung hochgeladen.|/reports/",
@@ -1859,7 +1869,7 @@ $@"
             await _notificationUserRepo.ManyAdd(notificationUsers);
 
         }
-        public async Task SendToParentsNewReportsForStudents(List<Student> students)
+        public async Task SendToParentsNewReportsForStudents(List<Student> students, string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -1930,7 +1940,8 @@ $@"
 
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-        school.SchoolName ?? "", parents.Select(x => x.Email ?? "").ToList(), "Neue Berichte", Message(content, school.SchoolName ?? ""), true, "Neue Berichte wurden hinzugefügt .");
+        school.SchoolName ?? "", parents.Select(x => x.Email ?? "").ToList(), "Neue Berichte",
+        Message(content, school.SchoolName ?? ""), yourEmail, true, "Neue Berichte wurden hinzugefügt .");
 
             var newNotification = new Notifications
             {
@@ -1953,7 +1964,7 @@ $@"
 
         }
 
-        public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId, string teacherId)
+        public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId, string teacherId ,string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -2022,7 +2033,8 @@ $@"
 
 ";
                     await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                        school.SchoolName ?? "", [teacher.Email], "Ein Bericht wurde abgelehnt.", Message(content, school.SchoolName ?? ""), true,
+                        school.SchoolName ?? "", [teacher.Email], "Ein Bericht wurde abgelehnt.",
+                        Message(content, school.SchoolName ?? ""), yourEmail, true,
                         "Ein Bericht wurde abgelehnt.");
 
                     var newNotification = new Notifications
@@ -2042,7 +2054,7 @@ $@"
             }
         }
 
-        public async Task SendRestPassword(string email, string link)
+        public async Task SendRestPassword(string email, string link, string? yourEmail)
         {
             var school = await _context.SchoolInfos
                 .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
@@ -2114,11 +2126,12 @@ $@"
 
                     ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                        school.SchoolName ?? "", [email], $"Passwort zurücksetzen für Ihr Konto bei {school.SchoolName}", Message(content, school.SchoolName ?? ""), true, $"Passwort zurücksetzen für Ihr Konto bei {school.SchoolName}");
+                        school.SchoolName ?? "", [email], $"Passwort zurücksetzen für Ihr Konto bei {school.SchoolName}",
+                        Message(content, school.SchoolName ?? ""), yourEmail, true, $"Passwort zurücksetzen für Ihr Konto bei {school.SchoolName}");
             }
         }
 
-        public async Task SendConfirmationEmailFromExcel(ApplicationUser user, string password)
+        public async Task SendConfirmationEmailFromExcel(ApplicationUser user, string password, string? yourEmail)
         {
             var school = await _context.SchoolInfos
                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
@@ -2194,14 +2207,15 @@ $@"
  ";
 
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail", Message(content, school.SchoolName ?? ""), true);
+                    school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail",
+                    Message(content, school.SchoolName ?? ""), yourEmail, true);
 
 
             }
 
         }
 
-        public async Task RejectStudentForParent(ApplicationUser parent, string reason)
+        public async Task RejectStudentForParent(ApplicationUser parent, string reason, string? yourEmail)
         {
             var school = await _context.SchoolInfos
                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
@@ -2280,7 +2294,99 @@ $@"
  ";
 
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [parent.Email], $"Mitteilung zur Anmeldung Ihres Kindes – {school.SchoolName}", Message(content, school.SchoolName ?? ""), true);
+                    school.SchoolName ?? "", [parent.Email], $"Mitteilung zur Anmeldung Ihres Kindes – {school.SchoolName}",
+                    Message(content, school.SchoolName ?? ""), yourEmail, true);
+
+
+            }
+        }
+
+        public async Task AcceptStudent(ApplicationUser parent, Student student,string? yourEmail)
+        {
+            var school = await _context.SchoolInfos
+               .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
+               .SingleOrDefaultAsync();
+            var schoolWebsiteUrl = Environment.GetEnvironmentVariable("FRONTEND_BASEURL")
+                          ?? _config["Frontend_BaseUrl"]
+                          ?? "https://fekrahub.app";
+            if (school != null)
+            {
+
+                var content = $@"
+
+ <table cellpadding=""0"" cellspacing=""0"" align=""center"" class=""es-content"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important"">
+         <tr>
+          <td align=""center"" style=""padding:0;Margin:0"">
+           <table bgcolor=""#ffffff"" align=""center"" cellpadding=""0"" cellspacing=""0"" class=""es-content-body"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;"">
+                    <tr>
+                     <td align=""left"" style=""Margin:0;padding-bottom:10px"">
+               <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                 <tr>
+                  <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
+                   <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                     
+                     <tr>
+                      <td align=""center"" class=""es-m-txt-c es-text-9171"" style=""padding:0;Margin:0;padding-top:30px;padding-bottom:30px""><h2 class=""es-text-mobile-size-26"" style=""Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:26px;color:#333333"">Guten Tag {parent.FirstName} {parent.LastName}</h2></td>
+                     </tr>
+                     <tr>
+                      <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
+  <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">
+    Wir freuen uns, Ihnen mitzuteilen, dass die Anmeldung Ihres Kindes bei {school.SchoolName} angenommen wurde.
+  </p>
+  <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">
+    Bitte besuchen Sie unsere Website, um weitere Informationen zu Ihrem Kind zu erhalten:
+    <a href=""{schoolWebsiteUrl}"" target=""_blank"" style=""mso-line-height-rule:exactly;text-decoration:underline;color:#5C68E2"">Zur Website</a>.
+  </p>
+  <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">
+    Bei Fragen kontaktieren Sie uns bitte.
+  </p>
+</td>
+
+
+                     </tr>
+                     <tr>
+                      <td align=""center"" style=""padding:20px;Margin:0;font-size:0"">
+                       <table cellpadding=""0"" cellspacing=""0"" border=""0"" width=""5%"" height=""100%"" class=""es-spacer"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                         <tr>
+                          <td style=""padding:0;Margin:0;width:100%;margin:0px;background:none;height:1px""></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+             <tr>
+              <td align=""left"" style=""padding:0;Margin:0;padding-right:20px;padding-left:20px;padding-bottom:30px"">
+               <table cellpadding=""0"" cellspacing=""0"" width=""100%"" role=""none"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                 <tr>
+                  <td align=""center"" valign=""top"" style=""padding:0;Margin:0;width:560px"">
+                   <table cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;border-radius:5px"" role=""presentation"">
+                    
+                     <tr>
+                      <td align=""center"" style=""padding:20px;Margin:0;font-size:0"">
+                       <table height=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"" width=""5%"" class=""es-spacer"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">
+                         <tr>
+                          <td style=""padding:0;Margin:0;height:1px;width:100%;margin:0px;background:none""></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                     <tr>
+                      <td align=""left"" class=""es-m-p0r es-m-p0l es-text-5335"" style=""Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px""><p style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px""><span class=""es-text-mobile-size-12 es-override-size"">Vielen Dank für Ihre Zeit.</span></p></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table></td>
+         </tr>
+       </table>
+
+ ";
+                var subject = $"Aufnahme bestätigt: {student.FirstName} {student.LastName} – {school.SchoolName}";
+
+                await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
+                    school.SchoolName ?? "", [parent.Email], subject, Message(content, school.SchoolName ?? ""), yourEmail, true);
 
 
             }

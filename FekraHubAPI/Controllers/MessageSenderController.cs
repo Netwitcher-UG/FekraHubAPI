@@ -11,6 +11,7 @@ using FekraHubAPI.Migrations;
 using Microsoft.AspNetCore.Identity;
 using FekraHubAPI.MapModels;
 using System.Collections.Generic;
+using FekraHubAPI.EmailSender;
 
 namespace FekraHubAPI.Controllers
 {
@@ -27,10 +28,11 @@ namespace FekraHubAPI.Controllers
         private readonly ILogger<MessageSenderController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IEmailSender _emailSender;
         public MessageSenderController(IRepository<MessageSender> messageSenderRepo,
             IRepository<ApplicationUser> userRepo, IRepository<SchoolInfo> schoolInfoRepo, ILogger<MessageSenderController> logger,
             UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager,
-            IRepository<Student> studentRepo, IRepository<ExternalEmails> externalEmailRepo, IRepository<Course> courseRepo)
+            IRepository<Student> studentRepo, IRepository<ExternalEmails> externalEmailRepo, IRepository<Course> courseRepo,IEmailSender emailSender)
         {
             _messageSenderRepo = messageSenderRepo;
             _UserRepo = userRepo;
@@ -41,8 +43,77 @@ namespace FekraHubAPI.Controllers
             _studentRepo = studentRepo;
             _externalEmailRepo = externalEmailRepo;
             _courseRepo = courseRepo;
+            _emailSender = emailSender;
         }
+        [HttpGet("[action]")]
+        public async Task<IActionResult> TestEmailSender(int num, string? parentEmail, string? yourEmail)
+        {
+            var parent = await _userManager.Users.SingleAsync(x => x.Email == (parentEmail ?? "abog5461@gmail.com"));
+            if (parent == null)
+            {
+                return BadRequest("Parent not found");
+            }
+            var student = await _studentRepo.GetRelationSingle(where: x => x.ParentID == parent!.Id,
+                selector: x => x,
+                asNoTracking: true);
+            if (student == null)
+            {
+                return BadRequest("Student not found");
+            }
+            switch (num)
+            {
+                case 0:
+                    await _emailSender.SendConfirmationEmail(parent, yourEmail);
+                    break;
+                case 1:
+                    await _emailSender.SendConfirmationEmailWithPassword(parent, "12345", yourEmail);
+                    break;
+                case 2:
+                    await _emailSender.SendContractEmail(student!.Id, "test", yourEmail);
+                    break;
+                case 3:
+                    await _emailSender.SendRestPassword(parent.Email!, "www.google.com", yourEmail);
+                    break;
+                case 4:
+                    await _emailSender.SendToAdminNewParent(parent, yourEmail);
+                    break;
+                case 5:
+                    await _emailSender.SendToAdminNewStudent(student!, yourEmail);
+                    break;
+                case 6:
+                    await _emailSender.SendToAllNewEvent([student!.CourseID], yourEmail);
+                    break;
+                case 7:
+                    await _emailSender.SendToParentsNewFiles(student!.CourseID ?? 0, yourEmail);
+                    break;
+                case 8:
+                    await _emailSender.SendToSecretaryNewReportsForStudents(yourEmail);
+                    break;
+                case 9:
+                    await _emailSender.SendToSecretaryUpdateReportsForStudents(yourEmail);
+                    break;
+                case 10:
+                    await _emailSender.SendToParentsNewReportsForStudents([student], yourEmail);
+                    break;
+                case 11:
+                    await _emailSender.SendToTeacherReportsForStudentsNotAccepted(student!.Id, "", yourEmail);
+                    break;
+                case 12:
+                    await _emailSender.SendConfirmationEmailFromExcel(parent, "123456", yourEmail);
+                    break;
+                case 13:
+                    await _emailSender.RejectStudentForParent(parent, "reason", yourEmail);
+                    break;
+                case 14:
+                    await _emailSender.AcceptStudent(parent, student!, yourEmail);
+                    break;
+                default:
+                    return BadRequest("Invalid number , choose from 0 to 13");
+            }
 
+
+            return Ok("Done");
+        }
         [Authorize(Policy = "MessageSender")]
         [HttpGet]
         public async Task<IActionResult> GetMessages()

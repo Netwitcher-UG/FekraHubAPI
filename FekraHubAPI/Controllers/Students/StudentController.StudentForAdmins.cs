@@ -34,6 +34,9 @@ namespace FekraHubAPI.Controllers.Students
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<StudentController> _logger;
+        private readonly IRepository<Notifications> _notificationsRepo;
+        private readonly IRepository<NotificationUser> _notificationUserRepo;
+
         public StudentController(IRepository<StudentContract> studentContractRepo, IContractMaker contractMaker,
             IRepository<Student> studentRepo, IRepository<Course> courseRepo,
             IEmailSender emailSender, IMapper mapper,
@@ -42,7 +45,8 @@ namespace FekraHubAPI.Controllers.Students
             IRepository<CourseSchedule> courseScheduleRepo,
             ILogger<StudentController> logger, IRepository<Event> eventRepo,
             IRepository<Room> roomRepo, IRepository<Report> reportRepo,
-            IRepository<Invoice> invoiceRepo, IRepository<Upload> uploadRepo)
+            IRepository<Invoice> invoiceRepo, IRepository<Upload> uploadRepo, IRepository<Notifications> notificationsRepo,
+            IRepository<NotificationUser> notificationUserRepo)
         {
             _studentContractRepo = studentContractRepo;
             _contractMaker = contractMaker;
@@ -59,65 +63,10 @@ namespace FekraHubAPI.Controllers.Students
             _reportRepo = reportRepo;
             _invoiceRepo = invoiceRepo;
             _uploadRepo = uploadRepo;
+            _notificationsRepo = notificationsRepo;
+            _notificationUserRepo = notificationUserRepo;
         }
-        [HttpGet("[action]")]
-        public async Task<IActionResult> TestEmailSender(int num)
-        {
-            var parent = await _userManager.Users.SingleAsync(x=>x.Email == "abog5461@gmail.com");
-            var student= await _studentRepo.GetRelationSingle(where:x=>x.ParentID == parent!.Id,
-                selector:x=>x,
-                asNoTracking:true);
-            switch (num)
-            {
-                case 0:
-                    await _emailSender.SendConfirmationEmail(parent);
-                    break;
-                case 1:
-                    await _emailSender.SendConfirmationEmailWithPassword(parent, "12345");
-                    break;
-                case 2:
-                    await _emailSender.SendContractEmail(student!.Id, "test");
-                    break;
-                case 3:
-                    await _emailSender.SendRestPassword(parent.Email!, "www.google.com");
-                    break;
-                case 4:
-                    await _emailSender.SendToAdminNewParent(parent);
-                    break;
-                case 5:
-                    await _emailSender.SendToAdminNewStudent(student!);
-                    break;
-                case 6:
-                    await _emailSender.SendToAllNewEvent([student!.CourseID]);
-                    break;
-                case 7:
-                    await _emailSender.SendToParentsNewFiles(student!.CourseID ?? 0);
-                    break;
-                case 8:
-                    await _emailSender.SendToSecretaryNewReportsForStudents();
-                    break;
-                case 9:
-                    await _emailSender.SendToSecretaryUpdateReportsForStudents();
-                    break;
-                case 10:
-                    await _emailSender.SendToParentsNewReportsForStudents([student]);
-                    break;
-                case 11:
-                    await _emailSender.SendToTeacherReportsForStudentsNotAccepted(student!.Id, "");
-                    break;
-                case 12:
-                    await _emailSender.SendConfirmationEmailFromExcel(parent, "123456");
-                    break;
-                case 13:
-                    await _emailSender.RejectStudentForParent(parent, "reason");
-                    break;
-                default:
-                    return BadRequest("Invalid number , choose from 0 to 13");
-            }
-            
-            
-            return Ok("Done");
-        }
+        
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet("GetStudent/{id}")]
         public async Task<IActionResult> GetStudent(int id)////////////////////// Profile for admin
@@ -657,7 +606,7 @@ namespace FekraHubAPI.Controllers.Students
         }
         //[Authorize(Roles = "Admin")]
         [HttpPost("accept-student")]
-        public async Task<IActionResult> acceptStudent([FromBody] AcceptStudent data)
+        public async Task<IActionResult> AcceptPendingStudent([FromBody] AcceptStudent data)
         {
             var student = await _studentRepo.GetById(data.StudentId);
             if (student == null)
@@ -667,11 +616,11 @@ namespace FekraHubAPI.Controllers.Students
             var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == student.ParentID);
             if (parent == null)
             {
-                return BadRequest();// رسالة بالالماني حساب الاهل غير موجود 
+                return BadRequest("Das Elternkonto der Erziehungsberechtigten wurde nicht gefunden.");// رسالة بالالماني حساب الاهل غير موجود 
             }
             if (!parent.EmailConfirmed)
             {
-                return BadRequest();// رسالة بالالماني ايميل الاهل غير مؤكد
+                return BadRequest("Die E-Mail-Adresse des Elternkontos ist noch nicht bestätigt");// رسالة بالالماني ايميل الاهل غير مؤكد
             }
             student.ActiveStudent = true;
             if (data.CourseId != null && data.CourseId != 0)
@@ -691,7 +640,22 @@ namespace FekraHubAPI.Controllers.Students
             await _studentRepo.Update(student);
 
 
-            ////////////////////////////////////////////////////////////////////////////////////////////////
+            await _emailSender.AcceptStudent(parent, student);
+
+            var newNotification = new Notifications
+            {
+                Notification = $"{student.FirstName} {student.LastName} wurde aufgenommen. |/children/",
+            };
+            await _notificationsRepo.Add(newNotification);
+            List<NotificationUser> notificationUsers = new List<NotificationUser>();
+            var notificationUser = new NotificationUser
+            {
+                NotificationId = newNotification.Id,
+                UserId = parent.Id
+            };
+            notificationUsers.Add(notificationUser);
+
+            await _notificationUserRepo.ManyAdd(notificationUsers);
             return Ok();
         }
         public class RejectData
@@ -711,11 +675,25 @@ namespace FekraHubAPI.Controllers.Students
             var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == student.ParentID);
             if (parent == null)
             {
-                return BadRequest();// رسالة بالالماني حساب الاهل غير موجود 
+                return BadRequest("Das Elternkonto der Erziehungsberechtigten wurde nicht gefunden.");// رسالة بالالماني حساب الاهل غير موجود 
             }
             await _studentRepo.Delete(student);
             await _emailSender.RejectStudentForParent(parent, rejectData.Reason ?? "");
-            ///////////////////////////////////////// اشعار
+
+            var newNotification = new Notifications
+            {
+                Notification = $"{student.FirstName} {student.LastName} wurde abgelehnt.|/children/",
+            };
+            await _notificationsRepo.Add(newNotification);
+            List<NotificationUser> notificationUsers = new List<NotificationUser>();
+            var notificationUser = new NotificationUser
+            {
+                NotificationId = newNotification.Id,
+                UserId = parent.Id
+            };
+            notificationUsers.Add(notificationUser);
+
+            await _notificationUserRepo.ManyAdd(notificationUsers);
             return Ok();
         }
 

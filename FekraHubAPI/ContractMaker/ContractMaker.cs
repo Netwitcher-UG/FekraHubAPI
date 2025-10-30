@@ -3,11 +3,8 @@ using FekraHubAPI.Repositories.Interfaces;
 
 using DinkToPdf;
 using DinkToPdf.Contracts;
-using System.Runtime.ConstrainedExecution;
-using System;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using MimeKit;
-using Serilog;
+using System.Globalization;
+
 
 namespace FekraHubAPI.ContractMaker
 {
@@ -29,7 +26,7 @@ namespace FekraHubAPI.ContractMaker
             _converter = converter;
             _contractPagesrepo = contractPagesrepo;
         }
-        private async Task<byte[]> PdfFile(Student student)
+        private async Task<byte[]> PdfFile(Student student, decimal RegistrationFee, decimal AnnualCourseFee)
         {
             var globalSettings = new GlobalSettings
             {
@@ -42,13 +39,13 @@ namespace FekraHubAPI.ContractMaker
             var objectSettings1 = new ObjectSettings
             {
                 PagesCount = true,
-                HtmlContent = (await ContractHtmlPage(student))[0],
+                HtmlContent = (await ContractHtmlPage(student, RegistrationFee, AnnualCourseFee))[0],
                 WebSettings = { DefaultEncoding = "utf-8", PrintMediaType = true, LoadImages = true },
             };
             var objectSettings2 = new ObjectSettings
             {
                 PagesCount = true,
-                HtmlContent = (await ContractHtmlPage(student))[1],
+                HtmlContent = (await ContractHtmlPage(student, 0, 0))[1],
                 WebSettings = { DefaultEncoding = "utf-8", PrintMediaType = true, LoadImages = true },
             };
             var document = new HtmlToPdfDocument()
@@ -59,11 +56,11 @@ namespace FekraHubAPI.ContractMaker
             byte[] pdfFile = _converter.Convert(document);
             return pdfFile;
         }
-        public async Task ConverterHtmlToPdf(Student student)
+        public async Task<byte[]> ConverterHtmlToPdf(Student student, decimal RegistrationFee, decimal AnnualCourseFee)
         {
             try
             {
-                byte[] pdfFile = await PdfFile(student);
+                byte[] pdfFile = await PdfFile(student, RegistrationFee, AnnualCourseFee);
                 StudentContract studentContract = new()
                 {
                     StudentID = student.Id,
@@ -71,6 +68,7 @@ namespace FekraHubAPI.ContractMaker
                     CreationDate = DateTime.Now
                 };
                 await _repo.Add(studentContract);
+                return pdfFile;
             }
             catch (Exception)
             {
@@ -82,6 +80,7 @@ namespace FekraHubAPI.ContractMaker
                 {
                     await _repo.Delete(student.Id);
                 }
+                return new byte[0];
             }
 
 
@@ -98,10 +97,10 @@ namespace FekraHubAPI.ContractMaker
         }
         public async Task<string> ContractHtml(Student student)
         {
-            byte[] x = await PdfFile(student);
+            byte[] x = await PdfFile(student,0,0);
             return Convert.ToBase64String(x);
         }
-        private async Task<List<string>> ContractHtmlPage(Student student)
+        private async Task<List<string>> ContractHtmlPage(Student student, decimal RegistrationFee, decimal AnnualCourseFee)
         {
             var schoolInfoLogo = await _schoolInforepo.GetRelationSingle(
                 selector: x => new { x.LogoBase64 , x.SchoolName },
@@ -130,7 +129,9 @@ namespace FekraHubAPI.ContractMaker
                 .Replace("{parent.ZipCode}", parent.ZipCode ?? "")
                 .Replace("{parent.EmergencyPhoneNumber}", parent.EmergencyPhoneNumber ?? "")
                 .Replace("{parent.PhoneNumber}", parent.PhoneNumber ?? "")
-                .Replace("{parent.Email}", parent.Email ?? "");
+                .Replace("{parent.Email}", parent.Email ?? "")
+                .Replace("{RegistrationFee}", RegistrationFee.ToString("F2", CultureInfo.InvariantCulture))
+                .Replace("{AnnualCourseFee}", AnnualCourseFee.ToString("F2", CultureInfo.InvariantCulture));
             for (var i = 0; i < contractPages.Count(); i++)
             {
                 contractPages[i] = contractPages[i].Replace("{fekrahublogo}", schoolInfoLogo.LogoBase64 ?? "");

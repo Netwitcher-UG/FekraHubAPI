@@ -36,6 +36,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             _roleManager = roleManager;
             _logger = logger;
             _emailSender = emailSender;
+            _dbContext = dbContext;
         }
         [HttpGet("download-excelFile")]
         public IActionResult DownloadExcel()

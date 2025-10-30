@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using FekraHubAPI.Constract;
+using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers.Excel_Migration
 {
@@ -22,10 +23,11 @@ namespace FekraHubAPI.Controllers.Excel_Migration
         private readonly ApplicationDbContext _db;
         private readonly ILogger<ExcelMigrationController> _logger;
         private readonly EmailSender.IEmailSender _emailSender;
+        private readonly ApplicationDbContext _dbContext ;
         public ExcelMigrationController(IRepository<Student> studentRepository,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager, ApplicationDbContext db,
-            ILogger<ExcelMigrationController> logger, EmailSender.IEmailSender emailSender
+            ILogger<ExcelMigrationController> logger, EmailSender.IEmailSender emailSender, ApplicationDbContext dbContext
              )
         {
             _db = db;
@@ -50,6 +52,64 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             return File(fileBytes, contentType, fileName);
         }
         //[Authorize(Policy = "ManageExcelMigration")]
+        //[HttpPost("UploadData")]
+        //public async Task<IActionResult> UploadData([Required] IFormFile file)
+        //{
+        //    try
+        //    {
+        //        if (file == null || file.Length == 0)
+        //            return BadRequest("File is not selected or empty");
+
+        //        var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+        //        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        //        var count = 0;
+        //        using (var stream = new MemoryStream())
+        //        {
+        //            await file.CopyToAsync(stream);
+        //            using (var package = new ExcelPackage(stream))
+        //            {
+        //                var worksheet = package.Workbook.Worksheets[0];
+
+        //                for (int row = 3; row <= 302; row++)
+        //                {
+        //                    var ex = ExcelExceptions(worksheet, row, emailRegex);
+        //                    if (!string.IsNullOrEmpty(ex))
+        //                    {
+        //                        return BadRequest(ex);
+        //                    }
+
+        //                    //var dateP = worksheet.Cells[row, 15].Text;
+        //                    //var dateS = worksheet.Cells[row, 4].Text;
+
+        //                }
+        //                for (int row = 3; row <= 302; row++)
+        //                {
+        //                    if (IsRowValid(worksheet, row))
+        //                    {
+        //                        var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
+        //                        var user = await GetUserAsync(email, worksheet, row);
+
+        //                        if (user != null)
+        //                        {
+        //                            var student = CreateStudent(worksheet, row, user.Id);
+        //                            await _studentRepository.Add(student);
+        //                            count++;
+        //                        }
+        //                    }
+
+        //                }
+        //            }
+        //        }
+
+        //        return Ok($"{count} students have been added");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", ex.Message));
+        //        return BadRequest(ex.Message);
+        //    }
+
+        //}
         [HttpPost("UploadData")]
         public async Task<IActionResult> UploadData([Required] IFormFile file)
         {
@@ -61,43 +121,40 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
                 var count = 0;
-                using (var stream = new MemoryStream())
+
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+                stream.Position = 0; 
+
+                using var package = new ExcelPackage(stream);
+                var worksheet = package.Workbook.Worksheets[0];
+
+                for (int row = 3; row <= 302; row++)
                 {
-                    await file.CopyToAsync(stream);
-                    using (var package = new ExcelPackage(stream))
-                    {
-                        var worksheet = package.Workbook.Worksheets[0];
-
-                        for (int row = 3; row <= 302; row++)
-                        {
-                            var ex = ExcelExceptions(worksheet, row, emailRegex);
-                            if (!string.IsNullOrEmpty(ex))
-                            {
-                                return BadRequest(ex);
-                            }
-                            
-                            //var dateP = worksheet.Cells[row, 15].Text;
-                            //var dateS = worksheet.Cells[row, 4].Text;
-
-                        }
-                        for (int row = 3; row <= 302; row++)
-                        {
-                            if (IsRowValid(worksheet, row))
-                            {
-                                var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
-                                var user = await GetUserAsync(email, worksheet, row);
-
-                                if (user != null)
-                                {
-                                    var student = CreateStudent(worksheet, row, user.Id);
-                                    await _studentRepository.Add(student);
-                                    count++;
-                                }
-                            }
-                            
-                        }
-                    }
+                    var ex = ExcelExceptions(worksheet, row, emailRegex);
+                    if (!string.IsNullOrEmpty(ex))
+                        return BadRequest(ex);
                 }
+
+                
+                await using var tx = await _dbContext.Database.BeginTransactionAsync();
+
+                for (int row = 3; row <= 302; row++)
+                {
+                    if (!IsRowValid(worksheet, row)) continue;
+
+                    var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
+                    var user = await GetUserAsync(email, worksheet, row);
+                    if (user == null) continue;
+
+                    var student = CreateStudent(worksheet, row, user.Id);
+
+                    _dbContext.Students.Add(student);
+                    count++;
+                }
+
+                await _dbContext.SaveChangesAsync();
+                await tx.CommitAsync();
 
                 return Ok($"{count} students have been added");
             }
@@ -106,8 +163,8 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
         }
+
         private static string T(ExcelWorksheet ws, int r, int c)
             => ws.Cells[r, c].Text?.Trim();
 

@@ -7,9 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.Authorization;
 using FekraHubAPI.Constract;
-using Microsoft.EntityFrameworkCore;
 
 namespace FekraHubAPI.Controllers.Excel_Migration
 {
@@ -20,17 +18,15 @@ namespace FekraHubAPI.Controllers.Excel_Migration
         private readonly IRepository<Student> _studentRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly ApplicationDbContext _db;
         private readonly ILogger<ExcelMigrationController> _logger;
         private readonly EmailSender.IEmailSender _emailSender;
         private readonly ApplicationDbContext _dbContext ;
         public ExcelMigrationController(IRepository<Student> studentRepository,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager, ApplicationDbContext db,
+            RoleManager<IdentityRole> roleManager, 
             ILogger<ExcelMigrationController> logger, EmailSender.IEmailSender emailSender, ApplicationDbContext dbContext
              )
         {
-            _db = db;
             _studentRepository = studentRepository;
             _userManager = userManager;
             _roleManager = roleManager;
@@ -52,68 +48,14 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             var fileBytes = System.IO.File.ReadAllBytes(filePath);
             return File(fileBytes, contentType, fileName);
         }
+        
         //[Authorize(Policy = "ManageExcelMigration")]
-        //[HttpPost("UploadData")]
-        //public async Task<IActionResult> UploadData([Required] IFormFile file)
-        //{
-        //    try
-        //    {
-        //        if (file == null || file.Length == 0)
-        //            return BadRequest("File is not selected or empty");
-
-        //        var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
-        //        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        //        var count = 0;
-        //        using (var stream = new MemoryStream())
-        //        {
-        //            await file.CopyToAsync(stream);
-        //            using (var package = new ExcelPackage(stream))
-        //            {
-        //                var worksheet = package.Workbook.Worksheets[0];
-
-        //                for (int row = 3; row <= 302; row++)
-        //                {
-        //                    var ex = ExcelExceptions(worksheet, row, emailRegex);
-        //                    if (!string.IsNullOrEmpty(ex))
-        //                    {
-        //                        return BadRequest(ex);
-        //                    }
-
-        //                    //var dateP = worksheet.Cells[row, 15].Text;
-        //                    //var dateS = worksheet.Cells[row, 4].Text;
-
-        //                }
-        //                for (int row = 3; row <= 302; row++)
-        //                {
-        //                    if (IsRowValid(worksheet, row))
-        //                    {
-        //                        var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
-        //                        var user = await GetUserAsync(email, worksheet, row);
-
-        //                        if (user != null)
-        //                        {
-        //                            var student = CreateStudent(worksheet, row, user.Id);
-        //                            await _studentRepository.Add(student);
-        //                            count++;
-        //                        }
-        //                    }
-
-        //                }
-        //            }
-        //        }
-
-        //        return Ok($"{count} students have been added");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", ex.Message));
-        //        return BadRequest(ex.Message);
-        //    }
-
-        //}
         [HttpPost("UploadData")]
         public async Task<IActionResult> UploadData([Required] IFormFile file)
         {
+            var createdUsers = new List<ApplicationUser>();          
+            var notifications = new List<(ApplicationUser user, string pass)>(); 
+
             try
             {
                 if (file == null || file.Length == 0)
@@ -125,31 +67,34 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
                 using var stream = new MemoryStream();
                 await file.CopyToAsync(stream);
-                stream.Position = 0; 
+                stream.Position = 0;
 
                 using var package = new ExcelPackage(stream);
                 var worksheet = package.Workbook.Worksheets[0];
-
-                for (int row = 3; row <= 302; row++)
+                var lastRow = worksheet.Dimension?.End.Row ?? 0;
+                for (int row = 3; row <= lastRow; row++)
                 {
                     var ex = ExcelExceptions(worksheet, row, emailRegex);
                     if (!string.IsNullOrEmpty(ex))
                         return BadRequest(ex);
                 }
 
-                
                 await using var tx = await _dbContext.Database.BeginTransactionAsync();
 
-                for (int row = 3; row <= 302; row++)
+                for (int row = 3; row <= lastRow; row++)
                 {
-                    if (!IsRowValid(worksheet, row)) continue;
+                    if (IsRowCompletelyEmpty(worksheet, row)) continue;
 
                     var email = worksheet.Cells[row, 14].Text.Trim().Replace(" ", "");
-                    var user = await GetUserAsync(email, worksheet, row);
-                    if (user == null) continue;
+                    var (user, created, pass) = await GetOrCreateUserAsync(email, worksheet, row);
+
+                    if (created)
+                    {
+                        createdUsers.Add(user);                    
+                        notifications.Add((user, pass!));         
+                    }
 
                     var student = CreateStudent(worksheet, row, user.Id);
-
                     _dbContext.Students.Add(student);
                     count++;
                 }
@@ -157,10 +102,31 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 await _dbContext.SaveChangesAsync();
                 await tx.CommitAsync();
 
+                foreach (var (user, pass) in notifications)
+                {
+                    try
+                    {
+                        await _emailSender.SendConfirmationEmailFromExcel(user, pass);
+                    }
+                    catch (Exception mailEx)
+                    {
+                        _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", $"Email failed for {user.Email}: {mailEx.Message}"));
+                    }
+                }
+
                 return Ok($"{count} students have been added");
             }
             catch (Exception ex)
             {
+                foreach (var u in createdUsers)
+                {
+                    try { await _userManager.DeleteAsync(u); }
+                    catch (Exception delEx)
+                    {
+                        _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", $"Failed to rollback user {u.Email}: {delEx.Message}"));
+                    }
+                }
+
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", ex.Message));
                 return BadRequest(ex.Message);
             }
@@ -182,31 +148,14 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             return true;
         }
 
-        private bool IsRowValid(ExcelWorksheet worksheet, int row)
-        {
-            // الصف الفارغ نعتبره صالح (لا نبلغ عنه)
-            if (IsRowCompletelyEmpty(worksheet, row))
-                return true;
+        
 
-            // كل الحقول المطلوبة يجب أن تكون غير فارغة
-            foreach (var c in RequiredCols)
-                if (string.IsNullOrWhiteSpace(T(worksheet, row, c)))
-                    return false;
-
-            // يمكنك هنا أيضًا إضافة تحقق صيغة الإيميل إن رغبت
-            // var email = T(worksheet, row, 14)?.Replace(" ", "");
-            // if (!regex.IsMatch(email)) return false;
-
-            return true;
-        }
 
         private string ExcelExceptions(ExcelWorksheet worksheet, int row, Regex regex)
         {
-            // لو الصف فاضي تماماً، لا ترجع أي رسالة
             if (IsRowCompletelyEmpty(worksheet, row))
                 return "";
 
-            // الآن نبلّغ فقط عن الحقول الناقصة في صف غير فارغ
             if (string.IsNullOrWhiteSpace(T(worksheet, row, 2)))
                 return $"In row ( {row - 2} ) field (student's First Name) : First Name is required";
 
@@ -215,6 +164,9 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
             if (string.IsNullOrWhiteSpace(T(worksheet, row, 4)))
                 return $"In row ( {row - 2} ) field (student's Birthday) : Birthday is required";
+
+            if (!DateTime.TryParse(T(worksheet, row, 4), out _))
+                return $"In row ( {row - 2} ) field (student's Birthday) : Birthday format is invalid";
 
             if (string.IsNullOrWhiteSpace(T(worksheet, row, 5)))
                 return $"In row ( {row - 2} ) field (student's Nationality) : Nationality is required";
@@ -232,92 +184,77 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             if (!regex.IsMatch(email.Replace(" ", "")))
                 return $"In row ( {row - 2} ) field (parent's Email) : Email format is invalid";
 
+
             return "";
         }
 
 
-        private async Task<ApplicationUser> GetUserAsync(string email, ExcelWorksheet worksheet, int row)
+        private async Task<(ApplicationUser user, bool created, string? password)> GetOrCreateUserAsync(
+    string email, ExcelWorksheet worksheet, int row)
         {
             var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
+            if (user != null)
+                return (user, false, null);
+
+            user = new ApplicationUser
             {
-                user = new ApplicationUser
-                {
-                    UserName = email,
-                    FirstName = worksheet.Cells[row, 12].Text,
-                    LastName = worksheet.Cells[row, 13].Text,
-                    Email = email,
-                    Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 15].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 15].Text),
-                    Birthplace = worksheet.Cells[row, 16].Text,
-                    Nationality = worksheet.Cells[row, 17].Text,
-                    PhoneNumber = worksheet.Cells[row, 18].Text,
-                    EmergencyPhoneNumber = worksheet.Cells[row, 19].Text,
-                    Gender = worksheet.Cells[row, 20].Text.Trim(),
-                    City = worksheet.Cells[row, 21].Text,
-                    Street = worksheet.Cells[row, 22].Text,
-                    StreetNr = worksheet.Cells[row, 23].Text,
-                    ZipCode = worksheet.Cells[row, 24].Text,
-                    Job = worksheet.Cells[row, 25].Text,
-                    Graduation = worksheet.Cells[row, 26].Text,
-                    SecurityStamp = Guid.NewGuid().ToString("D"),
-                    NormalizedUserName = email.ToUpper(),
-                    NormalizedEmail = email.ToUpper(),
-                    EmailConfirmed = true,
-                    ActiveUser = true
-                };
+                UserName = email,
+                FirstName = worksheet.Cells[row, 12].Text,
+                LastName = worksheet.Cells[row, 13].Text,
+                Email = email,
+                Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 15].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 15].Text),
+                Birthplace = worksheet.Cells[row, 16].Text,
+                Nationality = worksheet.Cells[row, 17].Text,
+                PhoneNumber = worksheet.Cells[row, 18].Text,
+                EmergencyPhoneNumber = worksheet.Cells[row, 19].Text,
+                Gender = worksheet.Cells[row, 20].Text.Trim(),
+                City = worksheet.Cells[row, 21].Text,
+                Street = worksheet.Cells[row, 22].Text,
+                StreetNr = worksheet.Cells[row, 23].Text,
+                ZipCode = worksheet.Cells[row, 24].Text,
+                Job = worksheet.Cells[row, 25].Text,
+                Graduation = worksheet.Cells[row, 26].Text,
+                SecurityStamp = Guid.NewGuid().ToString("D"),
+                NormalizedUserName = email.ToUpper(),
+                NormalizedEmail = email.ToUpper(),
+                EmailConfirmed = true,
+                ActiveUser = true
+            };
 
-                using (var transaction = await _db.Database.BeginTransactionAsync())
-                {
-                    try
-                    {
-                        var pass = "FekraSchule.2024";
-                        var result = await _userManager.CreateAsync(user, pass);
-                        if (!result.Succeeded)
-                        {
-                            await transaction.RollbackAsync();
-                            throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
-                        }
+            var pass = "FekraSchule.2024";
+            var create = await _userManager.CreateAsync(user, pass);
+            if (!create.Succeeded)
+                throw new Exception(string.Join(", ", create.Errors.Select(e => e.Description)));
 
-                        var roleResult = await _userManager.AddToRoleAsync(user, DefaultRole.Parent);
-                        if (!roleResult.Succeeded)
-                        {
-                            await transaction.RollbackAsync();
-                            throw new Exception(string.Join(", ", roleResult.Errors.Select(e => e.Description)));
-                        }
+            var role = await _userManager.AddToRoleAsync(user, DefaultRole.Parent);
+            if (!role.Succeeded)
+                throw new Exception(string.Join(", ", role.Errors.Select(e => e.Description)));
 
-                        await transaction.CommitAsync();
-                        await _emailSender.SendConfirmationEmailFromExcel(user, pass);
-                    }
-                    catch(Exception ex)
-                    {
-                        await transaction.RollbackAsync();
-                        _logger.LogError(HandleLogFile.handleErrLogFile(User, "ExcelMigrationController", ex.Message));
-                        throw;
-                    }
-                }
-            }
-
-            return user;
+            return (user, true, pass);
         }
-        
+
         private Student CreateStudent(ExcelWorksheet worksheet, int row, string parentId)
         {
+            var bdayText = T(worksheet, row, 4);
+            var birthday = DateTime.Parse(bdayText); 
+
             return new Student
             {
-                FirstName = worksheet.Cells[row, 2].Text.Trim(),
-                LastName = worksheet.Cells[row, 3].Text.Trim(),
-                Birthday = DateTime.Parse(worksheet.Cells[row, 4].Text.Trim()),
-                Nationality = worksheet.Cells[row, 5].Text.Trim(),
-                Gender = worksheet.Cells[row, 6].Text.Trim(),
-                City = worksheet.Cells[row, 7].Text.Trim(),
-                Street = worksheet.Cells[row, 8].Text.Trim(),
-                StreetNr = worksheet.Cells[row, 9].Text.Trim(),
-                ZipCode = worksheet.Cells[row, 10].Text.Trim(),
-                Note = worksheet.Cells[row, 11].Text.Trim() ?? "",
-                ActiveStudent= false,
+                FirstName = T(worksheet, row, 2),
+                LastName = T(worksheet, row, 3),
+                Birthday = birthday,
+                Nationality = T(worksheet, row, 5),
+                Gender = T(worksheet, row, 6),
+                City = T(worksheet, row, 7),
+                Street = T(worksheet, row, 8),
+                StreetNr = T(worksheet, row, 9),
+                ZipCode = T(worksheet, row, 10),
+                Note = (worksheet.Cells[row, 11].Text ?? string.Empty).Trim(),
+                ActiveStudent = false,
                 ParentID = parentId
             };
         }
+
 
 
 

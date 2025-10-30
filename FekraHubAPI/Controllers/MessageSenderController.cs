@@ -105,7 +105,7 @@ namespace FekraHubAPI.Controllers
                     await _emailSender.RejectStudentForParent(parent, "reason", yourEmail);
                     break;
                 case 14:
-                    await _emailSender.AcceptStudent(parent, student!, yourEmail);
+                    await _emailSender.AcceptStudent(parent, student!,new byte[0], yourEmail:yourEmail);
                     break;
                 default:
                     return BadRequest("Invalid number , choose from 0 to 13");

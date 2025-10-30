@@ -636,11 +636,12 @@ namespace FekraHubAPI.Controllers.Students
             {
                 student.CourseID = null;
             }
-            
+            var pdf = await _contractMaker.ConverterHtmlToPdf(student, data.RegistrationFee, data.AnnualCourseFee);
             await _studentRepo.Update(student);
 
 
-            await _emailSender.AcceptStudent(parent, student);
+
+            await _emailSender.AcceptStudent(parent, student,pdf);
 
             var newNotification = new Notifications
             {

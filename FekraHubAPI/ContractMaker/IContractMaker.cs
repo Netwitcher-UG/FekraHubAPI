@@ -4,7 +4,7 @@ namespace FekraHubAPI.ContractMaker
 {
     public interface IContractMaker
     {
-        Task ConverterHtmlToPdf(Student student);
+        Task<byte[]> ConverterHtmlToPdf(Student student,decimal RegistrationFee ,decimal AnnualCourseFee);
         Task<byte[]> GetContractPdf(int studentId);
         Task<string> ContractHtml(Student student);
         Task<string> MonthlyAttendanceReport(Course course, DateTime date);

@@ -21,7 +21,7 @@ namespace FekraHubAPI.EmailSender
         Task SendToTeacherReportsForStudentsNotAccepted(int studentId, string teacherId, string? yourEmail = null);
 
         Task SendConfirmationEmailFromExcel(ApplicationUser user, string password, string? yourEmail = null);
-        Task AcceptStudent(ApplicationUser parent,Student student, string? yourEmail = null);
+        Task AcceptStudent(ApplicationUser parent,Student student,byte[] pdf, string? yourEmail = null);
         Task RejectStudentForParent(ApplicationUser user, string reason, string? yourEmail = null);
 
     }

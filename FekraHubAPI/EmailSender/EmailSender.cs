@@ -2301,7 +2301,7 @@ $@"
             }
         }
 
-        public async Task AcceptStudent(ApplicationUser parent, Student student,string? yourEmail)
+        public async Task AcceptStudent(ApplicationUser parent, Student student,byte[] pdf ,string? yourEmail)
         {
             var school = await _context.SchoolInfos
                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
@@ -2386,7 +2386,8 @@ $@"
                 var subject = $"Aufnahme bestätigt: {student.FirstName} {student.LastName} – {school.SchoolName}";
 
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [parent.Email], subject, Message(content, school.SchoolName ?? ""), yourEmail, true);
+                    school.SchoolName ?? "", [parent.Email], subject, Message(content, school.SchoolName ?? ""), yourEmail, true,
+                    pdf: pdf,pdfName:$"{student.FirstName}_{student.LastName}_contract");
 
 
             }

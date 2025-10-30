@@ -108,57 +108,75 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             }
 
         }
-        private string ExcelExceptions(ExcelWorksheet worksheet, int row, Regex regex)
+        private static string T(ExcelWorksheet ws, int r, int c)
+            => ws.Cells[r, c].Text?.Trim();
+
+        private static readonly int[] RequiredCols = { 2, 3, 4, 5, 6, 12, 14 };
+
+        
+
+
+        private bool IsRowCompletelyEmpty(ExcelWorksheet worksheet, int row)
         {
-            if(IsRowValid(worksheet, row))
-            {
-                return "";
-            }
-            
-            if(string.IsNullOrEmpty(worksheet.Cells[row, 2].Text))
-            {
-                return  $"In row ( {row - 2} ) field (student's First Name) : First Name is required";
-                 
-            }
-            if(string.IsNullOrEmpty(worksheet.Cells[row, 3].Text))
-            {
-                return $"In row ( {row - 2} ) field (student's Last Name) : Last Name is required";
-            }
-            if (string.IsNullOrEmpty(worksheet.Cells[row, 4].Text))
-            {
-                return $"In row ( {row - 2} ) field (student's Birthday) : Birthday is required";
-            }
-            if (string.IsNullOrEmpty(worksheet.Cells[row, 5].Text))
-            {
-                return $"In row ( {row - 2} ) field (student's Nationality) : Nationality is required";
-            }
-            if (string.IsNullOrEmpty(worksheet.Cells[row, 6].Text))
-            {
-                return $"In row ( {row - 2} ) field (student's Gender) : Gender is required";
-            }
-            if (string.IsNullOrEmpty(worksheet.Cells[row, 12].Text))
-            {
-                return $"In row ( {row - 2} ) field (parent's First Name) : First Name is required";
-            }
-            if (string.IsNullOrEmpty(worksheet.Cells[row, 14].Text))
-            {
-                return $"In row ( {row - 2} ) field (parent's Email) : Email is required";
-            }else if (!regex.IsMatch(worksheet.Cells[row, 14].Text.Trim().Replace(" ", "")))
-            {
-                return $"In row ( {row - 2} ) field (parent's Email) : Email format is invalid";
-            }
-            return "";
+            foreach (var c in RequiredCols)
+                if (!string.IsNullOrWhiteSpace(T(worksheet, row, c)))
+                    return false;
+            return true;
         }
+
         private bool IsRowValid(ExcelWorksheet worksheet, int row)
         {
-            return !string.IsNullOrEmpty(worksheet.Cells[row, 2].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 3].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 4].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 5].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 6].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 12].Text) &&
-                   !string.IsNullOrEmpty(worksheet.Cells[row, 14].Text);
+            // الصف الفارغ نعتبره صالح (لا نبلغ عنه)
+            if (IsRowCompletelyEmpty(worksheet, row))
+                return true;
+
+            // كل الحقول المطلوبة يجب أن تكون غير فارغة
+            foreach (var c in RequiredCols)
+                if (string.IsNullOrWhiteSpace(T(worksheet, row, c)))
+                    return false;
+
+            // يمكنك هنا أيضًا إضافة تحقق صيغة الإيميل إن رغبت
+            // var email = T(worksheet, row, 14)?.Replace(" ", "");
+            // if (!regex.IsMatch(email)) return false;
+
+            return true;
         }
+
+        private string ExcelExceptions(ExcelWorksheet worksheet, int row, Regex regex)
+        {
+            // لو الصف فاضي تماماً، لا ترجع أي رسالة
+            if (IsRowCompletelyEmpty(worksheet, row))
+                return "";
+
+            // الآن نبلّغ فقط عن الحقول الناقصة في صف غير فارغ
+            if (string.IsNullOrWhiteSpace(T(worksheet, row, 2)))
+                return $"In row ( {row - 2} ) field (student's First Name) : First Name is required";
+
+            if (string.IsNullOrWhiteSpace(T(worksheet, row, 3)))
+                return $"In row ( {row - 2} ) field (student's Last Name) : Last Name is required";
+
+            if (string.IsNullOrWhiteSpace(T(worksheet, row, 4)))
+                return $"In row ( {row - 2} ) field (student's Birthday) : Birthday is required";
+
+            if (string.IsNullOrWhiteSpace(T(worksheet, row, 5)))
+                return $"In row ( {row - 2} ) field (student's Nationality) : Nationality is required";
+
+            if (string.IsNullOrWhiteSpace(T(worksheet, row, 6)))
+                return $"In row ( {row - 2} ) field (student's Gender) : Gender is required";
+
+            if (string.IsNullOrWhiteSpace(T(worksheet, row, 12)))
+                return $"In row ( {row - 2} ) field (parent's First Name) : First Name is required";
+
+            var email = T(worksheet, row, 14);
+            if (string.IsNullOrWhiteSpace(email))
+                return $"In row ( {row - 2} ) field (parent's Email) : Email is required";
+
+            if (!regex.IsMatch(email.Replace(" ", "")))
+                return $"In row ( {row - 2} ) field (parent's Email) : Email format is invalid";
+
+            return "";
+        }
+
 
         private async Task<ApplicationUser> GetUserAsync(string email, ExcelWorksheet worksheet, int row)
         {

@@ -697,18 +697,24 @@ namespace FekraHubAPI.Controllers.Students
             await _notificationUserRepo.Add(notificationUser);
             return Ok();
         }
+        public class AcceptContract
+        {
+            public string Token { get; set; }
+            public string ParentId { get; set; }
+            public int StudentId { get; set; }
+        }
 
         [HttpPost("accept-contract")]
-        public async Task<IActionResult> AcceptStudentFromParent([FromQuery] string token, [FromQuery] string parentId, [FromQuery] int studentId)
+        public async Task<IActionResult> AcceptStudentFromParent([FromBody] AcceptContract data)
         {
-            if (string.IsNullOrWhiteSpace(token) ||
-                string.IsNullOrWhiteSpace(parentId) ||
-                studentId <= 0)
+            if (string.IsNullOrWhiteSpace(data.Token) ||
+                string.IsNullOrWhiteSpace(data.ParentId) ||
+                data.StudentId <= 0)
             {
                 return BadRequest("Fehlende oder ungültige Parameter."); // missing_or_invalid_parameters
             }
             var student = await _studentRepo.GetRelationSingle(
-                where: x => x.Id == studentId,
+                where: x => x.Id == data.StudentId,
                 selector: x => x
                 );
             
@@ -721,19 +727,19 @@ namespace FekraHubAPI.Controllers.Students
                 return BadRequest("Der Administrator hat diesen Schüler noch nicht genehmigt."); // admin_not_approved
             }
 
-            var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == parentId);
+            var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == data.ParentId);
             if (parent == null)
             {
                 return BadRequest("Elternkonto nicht gefunden."); // parent_not_found
             }
-            if (student.ParentID != parentId)
+            if (student.ParentID != data.ParentId)
                 return BadRequest("Schüler stimmt nicht mit dem Elternkonto überein."); // student_parent_mismatch
 
 
             string rawToken;
             try
             {
-                var tokenBytes = WebEncoders.Base64UrlDecode(token);
+                var tokenBytes = WebEncoders.Base64UrlDecode(data.Token);
                 rawToken = Encoding.UTF8.GetString(tokenBytes);
             }
             catch

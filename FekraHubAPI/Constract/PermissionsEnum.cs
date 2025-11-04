@@ -61,7 +61,8 @@ namespace FekraHubAPI.Constract
             ManageInvoice,
             ShowParentInfo,
             UpdateCourseStu,
-            MessageSender
+            MessageSender,
+            StudentAdmissions
 
 
         }

@@ -8,10 +8,12 @@ using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Net;
+using System.Text;
 
 namespace FekraHubAPI.Controllers.Students
 {
@@ -604,7 +606,7 @@ namespace FekraHubAPI.Controllers.Students
 
 
         }
-        //[Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")] StudentAdmissions
         [HttpPost("accept-student")]
         public async Task<IActionResult> AcceptPendingStudent([FromBody] AcceptStudent data)
         {
@@ -637,10 +639,11 @@ namespace FekraHubAPI.Controllers.Students
                 student.CourseID = null;
             }
             var pdf = await _contractMaker.ConverterHtmlToPdf(student, data.RegistrationFee, data.AnnualCourseFee);
+            student.AdminApproved = true;
             await _studentRepo.Update(student);
 
 
-
+            
             await _emailSender.AcceptStudent(parent, student,pdf);
 
             var newNotification = new Notifications
@@ -686,18 +689,89 @@ namespace FekraHubAPI.Controllers.Students
                 Notification = $"{student.FirstName} {student.LastName} wurde abgelehnt.|/children/",
             };
             await _notificationsRepo.Add(newNotification);
-            List<NotificationUser> notificationUsers = new List<NotificationUser>();
             var notificationUser = new NotificationUser
             {
                 NotificationId = newNotification.Id,
                 UserId = parent.Id
             };
-            notificationUsers.Add(notificationUser);
-
-            await _notificationUserRepo.ManyAdd(notificationUsers);
+            await _notificationUserRepo.Add(notificationUser);
             return Ok();
         }
 
-        
+        [HttpPost("accept-contract")]
+        public async Task<IActionResult> AcceptStudentFromParent([FromQuery] string token, [FromQuery] string parentId, [FromQuery] int studentId)
+        {
+            if (string.IsNullOrWhiteSpace(token) ||
+                string.IsNullOrWhiteSpace(parentId) ||
+                studentId <= 0)
+            {
+                return BadRequest("Fehlende oder ungültige Parameter."); // missing_or_invalid_parameters
+            }
+            var student = await _studentRepo.GetRelationSingle(
+                where: x => x.Id == studentId,
+                selector: x => x
+                );
+            
+            if (student == null)
+            {
+                return BadRequest("Schüler nicht gefunden."); // student_not_found
+            }
+            if (student.AdminApproved != true)
+            {
+                return BadRequest("Der Administrator hat diesen Schüler noch nicht genehmigt."); // admin_not_approved
+            }
+
+            var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == parentId);
+            if (parent == null)
+            {
+                return BadRequest("Elternkonto nicht gefunden."); // parent_not_found
+            }
+            if (student.ParentID != parentId)
+                return BadRequest("Schüler stimmt nicht mit dem Elternkonto überein."); // student_parent_mismatch
+
+
+            string rawToken;
+            try
+            {
+                var tokenBytes = WebEncoders.Base64UrlDecode(token);
+                rawToken = Encoding.UTF8.GetString(tokenBytes);
+            }
+            catch
+            {
+                return BadRequest("Ungültiges Token-Format."); // invalid_token_format
+            }
+
+            var provider = _userManager.Options.Tokens.EmailConfirmationTokenProvider;
+            var isValid = await _userManager.VerifyUserTokenAsync(
+                parent,
+                provider,
+                "EmailConfirmation",
+                rawToken
+            );
+
+            if (!isValid)
+            {
+                return BadRequest("Ungültiges oder abgelaufenes Token."); // invalid_or_expired_token
+            }
+            if(student.ParentApproved == true)
+            {
+                return BadRequest("Bereits genehmigt."); // already_approved
+            }
+            student.ParentApproved = true;
+            await _studentRepo.Update(student);
+
+            var newNotification = new Notifications
+            {
+                Notification = $"Vertrag bestätigt({student.FirstName} {student.LastName}).|/students/",//children
+            };
+            await _notificationsRepo.Add(newNotification);
+            var notificationUser = new NotificationUser
+            {
+                NotificationId = newNotification.Id,
+                UserId = parent.Id
+            };
+            await _notificationUserRepo.Add(notificationUser);
+            return Ok("Erfolgreich genehmigt.");
+        }
     }
 }

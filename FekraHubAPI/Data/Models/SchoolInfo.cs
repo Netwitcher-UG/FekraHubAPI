@@ -19,6 +19,8 @@ namespace FekraHubAPI.Data.Models
         [MaxLength(50)]
         public string? FromEmail { get; set; }
         public string? Password { get; set; }
+        public string? Facebook { get; set; }
+        public string? Instagram { get; set; }
         public string? PrivacyPolicy { get; set; }
         public ICollection<ContractPage> ContractPages { get; set; }
         public ICollection<StudentsReportsKey> StudentsReportsKeys { get; set; }

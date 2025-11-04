@@ -1,22 +1,15 @@
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.Repositories.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
 using MailKit.Net.Smtp;
 using MimeKit;
-using FekraHubAPI.Controllers.AuthorizationController;
-using FekraHubAPI.Constract;
-using Org.BouncyCastle.Asn1.Ocsp;
-using Org.BouncyCastle.Crypto.Macs;
-using System.Drawing;
 using System.Net;
-using FekraHubAPI.Migrations;
 using Notifications = FekraHubAPI.Data.Models.Notifications;
+using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
 
 namespace FekraHubAPI.EmailSender
 {
@@ -2303,12 +2296,56 @@ $@"
 
         public async Task AcceptStudent(ApplicationUser parent, Student student,byte[] pdf ,string? yourEmail)
         {
+
             var school = await _context.SchoolInfos
                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
                .SingleOrDefaultAsync();
             var schoolWebsiteUrl = Environment.GetEnvironmentVariable("FRONTEND_BASEURL")
                           ?? _config["Frontend_BaseUrl"]
                           ?? "https://fekrahub.app";
+            var button = "";
+            if (student.ParentApproved != true && student.AdminApproved == true)
+            {
+                var baseUrl = schoolWebsiteUrl.TrimEnd('/');
+                var rawToken = await _userManager.GenerateEmailConfirmationTokenAsync(parent);
+                var token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
+                var relativePath = "/parent/accept";
+
+                string actionUrl =
+        $"{baseUrl}{relativePath}" +
+        $"?token={Uri.EscapeDataString(token)}" +
+        $"&studentId={Uri.EscapeDataString(student.Id.ToString())}" +
+        $"&parentId={Uri.EscapeDataString(parent.Id)}";
+
+                button = $@"
+        <tr>
+          <td align=""left"" class=""es-m-p0r es-m-p0l es-text-9623"" style=""Margin:0;padding-top:10px;padding-right:40px;padding-bottom:5px;padding-left:40px"">
+            <p class=""es-text-mobile-size-14 es-override-size"" style=""Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"">
+              Eine Kopie des Vertrags wurde dieser E-Mail als Anhang beigefügt. Wenn Sie dem Vertrag zustimmen, klicken Sie bitte auf die folgende Schaltfläche.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td align=""center"" style=""padding:20px;Margin:0"">
+            <table cellpadding=""0"" cellspacing=""0"" border=""0"" role=""presentation"">
+              <tr>
+                <td align=""center"" bgcolor=""#5C68E2"" style=""border-radius:4px;"">
+                  <a href=""{actionUrl}"" target=""_blank""
+                     style=""display:inline-block;padding:12px 20px;font-family:arial, 'helvetica neue', helvetica, sans-serif;
+                            font-size:14px;line-height:14px;text-decoration:none;color:#ffffff;
+                            mso-line-height-rule:exactly;border-radius:4px;"">
+                    Vertrag bestätigen
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        ";
+            }
+            
             if (school != null)
             {
 
@@ -2344,6 +2381,7 @@ $@"
 
 
                      </tr>
+{button}
                      <tr>
                       <td align=""center"" style=""padding:20px;Margin:0;font-size:0"">
                        <table cellpadding=""0"" cellspacing=""0"" border=""0"" width=""5%"" height=""100%"" class=""es-spacer"" role=""presentation"" style=""mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px"">

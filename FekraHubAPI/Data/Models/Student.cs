@@ -21,6 +21,8 @@ namespace FekraHubAPI.Data.Models
         public string? ZipCode { get; set; }
         public string? City { get; set; }
         public bool ActiveStudent { get; set; } = false;
+        public bool? AdminApproved { get; set; } = false;
+        public bool? ParentApproved { get; set; } = false;
         public DateTime? CreatedAt { get; set; }
 
         [ForeignKey("ParentID")]

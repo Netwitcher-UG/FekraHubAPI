@@ -2309,8 +2309,8 @@ $@"
                 var baseUrl = schoolWebsiteUrl.TrimEnd('/');
                 var rawToken = await _userManager.GenerateEmailConfirmationTokenAsync(parent);
                 var token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
-                var relativePath = "/parent/accept";
-
+                var relativePath = "/confirm-contract";
+                
                 string actionUrl =
         $"{baseUrl}{relativePath}" +
         $"?token={Uri.EscapeDataString(token)}" +

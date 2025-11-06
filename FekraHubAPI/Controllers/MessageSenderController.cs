@@ -53,7 +53,7 @@ namespace FekraHubAPI.Controllers
             {
                 return BadRequest("Parent not found");
             }
-            var student = await _studentRepo.GetRelationSingle(where: x => x.ParentID == parent!.Id,
+            var student = await _studentRepo.GetRelationSingle(where: x => x.ParentID == parent!.Id && x.ActiveStudent,
                 selector: x => x,
                 asNoTracking: true);
             if (student == null)
@@ -326,7 +326,7 @@ namespace FekraHubAPI.Controllers
                     foreach (var courseId in messagDTO.CourseId)
                     {
                         var parents = await _studentRepo.GetRelationList(
-                            where: x => x.CourseID == courseId,
+                            where: x => x.CourseID == courseId && x.ActiveStudent,
                             include: x => x.Include(z => z.User),
                             selector: x => x.User,
                             asNoTracking: true

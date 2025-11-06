@@ -21,7 +21,7 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
                 var student = await _studentRepo.GetRelationSingle(
-           where: x => x.Id == Id,
+           where: x => x.Id == Id&& x.ActiveStudent,
            selector: x => new { x.Id, x.ParentID },
            returnType: QueryReturnType.SingleOrDefault,
            asNoTracking: true);
@@ -61,7 +61,7 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
                 var student = await _studentRepo.GetRelationSingle(
-             where: x => x.Id == Id,
+             where: x => x.Id == Id&& x.ActiveStudent,
              selector: x => new { x.Id, x.CourseID },
              returnType: QueryReturnType.SingleOrDefault,
              asNoTracking: true);
@@ -251,7 +251,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 if (studentAttendance != null && studentAttendance.Any())
                 {
                     var studentsIdInCourse = await _studentRepo.GetRelationList(
-                        where: x => x.CourseID == courseId && studentAttendance.Select(z=>z.StudentID).Contains(x.Id),
+                        where: x => x.CourseID == courseId && studentAttendance.Select(z=>z.StudentID).Contains(x.Id)&& x.ActiveStudent,
                         selector: x => x,
                         asNoTracking: true);
                    

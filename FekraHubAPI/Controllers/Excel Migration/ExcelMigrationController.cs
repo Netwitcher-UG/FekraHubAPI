@@ -217,7 +217,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 SecurityStamp = Guid.NewGuid().ToString("D"),
                 NormalizedUserName = email.ToUpper(),
                 NormalizedEmail = email.ToUpper(),
-                EmailConfirmed = true,
+                EmailConfirmed = false,
                 ActiveUser = true
             };
 

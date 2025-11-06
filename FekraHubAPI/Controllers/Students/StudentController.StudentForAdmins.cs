@@ -76,7 +76,7 @@ namespace FekraHubAPI.Controllers.Students
             try
             {
                 var student = await _studentRepo.GetRelationSingle(
-                            where: x => x.Id == id,
+                            where: x => x.Id == id && x.ActiveStudent,
                             selector: z => new
                             {
                                 z.Id,
@@ -553,7 +553,7 @@ namespace FekraHubAPI.Controllers.Students
         }
 
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "StudentAdmissions")]
         [HttpGet("pending-student")]
         public async Task<IActionResult> PendingStudents()
         {
@@ -606,7 +606,7 @@ namespace FekraHubAPI.Controllers.Students
 
 
         }
-        //[Authorize(Roles = "Admin")] StudentAdmissions
+        [Authorize(Policy = "StudentAdmissions")] 
         [HttpPost("accept-student")]
         public async Task<IActionResult> AcceptPendingStudent([FromBody] AcceptStudent data)
         {
@@ -624,7 +624,7 @@ namespace FekraHubAPI.Controllers.Students
             {
                 return BadRequest("Die E-Mail-Adresse des Elternkontos ist noch nicht bestätigt");// رسالة بالالماني ايميل الاهل غير مؤكد
             }
-            student.ActiveStudent = true;
+            
             if (data.CourseId != null && data.CourseId != 0)
             {
                 var courseExist = await _courseRepo.DataExist(x => x.Id == data.CourseId.Value);
@@ -667,7 +667,7 @@ namespace FekraHubAPI.Controllers.Students
             public int StudentId { get; set; }
             public string? Reason { get; set; }
         }
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Policy = "StudentAdmissions")]
         [HttpPost("reject-student")]
         public async Task<IActionResult> RejectStudent([FromBody] RejectData rejectData)
         {
@@ -764,6 +764,10 @@ namespace FekraHubAPI.Controllers.Students
                 return BadRequest("Bereits genehmigt."); // already_approved
             }
             student.ParentApproved = true;
+            if(student.AdminApproved == true)
+            {
+                student.ActiveStudent = true;
+            }
             await _studentRepo.Update(student);
 
             var newNotification = new Notifications

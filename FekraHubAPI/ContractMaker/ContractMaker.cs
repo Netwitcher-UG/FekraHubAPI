@@ -80,7 +80,7 @@ namespace FekraHubAPI.ContractMaker
                 {
                     await _repo.Delete(student.Id);
                 }
-                return new byte[0];
+                return null;
             }
 
 

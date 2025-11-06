@@ -639,6 +639,10 @@ namespace FekraHubAPI.Controllers.Students
                 student.CourseID = null;
             }
             var pdf = await _contractMaker.ConverterHtmlToPdf(student, data.RegistrationFee, data.AnnualCourseFee);
+            if(pdf == null)
+            {
+                return BadRequest("pdf not found");
+            }
             student.AdminApproved = true;
             await _studentRepo.Update(student);
 

@@ -41,11 +41,11 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest("Benutzer nicht gefunden.");//User not found.
                 }
-                var payrollsExists = await _payRollRepository.DataExist(x=> x.UserID == UserID && x.Timestamp.Month == DateTime.Now.Month);
-                if (payrollsExists)
-                {
-                    return BadRequest("Sie haben diesen Monat eine Gehaltsabrechnung.");//You have a payrolls in this month
-                }
+                //var payrollsExists = await _payRollRepository.DataExist(x=> x.UserID == UserID && x.Timestamp.Month == DateTime.Now.Month);
+                //if (payrollsExists)
+                //{
+                //    return BadRequest("Sie haben diesen Monat eine Gehaltsabrechnung.");//You have a payrolls in this month
+                //}
                 var isTeacher = await _payRollRepository.IsTeacherIDExists(user.Id);
                 var isSecretariat = await _payRollRepository.IsSecretariatIDExists(user.Id);
                 if (!(isTeacher || isSecretariat))

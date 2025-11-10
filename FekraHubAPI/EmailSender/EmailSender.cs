@@ -10,6 +10,7 @@ using Notifications = FekraHubAPI.Data.Models.Notifications;
 using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
+using FekraHubAPI.Migrations;
 
 namespace FekraHubAPI.EmailSender
 {
@@ -327,7 +328,7 @@ namespace FekraHubAPI.EmailSender
 //            return ConstantsMessage;
 //        }
 
-        private string Message(string contentHtml, string schoolName)
+        private string Message(string contentHtml, string schoolName,string facebook ,string instagram)
         {
 
             var baseUrl = Environment.GetEnvironmentVariable("FEKRA_API_BASE")
@@ -907,12 +908,12 @@ $@"
   <tr>
     <td align=""center""
         style=""padding:0; Margin:0; font-size:0; line-height:0; white-space:nowrap;"">
-      <a href=""https://instagram.com"" target=""_blank"" style=""text-decoration:none; color:inherit;"">
+      <a href=""{instagram}"" target=""_blank"" style=""text-decoration:none; color:inherit;"">
         <img src=""{baseUrl}/api/SchoolInfo/SchoolLogo4"" width=""24"" height=""24"" alt=""Instagram""
              style=""display:inline-block; border:0; outline:none; text-decoration:none;"">
       </a>
       <span style=""display:inline-block; width:12px; height:1px; line-height:0;"">&#8203;</span>
-      <a href=""https://facebook.com"" target=""_blank"" style=""text-decoration:none; color:inherit;"">
+      <a href=""{facebook}"" target=""_blank"" style=""text-decoration:none; color:inherit;"">
         <img src=""{baseUrl}/api/SchoolInfo/SchoolLogo5"" width=""24"" height=""24"" alt=""Facebook""
              style=""display:inline-block; border:0; outline:none; text-decoration:none;"">
       </a>
@@ -1001,7 +1002,7 @@ $@"
         public async Task SendConfirmationEmail(ApplicationUser user, string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain,x.Facebook,x.Instagram })
                 .SingleOrDefaultAsync();
             if (school != null)
             {
@@ -1069,7 +1070,8 @@ $@"
  ";
 
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail", Message(content, school.SchoolName ?? ""), yourEmail, true);
+                    school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail", Message(content, school.SchoolName ?? ""
+                    ,school.Facebook?? "https://facebook.com", school.Instagram?? "https://instagram.com"), yourEmail, true);
 
 
             }
@@ -1078,7 +1080,7 @@ $@"
         public async Task SendConfirmationEmailWithPassword(ApplicationUser user, string password, string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain, x.Facebook, x.Instagram })
                 .SingleAsync();
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = $"{school.UrlDomain ?? ""}/confirm-user?ID={user.Id}&Token={token}";
@@ -1172,7 +1174,7 @@ $@"
 
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
                     school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail",
-                    Message(content, school.SchoolName ?? ""), yourEmail, true, "Bestätigungslink für das Konto + Anmeldedaten");
+                    Message(content, school.SchoolName ?? "", school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true, "Bestätigungslink für das Konto + Anmeldedaten");
 
 
 
@@ -1182,7 +1184,7 @@ $@"
         public async Task SendContractEmail(int studentId, string pdfName, string? yourEmail)//
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.Facebook, x.Instagram })
                 .SingleAsync();
             var student = await _studentRepo.GetById(studentId);
             var parent = await _userManager.FindByIdAsync(student.ParentID ?? "");
@@ -1254,7 +1256,8 @@ $@"
 ";
 
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                  school.SchoolName ?? "", [parent.Email], "Registrierungsbestätigung", Message(content, school.SchoolName ?? ""), yourEmail,
+                  school.SchoolName ?? "", [parent.Email], "Registrierungsbestätigung", Message(content, school.SchoolName ?? "",
+                  school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail,
                    true, $"Ein neuer Schüler namens <b>{student.FirstName} {student.LastName}</b> wurde erfolgreich registriert + Kopie des Vertrags",
                    contracts, pdfName + ".pdf");
             var newNotification = new Notifications
@@ -1274,7 +1277,7 @@ $@"
         public async Task SendToAdminNewParent(ApplicationUser user, string? yourEmail)//////////////
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.Facebook, x.Instagram })
                 .SingleAsync();
             var admins = await _userManager.Users
                     .Where(admin => admin.EmailConfirmed == true && _context.UserRoles
@@ -1354,7 +1357,8 @@ $@"
               </table>
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Benutzer registriert", Message(content, school.SchoolName ?? ""), yourEmail,
+               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Benutzer registriert", Message(content, school.SchoolName ?? ""
+               , school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail,
                true);
             var newNotification = new Notifications
             {
@@ -1378,7 +1382,7 @@ $@"
         public async Task SendToAdminNewStudent(Student student, string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.Facebook, x.Instagram })
                 .SingleAsync();
             var admins = await _userManager.Users
                     .Where(user => user.EmailConfirmed == true
@@ -1476,7 +1480,8 @@ $@"
               </table>
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Schüler registriert", Message(content, school.SchoolName ?? ""), yourEmail, true);
+               school.SchoolName ?? "", admins.Select(x => x.Email ?? "").ToList(), "Neuer Schüler registriert", Message(content, school.SchoolName ?? ""
+               , school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true);
             var newNotification = new Notifications
             {
                 Notification = $"Neuer Schüler hinzugefügt.|/students/{student.Id}/",
@@ -1500,7 +1505,7 @@ $@"
         public async Task SendToAllNewEvent(List<int?> corsesId,string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain, x.Facebook, x.Instagram })
                 .SingleAsync();
             var users = await _userManager.Users
                         .Where(u => u.EmailConfirmed == true && u.ActiveUser == true && _context.Courses.Where(c => corsesId.Contains(c.Id))
@@ -1573,7 +1578,8 @@ $@"
             
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-           school.SchoolName ?? "", users.Select(x => x.Email ?? "").ToList(), "Neue Veranstaltung", Message(content, school.SchoolName ?? ""), yourEmail, true, "Eine neue Veranstaltung wurde hinzugefügt");
+           school.SchoolName ?? "", users.Select(x => x.Email ?? "").ToList(), "Neue Veranstaltung", Message(content, school.SchoolName ?? "",
+           school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true, "Eine neue Veranstaltung wurde hinzugefügt");
 
             var newNotification = new Notifications
             {
@@ -1598,7 +1604,7 @@ $@"
         public async Task SendToParentsNewFiles(int coursId, string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.Facebook, x.Instagram })
                 .SingleAsync();
 
             var students = await _context.Students
@@ -1665,7 +1671,8 @@ $@"
 
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-            school.SchoolName ?? "", students.Select(x => x.Email ?? "").ToList(), "Neue Dateien", Message(content, school.SchoolName ?? ""), yourEmail, true, "Eine neue Datei wurde hinzugefügt");
+            school.SchoolName ?? "", students.Select(x => x.Email ?? "").ToList(), "Neue Dateien", Message(content, school.SchoolName ?? ""
+            , school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true, "Eine neue Datei wurde hinzugefügt");
 
             var newNotification = new Notifications
             {
@@ -1691,7 +1698,7 @@ $@"
         public async Task SendToSecretaryNewReportsForStudents(string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.Facebook, x.Instagram })
                 .SingleAsync();
 
             var Secretaries = await _userManager.Users
@@ -1755,7 +1762,7 @@ $@"
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
             school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Neue Berichte",
-            Message(content, school.SchoolName ?? ""), yourEmail, true, "Neue Berichte wurden hinzugefügt .", null, null);
+            Message(content, school.SchoolName ?? "", school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true, "Neue Berichte wurden hinzugefügt .", null, null);
             var newNotification = new Notifications
             {
                 Notification = $"Neue Berichte hinzugefügt.|/reports/",
@@ -1778,7 +1785,7 @@ $@"
         public async Task SendToSecretaryUpdateReportsForStudents(string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.Facebook, x.Instagram })
                 .SingleAsync();
 
             var Secretaries = await _userManager.Users
@@ -1842,7 +1849,7 @@ $@"
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
             school.SchoolName ?? "", Secretaries.Select(x => x.Email ?? "").ToList(), "Einige Berichte wurden aktualisiert",
-            Message(content, school.SchoolName ?? ""), yourEmail, true, "Einige Berichte wurden aktualisiert .", null, null);
+            Message(content, school.SchoolName ?? "", school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true, "Einige Berichte wurden aktualisiert .", null, null);
             var newNotification = new Notifications
             {
                 Notification = $"Berichtsänderung hochgeladen.|/reports/",
@@ -1865,7 +1872,7 @@ $@"
         public async Task SendToParentsNewReportsForStudents(List<Student> students, string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.Facebook, x.Instagram })
                 .SingleAsync();
             var parentIds = students.Select(s => s.ParentID).Distinct().ToList();
             var parents = await _userManager.Users
@@ -1934,7 +1941,7 @@ $@"
 ";
             await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
         school.SchoolName ?? "", parents.Select(x => x.Email ?? "").ToList(), "Neue Berichte",
-        Message(content, school.SchoolName ?? ""), yourEmail, true, "Neue Berichte wurden hinzugefügt .");
+        Message(content, school.SchoolName ?? "", school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true, "Neue Berichte wurden hinzugefügt .");
 
             var newNotification = new Notifications
             {
@@ -1960,7 +1967,7 @@ $@"
         public async Task SendToTeacherReportsForStudentsNotAccepted(int studentId, string teacherId ,string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.Facebook, x.Instagram })
                 .SingleAsync();
             var student = await _studentRepo.GetById(studentId);
             if (await _studentRepo.IsTeacherIDExists(teacherId))
@@ -2027,7 +2034,7 @@ $@"
 ";
                     await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
                         school.SchoolName ?? "", [teacher.Email], "Ein Bericht wurde abgelehnt.",
-                        Message(content, school.SchoolName ?? ""), yourEmail, true,
+                        Message(content, school.SchoolName ?? "", school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true,
                         "Ein Bericht wurde abgelehnt.");
 
                     var newNotification = new Notifications
@@ -2050,7 +2057,7 @@ $@"
         public async Task SendRestPassword(string email, string link, string? yourEmail)
         {
             var school = await _context.SchoolInfos
-                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName })
+                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.Facebook, x.Instagram })
                 .SingleAsync();
             var user = await _userManager.FindByEmailAsync(email);
             if (user != null)
@@ -2120,14 +2127,14 @@ $@"
                     ";
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
                         school.SchoolName ?? "", [email], $"Passwort zurücksetzen für Ihr Konto bei {school.SchoolName}",
-                        Message(content, school.SchoolName ?? ""), yourEmail, true, $"Passwort zurücksetzen für Ihr Konto bei {school.SchoolName}");
+                        Message(content, school.SchoolName ?? "", school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true, $"Passwort zurücksetzen für Ihr Konto bei {school.SchoolName}");
             }
         }
 
         public async Task SendConfirmationEmailFromExcel(ApplicationUser user, string password, string? yourEmail)
         {
             var school = await _context.SchoolInfos
-               .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
+               .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain, x.Facebook, x.Instagram })
                .SingleOrDefaultAsync();
             if (school != null)
             {
@@ -2201,7 +2208,7 @@ $@"
 
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
                     school.SchoolName ?? "", [user.Email], "Bitte bestätigen Sie Ihre E-Mail",
-                    Message(content, school.SchoolName ?? ""), yourEmail, true);
+                    Message(content, school.SchoolName ?? "", school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true);
 
 
             }
@@ -2211,7 +2218,7 @@ $@"
         public async Task RejectStudentForParent(ApplicationUser parent, string reason, string? yourEmail)
         {
             var school = await _context.SchoolInfos
-               .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
+               .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain, x.Facebook, x.Instagram })
                .SingleOrDefaultAsync();
             var encodedReason = string.IsNullOrWhiteSpace(reason) ? null : WebUtility.HtmlEncode(reason.Trim());
             var reasonBlock = encodedReason == null
@@ -2288,7 +2295,7 @@ $@"
 
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
                     school.SchoolName ?? "", [parent.Email], $"Mitteilung zur Anmeldung Ihres Kindes – {school.SchoolName}",
-                    Message(content, school.SchoolName ?? ""), yourEmail, true);
+                    Message(content, school.SchoolName ?? "", school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true);
 
 
             }
@@ -2298,7 +2305,7 @@ $@"
         {
 
             var school = await _context.SchoolInfos
-               .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain })
+               .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain, x.Facebook, x.Instagram })
                .SingleOrDefaultAsync();
             var schoolWebsiteUrl = Environment.GetEnvironmentVariable("FRONTEND_BASEURL")
                           ?? _config["Frontend_BaseUrl"]
@@ -2424,7 +2431,7 @@ $@"
                 var subject = $"Aufnahme bestätigt: {student.FirstName} {student.LastName} – {school.SchoolName}";
 
                 await SendEmail(school.EmailServer ?? "", school.EmailPortNumber, school.FromEmail ?? "", school.Password ?? "",
-                    school.SchoolName ?? "", [parent.Email], subject, Message(content, school.SchoolName ?? ""), yourEmail, true,
+                    school.SchoolName ?? "", [parent.Email], subject, Message(content, school.SchoolName ?? "", school.Facebook ?? "https://facebook.com", school.Instagram ?? "https://instagram.com"), yourEmail, true,
                     pdf: pdf,pdfName:$"{student.FirstName}_{student.LastName}_contract");
 
 

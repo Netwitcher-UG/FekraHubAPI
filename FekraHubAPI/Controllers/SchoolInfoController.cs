@@ -17,12 +17,15 @@ namespace FekraHubAPI.Controllers
     public class SchoolInfoController : ControllerBase
     {
         private readonly IRepository<SchoolInfo> _schoolInfoRepo;
+        private readonly IRepository<StudentsReportsKey> _studentReportKeys;
         private readonly ILogger<SchoolInfoController> _logger;
         public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo, 
-            ILogger<SchoolInfoController> logger)
+            ILogger<SchoolInfoController> logger,
+            IRepository<StudentsReportsKey> studentReportKeys)
         {
             _schoolInfoRepo = schoolInfoRepo;
             _logger = logger;
+            _studentReportKeys = studentReportKeys;
         }
         [Authorize(Policy = "ManageSchoolInfo")]
         [HttpGet("SchoolInfoBasic")]
@@ -228,30 +231,61 @@ namespace FekraHubAPI.Controllers
                 }
 
                 var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
-                        include: x => x.Include(k => k.StudentsReportsKeys),
-                        selector: x => x,
+                        selector: x => new { x.Id },
                         returnType: QueryReturnType.Single
                         );
                 if (schoolInfo == null)
                 {
-                   
                     return Ok("Sie können keine Berichtsschlüssel hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add report keys before adding the basic info
 
                 }
-                schoolInfo.StudentsReportsKeys.Clear();
-                List<StudentsReportsKey> studentsReportsKeys = new List<StudentsReportsKey>();
-                foreach (var key in schoolInfo_ReportKeys.StudentsReportsKeys)
+
+                var existingKeys = await _studentReportKeys.GetRelationList(
+                    where: k => k.SchoolInfoId == schoolInfo.Id,
+                    selector:x=>x
+                    );
+                existingKeys =  existingKeys.OrderBy(k => k.Id).ToList();
+
+                 
+                    
+
+                var incomingKeys = schoolInfo_ReportKeys.StudentsReportsKeys;
+                var minCount = Math.Min(existingKeys.Count, incomingKeys.Count);
+
+                for (int i = 0; i < minCount; i++)
                 {
-                    var studentRKey = new StudentsReportsKey
+                    if (!string.Equals(existingKeys[i].Keys, incomingKeys[i], StringComparison.Ordinal))
                     {
-                        Keys = key,
-                        SchoolInfoId = schoolInfo.Id
-                    };
-                    studentsReportsKeys.Add(studentRKey);
+                        existingKeys[i].Keys = incomingKeys[i];
+                        await _studentReportKeys.Update(existingKeys[i]);
+                    }
                 }
-                schoolInfo.StudentsReportsKeys = studentsReportsKeys;
-                await _schoolInfoRepo.Update(schoolInfo);
+
+                if (incomingKeys.Count > existingKeys.Count)
+                {
+                    for (int i = existingKeys.Count; i < incomingKeys.Count; i++)
+                    {
+                        var newKey = new StudentsReportsKey
+                        {
+                            Keys = incomingKeys[i],
+                            SchoolInfoId = schoolInfo.Id
+                        };
+                        await _studentReportKeys.Add(newKey);
+                    }
+                }
+
+                if (existingKeys.Count > incomingKeys.Count)
+                {
+                    var toDelete = existingKeys.Skip(incomingKeys.Count).ToList();
+                    _studentReportKeys.DeleteRange(toDelete);
+                }
+
                 return Ok("Success");
+
+
+
+
+
             }
             catch (Exception ex)
             {

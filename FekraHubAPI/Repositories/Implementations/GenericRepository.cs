@@ -79,7 +79,11 @@ namespace FekraHubAPI.Repositories.Implementations
                 await _context.SaveChangesAsync();
             }
         }
-       
+        public void DeleteRange(IEnumerable<T> entities)
+        {
+            _dbSet.RemoveRange(entities);
+            _context.SaveChanges();
+        }
         public async Task<IQueryable<TResult>> GetRelationAsQueryable<TResult>(
                         Expression<Func<T, bool>>? where = null,
                         List<Expression<Func<T, bool>>>? manyWhere = null,

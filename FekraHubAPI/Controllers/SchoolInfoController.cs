@@ -1,19 +1,13 @@
 ﻿using AutoMapper;
 using FekraHubAPI.Constract;
-using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.MapModels.SchoolInfo;
-
 using FekraHubAPI.Repositories.Interfaces;
 using FekraHubAPI.Seeds;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
-using System.Linq.Expressions;
 
 namespace FekraHubAPI.Controllers
 {
@@ -23,16 +17,12 @@ namespace FekraHubAPI.Controllers
     public class SchoolInfoController : ControllerBase
     {
         private readonly IRepository<SchoolInfo> _schoolInfoRepo;
-        private readonly IMapper _mapper;
         private readonly ILogger<SchoolInfoController> _logger;
-        private readonly UserManager<ApplicationUser> _userManager;
-        public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo, IMapper mapper,
-            ILogger<SchoolInfoController> logger, UserManager<ApplicationUser> userManager)
+        public SchoolInfoController(IRepository<SchoolInfo> schoolInfoRepo, 
+            ILogger<SchoolInfoController> logger)
         {
             _schoolInfoRepo = schoolInfoRepo;
-            _mapper = mapper;
             _logger = logger;
-            _userManager = userManager;
         }
         [Authorize(Policy = "ManageSchoolInfo")]
         [HttpGet("SchoolInfoBasic")]
@@ -41,13 +31,10 @@ namespace FekraHubAPI.Controllers
             try
             {
                 var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
-                    selector: x => new { x.SchoolName, x.SchoolOwner, x.LogoBase64 },
+                    selector: x => new { x.SchoolName, x.SchoolOwner, x.LogoBase64,x.Facebook,x.Instagram,x.PrivacyPolicy },
                     returnType:QueryReturnType.SingleOrDefault,
                     asNoTracking:true);
-                if (schoolInfo == null)
-                {
-                    return NotFound();
-                }
+                
 
                 return Ok(schoolInfo);
             }
@@ -69,10 +56,7 @@ namespace FekraHubAPI.Controllers
                     selector: x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password },
                     returnType: QueryReturnType.SingleOrDefault,
                     asNoTracking: true);
-                if (schoolInfo == null)
-                {
-                    return NotFound();
-                }
+                
 
                 return Ok(schoolInfo);
             }
@@ -95,36 +79,8 @@ namespace FekraHubAPI.Controllers
                     selector: x => x.StudentsReportsKeys.Select(z => z.Keys).ToList(),
                     returnType: QueryReturnType.SingleOrDefault,
                     asNoTracking: true);
-                if (schoolInfo == null)
-                {
-                    return NotFound();
-                }
-
-                return Ok(schoolInfo);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
-                return BadRequest(ex.Message);
-            }
-
-        }
-        [Authorize(Policy = "ManageSchoolInfo")]
-        [HttpGet("SchoolInfoContractAndPolicy")]
-        public async Task<IActionResult> GetSchoolInfoContractAndPolicy()
-        {
-            try
-            {
                 
-                var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
-                    include: x => x.Include(k => k.ContractPages),
-                    selector: x => new { x.PrivacyPolicy, contractPages = x.ContractPages.Select(z => z.ConPage).ToList() },
-                    returnType: QueryReturnType.SingleOrDefault,
-                    asNoTracking: true);
-                if (schoolInfo == null)
-                {
-                    return NotFound();
-                }
+
                 return Ok(schoolInfo);
             }
             catch (Exception ex)
@@ -134,6 +90,28 @@ namespace FekraHubAPI.Controllers
             }
 
         }
+        //[Authorize(Policy = "ManageSchoolInfo")]
+        //[HttpGet("SchoolInfoContractAndPolicy")]
+        //public async Task<IActionResult> GetSchoolInfoContractAndPolicy()
+        //{
+        //    try
+        //    {
+                
+        //        var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
+        //            include: x => x.Include(k => k.ContractPages),
+        //            selector: x => new { x.PrivacyPolicy, contractPages = x.ContractPages.Select(z => z.ConPage).ToList() },
+        //            returnType: QueryReturnType.SingleOrDefault,
+        //            asNoTracking: true);
+                
+        //        return Ok(schoolInfo);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+        //        return BadRequest(ex.Message);
+        //    }
+
+        //}
         [Authorize(Policy = "ManageSchoolInfo")]
         [HttpPost("SchoolInfo_Basic")]
         public async Task<IActionResult> InsertSchoolInfoBasic([FromForm] Map_SchoolInfo_Basic schoolInfo_Basic)
@@ -144,76 +122,45 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest(schoolInfo_Basic);
                 }
-                var IsEmailExists = await _userManager.FindByEmailAsync(schoolInfo_Basic.Email);
-                if (IsEmailExists != null)
+                var schoolInfo = await _schoolInfoRepo.GetRelationSingle(selector:x=>x);
+                if (schoolInfo == null)
                 {
-                    return BadRequest($"Email {schoolInfo_Basic.Email} is already token.");
+                    return BadRequest("School Info not found");
                 }
-                string RoleAdmin = DefaultRole.Admin;
-                var normalizedEmail = schoolInfo_Basic.Email.ToUpperInvariant();
-                var normalizedUserName = schoolInfo_Basic.Email.ToUpperInvariant();
-                ApplicationUser admin = new()
+                if (schoolInfo_Basic.Logo != null)
                 {
-                    UserName = schoolInfo_Basic.Email,
-                    Email = schoolInfo_Basic.Email,
-                    NormalizedUserName = normalizedUserName,
-                    FirstName = schoolInfo_Basic.FirstName,
-                    LastName = schoolInfo_Basic.LastName,
-                    NormalizedEmail = normalizedEmail,
-                    SecurityStamp = Guid.NewGuid().ToString("D"),
-                };
-
-                IdentityResult result = await _userManager.CreateAsync(admin, schoolInfo_Basic.Password);
-                if (result.Succeeded)
-                {
-                    _userManager.AddToRoleAsync(admin, RoleAdmin).Wait();
-                }
-                else
-                {
-                    return BadRequest(result.Errors.Select(x => x.Description).FirstOrDefault());
-                }
-                string LogoBase64 = "";
-                using (var memoryStream = new MemoryStream())
-                {
-                    schoolInfo_Basic.Logo.CopyTo(memoryStream);
-                    byte[] fileBytes = memoryStream.ToArray();
-                    LogoBase64 = Convert.ToBase64String(fileBytes);
-                }
-                bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
-                if (SchoolInfoExist)
-                {
-                    var OldSchoolInfo = (await _schoolInfoRepo.GetAll()).First();
-                    OldSchoolInfo.SchoolName = schoolInfo_Basic.SchoolName;
-                    OldSchoolInfo.SchoolOwner = schoolInfo_Basic.SchoolOwner;
-                    OldSchoolInfo.LogoBase64 = LogoBase64;
-                    await _schoolInfoRepo.Update(OldSchoolInfo);
-                    return Ok("Success");
-
-                }
-                else
-                {
-                    //bool SchoolInfoBasicExist = await _schoolInfoRepo.DataExist(null,
-                    //   new List<Expression<Func<SchoolInfo, bool>>>
-                    //       {
-                    //            entity => entity.SchoolName != null,
-                    //            entity => entity.SchoolOwner !=null,
-                    //            entity => entity.LogoBase64 != null
-                    //       }
-                    //   );
-                    //if (SchoolInfoBasicExist)
-                    //{
-                    //    return BadRequest("School Basic Information was added earlier");
-                    //}
-                    SchoolInfo newSchoolInfo = new SchoolInfo()
+                    using (var memoryStream = new MemoryStream())
                     {
-                        SchoolName = schoolInfo_Basic.SchoolName,
-                        SchoolOwner = schoolInfo_Basic.SchoolOwner,
-                        LogoBase64 = LogoBase64
-                    };
-                    await _schoolInfoRepo.Add(newSchoolInfo);
-                    return Ok("Success");
-
+                        schoolInfo_Basic.Logo.CopyTo(memoryStream);
+                        byte[] fileBytes = memoryStream.ToArray();
+                        schoolInfo.LogoBase64 = Convert.ToBase64String(fileBytes);
+                    }
                 }
+                if (!string.IsNullOrEmpty(schoolInfo_Basic.SchoolName))
+                {
+                    schoolInfo.SchoolName = schoolInfo_Basic.SchoolName;
+                }
+                if (!string.IsNullOrEmpty(schoolInfo_Basic.SchoolOwner))
+                {
+                    schoolInfo.SchoolOwner = schoolInfo_Basic.SchoolOwner;
+                }
+                if (!string.IsNullOrEmpty(schoolInfo_Basic.FacebookLink))
+                {
+                    schoolInfo.Facebook = schoolInfo_Basic.FacebookLink;
+                }
+                if (!string.IsNullOrEmpty(schoolInfo_Basic.InstagramLink))
+                {
+                    schoolInfo.Instagram = schoolInfo_Basic.InstagramLink;
+                }
+                if (!string.IsNullOrEmpty(schoolInfo_Basic.PrivacyPolicyLink))
+                {
+                    schoolInfo.PrivacyPolicy = schoolInfo_Basic.PrivacyPolicyLink;
+                }
+
+                await _schoolInfoRepo.Update(schoolInfo);
+                return Ok("Success");
+
+
             }
             catch (Exception ex)
             {
@@ -233,21 +180,29 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest(schoolInfo_EmailSender);
                 }
-                bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
-                if (SchoolInfoExist)
+                var schoolInfo = await _schoolInfoRepo.GetRelationSingle(selector:x=>x);
+                if (schoolInfo == null)
                 {
-                    var OldSchoolInfo = (await _schoolInfoRepo.GetAll()).First();
-                    OldSchoolInfo.EmailServer = schoolInfo_EmailSender.EmailServer;
-                    OldSchoolInfo.EmailPortNumber = schoolInfo_EmailSender.EmailPortNumber;
-                    OldSchoolInfo.FromEmail = schoolInfo_EmailSender.FromEmail;
-                    OldSchoolInfo.Password = schoolInfo_EmailSender.Password;
-                    await _schoolInfoRepo.Update(OldSchoolInfo);
-                    return Ok("Success");
+                    return BadRequest("Sie können keine E-Mail-Absenderinformationen hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add email sender info before adding the basic info
                 }
-                else
+                if (!string.IsNullOrEmpty(schoolInfo.EmailServer))
                 {
-                    return Ok("Sie können keine E-Mail-Absenderinformationen hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add email sender info before adding the basic info
+                    schoolInfo.EmailServer = schoolInfo_EmailSender.EmailServer;
                 }
+                if (!string.IsNullOrEmpty(schoolInfo.FromEmail))
+                {
+                    schoolInfo.FromEmail = schoolInfo_EmailSender.FromEmail;
+                }
+                if (!string.IsNullOrEmpty(schoolInfo.Password))
+                {
+                    schoolInfo.Password = schoolInfo_EmailSender.Password;
+                }
+                if(schoolInfo_EmailSender.EmailPortNumber != 0)
+                {
+                    schoolInfo.EmailPortNumber = schoolInfo_EmailSender.EmailPortNumber ?? 587;
+                }
+                await _schoolInfoRepo.Update(schoolInfo);
+                return Ok("Success");
             }
             catch (Exception ex)
             {
@@ -267,91 +222,36 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest(schoolInfo_ReportKeys);
                 }
-
-
-                bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
-                if (SchoolInfoExist)
+                if(schoolInfo_ReportKeys.StudentsReportsKeys == null || schoolInfo_ReportKeys.StudentsReportsKeys.Count == 0)
                 {
-                    var OldSchoolInfo = await _schoolInfoRepo.GetRelationSingle(
-                        include:x=> x.Include(k=>k.StudentsReportsKeys),
-                        selector: x => x,
-                        returnType:QueryReturnType.Single
-                        );
-
-
-                    OldSchoolInfo.StudentsReportsKeys.Clear();
-                    List<StudentsReportsKey> studentsReportsKeys = new List<StudentsReportsKey>();
-                    foreach (var key in schoolInfo_ReportKeys.StudentsReportsKeys)
-                    {
-                        var studentRKey = new StudentsReportsKey
-                        {
-                            Keys = key,
-                            SchoolInfoId = OldSchoolInfo.Id
-                        };
-                        studentsReportsKeys.Add(studentRKey);
-                    }
-                    OldSchoolInfo.StudentsReportsKeys = studentsReportsKeys;
-                    await _schoolInfoRepo.Update(OldSchoolInfo);
-                    return Ok("Success");
-
-                }
-                else
-                {
-                    return Ok("Sie können keine Berichtsschlüssel hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add report keys before adding the basic info
-
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
-                return BadRequest(ex.Message);
-            }
-
-        }
-        [Authorize(Policy = "ManageSchoolInfo")]
-        [HttpPost("SchoolInfo_ContractAndPolicy")]
-        public async Task<IActionResult> InsertSchoolInfoContractAndPolicy([FromForm] Map_SchoolInfo_ContractAndPolicy schoolInfo_ContractAndPolicy)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(schoolInfo_ContractAndPolicy);
+                    return BadRequest("You need to add some keys for the reports");
                 }
 
-
-                bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
-                if (SchoolInfoExist)
-                {
-                    var OldSchoolInfo = await _schoolInfoRepo.GetRelationSingle(
-                        include: x => x.Include(k => k.ContractPages),
+                var schoolInfo = await _schoolInfoRepo.GetRelationSingle(
+                        include: x => x.Include(k => k.StudentsReportsKeys),
                         selector: x => x,
                         returnType: QueryReturnType.Single
                         );
-
-
-                    OldSchoolInfo.ContractPages.Clear();
-                    OldSchoolInfo.PrivacyPolicy = schoolInfo_ContractAndPolicy.PrivacyPolicy;
-                    List<ContractPage> studentsContractPages = new List<ContractPage>();
-                    foreach (var page in schoolInfo_ContractAndPolicy.ContractPages)
-                    {
-                        var studentRKey = new ContractPage
-                        {
-                            ConPage = page,
-                            SchoolInfoId = OldSchoolInfo.Id
-                        };
-                        studentsContractPages.Add(studentRKey);
-                    }
-                    OldSchoolInfo.ContractPages = studentsContractPages;
-                    await _schoolInfoRepo.Update(OldSchoolInfo);
-                    return Ok("Success");
-
-                }
-                else
+                if (schoolInfo == null)
                 {
-                    return Ok("Sie können keinen Vertrag und keine Richtlinie hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add contract and policy before adding the basic info
+                   
+                    return Ok("Sie können keine Berichtsschlüssel hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add report keys before adding the basic info
 
                 }
+                schoolInfo.StudentsReportsKeys.Clear();
+                List<StudentsReportsKey> studentsReportsKeys = new List<StudentsReportsKey>();
+                foreach (var key in schoolInfo_ReportKeys.StudentsReportsKeys)
+                {
+                    var studentRKey = new StudentsReportsKey
+                    {
+                        Keys = key,
+                        SchoolInfoId = schoolInfo.Id
+                    };
+                    studentsReportsKeys.Add(studentRKey);
+                }
+                schoolInfo.StudentsReportsKeys = studentsReportsKeys;
+                await _schoolInfoRepo.Update(schoolInfo);
+                return Ok("Success");
             }
             catch (Exception ex)
             {
@@ -360,6 +260,57 @@ namespace FekraHubAPI.Controllers
             }
 
         }
+        //[Authorize(Policy = "ManageSchoolInfo")]
+        //[HttpPost("SchoolInfo_ContractAndPolicy")]
+        //public async Task<IActionResult> InsertSchoolInfoContractAndPolicy([FromForm] Map_SchoolInfo_ContractAndPolicy schoolInfo_ContractAndPolicy)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //        {
+        //            return BadRequest(schoolInfo_ContractAndPolicy);
+        //        }
+
+
+        //        bool SchoolInfoExist = await _schoolInfoRepo.DataExist();
+        //        if (SchoolInfoExist)
+        //        {
+        //            var OldSchoolInfo = await _schoolInfoRepo.GetRelationSingle(
+        //                include: x => x.Include(k => k.ContractPages),
+        //                selector: x => x,
+        //                returnType: QueryReturnType.Single
+        //                );
+
+
+        //            OldSchoolInfo.ContractPages.Clear();
+        //            List<ContractPage> studentsContractPages = new List<ContractPage>();
+        //            foreach (var page in schoolInfo_ContractAndPolicy.ContractPages)
+        //            {
+        //                var studentRKey = new ContractPage
+        //                {
+        //                    ConPage = page,
+        //                    SchoolInfoId = OldSchoolInfo.Id
+        //                };
+        //                studentsContractPages.Add(studentRKey);
+        //            }
+        //            OldSchoolInfo.ContractPages = studentsContractPages;
+        //            await _schoolInfoRepo.Update(OldSchoolInfo);
+        //            return Ok("Success");
+
+        //        }
+        //        else
+        //        {
+        //            return Ok("Sie können keinen Vertrag und keine Richtlinie hinzufügen, bevor die Basisinformationen hinzugefügt wurden.");//You cant add contract and policy before adding the basic info
+
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(HandleLogFile.handleErrLogFile(User, "SchoolInfoController", ex.Message));
+        //        return BadRequest(ex.Message);
+        //    }
+
+        //}
         //[Authorize(Policy = "ManageSchoolInfo")]
         //[HttpPut]
         //public async Task<IActionResult> UpdateSchoolInfo([FromForm] Map_SchoolInfo_Basic schoolInfo)

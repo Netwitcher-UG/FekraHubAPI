@@ -24,6 +24,7 @@ namespace FekraHubAPI.Repositories.Interfaces
         Task Delete(int id);
         Task Delete(T entity);
         Task DeleteRange(Expression<Func<T, bool>> singlePredicate);
+        void DeleteRange(IEnumerable<T> entities);
         Task<IQueryable<TResult>> GetRelationAsQueryable<TResult>(
                         Expression<Func<T, bool>>? where = null,
                         List<Expression<Func<T, bool>>>? manyWhere = null,

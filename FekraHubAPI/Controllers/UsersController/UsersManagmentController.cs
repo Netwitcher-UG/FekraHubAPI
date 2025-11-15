@@ -283,7 +283,13 @@ namespace FekraHubAPI.Controllers.UsersController
                     user.Graduation,
                     user.ActiveUser,
                     Roles = RoleName != null ? string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name)) : string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name)),
-                    Payrolls = payrollsDataLookup.ContainsKey(user.Id) ? payrollsDataLookup[user.Id] : null
+                    LastPayrollDate = payrollsDataLookup.ContainsKey(user.Id)
+                        ? payrollsDataLookup[user.Id]
+                            .Select(x => x.Timestamp)
+                            .OrderByDescending(x => x)
+                            .Cast<DateTime?>()
+                            .FirstOrDefault()                
+                        : (DateTime?)null
                 }).ToList();
 
                 return Ok(result);

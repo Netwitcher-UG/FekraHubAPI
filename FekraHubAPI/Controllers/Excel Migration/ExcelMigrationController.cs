@@ -8,6 +8,7 @@ using OfficeOpenXml;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using FekraHubAPI.Constract;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FekraHubAPI.Controllers.Excel_Migration
 {
@@ -49,7 +50,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             return File(fileBytes, contentType, fileName);
         }
         
-        //[Authorize(Policy = "ManageExcelMigration")]
+        [Authorize(Policy = "ManageExcelMigration")]
         [HttpPost("UploadData")]
         public async Task<IActionResult> UploadData([Required] IFormFile file)
         {
@@ -250,7 +251,9 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 StreetNr = T(worksheet, row, 9),
                 ZipCode = T(worksheet, row, 10),
                 Note = (worksheet.Cells[row, 11].Text ?? string.Empty).Trim(),
-                ActiveStudent = false,
+                ActiveStudent = true,
+                AdminApproved = true,
+                ParentApproved = false,
                 ParentID = parentId
             };
         }

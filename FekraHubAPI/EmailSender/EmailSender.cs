@@ -2217,6 +2217,10 @@ $@"
 
         public async Task RejectStudentForParent(ApplicationUser parent, string reason, string? yourEmail)
         {
+            if (!parent.EmailConfirmed)
+            {
+                return;
+            }
             var school = await _context.SchoolInfos
                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain, x.Facebook, x.Instagram })
                .SingleOrDefaultAsync();
@@ -2303,7 +2307,10 @@ $@"
 
         public async Task AcceptStudent(ApplicationUser parent, Student student,byte[] pdf ,string? yourEmail)
         {
-
+            if (!parent.EmailConfirmed)
+            {
+                return;
+            }
             var school = await _context.SchoolInfos
                .Select(x => new { x.EmailServer, x.EmailPortNumber, x.FromEmail, x.Password, x.SchoolName, x.UrlDomain, x.Facebook, x.Instagram })
                .SingleOrDefaultAsync();
@@ -2311,7 +2318,7 @@ $@"
                           ?? _config["Frontend_BaseUrl"]
                           ?? "https://fekrahub.app";
             var button = "";
-            if (student.ParentApproved != true && student.AdminApproved == true)
+            if ( student.AdminApproved == true)
             {
                 var baseUrl = schoolWebsiteUrl.TrimEnd('/');
                 var rawToken = await _userManager.GenerateEmailConfirmationTokenAsync(parent);

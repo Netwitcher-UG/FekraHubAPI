@@ -47,7 +47,7 @@ namespace FekraHubAPI.Controllers.Students
                 }
 
                 var students = await _studentRepo.GetRelationList(
-                    where:x => x.ParentID == parentId && x.ActiveStudent == true && x.ParentApproved == true && x.ParentApproved == true,
+                    where:x => x.ParentID == parentId && x.ActiveStudent == true &&  x.ParentApproved == true,
                     orderBy: x => x.Id,
                     include:x=> x.Include(t => t.Course.Teacher).Include(c=>c.Course).ThenInclude(r=>r.Room).ThenInclude(l=>l.Location),
                     selector: z => new
@@ -204,7 +204,7 @@ namespace FekraHubAPI.Controllers.Students
 
                 var students = await _studentRepo.GetRelationSingle(
                     where:x => x.ParentID == parentId && x.Id == id && x.ActiveStudent == true
-                    && x.AdminApproved ==true&&x.ParentApproved==true,
+                    && x.AdminApproved ==true&&
                     returnType:QueryReturnType.SingleOrDefault,
                     include:x=>x.Include(r=>r.Report).Include(c=>c.Course).ThenInclude(u=>u.Upload).Include(i=>i.Invoices)
                     .Include(z=>z.Course.Room).ThenInclude(z=>z.Location).Include(z => z.Course.Teacher),

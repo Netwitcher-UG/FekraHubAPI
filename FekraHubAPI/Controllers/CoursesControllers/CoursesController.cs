@@ -59,13 +59,13 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 var userId = _courseRepository.GetUserIDFromToken(User);
                 var isTeacher = await _courseRepository.IsTeacherIDExists(userId);
-
+                
                 var courses = await _courseRepository.GetRelationList(
                     manyWhere: new List<Expression<Func<Course, bool>>?>
                     {
                 isTeacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Any(n => n.Id == userId)) : null,
-                IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.Now.Date && x.EndDate.Date >= DateTime.Now.Date) : null,
-                (Expression<Func<Course, bool>>)(z => z.Student.Any())
+                IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.Now.Date && x.EndDate.Date >= DateTime.Now.Date) : null
+                //(Expression<Func<Course, bool>>)(z => z.Student.Any())
                     }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
 
                     selector: x => new { x.Id, x.Name },

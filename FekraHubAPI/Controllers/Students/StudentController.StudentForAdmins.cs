@@ -174,7 +174,7 @@ namespace FekraHubAPI.Controllers.Students
                                 asNoTracking: true
                             );
                 var reports = await _reportRepo.GetRelationList(
-                                    where: r => r.StudentId == id && r.CreationDate >= DateTime.Now.AddDays(-30),
+                                    where: r => r.StudentId == id && r.CreationDate >= DateTime.UtcNow.AddDays(-30),
                                     selector: r => new
                                     {
                                         r.Id,
@@ -186,7 +186,7 @@ namespace FekraHubAPI.Controllers.Students
                                     },asNoTracking:true
                                     );
                 var uploads = course == null ? null : await _uploadRepo.GetRelationList(
-                                    where: u => u.Courses.Any(c => c.Id == course.Id) && u.Date >= DateTime.Now.AddDays(-30),
+                                    where: u => u.Courses.Any(c => c.Id == course.Id) && u.Date >= DateTime.UtcNow.AddDays(-30),
                                     selector: u => new
                                     {
                                         u.Id,
@@ -197,7 +197,7 @@ namespace FekraHubAPI.Controllers.Students
                                     asNoTracking: true
                                 );
                 var invoices = await _invoiceRepo.GetRelationList(
-                                    where: i => i.Studentid == id && i.Date >= DateTime.Now.AddDays(-30),
+                                    where: i => i.Studentid == id && i.Date >= DateTime.UtcNow.AddDays(-30),
                                     selector: i => new
                                     {
                                         i.Id,
@@ -397,7 +397,7 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
-                var today = DateTime.Now.Date;
+                var today = DateTime.UtcNow.Date;
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(
                     where: x => x.CourseID == courseId, selector: x => x.Id);
                 var eventIsExist = await _eventRepo.DataExist(x => today >= x.StartDate.Date && today <= x.EndDate.Date &&
@@ -420,16 +420,16 @@ namespace FekraHubAPI.Controllers.Students
                 }
 
 
-                if (DateTime.Now.Date < course.StartDate.Date)
+                if (DateTime.UtcNow.Date < course.StartDate.Date)
                 {
                     return BadRequest("Der Kurs hat noch nicht begonnen.");//The course has not started yet
                 }
-                else if (DateTime.Now.Date > course.EndDate.Date)
+                else if (DateTime.UtcNow.Date > course.EndDate.Date)
                 {
                     return BadRequest("Der Kurs ist vorbei.");//The course is over
                 }
                 var att = await _attendanceDateRepo.GetRelationSingle(
-                    where: x => x.Date.Date == DateTime.Now.Date,
+                    where: x => x.Date.Date == DateTime.UtcNow.Date,
                     selector: x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id),
                     returnType: QueryReturnType.SingleOrDefault,
                     asNoTracking: true
@@ -438,7 +438,7 @@ namespace FekraHubAPI.Controllers.Students
                     where: x => x.CourseID == courseId,
                     selector: z => z.DayOfWeek,
                     asNoTracking: true);
-                bool isTodayIsWorkingDay = workingDays.Contains(DateTime.Now.DayOfWeek.ToString());
+                bool isTodayIsWorkingDay = workingDays.Contains(DateTime.UtcNow.DayOfWeek.ToString());
                 if (!isTodayIsWorkingDay)
                 {
                     return Ok(new { IsTodayAWorkDay = isTodayIsWorkingDay, CourseAttendance = att, students = new List<Student>() { } });
@@ -465,7 +465,7 @@ namespace FekraHubAPI.Controllers.Students
                         Street = x.Street ?? "Like parent",
                         StreetNr = x.StreetNr ?? "Like parent",
                         ZipCode = x.ZipCode ?? "Like parent",
-                        studentAttendance = x.StudentAttendance.Where(x => x.date.Date == DateTime.Now.Date)
+                        studentAttendance = x.StudentAttendance.Where(x => x.date.Date == DateTime.UtcNow.Date)
                                         .Select(x => x.AttendanceStatus.Title)
                                         .SingleOrDefault(),
                         course = x.Course == null ? null : new

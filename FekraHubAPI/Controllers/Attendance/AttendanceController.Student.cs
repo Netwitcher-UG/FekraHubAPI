@@ -187,7 +187,7 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-                var today = DateTime.Now.Date;
+                var today = DateTime.UtcNow.Date;
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(
                     where: x => x.CourseID == courseId, selector: x => x.Id);
                 var eventIsExist = await _eventRepo.DataExist(x => today >= x.StartDate.Date && today <= x.EndDate.Date &&
@@ -243,7 +243,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     return BadRequest("Die Arbeitstage des Kurses sind nicht im Schulsystem verzeichnet.");//Course working days are not recorded in the school system
                 }
-                if (!workingDays.Contains(DateTime.Now.DayOfWeek.ToString().ToLower()))
+                if (!workingDays.Contains(DateTime.UtcNow.DayOfWeek.ToString().ToLower()))
                 {
                     return BadRequest("Heute wurde nicht als Arbeitstag für diesen Kurs registriert.");//Today was not registered as a working day for this course
                 }
@@ -276,7 +276,7 @@ namespace FekraHubAPI.Controllers.Attendance
                                             .Where(a => a.StudentID == student.Id)
                                             .OrderBy(a => a.date) 
                                             .FirstOrDefault();
-                            student.CreatedAt = attendance?.date ?? DateTime.Now.Date;
+                            student.CreatedAt = attendance?.date ?? DateTime.UtcNow.Date;
                         }
 
                         await _studentRepo.ManyUpdate(notCreatedAt);

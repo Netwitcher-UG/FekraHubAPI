@@ -65,7 +65,7 @@ namespace FekraHubAPI.ContractMaker
                 {
                     StudentID = student.Id,
                     File = pdfFile,
-                    CreationDate = DateTime.Now
+                    CreationDate = DateTime.UtcNow
                 };
                 await _repo.Add(studentContract);
                 return pdfFile;

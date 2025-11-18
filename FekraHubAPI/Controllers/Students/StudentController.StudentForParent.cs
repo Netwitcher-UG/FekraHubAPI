@@ -254,7 +254,7 @@ namespace FekraHubAPI.Controllers.Students
                         News = new
                         {
                             Report = z.Report == null ? null : z.Report
-                                            .Where(x => x.CreationDate >= DateTime.Now.AddDays(-30))
+                                            .Where(x => x.CreationDate >= DateTime.UtcNow.AddDays(-30))
                                             .Select(z => new
                                             {
                                                 z.Id,
@@ -269,7 +269,7 @@ namespace FekraHubAPI.Controllers.Students
                                             .ToList(),
 
                             WorkSheet = z.Course == null || z.Course.Upload == null ? null : z.Course.Upload
-                                             .Where(upload => upload.Date >= DateTime.Now.AddDays(-30))
+                                             .Where(upload => upload.Date >= DateTime.UtcNow.AddDays(-30))
                                              .Select(upload => new
                                              {
                                                  upload.Id,
@@ -280,7 +280,7 @@ namespace FekraHubAPI.Controllers.Students
                                              .ToList(),
 
                             Invoice = z.Invoices == null ? null : z.Invoices
-                                             .Where(x => x.Date >= DateTime.Now.AddDays(-30))
+                                             .Where(x => x.Date >= DateTime.UtcNow.AddDays(-30))
                                              .Select(z => new
                                              {
                                                  z.Id,

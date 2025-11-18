@@ -270,7 +270,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             claims: claims,
                             issuer: _configuration["JWT:Issuer"],
                             audience: _configuration["JWT:Audience"],
-                            expires: DateTime.Now.AddMonths(1),
+                            expires: DateTime.UtcNow.AddMonths(1),
                             signingCredentials: signingCredentials
                         );
 
@@ -282,7 +282,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             userToken = new Tokens
                             {
                                 Email = user.Email,
-                                ExpiryDate = DateTime.Now.AddMonths(1),
+                                ExpiryDate = DateTime.UtcNow.AddMonths(1),
                                 UserId = user.Id,
                                 Token = tokenString
                             };

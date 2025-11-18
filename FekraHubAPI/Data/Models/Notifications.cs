@@ -4,7 +4,7 @@
     {
         public int Id { get; set; }
         public string Notification { get; set; }
-        public DateTime Date { get; set; } = DateTime.Now;
+        public DateTime Date { get; set; } = DateTime.UtcNow;
         
         public ICollection<NotificationUser> NotificationUsers { get; set; }
     }

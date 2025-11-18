@@ -179,7 +179,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     return BadRequest(ModelState);
                 }
 
-                var serverDate = DateTime.Now.Date;
+                var serverDate = DateTime.UtcNow.Date;
                 if (eventMdl.StartDate.Date < serverDate || eventMdl.EndDate.Date < serverDate)
                 {
                     return BadRequest("Das Start- oder Enddatum muss nach dem aktuellen Datum liegen.");
@@ -319,7 +319,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     return BadRequest("Ungültiges Veranstaltungsdatum.");
                 }
 
-                var serverDate = DateTime.Now.Date;
+                var serverDate = DateTime.UtcNow.Date;
                 if (eventMdl.StartDate.Date < serverDate || eventMdl.EndDate.Date < serverDate)
                 {
                     return BadRequest("Das Start- oder Enddatum muss nach dem aktuellen Datum liegen.");

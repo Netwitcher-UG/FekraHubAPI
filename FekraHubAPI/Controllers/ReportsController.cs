@@ -485,7 +485,7 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest(ModelState);
                 }
-                var DateNow = DateTime.Now;
+                var DateNow = DateTime.UtcNow;
                 var studentIds = new HashSet<int>(map_Report.Select(x => x.StudentId));
 
                 var firstDayOfMonth = new DateTime(DateNow.Year, DateNow.Month, 1);

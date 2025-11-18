@@ -250,8 +250,8 @@ namespace FekraHubAPI.Controllers.UsersController
                     })
                     .ToListAsync();
 
-                var currentMonth = DateTime.Now.Month;
-                var currentYear = DateTime.Now.Year;
+                var currentMonth = DateTime.UtcNow.Month;
+                var currentYear = DateTime.UtcNow.Year;
 
                 var payrollsThisMonth = await _db.PayRoll
                     .Where(p => p.Timestamp.Month == currentMonth && p.Timestamp.Year == currentYear)

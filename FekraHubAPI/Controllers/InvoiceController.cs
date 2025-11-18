@@ -246,7 +246,7 @@ namespace FekraHubAPI.Controllers
                     var upload = new Invoice
                     {
                         file = fileBytes,
-                        Date = DateTime.Now,
+                        Date = DateTime.UtcNow,
                         FileName = invoiceFile.FileName,
                         Studentid = studentId
                     };
@@ -289,7 +289,7 @@ namespace FekraHubAPI.Controllers
                     }
 
                     invoiceEntity.file = fileBytes;
-                    invoiceEntity.Date = DateTime.Now;
+                    invoiceEntity.Date = DateTime.UtcNow;
                     invoiceEntity.FileName = invoiceFile.FileName;
                     invoiceEntity.Studentid = studentId;
 

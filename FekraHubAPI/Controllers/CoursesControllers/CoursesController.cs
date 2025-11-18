@@ -64,7 +64,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     manyWhere: new List<Expression<Func<Course, bool>>?>
                     {
                 isTeacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Any(n => n.Id == userId)) : null,
-                IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.Now.Date && x.EndDate.Date >= DateTime.Now.Date) : null
+                IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.UtcNow.Date && x.EndDate.Date >= DateTime.UtcNow.Date) : null
                 //(Expression<Func<Course, bool>>)(z => z.Student.Any())
                     }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
 
@@ -234,8 +234,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 var filteredCourseSchedules = new List<object>();
 
               
-                var startFilter = new DateTime(DateTime.Now.Year, 9, 1); 
-                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1);
+                var startFilter = new DateTime(DateTime.UtcNow.Year, 9, 1); 
+                var endFilter = new DateTime(DateTime.UtcNow.Year + 1, 6, 1);
 
                 foreach (var schedule in courseSchedule)
                 {
@@ -539,8 +539,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 var filteredCourseSchedules = new List<EventModel>();
 
-                var startFilter = new DateTime(DateTime.Now.Year, 9, 1); 
-                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1); 
+                var startFilter = new DateTime(DateTime.UtcNow.Year, 9, 1); 
+                var endFilter = new DateTime(DateTime.UtcNow.Year + 1, 6, 1); 
 
                 foreach (var schedule in courseSchedule)
                 {
@@ -741,8 +741,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
                 var filteredCourseSchedules = new List<EventModel>();
 
-                var startFilter = new DateTime(DateTime.Now.Year, 9, 1);
-                var endFilter = new DateTime(DateTime.Now.Year + 1, 6, 1);
+                var startFilter = new DateTime(DateTime.UtcNow.Year, 9, 1);
+                var endFilter = new DateTime(DateTime.UtcNow.Year + 1, 6, 1);
 
                 foreach (var schedule in courseSchedule)
                 {

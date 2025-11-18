@@ -11,7 +11,7 @@ namespace FekraHubAPI.MapModels.Courses
 
         public bool? Improved { get; set; }
 
-        public DateTime CreationDate { get; set; } = DateTime.Now;
+        public DateTime CreationDate { get; set; } = DateTime.UtcNow;
         [Required]
         public string UserId { get; set; }
         [Required]

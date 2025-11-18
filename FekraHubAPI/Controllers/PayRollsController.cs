@@ -61,15 +61,17 @@ namespace FekraHubAPI.Controllers
                         fileBytes = ms.ToArray();
                     }
                     var filePayRoll = fileBytes;
-                    var UploadPayRoll = new Map_PayRoll
+                   
+
+                    var UploadPayRoll = new PayRoll
                     {
+                        Name = file.FileName,
                         File = filePayRoll,
                         UserID = user.Id,
 
                     };
 
-                    var PayRollEntity = _mapper.Map<PayRoll>(UploadPayRoll);
-                    await _payRollRepository.Add(PayRollEntity);
+                    await _payRollRepository.Add(UploadPayRoll);
 
 
                 }
@@ -129,6 +131,7 @@ namespace FekraHubAPI.Controllers
                 {
                     x.Id,
                     x.Timestamp,
+                    x.Name
                    
                 }
                 );
@@ -157,6 +160,7 @@ namespace FekraHubAPI.Controllers
                 {
                     x.Id,
                     x.Timestamp,
+                    x.Name
                 },
                 orderBy:x=>x.Timestamp
                 );

@@ -859,7 +859,10 @@ namespace FekraHubAPI.Controllers.Students
 
             await _studentRepo.Update(student);
 
-            return Ok();    
+            return Ok(new
+            {
+                student.FirstName,student.LastName,student.Gender,student.Birthday,student.Nationality,student.Street,student.StreetNr,student.City,student.ZipCode
+            });    
         }
 
         [HttpDelete("student-info/{Id}")]
@@ -873,7 +876,6 @@ namespace FekraHubAPI.Controllers.Students
             }
 
             student.ActiveStudent = false;
-            student.AdminApproved = false;
             await _studentRepo.Update(student);
 
             return Ok();

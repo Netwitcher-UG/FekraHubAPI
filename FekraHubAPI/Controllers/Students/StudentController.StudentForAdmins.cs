@@ -4,6 +4,7 @@ using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.MapModels;
+using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -787,5 +788,96 @@ namespace FekraHubAPI.Controllers.Students
             await _notificationUserRepo.Add(notificationUser);
             return Ok("Erfolgreich genehmigt.");
         }
+
+
+        public class Map_Student_Update
+        {
+            public string? FirstName { get; set; }
+            public string? LastName { get; set; }
+            public string? Gender { get; set; }
+            public DateTime? Birthday { get; set; }
+            public string? Nationality { get; set; }
+            public string? Note { get; set; }
+            public string? Street { get; set; }
+            public string? StreetNr { get; set; }
+            public string? ZipCode { get; set; }
+            public string? City { get; set; }
+            
+
+        }
+
+        [HttpPut("student-info/{Id}")]   
+        public async Task<IActionResult> UpdateStudentInfo(int Id ,[FromBody] Map_Student_Update studentInfo)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var student = await _studentRepo.GetById(Id);
+            if (student == null)
+            {
+                return BadRequest("Dieser Schüler wurde nicht gefunden.");
+            }
+            if(!string.IsNullOrEmpty(studentInfo.FirstName))
+            {
+                student.FirstName = studentInfo.FirstName ;
+            }
+            if (!string.IsNullOrEmpty(studentInfo.LastName))
+            {
+                student.LastName = studentInfo.LastName;
+            }
+            if (!string.IsNullOrEmpty(studentInfo.Gender))
+            {
+                student.Gender = studentInfo.Gender;
+            }
+            if (!string.IsNullOrEmpty(studentInfo.Nationality))
+            {
+                student.Nationality = studentInfo.Nationality;
+            }
+            if (!string.IsNullOrEmpty(studentInfo.Street))
+            {
+                student.Street = studentInfo.Street;
+            }
+            if (!string.IsNullOrEmpty(studentInfo.StreetNr))
+            {
+                student.StreetNr = studentInfo.StreetNr;
+            }
+            if (!string.IsNullOrEmpty(studentInfo.City))
+            {
+                student.City = studentInfo.City;
+            }
+            if (!string.IsNullOrEmpty(studentInfo.ZipCode))
+            {
+                student.ZipCode = studentInfo.ZipCode;
+            }
+            var minBirthDate = new DateTime(1980, 1, 1);
+
+            if (studentInfo.Birthday.HasValue && studentInfo.Birthday.Value > minBirthDate)
+            {
+                student.Birthday = studentInfo.Birthday.Value;
+            }
+
+            await _studentRepo.Update(student);
+
+            return Ok();    
+        }
+
+        [HttpDelete("student-info/{Id}")]
+        public async Task<IActionResult> DeleteStudentInfo(int Id)
+        {
+            
+            var student = await _studentRepo.GetById(Id);
+            if (student == null)
+            {
+                return BadRequest("Dieser Schüler wurde nicht gefunden.");
+            }
+
+            student.ActiveStudent = false;
+            student.AdminApproved = false;
+            await _studentRepo.Update(student);
+
+            return Ok();
+        }
+
     }
 }

@@ -325,7 +325,7 @@ namespace FekraHubAPI.ContractMaker
             <table style=""width: 100%; border-collapse: collapse;"">
                 <tr>
                     <td class=""tdWithPadding"">Anwesenheitsliste</td>
-                    <td class=""tdWithPadding"">Klasse :  {course.Name}  / نحضيري    </td>
+                    <td class=""tdWithPadding"">Klasse :  {course.Name} </td>
                     <td class=""tdWithPadding"">Lehrerin : {teacherName}</td>
                     <td class=""tdWithPadding"">Seminarraum : {roomName}</td>
                 </tr>
@@ -682,7 +682,7 @@ namespace FekraHubAPI.ContractMaker
         <table style=""width: 100%; border-collapse: collapse;"" >
             <tr>
                 <td class=""tdWithPadding"">Anwesenheitsliste</td>
-                <td class=""tdWithPadding"">Klasse :  {course.Name}  / نحضيري    </td>
+                <td class=""tdWithPadding"">Klasse :  {course.Name}    </td>
                 <td class=""tdWithPadding"">Lehrerin : {teacherName}</td>
                 <td class=""tdWithPadding"">Seminarraum : {roomName}</td>
             </tr>

@@ -28,6 +28,20 @@ namespace FekraHubAPI.Controllers
             _mapper = mapper;
             _logger = logger;
         }
+        [HttpPost("fix-names")]
+        public async Task<IActionResult> FixNames()
+        {
+            var payrolls = await _payRollRepository.GetRelationList(
+                where:x=>x.Name == null,
+                selector:x=>x
+                );
+            foreach (var item in payrolls)
+            {
+                item.Name = $"Gehlatnachweis - {item.Timestamp.Month}.{item.Timestamp.Year}";
+            }
+            await _payRollRepository.ManyUpdate(payrolls);
+            return Ok(payrolls.Select(x=>x.Name));
+        }
 
         [Authorize(Policy = "ManagePayrolls")]
         [HttpPost]

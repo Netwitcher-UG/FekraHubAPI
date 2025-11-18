@@ -55,7 +55,7 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest("Benutzer nicht gefunden.");//User not found.
                 }
-                //var payrollsExists = await _payRollRepository.DataExist(x=> x.UserID == UserID && x.Timestamp.Month == DateTime.Now.Month);
+                //var payrollsExists = await _payRollRepository.DataExist(x=> x.UserID == UserID && x.Timestamp.Month == DateTime.UtcNow.Month);
                 //if (payrollsExists)
                 //{
                 //    return BadRequest("Sie haben diesen Monat eine Gehaltsabrechnung.");//You have a payrolls in this month

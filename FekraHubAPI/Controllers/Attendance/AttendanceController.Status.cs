@@ -133,7 +133,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
 
                 DateTime startDate = course.StartDate.Date;
-                DateTime endDate = course.EndDate.Date < DateTime.Now.Date ? course.EndDate.Date : DateTime.Now.Date;
+                DateTime endDate = course.EndDate.Date < DateTime.UtcNow.Date ? course.EndDate.Date : DateTime.UtcNow.Date;
 
                 var workingDays = course.CourseSchedule.ToList();
 

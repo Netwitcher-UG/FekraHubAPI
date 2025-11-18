@@ -12,7 +12,7 @@ namespace FekraHubAPI.Data.Models
 
         public string FileName { get; set; }
 
-        public DateTime Date { get; set; } = DateTime.Now;
+        public DateTime Date { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("Studentid")]
         public virtual Student Student { get; set; }

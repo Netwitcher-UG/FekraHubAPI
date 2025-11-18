@@ -29,7 +29,7 @@ var appVersion = builder.Configuration.GetValue<string>("AppSettings:Version");
 
 
 builder.Services.AddDbContext<ApplicationDbContext>(op =>
-      op.UseSqlServer(builder.Configuration.GetConnectionString("develpConn")));
+      op.UseNpgsql(builder.Configuration.GetConnectionString("develpConn")));
 
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddDefaultTokenProviders().AddEntityFrameworkStores<ApplicationDbContext>();

@@ -110,7 +110,7 @@ namespace FekraHubAPI.Controllers.WorkContractControllers
                         var UploadWorkContract = new WorkContract
                         {
                             File = fileWorkContract,
-                            Timestamp = DateTime.Now,
+                            Timestamp = DateTime.UtcNow,
                             FileName = file.FileName,
                             TeacherID = UserID,
 

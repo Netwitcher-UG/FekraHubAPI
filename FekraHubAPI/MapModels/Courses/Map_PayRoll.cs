@@ -11,7 +11,7 @@ namespace FekraHubAPI.MapModels.Courses
         [Required]
         public byte[] File { get; set; }
 
-        public DateTime Timestamp { get; set; } = DateTime.Now;
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
         public string? UserID { get; set; }
 

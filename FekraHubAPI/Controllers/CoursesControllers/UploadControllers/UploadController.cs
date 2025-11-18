@@ -244,7 +244,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
                             ,
                             file = fileBytes,
                             FileName = file.FileName,
-                            Date = DateTime.Now,
+                            Date = DateTime.UtcNow,
                             Courses = new List<Course>()
                         };
 

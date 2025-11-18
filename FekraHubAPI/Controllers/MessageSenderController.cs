@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using MailKit.Net.Smtp;
 using MimeKit;
 using FekraHubAPI.Constract;
-using FekraHubAPI.Migrations;
 using Microsoft.AspNetCore.Identity;
 using FekraHubAPI.MapModels;
 using System.Collections.Generic;
@@ -433,7 +432,7 @@ namespace FekraHubAPI.Controllers
 
                 }
                 var germanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
-                var germanTime = TimeZoneInfo.ConvertTime(DateTime.Now, germanTimeZone);
+                var germanTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, germanTimeZone);
 
                 var messageSender = new MessageSender
                 {

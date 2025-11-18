@@ -10,7 +10,6 @@ using Notifications = FekraHubAPI.Data.Models.Notifications;
 using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
-using FekraHubAPI.Migrations;
 
 namespace FekraHubAPI.EmailSender
 {

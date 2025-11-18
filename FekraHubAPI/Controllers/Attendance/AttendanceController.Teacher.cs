@@ -139,7 +139,7 @@ namespace FekraHubAPI.Controllers.Attendance
             }
         }
 
-        [Authorize(Policy = "UpdateTeachersAttendance")]
+        //[Authorize(Policy = "UpdateTeachersAttendance")]
         [HttpPost("Teacher")]
         public async Task<IActionResult> AddTeacherAttendance([FromForm]Map_TeacherAttendance teacherAttendance)
         {
@@ -159,45 +159,57 @@ namespace FekraHubAPI.Controllers.Attendance
                 //}
 
                 //course teacher
-                var couseId = await _coursRepo.GetRelationSingle(
+                var courseIds = await _coursRepo.GetRelationList(
                     where: x => x.Teacher.Select(z => z.Id).Contains(teacherAttendance.TeacherID),
                     selector: x => x.Id,
-                    returnType: QueryReturnType.FirstOrDefault,
                     asNoTracking:true);
-                   
 
-                if (couseId == 0)
+
+                if (!courseIds.Any())
                 {
-                    return BadRequest($"Der Lehrer gehört nicht zu dem Kurs.");//The teacher is not belong to the course
+                    return BadRequest("Der Lehrer gehört nicht zu einem Kurs."); // المدرّس لا يخص أي كورس
                 }
 
-                // from course schedule (working days)
                 var workingDays = await _courseScheduleRepo.GetRelationList(
-                    where:x => x.CourseID == couseId,
-                    selector: x => x.DayOfWeek.ToLower());
+                    where: x => courseIds.Contains(x.CourseID??0),
+                    selector: x => new { x.CourseID, Day = x.DayOfWeek.ToLower() });
+
                 if (!workingDays.Any())
                 {
-                    return BadRequest("Die Arbeitstage des Kurses sind nicht im Schulsystem verzeichnet.");//Course working days are not recorded in the school system
-                }
-                if (!workingDays.Contains(teacherAttendance.Date.DayOfWeek.ToString().ToLower()))
-                {
-                    return BadRequest($"Das Datum wurde nicht als Arbeitstag für diesen Kurs registriert.");//Date was not registered as a working day for this course
+                    return BadRequest("Die Arbeitstage der Kurse sind nicht im Schulsystem verzeichnet.");
                 }
 
-                var techerAtten = await _teacherAttendanceRepo.DataExist(
-                    x => x.date.Date == teacherAttendance.Date.Date && x.TeacherID == teacherAttendance.TeacherID);
+                var dayOfWeek = teacherAttendance.Date.DayOfWeek.ToString().ToLower();
 
-                if (techerAtten)
+                var selectedCourseId = workingDays
+                    .Where(w => w.Day == dayOfWeek)
+                    .Select(w => w.CourseID)
+                    .FirstOrDefault();        
+
+                if (selectedCourseId == 0)
                 {
-                    return BadRequest("Die Lehrer haben bereits eine Anwesenheit.");//The teachers already have attendance
+                    return BadRequest("Das Datum wurde nicht als Arbeitstag für einen Kurs des Lehrers registriert.");
                 }
+
+
+                var teacherHasAttendance = await _teacherAttendanceRepo.DataExist(
+                    x => x.date.Date == teacherAttendance.Date.Date
+                         && x.TeacherID == teacherAttendance.TeacherID);
+
+                if (teacherHasAttendance)
+                {
+                    return BadRequest("Die Lehrer haben bereits eine Anwesenheit an diesem Datum.");// المدرّس لديه حضور بالفعل في هذا التاريخ
+                }
+
                 var tAttendance = new TeacherAttendance
                 {
                     date = teacherAttendance.Date,
-                    CourseID = couseId,
+                    CourseID = selectedCourseId,         
                     TeacherID = teacherAttendance.TeacherID,
                     StatusID = teacherAttendance.StatusID
                 };
+
+
 
                 await _teacherAttendanceRepo.Add(tAttendance);
 

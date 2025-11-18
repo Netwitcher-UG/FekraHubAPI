@@ -151,12 +151,12 @@ namespace FekraHubAPI.Controllers.Attendance
                     return BadRequest(ModelState);
                 }
 
-                var existingDate = await _attendanceDateRepo.DataExist(x => x.Date.Date == teacherAttendance.Date.Date);
+                //var existingDate = await _attendanceDateRepo.DataExist(x => x.Date.Date == teacherAttendance.Date.Date);
 
-                if (!existingDate)
-                {
-                    return BadRequest("Dieses Datum ist kein Arbeitstag.");//This date not a working day
-                }
+                //if (!existingDate)
+                //{
+                //    return BadRequest("Dieses Datum ist kein Arbeitstag.");//This date not a working day
+                //}
 
                 //course teacher
                 var couseId = await _coursRepo.GetRelationSingle(

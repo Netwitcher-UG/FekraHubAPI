@@ -152,7 +152,7 @@ namespace FekraHubAPI.Controllers.Attendance
                     return BadRequest(ModelState);
                 }
 
-                //var existingDate = await _attendanceDateRepo.DataExist(x => x.Date.Date == teacherAttendance.Date.Date);
+                //var existingDate = await _attendanceDateRepo.DataExist(x => x.Date.Date == teacherAttendance.Date.Date.ToUtcSafe());
 
                 //if (!existingDate)
                 //{
@@ -194,7 +194,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
 
                 var teacherHasAttendance = await _teacherAttendanceRepo.DataExist(
-                    x => x.date.Date == teacherAttendance.Date.Date
+                    x => x.date.Date == teacherAttendance.Date.Date.ToUtcSafe()
                          && x.TeacherID == teacherAttendance.TeacherID);
 
                 if (teacherHasAttendance)

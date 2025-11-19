@@ -269,8 +269,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
          
                 eventEntity.EventName = eventMdl.EventName;
                 eventEntity.Description = eventMdl.Description;
-                eventEntity.StartDate = eventMdl.StartDate;
-                eventEntity.EndDate = eventMdl.EndDate;
+                eventEntity.StartDate = eventMdl.StartDate.ToUtcSafe();
+                eventEntity.EndDate = eventMdl.EndDate.ToUtcSafe();
                 eventEntity.StartTime = new TimeSpan(eventMdl.StartDate.Hour, eventMdl.StartDate.Minute, 0);
                 eventEntity.EndTime = new TimeSpan(eventMdl.EndDate.Hour, eventMdl.EndDate.Minute, 0);
                 eventEntity.TypeID = eventMdl.TypeID;

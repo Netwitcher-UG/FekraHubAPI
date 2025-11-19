@@ -3,13 +3,14 @@ using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers.AuthorizationController;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
+using FekraHubAPI.Helpers;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 using System;
+using System.Linq.Expressions;
 
 
 namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
@@ -383,8 +384,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     EventName = eventMdl.EventName,
                     Description = eventMdl.Description,
-                    StartDate = eventMdl.StartDate,
-                    EndDate = eventMdl.EndDate,
+                    StartDate = eventMdl.StartDate.ToUtcSafe(),
+                    EndDate = eventMdl.EndDate.ToUtcSafe(),
                     StartTime = startTime,
                     EndTime = endTime,
                     TypeID = eventMdl.TypeID

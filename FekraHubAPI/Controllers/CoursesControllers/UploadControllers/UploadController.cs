@@ -240,8 +240,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.UploadControllers
 
                         var upload = new Upload
                         {
-                            UploadTypeid = uploadFilesDTO.UploadTypeId
-                            ,
+                            UploadTypeid = uploadFilesDTO.UploadTypeId,
                             file = fileBytes,
                             FileName = file.FileName,
                             Date = DateTime.UtcNow,

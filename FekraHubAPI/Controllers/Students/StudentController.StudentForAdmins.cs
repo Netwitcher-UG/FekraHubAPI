@@ -3,6 +3,7 @@ using FekraHubAPI.Constract;
 using FekraHubAPI.ContractMaker;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
+using FekraHubAPI.Helpers;
 using FekraHubAPI.MapModels;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -854,7 +855,7 @@ namespace FekraHubAPI.Controllers.Students
 
             if (studentInfo.Birthday.HasValue && studentInfo.Birthday.Value > minBirthDate)
             {
-                student.Birthday = studentInfo.Birthday.Value;
+                student.Birthday = studentInfo.Birthday.Value.ToUtcSafe();
             }
 
             await _studentRepo.Update(student);

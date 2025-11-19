@@ -3,6 +3,7 @@ using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
+using FekraHubAPI.Helpers;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Implementations;
 using FekraHubAPI.Repositories.Interfaces;
@@ -1131,8 +1132,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                     Price = mapCourseSchedule.course.Price,
                     Lessons = mapCourseSchedule.course.Lessons,
                     Capacity = mapCourseSchedule.course.Capacity,
-                    StartDate = mapCourseSchedule.course.StartDate,
-                    EndDate = mapCourseSchedule.course.EndDate,
+                    StartDate = mapCourseSchedule.course.StartDate.ToUtcSafe(),
+                    EndDate = mapCourseSchedule.course.EndDate.ToUtcSafe(),
                     RoomId = mapCourseSchedule.course.RoomId,
                     Teacher = new List<ApplicationUser>()
                 };

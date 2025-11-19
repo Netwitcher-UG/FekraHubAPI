@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using FekraHubAPI.Constract;
 using Microsoft.AspNetCore.Authorization;
+using FekraHubAPI.Helpers;
 
 namespace FekraHubAPI.Controllers.Excel_Migration
 {
@@ -203,7 +204,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 FirstName = worksheet.Cells[row, 12].Text,
                 LastName = worksheet.Cells[row, 13].Text,
                 Email = email,
-                Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 15].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 15].Text),
+                Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 15].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 15].Text).ToUtcSafe(),
                 Birthplace = worksheet.Cells[row, 16].Text,
                 Nationality = worksheet.Cells[row, 17].Text,
                 PhoneNumber = worksheet.Cells[row, 18].Text,
@@ -237,7 +238,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
         private Student CreateStudent(ExcelWorksheet worksheet, int row, string parentId)
         {
             var bdayText = T(worksheet, row, 4);
-            var birthday = DateTime.Parse(bdayText); 
+            var birthday = DateTime.Parse(bdayText).ToUtcSafe(); 
 
             return new Student
             {

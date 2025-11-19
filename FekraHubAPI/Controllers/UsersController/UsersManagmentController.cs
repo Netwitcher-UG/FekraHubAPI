@@ -1,27 +1,27 @@
-﻿using FekraHubAPI.Data.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-
-using FekraHubAPI.Seeds;
+﻿using FekraHubAPI.Constract;
+using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data;
+using FekraHubAPI.Data.Models;
+using FekraHubAPI.EmailSender;
+using FekraHubAPI.Helpers;
+using FekraHubAPI.MapModels;
+using FekraHubAPI.MapModels.Response;
+using FekraHubAPI.MapModels.Users;
+using FekraHubAPI.Repositories.Interfaces;
+using FekraHubAPI.Seeds;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
-using FekraHubAPI.EmailSender;
-using System.Security.Claims;
-using FekraHubAPI.Repositories.Interfaces;
-using static System.Net.Mime.MediaTypeNames;
-using System.Reflection.Metadata;
 using System.IO;
-using FekraHubAPI.MapModels.Users;
-using FekraHubAPI.MapModels.Response;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using FekraHubAPI.MapModels;
-using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
-using FekraHubAPI.Constract;
-using static FekraHubAPI.Controllers.UsersController.UsersManagment;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Security.Claims;
+using static FekraHubAPI.Controllers.UsersController.UsersManagment;
+using static System.Net.Mime.MediaTypeNames;
 
 
 namespace FekraHubAPI.Controllers.UsersController
@@ -609,7 +609,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             PhoneNumber = user.PhoneNumber,
                             Gender = user.Gender,
                             EmergencyPhoneNumber = user.EmergencyPhoneNumber,
-                            Birthday = user.Birthday,
+                            Birthday = user.Birthday.ToUtcSafe(),
                             Birthplace = user.Birthplace,
                             Nationality = user.Nationality,
                             Street = user.Street,
@@ -750,7 +750,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 account.PhoneNumber = accountUpdate.PhoneNumber;
                 account.Gender = accountUpdate.Gender;
                 account.EmergencyPhoneNumber = accountUpdate.EmergencyPhoneNumber;
-                account.Birthday = accountUpdate.Birthday;
+                account.Birthday = accountUpdate.Birthday.ToUtcSafe();
                 account.Birthplace = accountUpdate.Birthplace;
                 account.Nationality = accountUpdate.Nationality;
                 account.Street = accountUpdate.Street;
@@ -834,7 +834,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 account.PhoneNumber = accountUpdate.PhoneNumber;
                 account.Gender = accountUpdate.Gender;
                 account.EmergencyPhoneNumber = accountUpdate.EmergencyPhoneNumber;
-                account.Birthday = accountUpdate.Birthday;
+                account.Birthday = accountUpdate.Birthday.ToUtcSafe();
                 account.Birthplace = accountUpdate.Birthplace;
                 account.Nationality = accountUpdate.Nationality;
                 account.Street = accountUpdate.Street;

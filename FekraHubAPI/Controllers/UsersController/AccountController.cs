@@ -1,39 +1,40 @@
-using Microsoft.AspNetCore.Http;
+using FekraHubAPI.Constract;
+using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
-using Microsoft.AspNetCore.Identity;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using FekraHubAPI.EmailSender;
+using FekraHubAPI.EmailSender;
+using FekraHubAPI.Helpers;
 using FekraHubAPI.MapModels.Response;
 using FekraHubAPI.MapModels.Users;
+using FekraHubAPI.Repositories.Interfaces;
 using FekraHubAPI.Seeds;
+using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using FekraHubAPI.Data;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using FekraHubAPI.EmailSender;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using static System.Net.Mime.MediaTypeNames;
-using static Azure.Core.HttpHeader;
-using System.Security.Cryptography;
-using System.IO;
-using System.Reflection.Emit;
-using System.ComponentModel.DataAnnotations;
-using FekraHubAPI.EmailSender;
 using Microsoft.Extensions.Configuration;
-using static System.Net.WebRequestMethods;
-using FekraHubAPI.Repositories.Interfaces;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
-using System.Net;
-using FekraHubAPI.Constract;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Serilog;
-using MailKit.Net.Smtp;
+using Microsoft.IdentityModel.Tokens;
 using MimeKit;
+using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
+using Serilog;
+using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Net;
+using System.Reflection.Emit;
+using System.Security.Claims;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using static Azure.Core.HttpHeader;
+using static System.Net.Mime.MediaTypeNames;
+using static System.Net.WebRequestMethods;
 
 namespace FekraHubAPI.Controllers.UsersController
 {
@@ -123,7 +124,7 @@ namespace FekraHubAPI.Controllers.UsersController
             account.PhoneNumber = accountUpdate.PhoneNumber;
             account.Gender = accountUpdate.Gender;
             account.EmergencyPhoneNumber = accountUpdate.EmergencyPhoneNumber;
-            account.Birthday = accountUpdate.Birthday;
+            account.Birthday = accountUpdate.Birthday.ToUtcSafe();
             account.Birthplace = accountUpdate.Birthplace;
             account.Nationality = accountUpdate.Nationality;
             account.Street = accountUpdate.Street;
@@ -282,7 +283,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             userToken = new Tokens
                             {
                                 Email = user.Email,
-                                ExpiryDate = DateTime.UtcNow.AddMonths(1),
+                                ExpiryDate = DateTime.UtcNow.AddMonths(1).ToUtcSafe(),
                                 UserId = user.Id,
                                 Token = tokenString
                             };
@@ -351,7 +352,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             PhoneNumber = user.phoneNumber,
                             Gender = user.gender,
                             EmergencyPhoneNumber = user.emergencyPhoneNumber,
-                            Birthday = user.birthday ,
+                            Birthday = user.birthday.ToUtcSafe(),
                             Birthplace = user.birthplace,
                             Nationality = user.nationality,
                             Street = user.street,

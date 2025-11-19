@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using FekraHubAPI.Helpers;
 
 namespace FekraHubAPI.Controllers.Students
 {
@@ -35,7 +36,7 @@ namespace FekraHubAPI.Controllers.Students
                     Nationality = student.Nationality,
                     Note = student.Note??"",
                     Gender = student.Gender,
-                    Birthday = student.Birthday,
+                    Birthday = student.Birthday.ToUtcSafe(),
                     City = student.City ?? "Like parent",
                     Street = student.Street ?? "Like parent",
                     StreetNr = student.StreetNr ?? "Like parent",
@@ -80,7 +81,7 @@ namespace FekraHubAPI.Controllers.Students
                     Nationality = student.Nationality,
                     Note = student.Note ?? "",
                     Gender = student.Gender,
-                    Birthday = student.Birthday,
+                    Birthday = student.Birthday.ToUtcSafe(),
                     City = student.City,
                     Street = student.Street,
                     StreetNr = student.StreetNr,

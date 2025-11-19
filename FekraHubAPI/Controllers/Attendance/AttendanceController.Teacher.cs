@@ -1,12 +1,13 @@
-﻿using FekraHubAPI.Data.Models;
+﻿using FekraHubAPI.Constract;
+using FekraHubAPI.Data.Models;
+using FekraHubAPI.Helpers;
 using FekraHubAPI.MapModels.Courses;
+using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq.Expressions;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using FekraHubAPI.Constract;
-using FekraHubAPI.Repositories.Interfaces;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace FekraHubAPI.Controllers.Attendance
 {
@@ -203,7 +204,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
                 var tAttendance = new TeacherAttendance
                 {
-                    date = teacherAttendance.Date,
+                    date = teacherAttendance.Date.ToUtcSafe(),
                     CourseID = selectedCourseId,         
                     TeacherID = teacherAttendance.TeacherID,
                     StatusID = teacherAttendance.StatusID

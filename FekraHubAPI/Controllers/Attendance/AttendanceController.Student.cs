@@ -1,13 +1,14 @@
-﻿using FekraHubAPI.Data.Models;
+﻿using FekraHubAPI.Constract;
+using FekraHubAPI.Data.Models;
+using FekraHubAPI.Helpers;
 using FekraHubAPI.MapModels.Courses;
+using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using FekraHubAPI.Constract;
 using System.ComponentModel.DataAnnotations;
-using FekraHubAPI.Repositories.Interfaces;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace FekraHubAPI.Controllers.Attendance
 {
@@ -276,7 +277,7 @@ namespace FekraHubAPI.Controllers.Attendance
                                             .Where(a => a.StudentID == student.Id)
                                             .OrderBy(a => a.date) 
                                             .FirstOrDefault();
-                            student.CreatedAt = attendance?.date ?? DateTime.UtcNow.Date;
+                            student.CreatedAt = attendance?.date.ToUtcSafe() ?? DateTime.UtcNow.Date.ToUtcSafe();
                         }
 
                         await _studentRepo.ManyUpdate(notCreatedAt);
@@ -298,7 +299,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     var newAttendanceDate = new AttendanceDate
                     {
-                        Date = today
+                        Date = today.ToUtcSafe()
                     };
 
                     await _attendanceDateRepo.Add(newAttendanceDate);
@@ -327,7 +328,7 @@ namespace FekraHubAPI.Controllers.Attendance
                         newAttendance.Add(
                             new StudentAttendance
                             {
-                                date = today,
+                                date = today.ToUtcSafe(),
                                 CourseID = courseId,
                                 StudentID = studentAtt.StudentID,
                                 StatusID = studentAtt.StatusID
@@ -405,7 +406,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 var newAtt = new StudentAttendance
                 {
-                    date = date,
+                    date = date.ToUtcSafe(),
                     StatusID = statusId,
                     StudentID = studentId,
                     CourseID = Student.CourseID

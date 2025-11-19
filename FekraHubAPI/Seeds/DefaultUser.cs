@@ -1,16 +1,17 @@
-using Microsoft.AspNetCore.Identity;
-using FekraHubAPI.Data.Models;
-using FekraHubAPI.Seeds;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Numerics;
-using System.Reflection.Emit;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers;
-using System.Data;
-using System.Security.Claims;
 using FekraHubAPI.Data;
+using FekraHubAPI.Data.Models;
+using FekraHubAPI.Helpers;
+using FekraHubAPI.Seeds;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
+using System.Numerics;
+using System.Reflection.Emit;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace FekraHubAPI.Seeds
 {
@@ -40,7 +41,7 @@ namespace FekraHubAPI.Seeds
                 FirstName = "John",
                 Birthplace = "city",
                 LastName = "Doe",
-                Birthday = DateTime.Parse("1985-01-01"),
+                Birthday = DateTime.Parse("1985-01-01").ToUtcSafe(),
                 Nationality = "American",
                 Street = "123 Main St",
                 StreetNr = "1A",
@@ -80,7 +81,7 @@ namespace FekraHubAPI.Seeds
                 Gender = "Female",
                 FirstName = "Jane",
                 LastName = "Smith",
-                Birthday = DateTime.Parse("1990-02-02"),
+                Birthday = DateTime.Parse("1990-02-02").ToUtcSafe(),
                 Nationality = "American",
                 Street = "456 Elm St",
                 Birthplace ="city",

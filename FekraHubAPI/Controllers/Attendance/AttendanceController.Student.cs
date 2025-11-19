@@ -393,7 +393,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
 
                 var StudentAttendanceExist = (await _studentAttendanceRepo.GetRelationList
-                    (where: x => x.Student.Id == studentId && x.date.Date == date.Date,
+                    (where: x => x.Student.Id == studentId && x.date.Date == date.Date.ToUtcSafe(),
                     selector: x => x, asNoTracking: true)).Any();
                 if (StudentAttendanceExist)
                 {

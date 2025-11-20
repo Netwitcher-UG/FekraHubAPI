@@ -1,4 +1,4 @@
-using FekraHubAPI.Constract;
+﻿using FekraHubAPI.Constract;
 using FekraHubAPI.Data;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
@@ -209,10 +209,10 @@ namespace FekraHubAPI.Controllers.UsersController
                     return Ok(ModelState);
                 }
                 return StatusCode(StatusCodes.Status200OK,
-                    new Response { Status = "Success", Message = $"Passwort wurde ge�ndert." });//Password has been changed
+                    new Response { Status = "Success", Message = $"Passwort wurde geändert." });//Password has been changed
             }
             return StatusCode(StatusCodes.Status400BadRequest,
-                    new Response { Status = "Error", Message = $"Passwort konnte nicht ge�ndert werden, bitte versuchen Sie es erneut." });//Could not change password , please try again.
+                    new Response { Status = "Error", Message = $"Passwort konnte nicht geändert werden, bitte versuchen Sie es erneut." });//Could not change password , please try again.
 
         }
 
@@ -231,7 +231,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
                     if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
                     {
-                        return Unauthorized("E-Mail oder Passwort ist ung�ltig.");//Email or password is invalid
+                        return Unauthorized("E-Mail oder Passwort ist ungültig.");//Email or password is invalid
                     }
 
                     if (!user.ActiveUser)
@@ -242,7 +242,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     {
                         
                         await _emailSender.SendConfirmationEmail(user);
-                        return StatusCode(409, "Ihr Konto wurde nicht best�tigt. Der Best�tigungslink wurde an Ihre E-Mail gesendet.");//Your account not confirmed . The confirm link has been sent to your email
+                        return StatusCode(409, "Ihr Konto wurde nicht bestätigt. Der Bestätigungslink wurde an Ihre E-Mail gesendet.");//Your account not confirmed . The confirm link has been sent to your email
                     }
 
                     var claims = new List<Claim>
@@ -253,10 +253,24 @@ namespace FekraHubAPI.Controllers.UsersController
                         };
 
                     var roles = await _userManager.GetRolesAsync(user);
-                    foreach (var role in roles)
+
+                    foreach (var role in roles.Where(r => !string.IsNullOrWhiteSpace(r)))
                     {
+                        // Claim خاص بالـ Role نفسه
                         claims.Add(new Claim("role", role));
-                        var roleUser = await _roleManager.FindByNameAsync(role);
+
+                        // نبحث عن كائن الـ Role من جدول AspNetRoles باستخدام Name
+                        var roleUser = await _roleManager.Roles
+                            .FirstOrDefaultAsync(r => r.Name == role);
+
+                        if (roleUser == null)
+                        {
+                            // لو الـ Role غير موجود في قاعدة البيانات نسجل تحذير ونكمل
+                            _logger.LogWarning("Role '{RoleName}' not found while logging in user {UserId}", role, user.Id);
+                            continue;
+                        }
+
+                        // Claims الخاصة بالـ Role (Permissions)
                         var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
                         foreach (var roleClaim in roleClaims)
                         {
@@ -376,7 +390,7 @@ namespace FekraHubAPI.Controllers.UsersController
                             {
                                 
                                 await _emailSender.SendConfirmationEmail(ThisNewUser);
-                                return Ok($"Erfolg!! Bitte gehen Sie zu Ihrem E-Mail-Postfach und best�tigen Sie Ihre E-Mail.");//Success!! . Please go to your email message box and confirm your email
+                                return Ok($"Erfolg!! Bitte gehen Sie zu Ihrem E-Mail-Postfach und bestätigen Sie Ihre E-Mail.");//Success!! . Please go to your email message box and confirm your email
                             }
 
                            
@@ -425,7 +439,7 @@ namespace FekraHubAPI.Controllers.UsersController
         {
             if (string.IsNullOrEmpty(ID) || string.IsNullOrEmpty(Token))
             {
-                return BadRequest("Ung�ltiger oder abgelaufener Link.");//Invalid or expired link.
+                return BadRequest("Ungültiger oder abgelaufener Link.");//Invalid or expired link.
             }
             var user = await _userManager.FindByIdAsync(ID);
             if (user == null)
@@ -479,7 +493,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 var userId = principal.FindFirstValue("id");
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("Ung�ltiger Token: Benutzer-ID fehlt.");//Invalid token: Missing user ID
+                    return Unauthorized("Ungültiger Token: Benutzer-ID fehlt.");//Invalid token: Missing user ID
                 }
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user != null)
@@ -491,18 +505,18 @@ namespace FekraHubAPI.Controllers.UsersController
                     }
                     else
                     {
-                        return Unauthorized("Ung�ltiger Token.");//Invalid token
+                        return Unauthorized("Ungültiger Token.");//Invalid token
                     }
                 }
                 else
                 {
-                    return Unauthorized("Ung�ltiger Token.");//Invalid token
+                    return Unauthorized("Ungültiger Token.");//Invalid token
                 }
 
             }
             catch (SecurityTokenException)
             {
-                return Unauthorized("Ung�ltiger Token.");//Invalid token
+                return Unauthorized("Ungültiger Token.");//Invalid token
             }
         }
         

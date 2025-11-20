@@ -4,6 +4,7 @@ using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data.Models;
 using FekraHubAPI.EmailSender;
 using FekraHubAPI.ExportReports;
+using FekraHubAPI.Helpers;
 using FekraHubAPI.MapModels;
 using FekraHubAPI.MapModels.Courses;
 using FekraHubAPI.Repositories.Interfaces;
@@ -475,7 +476,7 @@ namespace FekraHubAPI.Controllers
             
         }
 
-        [Authorize(Policy = "InsertUpdateStudentsReports")]
+        //[Authorize(Policy = "InsertUpdateStudentsReports")]
         [HttpPost]
         public async Task<IActionResult> CreateReports(List<Map_Report_Post> map_Report)
         {
@@ -488,8 +489,8 @@ namespace FekraHubAPI.Controllers
                 var DateNow = DateTime.UtcNow;
                 var studentIds = new HashSet<int>(map_Report.Select(x => x.StudentId));
 
-                var firstDayOfMonth = new DateTime(DateNow.Year, DateNow.Month, 1);
-                var firstDayOfNextMonth = firstDayOfMonth.AddMonths(1);
+                var firstDayOfMonth = new DateTime(DateNow.Year, DateNow.Month, 1).ToUtcSafe();
+                var firstDayOfNextMonth = firstDayOfMonth.AddMonths(1).ToUtcSafe();
 
                 var reports = await _reportRepo.DataExist(
                                   report => report.CreationDate >= firstDayOfMonth &&

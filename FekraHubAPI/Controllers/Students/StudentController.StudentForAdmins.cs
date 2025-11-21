@@ -612,96 +612,109 @@ namespace FekraHubAPI.Controllers.Students
         [HttpPost("accept-student")]
         public async Task<IActionResult> AcceptPendingStudent([FromBody] AcceptStudent data)
         {
-            var student = await _studentRepo.GetById(data.StudentId);
-            if (student == null)
+            try
             {
-                return BadRequest("Dieser Schüler wurde nicht gefunden.");
-            }
-            var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == student.ParentID);
-            if (parent == null)
-            {
-                return BadRequest("Das Elternkonto der Erziehungsberechtigten wurde nicht gefunden.");// رسالة بالالماني حساب الاهل غير موجود 
-            }
-            if (!parent.EmailConfirmed)
-            {
-                return BadRequest("Die E-Mail-Adresse des Elternkontos ist noch nicht bestätigt");// رسالة بالالماني ايميل الاهل غير مؤكد
-            }
-            
-            if (data.CourseId != null && data.CourseId != 0)
-            {
-                var courseExist = await _courseRepo.DataExist(x => x.Id == data.CourseId.Value);
-                if (!courseExist)
+                var student = await _studentRepo.GetById(data.StudentId);
+                if (student == null)
                 {
-                    return BadRequest("Kurs nicht gefunden.");
+                    return BadRequest("Dieser Schüler wurde nicht gefunden.");
                 }
-                student.CourseID = data.CourseId;
+                var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == student.ParentID);
+                if (parent == null)
+                {
+                    return BadRequest("Das Elternkonto der Erziehungsberechtigten wurde nicht gefunden.");// رسالة بالالماني حساب الاهل غير موجود 
+                }
+                if (!parent.EmailConfirmed)
+                {
+                    return BadRequest("Die E-Mail-Adresse des Elternkontos ist noch nicht bestätigt");// رسالة بالالماني ايميل الاهل غير مؤكد
+                }
+
+                if (data.CourseId != null && data.CourseId != 0)
+                {
+                    var courseExist = await _courseRepo.DataExist(x => x.Id == data.CourseId.Value);
+                    if (!courseExist)
+                    {
+                        return BadRequest("Kurs nicht gefunden.");
+                    }
+                    student.CourseID = data.CourseId;
+                }
+                else
+                {
+                    student.CourseID = null;
+                }
+                var pdf = await _contractMaker.ConverterHtmlToPdf(student, data.RegistrationFee, data.AnnualCourseFee);
+                if (pdf == null)
+                {
+                    return BadRequest("pdf not found");
+                }
+                student.AdminApproved = true;
+                await _studentRepo.Update(student);
+
+
+
+                await _emailSender.AcceptStudent(parent, student, pdf);
+
+                var newNotification = new Notifications
+                {
+                    Notification = $"{student.FirstName} {student.LastName} wurde aufgenommen. |/children/",
+                };
+                await _notificationsRepo.Add(newNotification);
+                List<NotificationUser> notificationUsers = new List<NotificationUser>();
+                var notificationUser = new NotificationUser
+                {
+                    NotificationId = newNotification.Id,
+                    UserId = parent.Id
+                };
+                notificationUsers.Add(notificationUser);
+
+                await _notificationUserRepo.ManyAdd(notificationUsers);
+                return Ok();
+            }catch(Exception ex)
+            {
+                return BadRequest(ex.Message);  
             }
-            else
-            {
-                student.CourseID = null;
-            }
-            var pdf = await _contractMaker.ConverterHtmlToPdf(student, data.RegistrationFee, data.AnnualCourseFee);
-            if(pdf == null)
-            {
-                return BadRequest("pdf not found");
-            }
-            student.AdminApproved = true;
-            await _studentRepo.Update(student);
-
-
-            
-            await _emailSender.AcceptStudent(parent, student,pdf);
-
-            var newNotification = new Notifications
-            {
-                Notification = $"{student.FirstName} {student.LastName} wurde aufgenommen. |/children/",
-            };
-            await _notificationsRepo.Add(newNotification);
-            List<NotificationUser> notificationUsers = new List<NotificationUser>();
-            var notificationUser = new NotificationUser
-            {
-                NotificationId = newNotification.Id,
-                UserId = parent.Id
-            };
-            notificationUsers.Add(notificationUser);
-
-            await _notificationUserRepo.ManyAdd(notificationUsers);
-            return Ok();
         }
         public class RejectData
         {
             public int StudentId { get; set; }
             public string? Reason { get; set; }
         }
-        [Authorize(Policy = "StudentAdmissions")]
+        //[Authorize(Policy = "StudentAdmissions")]
         [HttpPost("reject-student")]
         public async Task<IActionResult> RejectStudent([FromBody] RejectData rejectData)
         {
-            var student = await _studentRepo.GetById(rejectData.StudentId);
-            if (student == null)
+            try
             {
-                return BadRequest("Dieser Schüler wurde nicht gefunden.");
-            }
-            var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == student.ParentID);
-            if (parent == null)
-            {
-                return BadRequest("Das Elternkonto der Erziehungsberechtigten wurde nicht gefunden.");// رسالة بالالماني حساب الاهل غير موجود 
-            }
-            await _studentRepo.Delete(student);
-            await _emailSender.RejectStudentForParent(parent, rejectData.Reason ?? "");
+                var student = await _studentRepo.GetById(rejectData.StudentId);
+                if (student == null)
+                {
+                    return BadRequest("Dieser Schüler wurde nicht gefunden.");
+                }
+                var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == student.ParentID);
+                if (parent == null)
+                {
+                    return BadRequest("Das Elternkonto der Erziehungsberechtigten wurde nicht gefunden.");// رسالة بالالماني حساب الاهل غير موجود 
+                }
+                await _studentRepo.Delete(student);
+                await _emailSender.RejectStudentForParent(parent, rejectData.Reason ?? "");
 
-            var newNotification = new Notifications
+                var newNotification = new Notifications
+                {
+                    Notification = $"{student.FirstName} {student.LastName} wurde abgelehnt.|/children/",
+                };
+                await _notificationsRepo.Add(newNotification);
+                var notificationUser = new NotificationUser
+                {
+                    NotificationId = newNotification.Id,
+                    UserId = parent.Id
+                };
+                await _notificationUserRepo.Add(notificationUser);
+                return Ok();
+            }
+            catch(Exception ex)
             {
-                Notification = $"{student.FirstName} {student.LastName} wurde abgelehnt.|/children/",
-            };
-            await _notificationsRepo.Add(newNotification);
-            var notificationUser = new NotificationUser
-            {
-                NotificationId = newNotification.Id,
-                UserId = parent.Id
-            };
-            await _notificationUserRepo.Add(notificationUser);
-            return Ok();
+                return BadRequest(ex.Message);
+            }
         }
         public class AcceptContract
         {
@@ -713,81 +726,87 @@ namespace FekraHubAPI.Controllers.Students
         [HttpPost("accept-contract")]
         public async Task<IActionResult> AcceptStudentFromParent([FromBody] AcceptContract data)
         {
-            if (string.IsNullOrWhiteSpace(data.Token) ||
-                string.IsNullOrWhiteSpace(data.ParentId) ||
-                data.StudentId <= 0)
-            {
-                return BadRequest("Fehlende oder ungültige Parameter."); // missing_or_invalid_parameters
-            }
-            var student = await _studentRepo.GetRelationSingle(
-                where: x => x.Id == data.StudentId,
-                selector: x => x
-                );
-            
-            if (student == null)
-            {
-                return BadRequest("Schüler nicht gefunden."); // student_not_found
-            }
-            if (student.AdminApproved != true)
-            {
-                return BadRequest("Der Administrator hat diesen Schüler noch nicht genehmigt."); // admin_not_approved
-            }
-
-            var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == data.ParentId);
-            if (parent == null)
-            {
-                return BadRequest("Elternkonto nicht gefunden."); // parent_not_found
-            }
-            if (student.ParentID != data.ParentId)
-                return BadRequest("Schüler stimmt nicht mit dem Elternkonto überein."); // student_parent_mismatch
-
-
-            string rawToken;
             try
             {
-                var tokenBytes = WebEncoders.Base64UrlDecode(data.Token);
-                rawToken = Encoding.UTF8.GetString(tokenBytes);
-            }
-            catch
-            {
-                return BadRequest("Ungültiges Token-Format."); // invalid_token_format
-            }
+                if (string.IsNullOrWhiteSpace(data.Token) ||
+                string.IsNullOrWhiteSpace(data.ParentId) ||
+                data.StudentId <= 0)
+                {
+                    return BadRequest("Fehlende oder ungültige Parameter."); // missing_or_invalid_parameters
+                }
+                var student = await _studentRepo.GetRelationSingle(
+                    where: x => x.Id == data.StudentId,
+                    selector: x => x
+                    );
 
-            var provider = _userManager.Options.Tokens.EmailConfirmationTokenProvider;
-            var isValid = await _userManager.VerifyUserTokenAsync(
-                parent,
-                provider,
-                "EmailConfirmation",
-                rawToken
-            );
+                if (student == null)
+                {
+                    return BadRequest("Schüler nicht gefunden."); // student_not_found
+                }
+                if (student.AdminApproved != true)
+                {
+                    return BadRequest("Der Administrator hat diesen Schüler noch nicht genehmigt."); // admin_not_approved
+                }
 
-            if (!isValid)
-            {
-                return BadRequest("Ungültiges oder abgelaufenes Token."); // invalid_or_expired_token
-            }
-            if(student.ParentApproved == true)
-            {
-                return BadRequest("Bereits genehmigt."); // already_approved
-            }
-            student.ParentApproved = true;
-            if(student.AdminApproved == true)
-            {
-                student.ActiveStudent = true;
-            }
-            await _studentRepo.Update(student);
+                var parent = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == data.ParentId);
+                if (parent == null)
+                {
+                    return BadRequest("Elternkonto nicht gefunden."); // parent_not_found
+                }
+                if (student.ParentID != data.ParentId)
+                    return BadRequest("Schüler stimmt nicht mit dem Elternkonto überein."); // student_parent_mismatch
 
-            var newNotification = new Notifications
+
+                string rawToken;
+                try
+                {
+                    var tokenBytes = WebEncoders.Base64UrlDecode(data.Token);
+                    rawToken = Encoding.UTF8.GetString(tokenBytes);
+                }
+                catch
+                {
+                    return BadRequest("Ungültiges Token-Format."); // invalid_token_format
+                }
+
+                var provider = _userManager.Options.Tokens.EmailConfirmationTokenProvider;
+                var isValid = await _userManager.VerifyUserTokenAsync(
+                    parent,
+                    provider,
+                    "EmailConfirmation",
+                    rawToken
+                );
+
+                if (!isValid)
+                {
+                    return BadRequest("Ungültiges oder abgelaufenes Token."); // invalid_or_expired_token
+                }
+                if (student.ParentApproved == true)
+                {
+                    return BadRequest("Bereits genehmigt."); // already_approved
+                }
+                student.ParentApproved = true;
+                if (student.AdminApproved == true)
+                {
+                    student.ActiveStudent = true;
+                }
+                await _studentRepo.Update(student);
+
+                var newNotification = new Notifications
+                {
+                    Notification = $"Vertrag bestätigt({student.FirstName} {student.LastName}).|/students/",//children
+                };
+                await _notificationsRepo.Add(newNotification);
+                var notificationUser = new NotificationUser
+                {
+                    NotificationId = newNotification.Id,
+                    UserId = parent.Id
+                };
+                await _notificationUserRepo.Add(notificationUser);
+                return Ok("Erfolgreich genehmigt.");
+            }catch(Exception ex)
             {
-                Notification = $"Vertrag bestätigt({student.FirstName} {student.LastName}).|/students/",//children
-            };
-            await _notificationsRepo.Add(newNotification);
-            var notificationUser = new NotificationUser
-            {
-                NotificationId = newNotification.Id,
-                UserId = parent.Id
-            };
-            await _notificationUserRepo.Add(notificationUser);
-            return Ok("Erfolgreich genehmigt.");
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -810,78 +829,99 @@ namespace FekraHubAPI.Controllers.Students
         [HttpPut("student-info/{Id}")]   
         public async Task<IActionResult> UpdateStudentInfo(int Id ,[FromBody] Map_Student_Update studentInfo)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
-            var student = await _studentRepo.GetById(Id);
-            if (student == null)
-            {
-                return BadRequest("Dieser Schüler wurde nicht gefunden.");
-            }
-            if(!string.IsNullOrEmpty(studentInfo.FirstName))
-            {
-                student.FirstName = studentInfo.FirstName ;
-            }
-            if (!string.IsNullOrEmpty(studentInfo.LastName))
-            {
-                student.LastName = studentInfo.LastName;
-            }
-            if (!string.IsNullOrEmpty(studentInfo.Gender))
-            {
-                student.Gender = studentInfo.Gender;
-            }
-            if (!string.IsNullOrEmpty(studentInfo.Nationality))
-            {
-                student.Nationality = studentInfo.Nationality;
-            }
-            if (!string.IsNullOrEmpty(studentInfo.Street))
-            {
-                student.Street = studentInfo.Street;
-            }
-            if (!string.IsNullOrEmpty(studentInfo.StreetNr))
-            {
-                student.StreetNr = studentInfo.StreetNr;
-            }
-            if (!string.IsNullOrEmpty(studentInfo.City))
-            {
-                student.City = studentInfo.City;
-            }
-            if (!string.IsNullOrEmpty(studentInfo.ZipCode))
-            {
-                student.ZipCode = studentInfo.ZipCode;
-            }
-            var minBirthDate = new DateTime(1980, 1, 1);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                var student = await _studentRepo.GetById(Id);
+                if (student == null)
+                {
+                    return BadRequest("Dieser Schüler wurde nicht gefunden.");
+                }
+                if (!string.IsNullOrEmpty(studentInfo.FirstName))
+                {
+                    student.FirstName = studentInfo.FirstName;
+                }
+                if (!string.IsNullOrEmpty(studentInfo.LastName))
+                {
+                    student.LastName = studentInfo.LastName;
+                }
+                if (!string.IsNullOrEmpty(studentInfo.Gender))
+                {
+                    student.Gender = studentInfo.Gender;
+                }
+                if (!string.IsNullOrEmpty(studentInfo.Nationality))
+                {
+                    student.Nationality = studentInfo.Nationality;
+                }
+                if (!string.IsNullOrEmpty(studentInfo.Street))
+                {
+                    student.Street = studentInfo.Street;
+                }
+                if (!string.IsNullOrEmpty(studentInfo.StreetNr))
+                {
+                    student.StreetNr = studentInfo.StreetNr;
+                }
+                if (!string.IsNullOrEmpty(studentInfo.City))
+                {
+                    student.City = studentInfo.City;
+                }
+                if (!string.IsNullOrEmpty(studentInfo.ZipCode))
+                {
+                    student.ZipCode = studentInfo.ZipCode;
+                }
+                var minBirthDate = new DateTime(1980, 1, 1);
 
-            if (studentInfo.Birthday.HasValue && studentInfo.Birthday.Value > minBirthDate)
+                if (studentInfo.Birthday.HasValue && studentInfo.Birthday.Value > minBirthDate)
+                {
+                    student.Birthday = studentInfo.Birthday.Value.ToUtcSafe();
+                }
+
+                await _studentRepo.Update(student);
+
+                return Ok(new
+                {
+                    student.FirstName,
+                    student.LastName,
+                    student.Gender,
+                    student.Birthday,
+                    student.Nationality,
+                    student.Street,
+                    student.StreetNr,
+                    student.City,
+                    student.ZipCode
+                });
+            } 
+            catch(Exception ex)
             {
-                student.Birthday = studentInfo.Birthday.Value.ToUtcSafe();
+                return BadRequest(ex.Message);
             }
-
-            await _studentRepo.Update(student);
-
-            return Ok(new
-            {
-                student.FirstName,student.LastName,student.Gender,student.Birthday,student.Nationality,student.Street,student.StreetNr,student.City,student.ZipCode
-            });    
         }
 
         [HttpDelete("student-info/{Id}")]
         public async Task<IActionResult> DeleteStudentInfo(int Id)
         {
-            
-            var student = await _studentRepo.GetById(Id);
-            if (student == null)
+            try
             {
-                return BadRequest("Dieser Schüler wurde nicht gefunden.");
+                var student = await _studentRepo.GetById(Id);
+                if (student == null)
+                {
+                    return BadRequest("Dieser Schüler wurde nicht gefunden.");
+                }
+
+                student.ActiveStudent = false;
+                student.ParentApproved = false;
+                student.AdminApproved = false;
+                await _studentRepo.Update(student);
+
+                return Ok();
             }
-
-            student.ActiveStudent = false;
-            student.ParentApproved = false;
-            student.AdminApproved = false;
-            await _studentRepo.Update(student);
-
-            return Ok();
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
     }

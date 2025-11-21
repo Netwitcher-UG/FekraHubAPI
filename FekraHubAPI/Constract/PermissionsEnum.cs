@@ -62,7 +62,8 @@ namespace FekraHubAPI.Constract
             ShowParentInfo,
             UpdateCourseStu,
             MessageSender,
-            StudentAdmissions
+            StudentAdmissions,
+            ManageStudents
 
 
         }

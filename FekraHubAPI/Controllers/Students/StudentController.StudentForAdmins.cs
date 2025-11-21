@@ -806,7 +806,7 @@ namespace FekraHubAPI.Controllers.Students
             
 
         }
-
+        [Authorize(Policy = "ManageStudents")]
         [HttpPut("student-info/{Id}")]   
         public async Task<IActionResult> UpdateStudentInfo(int Id ,[FromBody] Map_Student_Update studentInfo)
         {

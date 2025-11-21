@@ -43,7 +43,9 @@ namespace FekraHubAPI.Controllers.Students
                     ZipCode = student.ZipCode ?? "Like parent",
                     CourseID = null,
                     ParentID = parentId,
-                    ActiveStudent = false
+                    ActiveStudent = false,
+                    ParentApproved = true
+                    
                 };
                 await _studentRepo.Add(studentEntity);
                 await _emailSender.SendToAdminNewStudent(studentEntity);

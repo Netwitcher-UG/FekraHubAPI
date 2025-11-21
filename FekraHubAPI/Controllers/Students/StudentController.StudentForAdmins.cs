@@ -560,7 +560,7 @@ namespace FekraHubAPI.Controllers.Students
         public async Task<IActionResult> PendingStudents()
         {
             var students = await _studentRepo.GetRelationList(
-                where: x => x.ActiveStudent == false,
+                where: x => x.ActiveStudent == false&& (x.AdminApproved == true || x.ParentApproved == true),
                 selector: x => new
                 {
                     x.Id,
@@ -877,6 +877,8 @@ namespace FekraHubAPI.Controllers.Students
             }
 
             student.ActiveStudent = false;
+            student.ParentApproved = false;
+            student.AdminApproved = false;
             await _studentRepo.Update(student);
 
             return Ok();

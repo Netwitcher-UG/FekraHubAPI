@@ -155,6 +155,7 @@ namespace FekraHubAPI.ContractMaker
             };
 
             var htmlPages = Annualpage(school.SchoolName ?? "",school.LogoBase64, course);
+            
             var objectSettingsList = new List<ObjectSettings>();
 
             foreach (var htmlPage in htmlPages)
@@ -201,9 +202,8 @@ namespace FekraHubAPI.ContractMaker
         //                    </div>
         //                    ";
 
-        private List<string> Annualpage(string schoolName,string logo, Course course)
+        private List<string> Annualpage(string schoolName, string logo, Course course)
         {
-            
             var teacher = course.Teacher.FirstOrDefault();
             var teacherName = teacher != null ? $"{teacher.FirstName} {teacher.LastName}" : "";
             var roomName = course.Room != null ? course.Room.Name : "";
@@ -234,143 +234,162 @@ namespace FekraHubAPI.ContractMaker
             workDays.Sort();
 
             int studentsPerPage = 15; // عدد الطلاب في كل صفحة
-            int daysPerPage = 20; // عدد الأعمدة في كل صفحة
-            var totalStudentPages = (int)Math.Ceiling((double)students.Count / studentsPerPage); // عدد الصفحات للطلاب
-            var totalDayPages = (int)Math.Ceiling((double)workDays.Count / daysPerPage); // عدد الصفحات للأعمدة
+            int daysPerPage = 20;     // عدد الأعمدة في كل صفحة
+
+            // ⚠️ هنا التعديل المهم: نضمن وجود صفحة واحدة على الأقل حتى لو 0 طلاب أو 0 أيام
+            var totalStudentPages = Math.Max(1, (int)Math.Ceiling((double)students.Count / studentsPerPage));
+            var totalDayPages = Math.Max(1, (int)Math.Ceiling((double)workDays.Count / daysPerPage));
 
             var htmlPages = new List<string>();
 
-            // القالب الذي يتكرر في كل صفحة (الهيدر والفوتر)
             string template = @"
-    <!DOCTYPE html>
-    <html lang='en'>
-    <head>
-        <meta charset='UTF-8'>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        <title>Document</title>
-      <style>
-        body{
-            font-family: Arial, Helvetica, sans-serif;
-            padding: 0 !important;
-            margin: 0;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-        h3 {
-            font-size: 16px !important;
-        }
-        
-        .container{
-            width: 1400px; 
-            height: 990px;
-            margin: 0 auto;
-            padding: 0 !important;
-            text-align: left;
-            overflow: hidden;
-        }
-       
-        h5{
-            margin: 20px 0;
-        }
-        .tdWithPadding{
-            border: 1px solid black;
-            padding: 5px;
-        }
-        .AttendanceTable {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        .AttendanceTable th,
-        .AttendanceTable td {
-            border: 1px solid black;
-            padding: 5px;
-            text-align: center;
-        }
-        
-        .header-col {
-            text-align: left !important;
-            padding-left: 20px !important;
-            padding-right: 20px !important;
-            white-space: nowrap;
-            overflow: hidden;  
-            text-overflow: ellipsis; 
-        }
-        .gray {
-            background-color: #d3d3d3;
-        }
-      </style>" + $@"
-    </head>
-    <body >
-        <div class='container'>
-        <div style='width: 1395px; height: 100px;'>
-            <table style='width:100%; padding-top:20px;'>
-                <tr>
-                    <td style='width:10%;text-align:right;padding: 0;height: 80px;'>
-                        <img alt='logo' width='80px' style='padding:0;opacity: 1;' src='data:image/png;base64,{logo}'>
-                    </td>
-                    <td style='width:10%;text-align:left;padding: 0;'>
-                        <h1 style='font-size: 28px;color: rgba(0, 0, 0, 0.5);'>{schoolName}</h1>
-                    </td>
-                    <td style='width:80%;'></td>
-                </tr>
-            </table>
-            <div style='position: relative;width: 100%;'>
-                <div style='border-top:3px solid rgba(0, 0, 0, 0.082) ;width: 100%;'>
-                </div>
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Document</title>
+  <style>
+    body{
+        font-family: Arial, Helvetica, sans-serif;
+        padding: 0 !important;
+        margin: 0;
+        box-sizing: border-box;
+        font-size: 14px;
+    }
+    h3 {
+        font-size: 16px !important;
+    }
+    
+    .container{
+        width: 1400px; 
+        height: 990px;
+        margin: 0 auto;
+        padding: 0 !important;
+        text-align: left;
+        overflow: hidden;
+    }
+   
+    h5{
+        margin: 20px 0;
+    }
+    .tdWithPadding{
+        border: 1px solid black;
+        padding: 5px;
+    }
+    .AttendanceTable {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    .AttendanceTable th,
+    .AttendanceTable td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: center;
+    }
+    
+    .header-col {
+        text-align: left !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+        white-space: nowrap;
+        overflow: hidden;  
+        text-overflow: ellipsis; 
+    }
+    .gray {
+        background-color: #d3d3d3;
+    }
+  </style>" + $@"
+</head>
+<body >
+    <div class='container'>
+    <div style='width: 1395px; height: 100px;'>
+        <table style='width:100%; padding-top:20px;'>
+            <tr>
+                <td style='width:10%;text-align:right;padding: 0;height: 80px;'>
+                    <img alt='logo' width='80px' style='padding:0;opacity: 1;' src='data:image/png;base64,{logo}'>
+                </td>
+                <td style='width:10%;text-align:left;padding: 0;'>
+                    <h1 style='font-size: 28px;color: rgba(0, 0, 0, 0.5);'>{schoolName}</h1>
+                </td>
+                <td style='width:80%;'></td>
+            </tr>
+        </table>
+        <div style='position: relative;width: 100%;'>
+            <div style='border-top:3px solid rgba(0, 0, 0, 0.082) ;width: 100%;'>
             </div>
         </div>
+    </div>
 
-        <div style='width: 1370px; height: 670px;min-height: 670px !important;padding: 20px;padding-top:50px;'>
+    <div style='width: 1370px; height: 670px;min-height: 670px !important;padding: 20px;padding-top:50px;'>
 
-            <table style=""width: 100%; border-collapse: collapse;"">
-                <tr>
-                    <td class=""tdWithPadding"">Anwesenheitsliste</td>
-                    <td class=""tdWithPadding"">Klasse :  {course.Name} </td>
-                    <td class=""tdWithPadding"">Lehrerin : {teacherName}</td>
-                    <td class=""tdWithPadding"">Seminarraum : {roomName}</td>
-                </tr>
-            </table>";
+        <table style=""width: 100%; border-collapse: collapse;"">
+            <tr>
+                <td class=""tdWithPadding"">Anwesenheitsliste</td>
+                <td class=""tdWithPadding"">Klasse :  {course.Name} </td>
+                <td class=""tdWithPadding"">Lehrerin : {teacherName}</td>
+                <td class=""tdWithPadding"">Seminarraum : {roomName}</td>
+            </tr>
+        </table>";
 
             string footer = @"
-        <div style='width: 100%; height: 150px;border-top: 1px solid rgba(0, 0, 0, 0.11);background-color: white;z-index: 1000;position: fixed;bottom: 0;left: 0;'>
-            <table style='width:100%;'>
-                <tr>
-                    <td style='width:10%;text-align:right;padding: 20px;'>
-                        <div style='text-align:left;'>
-                            <h4>
-                                Telefon : 01794169927<br></br>
-                                Email : Admin@fekraschule.de<br></br>
-                                Adresse : Kleiststraße 23-26, 10787 Berlin
-                            </h4>
+    <div style='width: 100%; height: 150px;border-top: 1px solid rgba(0, 0, 0, 0.11);background-color: white;z-index: 1000;position: fixed;bottom: 0;left: 0;'>
+        <table style='width:100%;'>
+            <tr>
+                <td style='width:10%;text-align:right;padding: 20px;'>
+                    <div style='text-align:left;'>
+                        <h4>
+                            Telefon : 01794169927<br></br>
+                            Email : Admin@fekraschule.de<br></br>
+                            Adresse : Kleiststraße 23-26, 10787 Berlin
+                        </h4>
+                    </div>
+                </td>
+                <td style='width:10%;text-align:left;padding: 0;'>
+                    <div dir='rtl' style='text-align: right;padding-top: 10px;'>
+                        <div style='color: white;background-color: black;width: 80%;margin-right: 5px;'>
+                            <h1 style='padding: 20px;font-size: 18px;'>مدرسة فكرة ... <br>الطريق الأفضل لتعلم اللغة العربية</h1>
                         </div>
-                    </td>
-                    <td style='width:10%;text-align:left;padding: 0;'>
-                        <div dir='rtl' style='text-align: right;padding-top: 10px;'>
-                            <div style='color: white;background-color: black;width: 80%;margin-right: 5px;'>
-                                <h1 style='padding: 20px;font-size: 18px;'>مدرسة فكرة ... <br>الطريق الأفضل لتعلم اللغة العربية</h1>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
+</div>
 </body>
 </html>";
 
             // تكرار لكل مجموعة من 20 يومًا (أعمدة)
             for (int dayPage = 0; dayPage < totalDayPages; dayPage++)
             {
-                var currentWorkDays = workDays.Skip(dayPage * daysPerPage).Take(daysPerPage).ToList();
+                var currentWorkDays = workDays
+                    .Skip(dayPage * daysPerPage)
+                    .Take(daysPerPage)
+                    .ToList();
+
+                // نص الفترة أعلى الجدول – نتفادى .First() / .Last() على قائمة فاضية
+                string periodText;
+                if (currentWorkDays.Any())
+                {
+                    periodText = $"{currentWorkDays.First():dd.MM.yyyy} - {currentWorkDays.Last():dd.MM.yyyy} - {course.Name}";
+                }
+                else
+                {
+                    // لو ما في أيام دوام نعرض فترة الكورس أو نتركها بسيطة
+                    periodText = $"{courseStartDate:dd.MM.yyyy} - {courseEndDate:dd.MM.yyyy} - {course.Name}";
+                }
 
                 // تكرار لكل مجموعة من الطلاب (15 طالب)
                 for (int group = 0; group < totalStudentPages; group++)
                 {
-                    var studentGroup = students.Skip(group * studentsPerPage).Take(studentsPerPage).ToList();
+                    var studentGroup = students
+                        .Skip(group * studentsPerPage)
+                        .Take(studentsPerPage)
+                        .ToList();
 
-                    // إنشاء رأس الجدول مع الأعمدة
-                    var header = $@"
-                <thead>
+                    // الهيدر
+                    var header = @"
+            <thead>
                 <tr>
                     <th rowspan=""2"" colspan=""2"" style=""font-size: 20px;"">Name</th>
                 </tr>
@@ -379,12 +398,12 @@ namespace FekraHubAPI.ContractMaker
                     for (int i = 0; i < currentWorkDays.Count; i++)
                     {
                         var cssClass = (i % 2 == 0) ? "gray" : "";
-                        header += $@"<th class='{cssClass}'>{currentWorkDays[i].ToString("dd.MM")}</th>";
+                        header += $@"<th class='{cssClass}'>{currentWorkDays[i]:dd.MM}</th>";
                     }
 
                     header += "</tr></thead>";
 
-                    // إنشاء صفوف الطلاب
+                    // الصفوف
                     var row = "";
                     for (var i = 0; i < studentGroup.Count; i++)
                     {
@@ -393,29 +412,23 @@ namespace FekraHubAPI.ContractMaker
 
                         row += $@"
                 <tr>
-                <td class='gray' style='width:10px;'>{(group * studentsPerPage) + i + 1}</td>
-                <td class='header-col'>{studentName}</td>";
+                    <td class='gray' style='width:10px;'>{(group * studentsPerPage) + i + 1}</td>
+                    <td class='header-col'>{studentName}</td>";
 
-                        // إنشاء خلايا الحضور لكل يوم
                         for (int j = 0; j < currentWorkDays.Count; j++)
                         {
                             var currentDay = currentWorkDays[j];
-                            var attendanceStatus = studentAttendance?.FirstOrDefault(a => a.date.Date == currentDay.Date)?.AttendanceStatus?.Title ?? "";
-                            var cssClass = (j % 2 == 0) ? "gray" : "";
+                            var attendanceStatus = studentAttendance?
+                                .FirstOrDefault(a => a.date.Date == currentDay.Date)?
+                                .AttendanceStatus?.Title ?? "";
 
-                            string attendanceIcon;
-                            if (attendanceStatus == "Present")
+                            var cssClass = (j % 2 == 0) ? "gray" : "";
+                            string attendanceIcon = attendanceStatus switch
                             {
-                                attendanceIcon = "<span style='color: green;'>&#10004;</span>";
-                            }
-                            else if (attendanceStatus == "Absent")
-                            {
-                                attendanceIcon = "<span style='color: red;'>&#10008;</span>";
-                            }
-                            else
-                            {
-                                attendanceIcon = "";
-                            }
+                                "Present" => "<span style='color: green;'>&#10004;</span>",
+                                "Absent" => "<span style='color: red;'>&#10008;</span>",
+                                _ => ""
+                            };
 
                             row += $@"<td class='{cssClass}'>{attendanceIcon}</td>";
                         }
@@ -423,10 +436,10 @@ namespace FekraHubAPI.ContractMaker
                         row += "</tr>";
                     }
 
-                    // إنشاء الصفحة HTML مع القالب والتفاصيل
+                    // لو ما فيه طلاب نهائياً → studentGroup.Count = 0 → الجدول يطلع بدون صفوف، وهذا المطلوب
                     var htmlPage = template + $@"
                 <div style='width: 100%;text-align: center;margin-top: 50px;'>
-                    <h3>{currentWorkDays.First().ToString("dd.MM.yyyy")} - {currentWorkDays.Last().ToString("dd.MM.yyyy")} - {course.Name}</h3>
+                    <h3>{periodText}</h3>
                 </div>
                 <table class=""AttendanceTable"" style=""z-index: 1;margin-top:30px;"">
                    {header}
@@ -436,7 +449,7 @@ namespace FekraHubAPI.ContractMaker
                 </table>
             " + footer;
 
-                    htmlPages.Add(htmlPage); // إضافة الصفحة إلى القائمة
+                    htmlPages.Add(htmlPage);
                 }
             }
 

@@ -856,6 +856,10 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     student.Nationality = studentInfo.Nationality;
                 }
+                if (!string.IsNullOrEmpty(studentInfo.Note))
+                {
+                    student.Note = studentInfo.Note;
+                }
                 if (!string.IsNullOrEmpty(studentInfo.Street))
                 {
                     student.Street = studentInfo.Street;
@@ -888,6 +892,7 @@ namespace FekraHubAPI.Controllers.Students
                     student.Gender,
                     student.Birthday,
                     student.Nationality,
+                    student.Note,
                     student.Street,
                     student.StreetNr,
                     student.City,

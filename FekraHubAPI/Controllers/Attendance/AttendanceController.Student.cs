@@ -140,17 +140,28 @@ namespace FekraHubAPI.Controllers.Attendance
                     }
 
                 }
+                var courseStartUtc = course.StartDate.ToUtcSafe();
+                var courseEndUtc = course.EndDate.ToUtcSafe();
+
+                var startUtc = startDate?.ToUtcSafe();
+                var endUtc = endDate?.ToUtcSafe();
+
+                DateTime? dateOnlyUtc = null;
+                if (dateTime.HasValue)
+                {
+                    dateOnlyUtc = dateTime.Value.ToUtcSafe().Date;
+                }
                 var result = await _studentAttendanceRepo.GetRelationList(
                    manyWhere: new List<Expression<Func<StudentAttendance, bool>>?>
-                    {
-                        x => x.CourseID == courseId,
-                        ta => ta.date >= course.StartDate && ta.date <= course.EndDate,
-                        startDate.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date >= startDate.Value) : null,
-                        endDate.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date <= endDate.Value) : null,
-                        year.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date.Year == year.Value) : null,
-                        month.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date.Month == month.Value) : null,
-                        dateTime.HasValue ? (Expression<Func<StudentAttendance, bool>>)(sa => sa.date.Date == dateTime.Value.Date) : null,
-                    }.Where(x => x != null).Cast<Expression<Func<StudentAttendance, bool>>>().ToList(),
+            {
+                x => x.CourseID == courseId,
+                ta => ta.date >= courseStartUtc && ta.date <= courseEndUtc,
+                startUtc.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date >= startUtc.Value) : null,
+                endUtc.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date <= endUtc.Value) : null,
+                year.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date.Year == year.Value) : null,
+                month.HasValue ? (Expression<Func<StudentAttendance, bool>>)(ta => ta.date.Month == month.Value) : null,
+                dateOnlyUtc.HasValue ? (Expression<Func<StudentAttendance, bool>>)(sa => sa.date.Date == dateOnlyUtc.Value) : null,
+            }.Where(x => x != null).Cast<Expression<Func<StudentAttendance, bool>>>().ToList(),
                    orderBy: ta => ta.date,
                    include: q => q.Include(x => x.Course).Include(x => x.Student).Include(x => x.AttendanceStatus),
                    selector: sa => new
@@ -188,7 +199,7 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-                var today = DateTime.UtcNow.Date;
+                var today = DateTime.UtcNow.Date.ToUtcSafe();
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(
                     where: x => x.CourseID == courseId, selector: x => x.Id);
                 var eventIsExist = await _eventRepo.DataExist(x => today >= x.StartDate.Date && today <= x.EndDate.Date &&
@@ -299,7 +310,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 {
                     var newAttendanceDate = new AttendanceDate
                     {
-                        Date = today.ToUtcSafe()
+                        Date = today
                     };
 
                     await _attendanceDateRepo.Add(newAttendanceDate);
@@ -328,7 +339,7 @@ namespace FekraHubAPI.Controllers.Attendance
                         newAttendance.Add(
                             new StudentAttendance
                             {
-                                date = today.ToUtcSafe(),
+                                date = today,
                                 CourseID = courseId,
                                 StudentID = studentAtt.StudentID,
                                 StatusID = studentAtt.StatusID
@@ -362,28 +373,28 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-                date = date.ToUtcSafe();
-                var dateOnly = date.Date;
+                var dateUtc = date.ToUtcSafe();
+                var dateOnlyUtc = date.Date.ToUtcSafe();
                 var Student = await _studentRepo.GetById(studentId);
                 if (Student == null)
                 {
                     return BadRequest("Student nicht gefunden.");//Student not found
                 }
                 
-                var course = await _coursRepo.DataExist(x=> x.Id == Student.CourseID && dateOnly >= x.StartDate.Date && dateOnly <= x.EndDate.Date);
+                var course = await _coursRepo.DataExist(x=> x.Id == Student.CourseID && dateOnlyUtc >= x.StartDate.Date && dateOnlyUtc <= x.EndDate.Date);
                 if (!course)
                 {
                     return BadRequest("Dieses Datum ist nicht im Kursplan enthalten.");//This date is not in the course schedule
                 }
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(where: x => x.CourseID == Student.CourseID, selector: x => x.Id);
-                var eventIsExist = await _eventRepo.DataExist(x => dateOnly >= x.StartDate.Date && dateOnly <= x.EndDate.Date &&
+                var eventIsExist = await _eventRepo.DataExist(x => dateOnlyUtc >= x.StartDate.Date && dateOnlyUtc <= x.EndDate.Date &&
                 x.CourseSchedule.Any(cs => courseScheduleIds.Contains(cs.Id)));
                 if (eventIsExist)
                 {
                     return BadRequest("An diesem Datum gibt es eine Veranstaltung.");//On this date there is an event
                 }
                 var schedule = await _courseScheduleRepo.DataExist(
-                   x => x.CourseID == Student.CourseID && x.DayOfWeek.ToLower() == date.DayOfWeek.ToString().ToLower()
+                   x => x.CourseID == Student.CourseID && x.DayOfWeek.ToLower() == dateUtc.DayOfWeek.ToString().ToLower()
                     );
                 if (!schedule)
                 {
@@ -394,7 +405,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
 
                 var StudentAttendanceExist = (await _studentAttendanceRepo.GetRelationList
-                    (where: x => x.Student.Id == studentId && x.date.Date == dateOnly,
+                    (where: x => x.Student.Id == studentId && x.date.Date == dateOnlyUtc,
                     selector: x => x, asNoTracking: true)).Any();
                 if (StudentAttendanceExist)
                 {
@@ -407,7 +418,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 var newAtt = new StudentAttendance
                 {
-                    date = date,
+                    date = dateUtc,
                     StatusID = statusId,
                     StudentID = studentId,
                     CourseID = Student.CourseID

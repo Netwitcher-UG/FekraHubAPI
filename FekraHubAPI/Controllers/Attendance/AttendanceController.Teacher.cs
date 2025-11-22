@@ -107,17 +107,24 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
 
+                var startUtc = startDate?.ToUtcSafe();
+                var endUtc = endDate?.ToUtcSafe();
 
+                DateTime? dateOnlyUtc = null;
+                if (dateTime.HasValue)
+                {
+                    dateOnlyUtc = dateTime.Value.ToUtcSafe().Date;
+                }
                 var result = await _teacherAttendanceRepo.GetRelationList(
             manyWhere: new List<Expression<Func<TeacherAttendance, bool>>?>
             {
                 teacherId != null ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.TeacherID == teacherId) : null,
                 coursId.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.CourseID == coursId) : null,
-                startDate.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date >= startDate.Value) : null,
-                endDate.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date <= endDate.Value) : null,
+                startUtc.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date >= startUtc.Value) : null,
+                endUtc.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date <= endUtc.Value) : null,
                 year.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Year == year.Value) : null,
                 month.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(ta => ta.date.Month == month.Value) : null,
-                dateTime.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(sa => sa.date.Date == dateTime.Value.Date) : null,
+                dateOnlyUtc.HasValue ? (Expression<Func<TeacherAttendance, bool>>)(sa => sa.date.Date == dateOnlyUtc.Value) : null,
             }.Where(x => x != null).Cast<Expression<Func<TeacherAttendance, bool>>>().ToList(),
             orderBy: ta => ta.date,
             include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
@@ -193,8 +200,11 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
 
 
+                var dateUtc = teacherAttendance.Date.ToUtcSafe();
+                var dateOnly = dateUtc.Date;
+
                 var teacherHasAttendance = await _teacherAttendanceRepo.DataExist(
-                    x => x.date.Date == teacherAttendance.Date.Date.ToUtcSafe()
+                            x => x.date.Date == dateOnly
                          && x.TeacherID == teacherAttendance.TeacherID);
 
                 if (teacherHasAttendance)
@@ -204,7 +214,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
                 var tAttendance = new TeacherAttendance
                 {
-                    date = teacherAttendance.Date.ToUtcSafe(),
+                    date = dateUtc,
                     CourseID = selectedCourseId,         
                     TeacherID = teacherAttendance.TeacherID,
                     StatusID = teacherAttendance.StatusID

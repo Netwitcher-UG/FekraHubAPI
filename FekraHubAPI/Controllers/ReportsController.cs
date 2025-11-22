@@ -287,23 +287,26 @@ namespace FekraHubAPI.Controllers
             {
                 var userId = _reportRepo.GetUserIDFromToken(User);
                 var Teacher = await _reportRepo.IsTeacherIDExists(userId);
+                DateTime? startUtc = startDate?.ToUtcSafe();
+                DateTime? endUtc = endDate?.ToUtcSafe();
+                DateTime? dateOnlyUtc = dateTime.HasValue ? dateTime.Value.Date.ToUtcSafe() : null;
                 var query = await _reportRepo.GetRelationAsQueryable(
                 manyWhere: new List<Expression<Func<Report, bool>>?>
-                    {
-                        Teacher ? (Expression<Func<Report, bool>>)(x => x.UserId == userId) : null,
-                        CourseId.HasValue ? (Expression<Func<Report, bool>>)(x => x.Student.CourseID == CourseId) : null,
-                        !string.IsNullOrEmpty(teacherId) ? (Expression<Func<Report, bool>>)(x => x.UserId == teacherId) : null,
-                        studentId.HasValue ? (Expression<Func<Report, bool>>)(x => x.StudentId == studentId) : null,
-                        reportId.HasValue ? (Expression<Func<Report, bool>>)(x => x.Id == reportId) : null,
-                        startDate.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate >= startDate.Value) : null,
-                        endDate.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate <= endDate.Value) : null,
-                        year.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate.Year == year.Value) : null,
-                        month.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate.Month == month.Value) : null,
-                        dateTime.HasValue ? (Expression<Func<Report, bool>>)(sa => sa.CreationDate.Date == dateTime.Value.Date) : null,
-                        !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "null" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == null) : null,
-                        !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "true" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == true) : null,
-                        !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "false" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == false) : null,
-                    }.Where(x => x != null).Cast<Expression<Func<Report, bool>>>().ToList(),
+            {
+                Teacher ? (Expression<Func<Report, bool>>)(x => x.UserId == userId) : null,
+                CourseId.HasValue ? (Expression<Func<Report, bool>>)(x => x.Student.CourseID == CourseId) : null,
+                !string.IsNullOrEmpty(teacherId) ? (Expression<Func<Report, bool>>)(x => x.UserId == teacherId) : null,
+                studentId.HasValue ? (Expression<Func<Report, bool>>)(x => x.StudentId == studentId) : null,
+                reportId.HasValue ? (Expression<Func<Report, bool>>)(x => x.Id == reportId) : null,
+                startUtc.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate >= startUtc.Value) : null,
+                endUtc.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate <= endUtc.Value) : null,
+                year.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate.Year == year.Value) : null,
+                month.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate.Month == month.Value) : null,
+                dateOnlyUtc.HasValue ? (Expression<Func<Report, bool>>)(sa => sa.CreationDate.Date == dateOnlyUtc.Value) : null,
+                !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "null" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == null) : null,
+                !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "true" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == true) : null,
+                !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "false" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == false) : null,
+            }.Where(x => x != null).Cast<Expression<Func<Report, bool>>>().ToList(),
                 orderBy: x => x.CreationDate,
                 include: x => x.Include(u => u.User).Include(s => s.Student).ThenInclude(c => c.Course),
                 selector: x => new

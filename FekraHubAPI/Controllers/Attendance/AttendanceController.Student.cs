@@ -362,20 +362,21 @@ namespace FekraHubAPI.Controllers.Attendance
         {
             try
             {
-
+                date = date.ToUtcSafe();
+                var dateOnly = date.Date;
                 var Student = await _studentRepo.GetById(studentId);
                 if (Student == null)
                 {
                     return BadRequest("Student nicht gefunden.");//Student not found
                 }
                 
-                var course = await _coursRepo.DataExist(x=> x.Id == Student.CourseID && date.Date >= x.StartDate.Date && date.Date <= x.EndDate.Date);
+                var course = await _coursRepo.DataExist(x=> x.Id == Student.CourseID && dateOnly >= x.StartDate.Date && dateOnly <= x.EndDate.Date);
                 if (!course)
                 {
                     return BadRequest("Dieses Datum ist nicht im Kursplan enthalten.");//This date is not in the course schedule
                 }
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(where: x => x.CourseID == Student.CourseID, selector: x => x.Id);
-                var eventIsExist = await _eventRepo.DataExist(x => date.Date >= x.StartDate.Date && date.Date <= x.EndDate.Date &&
+                var eventIsExist = await _eventRepo.DataExist(x => dateOnly >= x.StartDate.Date && dateOnly <= x.EndDate.Date &&
                 x.CourseSchedule.Any(cs => courseScheduleIds.Contains(cs.Id)));
                 if (eventIsExist)
                 {
@@ -393,7 +394,7 @@ namespace FekraHubAPI.Controllers.Attendance
 
 
                 var StudentAttendanceExist = (await _studentAttendanceRepo.GetRelationList
-                    (where: x => x.Student.Id == studentId && x.date.Date == date.Date.ToUtcSafe(),
+                    (where: x => x.Student.Id == studentId && x.date.Date == dateOnly,
                     selector: x => x, asNoTracking: true)).Any();
                 if (StudentAttendanceExist)
                 {
@@ -406,7 +407,7 @@ namespace FekraHubAPI.Controllers.Attendance
                 }
                 var newAtt = new StudentAttendance
                 {
-                    date = date.ToUtcSafe(),
+                    date = date,
                     StatusID = statusId,
                     StudentID = studentId,
                     CourseID = Student.CourseID

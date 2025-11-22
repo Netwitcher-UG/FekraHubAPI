@@ -9,6 +9,7 @@ using FekraHubAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Tls;
 using System;
 using System.Linq.Expressions;
 
@@ -179,22 +180,26 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     return BadRequest(ModelState);
                 }
-
                 var serverDate = DateTime.UtcNow.Date;
-                if (eventMdl.StartDate.Date < serverDate || eventMdl.EndDate.Date < serverDate)
+
+                // ✅ تطبيع تواريخ الحدث إلى UTC
+                var startUtcDate = eventMdl.StartDate.ToUtcSafe().Date;
+                var endUtcDate = eventMdl.EndDate.ToUtcSafe().Date;
+
+                if (startUtcDate < serverDate || endUtcDate < serverDate)
                 {
                     return BadRequest("Das Start- oder Enddatum muss nach dem aktuellen Datum liegen.");
                 }
+                
 
                 List<CourseSchedule> schedule;
 
-                
+
                 if (scheduleId == null || !scheduleId.Any())
                 {
                     var startDate = eventMdl.StartDate.Date;
                     var endDate = eventMdl.EndDate.Date;
 
-                  
                     var daysList = new List<string>();
                     for (var date = startDate; date <= endDate; date = date.AddDays(1))
                     {
@@ -203,8 +208,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
                     schedule = await _ScheduleRepository.GetRelationList(
                         where: n => daysList.Contains(n.DayOfWeek)
-                                    && eventMdl.StartDate.Date >= n.Course.StartDate.Date
-                                    && eventMdl.EndDate.Date <= n.Course.EndDate.Date,
+                                    && startUtcDate >= n.Course.StartDate.Date
+                                    && endUtcDate <= n.Course.EndDate.Date,
                         selector: x => x
                     );
                 }
@@ -222,10 +227,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 }
 
                 var courseIds = schedule.Select(z => z.CourseID).Distinct().ToList();
+
                 var courseValid = await _courseRepository.GetRelationList(
                     where: x => courseIds.Contains(x.Id)
-                                && eventMdl.StartDate.Date >= x.StartDate.Date
-                                && eventMdl.EndDate.Date <= x.EndDate.Date,
+                                && startUtcDate >= x.StartDate.Date
+                                && endUtcDate <= x.EndDate.Date,
                     selector: x => x
                 );
 
@@ -319,22 +325,23 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                 {
                     return BadRequest("Ungültiges Veranstaltungsdatum.");
                 }
-
                 var serverDate = DateTime.UtcNow.Date;
-                if (eventMdl.StartDate.Date < serverDate || eventMdl.EndDate.Date < serverDate)
+                var startUtcDate = eventMdl.StartDate.ToUtcSafe().Date;
+                var endUtcDate = eventMdl.EndDate.ToUtcSafe().Date;
+
+                if (startUtcDate < serverDate || endUtcDate < serverDate)
                 {
                     return BadRequest("Das Start- oder Enddatum muss nach dem aktuellen Datum liegen.");
                 }
 
                 List<CourseSchedule> schedule = new List<CourseSchedule>();
 
-                
+
                 if (scheduleId == null || !scheduleId.Any())
                 {
                     var startDate = eventMdl.StartDate.Date;
                     var endDate = eventMdl.EndDate.Date;
 
-                 
                     var daysList = new List<string>();
                     for (var date = startDate; date <= endDate; date = date.AddDays(1))
                     {
@@ -343,8 +350,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
 
                     schedule = await _ScheduleRepository.GetRelationList(
                         where: n => daysList.Contains(n.DayOfWeek)
-                                    && eventMdl.StartDate.Date >= n.Course.StartDate.Date
-                                    && eventMdl.EndDate.Date <= n.Course.EndDate.Date,
+                                    && startUtcDate >= n.Course.StartDate.Date
+                                    && endUtcDate <= n.Course.EndDate.Date,
                         selector: x => x
                     );
                 }
@@ -360,12 +367,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     schedule = mergedCourseSchedules;
                 }
 
-              
+
                 var courseIds = schedule.Select(z => z.CourseID).Distinct().ToList();
                 var courseValid = await _courseRepository.GetRelationList(
                     where: x => courseIds.Contains(x.Id)
-                                && eventMdl.StartDate.Date >= x.StartDate.Date
-                                && eventMdl.EndDate.Date <= x.EndDate.Date,
+                                && startUtcDate >= x.StartDate.Date
+                                && endUtcDate <= x.EndDate.Date,
                     selector: x => x
                 );
 
@@ -375,11 +382,10 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     return BadRequest("Überprüfen Sie das Start- oder Enddatum der Kurse.");
                 }
 
-              
                 var startTime = new TimeSpan(eventMdl.StartDate.Hour, eventMdl.StartDate.Minute, 0);
                 var endTime = new TimeSpan(eventMdl.EndDate.Hour, eventMdl.EndDate.Minute, 0);
 
-              
+
                 var eventEntity = new Event
                 {
                     EventName = eventMdl.EventName,
@@ -391,7 +397,7 @@ namespace FekraHubAPI.Controllers.CoursesControllers.EventControllers
                     TypeID = eventMdl.TypeID
                 };
 
-              
+
                 var relatedSchedules = schedule.Where(cs =>
                     eventMdl.StartDate.Date >= cs.Course.StartDate.Date &&
                     eventMdl.EndDate.Date <= cs.Course.EndDate.Date

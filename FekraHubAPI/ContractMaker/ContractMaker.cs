@@ -207,7 +207,7 @@ namespace FekraHubAPI.ContractMaker
             var teacher = course.Teacher.FirstOrDefault();
             var teacherName = teacher != null ? $"{teacher.FirstName} {teacher.LastName}" : "";
             var roomName = course.Room != null ? course.Room.Name : "";
-            var students = course.Student.ToList();
+            var students = course.Student.Where(x => x.ActiveStudent).ToList();
             var schedule = course.CourseSchedule.ToList() ?? new List<CourseSchedule>();
 
             var courseStartDate = course.StartDate.Date;
@@ -508,7 +508,7 @@ namespace FekraHubAPI.ContractMaker
             var teacherName = teacher != null ? $"{teacher.FirstName} {teacher.LastName}" : "";
             var roomName = course.Room != null ? course.Room.Name : "";
             var row = @"";
-            var students = course.Student.ToList();
+            var students = course.Student.Where(x=>x.ActiveStudent).ToList();
             var schedule = course.CourseSchedule.ToList() ?? new List<CourseSchedule>();
 
             var monthStart = new DateTime(date.Year, date.Month, 1);
@@ -532,7 +532,7 @@ namespace FekraHubAPI.ContractMaker
                 }
             }
             workDays.Sort();
-            var attendanceList = course.Student.Select(x => x.StudentAttendance).ToList();
+            var attendanceList = course.Student.Where(x => x.ActiveStudent).Select(x => x.StudentAttendance).ToList();
 
             var header = $@"
                 <thead>

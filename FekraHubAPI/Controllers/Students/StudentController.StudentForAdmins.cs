@@ -398,7 +398,7 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     return BadRequest("Kurs nicht gefunden.");//Course not found
                 }
-                var today = DateTime.UtcNow.Date;
+                var today = DateTime.UtcNow.Date.ToUtcSafe();
                 var courseScheduleIds = await _courseScheduleRepo.GetRelationList(
                     where: x => x.CourseID == courseId, selector: x => x.Id);
                 var eventIsExist = await _eventRepo.DataExist(x => today >= x.StartDate.Date && today <= x.EndDate.Date &&

@@ -23,22 +23,52 @@ namespace FekraHubAPI.Controllers.Attendance
 
         [Authorize(Policy = "GetTeachersAttendance")]
         [HttpGet("TeacherAttendance/{Id}")]
-        public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendance(string Id) {
-            try { 
-                var result = await _teacherAttendanceRepo.GetRelationList(where: x => x.TeacherID == Id,
-                    include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
-                    orderBy: x => x.date, selector: sa =>
-                    new { id = sa.Id, Date = sa.date,
-                        course = new { sa.Course.Id,sa.Course.Name },
-                        Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
-                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }, },
-                    asNoTracking: true);
-                return Ok(result); } 
-            catch (Exception ex) {
+        public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendance(string Id)
+        {
+            try
+            {
+                var result = await _teacherAttendanceRepo.GetRelationList(
+                    where: x => x.TeacherID == Id,
+                    include: x => x.Include(z => z.Course)
+                                   .Include(t => t.Teacher)
+                                   .Include(at => at.AttendanceStatus),
+                    orderBy: x => x.date,
+                    selector: sa => new
+                    {
+                        id = sa.Id,
+                        Date = sa.date,
+
+                        course = new
+                        {
+                            Id = sa.Course != null ? sa.Course.Id : 0,
+                            Name = sa.Course != null ? sa.Course.Name : null
+                        },
+
+                        Teacher = new
+                        {
+                            Id = sa.Teacher != null ? sa.Teacher.Id : null,
+                            FirstName = sa.Teacher != null ? sa.Teacher.FirstName : null,
+                            LastName = sa.Teacher != null ? sa.Teacher.LastName : null
+                        },
+
+                        AttendanceStatus = new
+                        {
+                            Id = sa.AttendanceStatus != null ? sa.AttendanceStatus.Id : 0,
+                            Title = sa.AttendanceStatus != null ? sa.AttendanceStatus.Title : null
+                        },
+                    },
+                    asNoTracking: true
+                );
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
                 return BadRequest(ex.Message);
             }
         }
+
         [Authorize(Policy = "GetTeacher")]
         [HttpGet("TeacherAttendanceProfile")]
         public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendanceProfile(string id)

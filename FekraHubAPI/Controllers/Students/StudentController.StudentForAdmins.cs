@@ -430,7 +430,7 @@ namespace FekraHubAPI.Controllers.Students
                     return BadRequest("Der Kurs ist vorbei.");//The course is over
                 }
                 var att = await _attendanceDateRepo.GetRelationSingle(
-                    where: x => x.Date.Date == DateTime.UtcNow.Date.ToUtcSafe(),
+                    where: x => x.Date.Date == today,
                     selector: x => x.CourseAttendance.Any(z => z.CourseId == courseId && z.AttendanceDateId == x.Id),
                     returnType: QueryReturnType.SingleOrDefault,
                     asNoTracking: true

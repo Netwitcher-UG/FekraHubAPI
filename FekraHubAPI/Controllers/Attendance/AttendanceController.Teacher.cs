@@ -28,18 +28,31 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
                 var result = await _teacherAttendanceRepo.GetRelationList(
-             where: x => x.TeacherID == Id,
-             include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
-             orderBy: x => x.date,
-             selector: sa => new
-             {
-                 id = sa.Id,
-                 Date = sa.date,
-                 course = new { sa.Course.Id, sa.Course.Name },
-                 Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
-                 AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
-             },
-             asNoTracking: true);
+                            where: x => x.TeacherID == Id,
+                            include: x => x.Include(z => z.Course)
+                                           .Include(t => t.Teacher)
+                                           .Include(at => at.AttendanceStatus),
+                            orderBy: x => x.date,
+                            selector: sa => new
+                            {
+                                id = sa.Id,
+                                Date = sa.date,
+
+                                course = sa.Course == null
+                                    ? null
+                                    : new { sa.Course.Id, sa.Course.Name },
+
+                                Teacher = sa.Teacher == null
+                                    ? null
+                                    : new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
+
+                                AttendanceStatus = sa.AttendanceStatus == null
+                                    ? null
+                                    : new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
+                            },
+                            asNoTracking: true
+                        );
+
 
                 return Ok(result) ;
             }
@@ -147,7 +160,7 @@ namespace FekraHubAPI.Controllers.Attendance
             }
         }
 
-        //[Authorize(Policy = "UpdateTeachersAttendance")]
+        [Authorize(Policy = "UpdateTeachersAttendance")]
         [HttpPost("Teacher")]
         public async Task<IActionResult> AddTeacherAttendance([FromForm]Map_TeacherAttendance teacherAttendance)
         {

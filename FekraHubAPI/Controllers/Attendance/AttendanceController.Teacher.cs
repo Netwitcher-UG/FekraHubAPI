@@ -23,45 +23,21 @@ namespace FekraHubAPI.Controllers.Attendance
 
         [Authorize(Policy = "GetTeachersAttendance")]
         [HttpGet("TeacherAttendance/{Id}")]
-        public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendance(string Id)
-        {
-            try
-            {
-                var result = await _teacherAttendanceRepo.GetRelationList(
-                            where: x => x.TeacherID == Id,
-                            include: x => x.Include(z => z.Course)
-                                           .Include(t => t.Teacher)
-                                           .Include(at => at.AttendanceStatus),
-                            orderBy: x => x.date,
-                            selector: sa => new
-                            {
-                                id = sa.Id,
-                                Date = sa.date,
-
-                                course = sa.Course == null
-                                    ? null
-                                    : new { sa.Course.Id, sa.Course.Name },
-
-                                Teacher = sa.Teacher == null
-                                    ? null
-                                    : new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
-
-                                AttendanceStatus = sa.AttendanceStatus == null
-                                    ? null
-                                    : new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title },
-                            },
-                            asNoTracking: true
-                        );
-
-
-                return Ok(result) ;
-            }
-            catch (Exception ex)
-            {
+        public async Task<ActionResult<IEnumerable<TeacherAttendance>>> GetTeacherAttendance(string Id) {
+            try { 
+                var result = await _teacherAttendanceRepo.GetRelationList(where: x => x.TeacherID == Id,
+                    include: x => x.Include(z => z.Course).Include(t => t.Teacher).Include(at => at.AttendanceStatus),
+                    orderBy: x => x.date, selector: sa =>
+                    new { id = sa.Id, Date = sa.date,
+                        course = new { sa.Course.Id,sa.Course.Name },
+                        Teacher = new { sa.Teacher.Id, sa.Teacher.FirstName, sa.Teacher.LastName },
+                        AttendanceStatus = new { sa.AttendanceStatus.Id, sa.AttendanceStatus.Title }, },
+                    asNoTracking: true);
+                return Ok(result); } 
+            catch (Exception ex) {
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
         }
         [Authorize(Policy = "GetTeacher")]
         [HttpGet("TeacherAttendanceProfile")]

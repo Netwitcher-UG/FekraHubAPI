@@ -701,9 +701,10 @@ namespace FekraHubAPI.Controllers.UsersController
                 {
                     return BadRequest($"Konto-ID {id} existiert nicht!");//account id {id} not exists !
                 }
-
+                if (!await _roleManager.RoleExistsAsync(accountUpdate.Role))
+                    return BadRequest("Role not valid");
                 var currentRoles = await _userManager.GetRolesAsync(account);
-                if (currentRoles.Contains(accountUpdate.Role))
+                if (!currentRoles.Contains(accountUpdate.Role))
                 {
                     var removeResult = await _userManager.RemoveFromRolesAsync(account, currentRoles);
                     if (!removeResult.Succeeded)

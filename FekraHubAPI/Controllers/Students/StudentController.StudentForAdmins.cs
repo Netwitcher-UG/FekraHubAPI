@@ -466,7 +466,7 @@ namespace FekraHubAPI.Controllers.Students
                         Street = x.Street ?? "Like parent",
                         StreetNr = x.StreetNr ?? "Like parent",
                         ZipCode = x.ZipCode ?? "Like parent",
-                        studentAttendance = x.StudentAttendance.Where(x => x.date.Date == DateTime.UtcNow.Date.ToUtcSafe())
+                        studentAttendance = x.StudentAttendance.Where(x => x.date.Date == today)
                                         .Select(x => x.AttendanceStatus.Title)
                                         .SingleOrDefault(),
                         course = x.Course == null ? null : new

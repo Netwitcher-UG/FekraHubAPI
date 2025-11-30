@@ -133,9 +133,10 @@ namespace FekraHubAPI.Controllers
                 return BadRequest("Teacher not found");
             }
             var isTeacher = await _payRollRepository.IsTeacherIDExists(id);
-            if (!isTeacher)
+            var isSecretariat = await _payRollRepository.IsSecretariatIDExists(id);
+            if (!isTeacher && !isSecretariat)
             {
-                return BadRequest("The Id does not belong to a teacher");
+                return BadRequest("The Id does not belong to a teacher or a secretariat");
             }
             var teacherPayrolls = await _payRollRepository.GetRelationList(
                 where: x => x.UserID == id,

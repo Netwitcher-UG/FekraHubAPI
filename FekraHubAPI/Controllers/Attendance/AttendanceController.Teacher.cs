@@ -147,7 +147,7 @@ namespace FekraHubAPI.Controllers.Attendance
             }
         }
 
-        //[Authorize(Policy = "UpdateTeachersAttendance")]
+        [Authorize(Policy = "UpdateTeachersAttendance")]
         [HttpPost("Teacher")]
         public async Task<IActionResult> AddTeacherAttendance([FromForm]Map_TeacherAttendance teacherAttendance)
         {

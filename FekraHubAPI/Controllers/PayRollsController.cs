@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using FekraHubAPI.Constract;
 using FekraHubAPI.Controllers.CoursesControllers.UploadControllers;
 using FekraHubAPI.Data.Models;
@@ -64,7 +64,7 @@ namespace FekraHubAPI.Controllers
                 var isSecretariat = await _payRollRepository.IsSecretariatIDExists(user.Id);
                 if (!(isTeacher || isSecretariat))
                 {
-                    return BadRequest("Benutzer muss die Rolle Lehrer oder Sekret�r haben.");//User Must Have Teacher Or Secrtaria Role
+                    return BadRequest("Benutzer muss die Rolle Lehrer oder Sekretär haben.");//User Must Have Teacher Or Secrtaria Role
                 }
                 if (file.Length > 0)
                 {
@@ -181,6 +181,43 @@ namespace FekraHubAPI.Controllers
                 );
             return Ok(new { employee = new { Teacher.Id, Teacher.FirstName, Teacher.LastName }, payrolls });
         }
+        [Authorize]
+        [HttpGet("payroll-teacher")]
+        public async Task<IActionResult> GetMyTeacherPayRolls()
+        {
+            var userId = _payRollRepository.GetUserIDFromToken(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Das Token enthält keine gültige Benutzer-ID.");// Token لا يحتوي على Id صالح.
+            }
+
+            var teacher = await _userManager.FindByIdAsync(userId);
+            if (teacher == null)
+            {
+                return BadRequest("Lehrkraft wurde nicht gefunden.");// Teacher not found.
+            }
+
+            var isTeacher = await _payRollRepository.IsTeacher(teacher);
+            if (!isTeacher)
+            {
+                return Forbid("Das aktuelle Konto ist keine Lehrkraft.");// الحساب الحالي ليس أستاذاً.
+            }
+
+            var teacherPayrolls = await _payRollRepository.GetRelationList(
+                where: x => x.UserID == userId,
+                asNoTracking: true,
+                selector: x => new
+                {
+                    x.Id,
+                    x.Timestamp,
+                    x.Name
+                },
+                orderBy: x => x.Timestamp
+            );
+
+            return Ok(teacherPayrolls);
+        }
+
         [Authorize(Policy = "GetTeacher")]
         [HttpGet("DownloadPayrolls")]
         public async Task<IActionResult> GetDownloadTeacherPayrolls(int id)

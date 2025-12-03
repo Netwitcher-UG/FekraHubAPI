@@ -1,16 +1,17 @@
-﻿using FekraHubAPI.Data.Models;
+﻿using FekraHubAPI.Constract;
+using FekraHubAPI.Data.Models;
+using FekraHubAPI.EmailSender;
+using FekraHubAPI.Helpers;
+using FekraHubAPI.MapModels;
 using FekraHubAPI.Repositories.Interfaces;
+using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MailKit.Net.Smtp;
 using MimeKit;
-using FekraHubAPI.Constract;
-using Microsoft.AspNetCore.Identity;
-using FekraHubAPI.MapModels;
 using System.Collections.Generic;
-using FekraHubAPI.EmailSender;
 
 namespace FekraHubAPI.Controllers
 {
@@ -431,12 +432,13 @@ namespace FekraHubAPI.Controllers
                     }
 
                 }
+                var nowUtc = DateTime.UtcNow.ToUtcSafe();
                 var germanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
                 var germanTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, germanTimeZone);
 
                 var messageSender = new MessageSender
                 {
-                    Date = germanTime,
+                    Date = nowUtc,
                     Subject = messagDTO.Subject,
                     Message = messagDTO.Message,
                     UserMessages = uniqueUsers.Select(user => new UserMessage

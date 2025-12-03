@@ -167,6 +167,57 @@ namespace FekraHubAPI.Controllers.Attendance
         }
 
         [Authorize(Policy = "UpdateTeachersAttendance")]
+        [HttpGet("HasWorkDay")]
+        public async Task<IActionResult> HasTeacherWorkDay(
+    [FromQuery] string teacherId,
+    [FromQuery] DateTime? date = null)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(teacherId))
+                {
+                    return BadRequest("teacherId is required.");
+                }
+
+                DateTime baseDate = date ?? DateTime.UtcNow;
+                DateTime dateUtc = baseDate.ToUtcSafe(); 
+                var dayOfWeek = dateUtc.DayOfWeek.ToString().ToLower();
+
+                
+                var courseIds = await _coursRepo.GetRelationList(
+                    where: x => x.Teacher.Select(z => z.Id).Contains(teacherId),
+                    selector: x => x.Id,
+                    asNoTracking: true
+                );
+
+                if (!courseIds.Any())
+                {
+                    
+                    return Ok(false);
+                }
+
+                var workingDays = await _courseScheduleRepo.GetRelationList(
+                    where: x => courseIds.Contains(x.CourseID ?? 0),
+                    selector: x => new { x.CourseID, Day = x.DayOfWeek.ToLower() }
+                );
+
+                if (!workingDays.Any())
+                {
+                    return Ok(false);
+                }
+
+                bool hasWorkDay = workingDays.Any(w => w.Day == dayOfWeek);
+
+                return Ok(hasWorkDay);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AttendanceController", ex.Message));
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [Authorize(Policy = "UpdateTeachersAttendance")]
         [HttpPost("Teacher")]
         public async Task<IActionResult> AddTeacherAttendance([FromForm]Map_TeacherAttendance teacherAttendance)
         {

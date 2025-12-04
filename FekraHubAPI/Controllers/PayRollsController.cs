@@ -191,16 +191,17 @@ namespace FekraHubAPI.Controllers
                 return Unauthorized("Das Token enthält keine gültige Benutzer-ID.");// Token لا يحتوي على Id صالح.
             }
 
-            var teacher = await _userManager.FindByIdAsync(userId);
-            if (teacher == null)
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
             {
                 return BadRequest("Lehrkraft wurde nicht gefunden.");// Teacher not found.
             }
 
-            var isTeacher = await _payRollRepository.IsTeacher(teacher);
-            if (!isTeacher)
+            var isTeacher = await _payRollRepository.IsTeacher(user);
+            var isSecret = await _payRollRepository.IsSecretariat(user);
+            if (!isTeacher && !isSecret)
             {
-                return Forbid("Das aktuelle Konto ist keine Lehrkraft.");// الحساب الحالي ليس أستاذاً.
+                return Forbid("Das Girokonto ist nicht für einen Lehrer oder eine Sekretärin.");// الحساب الحالي ليس أستاذاً.
             }
 
             var teacherPayrolls = await _payRollRepository.GetRelationList(

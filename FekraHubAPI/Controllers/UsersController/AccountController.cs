@@ -464,6 +464,7 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpPost("[action]")]
         public async Task<IActionResult> ValidateToken()
         {
+            // --------- 0) معلومات تشخيص عامة ----------
             var instance = Environment.MachineName;
             HttpContext.Response.Headers["X-Instance"] = instance;
 
@@ -479,32 +480,37 @@ namespace FekraHubAPI.Controllers.UsersController
                 issuer,
                 audience
             );
+
+            // --------- 1) قراءة الهيدر ----------
             var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
             if (string.IsNullOrWhiteSpace(authHeader))
+            {
+                _logger.LogWarning("ValidateToken FAIL | Instance={Instance} | Reason=NoAuthorizationHeader", instance);
                 return Unauthorized("Token ist erforderlich.");
+            }
 
             var token = authHeader;
-
             if (token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                 token = token.Substring("Bearer ".Length);
 
             token = token.Trim();
 
             if (string.IsNullOrWhiteSpace(token))
+            {
+                _logger.LogWarning("ValidateToken FAIL | Instance={Instance} | Reason=EmptyTokenAfterTrim", instance);
                 return Unauthorized("Token ist erforderlich.");
+            }
 
+            // --------- 2) إعدادات التحقق ----------
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"])
-                ),
-                ValidIssuer = _configuration["JWT:Issuer"],
-                ValidAudience = _configuration["JWT:Audience"],
-
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+                ValidIssuer = issuer,
+                ValidAudience = audience,
                 ClockSkew = TimeSpan.FromMinutes(2)
             };
 
@@ -513,28 +519,54 @@ namespace FekraHubAPI.Controllers.UsersController
                 var handler = new JwtSecurityTokenHandler();
                 var principal = handler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
 
+                _logger.LogInformation(
+                    "ValidateToken JWT OK | Instance={Instance} | ValidTo(UTC)={ValidTo}",
+                    instance,
+                    validatedToken.ValidTo
+                );
+
+                // --------- 3) استخراج userId ----------
                 var userId =
                     principal.FindFirstValue("id") ??
                     principal.FindFirstValue(ClaimTypes.NameIdentifier) ??
                     principal.FindFirstValue("sub");
 
                 if (string.IsNullOrWhiteSpace(userId))
+                {
+                    _logger.LogWarning("ValidateToken FAIL | Instance={Instance} | Reason=MissingUserIdClaim", instance);
                     return Unauthorized("Ungültiger Token: Benutzer-ID fehlt.");
+                }
 
+                // --------- 4) جلب المستخدم ----------
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
+                {
+                    _logger.LogWarning("ValidateToken FAIL | Instance={Instance} | Reason=UserNotFound | UserId={UserId}", instance, userId);
                     return Unauthorized("Ungültiger Token.");
+                }
 
+                // --------- 5) DB token ----------
                 var tokenRow = await _db.Token.FirstOrDefaultAsync(x => x.Email == user.Email);
                 if (tokenRow == null)
+                {
+                    _logger.LogWarning("ValidateToken FAIL | Instance={Instance} | Reason=NoTokenRowInDb | Email={Email}", instance, user.Email);
                     return Unauthorized("Ungültiger Token.");
+                }
 
                 var dbToken = (tokenRow.Token ?? "").Trim();
                 if (dbToken.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                     dbToken = dbToken.Substring("Bearer ".Length).Trim();
 
                 if (!string.Equals(dbToken, token, StringComparison.Ordinal))
+                {
+                    _logger.LogWarning(
+                        "ValidateToken FAIL | Instance={Instance} | Reason=DbTokenMismatch | Email={Email} | DbTokenLen={DbLen} | HeaderTokenLen={HdrLen}",
+                        instance, user.Email, dbToken.Length, token.Length
+                    );
                     return Unauthorized("Ungültiger Token.");
+                }
+
+                _logger.LogInformation("ValidateToken SUCCESS | Instance={Instance} | Email={Email}", instance, user.Email);
 
                 return Ok(new
                 {
@@ -542,8 +574,24 @@ namespace FekraHubAPI.Controllers.UsersController
                     ValidTo = validatedToken.ValidTo
                 });
             }
-            catch (SecurityTokenException)
+            catch (SecurityTokenExpiredException ex)
             {
+                _logger.LogWarning(ex, "ValidateToken FAIL | Instance={Instance} | Reason=TokenExpired", instance);
+                return Unauthorized("Ungültiger Token.");
+            }
+            catch (SecurityTokenInvalidSignatureException ex)
+            {
+                _logger.LogWarning(ex, "ValidateToken FAIL | Instance={Instance} | Reason=InvalidSignature (Secret mismatch?)", instance);
+                return Unauthorized("Ungültiger Token.");
+            }
+            catch (SecurityTokenException ex)
+            {
+                _logger.LogWarning(ex, "ValidateToken FAIL | Instance={Instance} | Reason=SecurityTokenException", instance);
+                return Unauthorized("Ungültiger Token.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ValidateToken FAIL | Instance={Instance} | Reason=UnhandledException", instance);
                 return Unauthorized("Ungültiger Token.");
             }
         }

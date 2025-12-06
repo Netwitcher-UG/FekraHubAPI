@@ -256,21 +256,17 @@ namespace FekraHubAPI.Controllers.UsersController
 
                     foreach (var role in roles.Where(r => !string.IsNullOrWhiteSpace(r)))
                     {
-                        // Claim خاص بالـ Role نفسه
                         claims.Add(new Claim("role", role));
 
-                        // نبحث عن كائن الـ Role من جدول AspNetRoles باستخدام Name
                         var roleUser = await _roleManager.Roles
                             .FirstOrDefaultAsync(r => r.Name == role);
 
                         if (roleUser == null)
                         {
-                            // لو الـ Role غير موجود في قاعدة البيانات نسجل تحذير ونكمل
                             _logger.LogWarning("Role '{RoleName}' not found while logging in user {UserId}", role, user.Id);
                             continue;
                         }
 
-                        // Claims الخاصة بالـ Role (Permissions)
                         var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
                         foreach (var roleClaim in roleClaims)
                         {
@@ -285,7 +281,8 @@ namespace FekraHubAPI.Controllers.UsersController
                             claims: claims,
                             issuer: _configuration["JWT:Issuer"],
                             audience: _configuration["JWT:Audience"],
-                            expires: DateTime.UtcNow.AddMonths(1),
+                            //expires: DateTime.UtcNow.AddMonths(1),
+                            expires: DateTime.UtcNow.AddSeconds(20),
                             signingCredentials: signingCredentials
                         );
 
@@ -463,17 +460,23 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             
         }
-        
+
         [HttpPost("[action]")]
         public async Task<IActionResult> ValidateToken()
         {
+            var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrWhiteSpace(authHeader))
+                return Unauthorized("Token ist erforderlich.");
 
-            var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var token = authHeader;
 
-            if (string.IsNullOrEmpty(token))
-            {
-                return Unauthorized("Token ist erforderlich.");//Token is required
-            }
+            if (token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                token = token.Substring("Bearer ".Length);
+
+            token = token.Trim();
+
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized("Token ist erforderlich.");
 
             var tokenValidationParameters = new TokenValidationParameters
             {
@@ -481,45 +484,56 @@ namespace FekraHubAPI.Controllers.UsersController
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"])),
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"])
+                ),
                 ValidIssuer = _configuration["JWT:Issuer"],
                 ValidAudience = _configuration["JWT:Audience"],
-                ClockSkew = TimeSpan.Zero
+
+                ClockSkew = TimeSpan.FromMinutes(2)
             };
 
             try
             {
-                var principal = new JwtSecurityTokenHandler().ValidateToken(token, tokenValidationParameters, out var validatedToken);
-                var userId = principal.FindFirstValue("id");
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized("Ungültiger Token: Benutzer-ID fehlt.");//Invalid token: Missing user ID
-                }
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user != null)
-                {
-                    var isTokenExists = await _db.Token.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
-                    if (isTokenExists != null && isTokenExists.Token == token)
-                    {
-                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, validatedToken.ValidTo });
-                    }
-                    else
-                    {
-                        return Unauthorized("Ungültiger Token.");//Invalid token
-                    }
-                }
-                else
-                {
-                    return Unauthorized("Ungültiger Token.");//Invalid token
-                }
+                var handler = new JwtSecurityTokenHandler();
+                var principal = handler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
 
+                var userId =
+                    principal.FindFirstValue("id") ??
+                    principal.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                    principal.FindFirstValue("sub");
+
+                if (string.IsNullOrWhiteSpace(userId))
+                    return Unauthorized("Ungültiger Token: Benutzer-ID fehlt.");
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    return Unauthorized("Ungültiger Token.");
+
+                var tokenRow = await _db.Token.FirstOrDefaultAsync(x => x.Email == user.Email);
+                if (tokenRow == null)
+                    return Unauthorized("Ungültiger Token.");
+
+                var dbToken = (tokenRow.Token ?? "").Trim();
+                if (dbToken.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    dbToken = dbToken.Substring("Bearer ".Length).Trim();
+
+                if (!string.Equals(dbToken, token, StringComparison.Ordinal))
+                    return Unauthorized("Ungültiger Token.");
+
+                return Ok(new
+                {
+                    UserData = new { user.FirstName, user.LastName, user.Email },
+                    ValidTo = validatedToken.ValidTo
+                });
             }
             catch (SecurityTokenException)
             {
-                return Unauthorized("Ungültiger Token.");//Invalid token
+                return Unauthorized("Ungültiger Token.");
             }
         }
-        
+
+
         [HttpPost("[action]")]
         public async Task<IActionResult> Logout()
         {

@@ -464,6 +464,21 @@ namespace FekraHubAPI.Controllers.UsersController
         [HttpPost("[action]")]
         public async Task<IActionResult> ValidateToken()
         {
+            var instance = Environment.MachineName;
+            HttpContext.Response.Headers["X-Instance"] = instance;
+
+            var secret = _configuration["JWT:SecretKey"];
+            var issuer = _configuration["JWT:Issuer"];
+            var audience = _configuration["JWT:Audience"];
+
+            _logger.LogInformation(
+                "ValidateToken START | Instance={Instance} | HasSecret={HasSecret} | SecretLen={SecretLen} | Issuer={Issuer} | Audience={Audience}",
+                instance,
+                !string.IsNullOrWhiteSpace(secret),
+                secret?.Length ?? 0,
+                issuer,
+                audience
+            );
             var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
             if (string.IsNullOrWhiteSpace(authHeader))
                 return Unauthorized("Token ist erforderlich.");

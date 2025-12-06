@@ -216,111 +216,114 @@ namespace FekraHubAPI.Controllers.UsersController
 
         }
 
-       
+
         [AllowAnonymous]
         [HttpPost("[action]")]
         public async Task<IActionResult> LogIn([FromForm] Map_Login login)
         {
-
             try
             {
-                if (ModelState.IsValid)
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
+                if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
+                    return Unauthorized("E-Mail oder Passwort ist ungültig.");
+
+                if (!user.ActiveUser)
+                    return BadRequest("Ihr Konto ist nicht aktiv, bitte wenden Sie sich an den Administrator.");
+
+                if (!user.EmailConfirmed)
                 {
-
-
-                    ApplicationUser? user = await _userManager.FindByEmailAsync(login.email);
-                    if (user == null || !(await _userManager.CheckPasswordAsync(user, login.password)))
-                    {
-                        return Unauthorized("E-Mail oder Passwort ist ungültig.");//Email or password is invalid
-                    }
-
-                    if (!user.ActiveUser)
-                    {
-                        return BadRequest("Ihr Konto ist nicht aktiv, bitte wenden Sie sich an den Administrator.");//Your account is not active , Contact administrator
-                    }
-                    if (!user.EmailConfirmed)
-                    {
-                        
-                        await _emailSender.SendConfirmationEmail(user);
-                        return StatusCode(409, "Ihr Konto wurde nicht bestätigt. Der Bestätigungslink wurde an Ihre E-Mail gesendet.");//Your account not confirmed . The confirm link has been sent to your email
-                    }
-
-                    var claims = new List<Claim>
-                        {
-                            new Claim("name", user.UserName),
-                            new Claim("id", user.Id),
-                            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                        };
-
-                    var roles = await _userManager.GetRolesAsync(user);
-
-                    foreach (var role in roles.Where(r => !string.IsNullOrWhiteSpace(r)))
-                    {
-                        claims.Add(new Claim("role", role));
-
-                        var roleUser = await _roleManager.Roles
-                            .FirstOrDefaultAsync(r => r.Name == role);
-
-                        if (roleUser == null)
-                        {
-                            _logger.LogWarning("Role '{RoleName}' not found while logging in user {UserId}", role, user.Id);
-                            continue;
-                        }
-
-                        var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
-                        foreach (var roleClaim in roleClaims)
-                        {
-                            claims.Add(new Claim("Permissions", roleClaim.Value));
-                        }
-                    }
-
-                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
-                        var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-                        var token = new JwtSecurityToken(
-                            claims: claims,
-                            issuer: _configuration["JWT:Issuer"],
-                            audience: _configuration["JWT:Audience"],
-                            expires: DateTime.UtcNow.AddMonths(1),
-                            //expires: DateTime.UtcNow.AddSeconds(20),
-                            signingCredentials: signingCredentials
-                        );
-
-                        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-                        var userToken = await _db.Token.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
-                        if (userToken == null)
-                        {
-                            userToken = new Tokens
-                            {
-                                Email = user.Email,
-                                ExpiryDate = DateTime.UtcNow.AddMonths(1).ToUtcSafe(),
-                                UserId = user.Id,
-                                Token = tokenString
-                            };
-                            _db.Token.Add(userToken);
-                        }
-                        else
-                        {
-                            userToken.Token = tokenString;
-                            _db.Token.Update(userToken);
-                        }
-                        await _db.SaveChangesAsync();
-
-
-                        return Ok(new { UserData = new { user.FirstName, user.LastName, user.Email }, Role = roles[0].ToString(), token = tokenString, token.ValidTo });
-                    
+                    await _emailSender.SendConfirmationEmail(user);
+                    return StatusCode(409, "Ihr Konto wurde nicht bestätigt. Der Bestätigungslink wurde an Ihre E-Mail gesendet.");
                 }
-                return BadRequest(ModelState);
-               
+
+                // 1) جهّز الـ JTI أولًا عشان نقدر نلوّغها
+                var jti = Guid.NewGuid().ToString();
+
+                var claims = new List<Claim>
+        {
+            new Claim("name", user.UserName),
+            new Claim("id", user.Id),
+            new Claim(JwtRegisteredClaimNames.Jti, jti)
+        };
+
+                var roles = await _userManager.GetRolesAsync(user);
+
+                foreach (var role in roles.Where(r => !string.IsNullOrWhiteSpace(r)))
+                {
+                    claims.Add(new Claim("role", role));
+
+                    var roleUser = await _roleManager.Roles.FirstOrDefaultAsync(r => r.Name == role);
+                    if (roleUser == null)
+                    {
+                        _logger.LogWarning("Role '{RoleName}' not found while logging in user {UserId}", role, user.Id);
+                        continue;
+                    }
+
+                    var roleClaims = await _roleManager.GetClaimsAsync(roleUser);
+                    foreach (var roleClaim in roleClaims)
+                    {
+                        claims.Add(new Claim("Permissions", roleClaim.Value));
+                    }
+                }
+
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
+                var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                var token = new JwtSecurityToken(
+                    claims: claims,
+                    issuer: _configuration["JWT:Issuer"],
+                    audience: _configuration["JWT:Audience"],
+                    expires: DateTime.UtcNow.AddMonths(1),
+                    signingCredentials: signingCredentials
+                );
+
+                var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+                // ✅ 2) اللوغ هنا بعد ما صار عندنا jti + tokenString + user
+                _logger.LogInformation(
+                    "Login issued token | Email={Email} | JTI={JTI} | TokenLen={Len}",
+                    user.Email, jti, tokenString.Length
+                );
+
+                var userToken = await _db.Token.FirstOrDefaultAsync(x => x.UserId == user.Id);
+                if (userToken == null)
+                {
+                    userToken = new Tokens
+                    {
+                        Email = user.Email,
+                        ExpiryDate = DateTime.UtcNow.AddMonths(1).ToUtcSafe(),
+                        UserId = user.Id,
+                        Token = tokenString
+                    };
+                    _db.Token.Add(userToken);
+                }
+                else
+                {
+                    userToken.Token = tokenString;
+                    userToken.ExpiryDate = DateTime.UtcNow.AddMonths(1).ToUtcSafe();
+                    _db.Token.Update(userToken);
+                }
+
+                await _db.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    UserData = new { user.FirstName, user.LastName, user.Email },
+                    Role = roles.FirstOrDefault(),
+                    token = tokenString,
+                    token.ValidTo
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(HandleLogFile.handleErrLogFile(User, "AccountController", ex.Message));
+                _logger.LogError(ex, "Login error");
                 return BadRequest(ex.Message);
             }
-            
         }
+
         [AllowAnonymous]
         [HttpPost("RegisterParent")]
         public async Task<IActionResult> RegisterParent([FromForm] Map_RegisterParent user)

@@ -281,8 +281,8 @@ namespace FekraHubAPI.Controllers.UsersController
                             claims: claims,
                             issuer: _configuration["JWT:Issuer"],
                             audience: _configuration["JWT:Audience"],
-                            //expires: DateTime.UtcNow.AddMonths(1),
-                            expires: DateTime.UtcNow.AddSeconds(20),
+                            expires: DateTime.UtcNow.AddMonths(1),
+                            //expires: DateTime.UtcNow.AddSeconds(20),
                             signingCredentials: signingCredentials
                         );
 

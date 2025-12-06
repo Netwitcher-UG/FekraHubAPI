@@ -780,11 +780,12 @@ namespace FekraHubAPI.Controllers.Students
                 {
                     return BadRequest("Ungültiges oder abgelaufenes Token."); // invalid_or_expired_token
                 }
-                if (student.ParentApproved == true)
+                if (student.ParentApproved != true)
                 {
-                    return BadRequest("Bereits genehmigt."); // already_approved
+                    student.ParentApproved = true;
+                    //return BadRequest("Bereits genehmigt."); // already_approved
                 }
-                student.ParentApproved = true;
+                
                 if (student.AdminApproved == true)
                 {
                     student.ActiveStudent = true;

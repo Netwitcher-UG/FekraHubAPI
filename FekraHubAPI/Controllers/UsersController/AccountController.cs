@@ -154,7 +154,7 @@ namespace FekraHubAPI.Controllers.UsersController
                     selector: x=>x.UrlDomain,
                     returnType:QueryReturnType.Single,
                     asNoTracking:true);
-                var restPaswordLink = "/reset-password";
+                var restPaswordLink = "reset-password";
                 var callbackUrlLink = $"{domain}/{restPaswordLink}?Email={user.Email}&Token={encodedToken}";
                 await _emailSender.SendRestPassword(user.Email, callbackUrlLink);
                 return Ok();

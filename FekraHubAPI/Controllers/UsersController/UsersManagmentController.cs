@@ -302,7 +302,88 @@ namespace FekraHubAPI.Controllers.UsersController
             }
             
         }
-        
+
+        [Authorize(Policy = "ManagePayrolls")]
+        [HttpGet("payroll-info")]
+        public async Task<IActionResult> GetPayrollInfo([FromQuery]  bool IsActive = true)
+        {
+            try
+            {
+                List<string> roleIds = new List<string> {  "2", "4" };
+
+                
+
+                var userIds = await _db.UserRoles
+                    .Where(ur => roleIds.Contains(ur.RoleId))
+                    .Select(ur => ur.UserId)
+                    .ToListAsync();
+
+                var users = await _db.ApplicationUser
+                    .Where(u => userIds.Contains(u.Id) && u.ActiveUser == IsActive)
+                    .ToListAsync();
+
+                var userRoles = await _db.UserRoles
+                    .Where(ur => userIds.Contains(ur.UserId))
+                    .Join(_db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new
+                    {
+                        ur.UserId,
+                        r.Name
+                    })
+                    .ToListAsync();
+
+                var currentMonth = DateTime.UtcNow.Month;
+                var currentYear = DateTime.UtcNow.Year;
+
+                var payrollsThisMonth = await _db.PayRoll
+                    .Where(p => p.Timestamp.Month == currentMonth && p.Timestamp.Year == currentYear)
+                    .Select(p => new { p.UserID, p.Timestamp, p.Id })
+                    .ToListAsync();
+
+                var payrollsDataLookup = payrollsThisMonth
+                    .GroupBy(p => p.UserID)
+                    .ToDictionary(g => g.Key ?? "", g => g.Select(p => new { p.Id, p.Timestamp }).ToList());
+
+                var result = users.Select(user => new
+                {
+                    user.Id,
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    user.ImageUser,
+                    user.Gender,
+                    user.Job,
+                    user.Birthday,
+                    user.Birthplace,
+                    user.Nationality,
+                    user.City,
+                    user.Street,
+                    user.StreetNr,
+                    user.ZipCode,
+                    user.PhoneNumber,
+                    user.EmergencyPhoneNumber,
+                    user.Graduation,
+                    user.ActiveUser,
+                    Roles = string.Join(", ", userRoles.Where(ur => ur.UserId == user.Id).Select(ur => ur.Name)),
+                    LastPayrollDate = payrollsDataLookup.ContainsKey(user.Id)
+                        ? payrollsDataLookup[user.Id]
+                            .Select(x => x.Timestamp)
+                            .OrderByDescending(x => x)
+                            .Cast<DateTime?>()
+                            .FirstOrDefault()
+                        : (DateTime?)null
+                }).ToList();
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(HandleLogFile.handleErrLogFile(User, "UsersManagment", ex.Message));
+                return BadRequest(ex.Message);
+            }
+
+        }
+
         [Authorize(Policy = "GetTeacher")]
         [HttpGet("GetTeacher")]
         public async Task<IActionResult> GetTeacher()

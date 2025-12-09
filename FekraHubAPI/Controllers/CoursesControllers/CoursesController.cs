@@ -58,26 +58,37 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
+                var now = DateTime.UtcNow;
                 var userId = _courseRepository.GetUserIDFromToken(User);
                 var isTeacher = await _courseRepository.IsTeacherIDExists(userId);
-                
-                var courses = await _courseRepository.GetRelationList(
-                    manyWhere: new List<Expression<Func<Course, bool>>?>
-                    {
-                isTeacher ? (Expression<Func<Course, bool>>)(z => z.Teacher.Any(n => n.Id == userId)) : null,
-                IsAttendance == true ? (Expression<Func<Course, bool>>)(x => x.StartDate.Date <= DateTime.UtcNow.Date && x.EndDate.Date >= DateTime.UtcNow.Date) : null
-                //(Expression<Func<Course, bool>>)(z => z.Student.Any())
-                    }.Where(x => x != null).Cast<Expression<Func<Course, bool>>>().ToList(),
 
-                    selector: x => new { x.Id, x.Name },
+                var todayName = DateTime.UtcNow.DayOfWeek.ToString(); 
+
+                var predicates = new List<Expression<Func<Course, bool>>>();
+
+                if (isTeacher)
+                {
+                    predicates.Add(c => c.Teacher.Any(t => t.Id == userId));
+                }
+
+                if (IsAttendance == true)
+                {
+                    predicates.Add(c =>
+                        c.StartDate <= now &&
+                        c.EndDate >= now &&
+                        c.CourseSchedule.Any(s => s.DayOfWeek == todayName)
+                    );
+                }
+
+                var courses = await _courseRepository.GetRelationList(
+                    manyWhere: predicates,
+                    selector: c => new { c.Id, c.Name },
                     asNoTracking: true,
-                    orderBy: x => x.Id
+                    orderBy: c => c.Id
                 );
 
                 if (!courses.Any())
-                {
-                    return BadRequest("Kein Kurs gefunden."); // No course found
-                }
+                    return BadRequest("Kein Kurs gefunden.");
 
                 return Ok(courses);
             }
@@ -86,11 +97,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
                 return BadRequest(ex.Message);
             }
-
-
-
-
         }
+
         [Authorize]
         [HttpGet("GetCoursesNameForCalendar")]
         public async Task<IActionResult> GetCoursesNameForCalendar()

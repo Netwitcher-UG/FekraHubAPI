@@ -499,7 +499,7 @@ namespace FekraHubAPI.Controllers
         private string MessageLayout(string contentHtml, string schoolName)
         {
             var baseUrl = Environment.GetEnvironmentVariable("FEKRA_API_BASE")
-                  ?? "https://devapi.fekrahub.app";
+                  ?? "https://api.fekrahub.app";
             string ConstantsMessage = @"
 <!DOCTYPE html
   PUBLIC ""-//W3C//DTD XHTML 1.0 Transitional//EN"" ""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"">
@@ -929,6 +929,15 @@ namespace FekraHubAPI.Controllers
 $@"
 
 <body class=""body"" style=""width:100%;height:100%;padding:0;Margin:0"">
+<div style=""
+      display:none !important;
+      max-height:0;
+      overflow:hidden;
+      opacity:0;
+      color:transparent;
+      mso-hide:all;"">
+    Sie haben eine neue Nachricht von {schoolName}.
+  </div>
   <div dir=""ltr"" class=""es-wrapper-color"" lang=""en"" style=""background-color:#FAFAFA""><!--[if gte mso 9]>
 			<v:background xmlns:v=""urn:schemas-microsoft-com:vml"" fill=""t"">
 				<v:fill type=""tile"" color=""#fafafa""></v:fill>

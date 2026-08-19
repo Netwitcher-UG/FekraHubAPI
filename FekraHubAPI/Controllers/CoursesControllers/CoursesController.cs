@@ -37,10 +37,12 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         private readonly IRepository<Room> _roomRepo;
         private readonly ILogger<CoursesController> _logger;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ApplicationDbContext _context;
         public CoursesController(IRepository<Course> courseRepository, IRepository<Event> eventRepository,
         IRepository<ApplicationUser> teacherRepository,
             IRepository<Student> studentRepository, IMapper mapper, IRepository<Room> roomRepo,
-            ILogger<CoursesController> logger, IRepository<CourseSchedule> courseScheduleRepository, IServiceProvider serviceProvider)
+            ILogger<CoursesController> logger, IRepository<CourseSchedule> courseScheduleRepository, IServiceProvider serviceProvider,
+            ApplicationDbContext context)
         {
             _courseRepository = courseRepository;
             _studentRepository = studentRepository;
@@ -51,6 +53,8 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             _courseScheduleRepository = courseScheduleRepository;
             _serviceProvider = serviceProvider;
             _eventRepository = eventRepository;
+            _mapper = mapper;
+            _context = context;
         }
         [Authorize]
         [HttpGet("GetCoursesName")]
@@ -1311,33 +1315,339 @@ namespace FekraHubAPI.Controllers.CoursesControllers
 
         }
 
+        //[Authorize(Policy = "DeleteCourse")]
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteCourse(int id)
+        //{
+        //    try
+        //    {
+        //        var courseEntity = await _courseRepository.DataExist(x => x.Id == id);
+        //        if (!courseEntity)
+        //        {
+        //            return BadRequest("Kurs nicht gefunden.");//Course not found
+        //        }
+        //        var studentExist = await _studentRepository.DataExist(n => n.CourseID == id);
+        //        if (studentExist)
+        //        {
+        //            return BadRequest("Dieser Kurs enthält Schüler!!");//This course contains students !!
+        //        }
+        //        await _courseScheduleRepository.DeleteRange(n => n.CourseID == id);
+        //        await _courseRepository.Delete(id);
+        //        return Ok("Erfolgreich gelöscht");//Deleted success
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
         [Authorize(Policy = "DeleteCourse")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCourse(int id)
         {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
             try
             {
-                var courseEntity = await _courseRepository.DataExist(x => x.Id == id);
-                if (!courseEntity)
+                // =====================================================
+                // 1. Course
+                // =====================================================
+
+                var course = await _context.Courses
+                    .Include(c => c.Teacher)
+                    .FirstOrDefaultAsync(c => c.Id == id);
+
+                if (course == null)
                 {
-                    return BadRequest("Kurs nicht gefunden.");//Course not found
+                    await transaction.RollbackAsync();
+
+                    return BadRequest("Kurs nicht gefunden.");
                 }
-                var studentExist = await _studentRepository.DataExist(n => n.CourseID == id);
-                if (studentExist)
+
+
+                // =====================================================
+                // 2. Students
+                // لا نحذف الطلاب
+                // ولكن ممنوع حذف الكورس إذا كان فيه طالب Active
+                // =====================================================
+
+                var students = await _context.Students
+                    .Where(s => s.CourseID == id)
+                    .ToListAsync();
+
+                if (students.Any(s => s.ActiveStudent))
                 {
-                    return BadRequest("Dieser Kurs enthält Schüler!!");//This course contains students !!
+                    await transaction.RollbackAsync();
+
+                    return BadRequest(
+                        "Dieser Kurs enthält aktive Schüler!!"
+                    );
                 }
-                await _courseScheduleRepository.DeleteRange(n => n.CourseID == id);
-                await _courseRepository.Delete(id);
-                return Ok("Erfolgreich gelöscht");//Deleted success
+
+
+                // الطلاب الموجودون هنا جميعهم Inactive.
+                // نفصلهم عن الكورس فقط.
+                foreach (var student in students)
+                {
+                    student.CourseID = null;
+                }
+
+
+                // =====================================================
+                // 3. CourseSchedules
+                // نحتاج IDs قبل حذفها لمعالجة Events
+                // =====================================================
+
+                var schedules = await _context.CourseSchedules
+                    .Where(s => s.CourseID == id)
+                    .ToListAsync();
+
+                var scheduleIds = schedules
+                    .Select(s => s.Id)
+                    .ToList();
+
+
+                // =====================================================
+                // 4. Events المرتبطة بـ CourseSchedule
+                // =====================================================
+
+                var events = new List<Event>();
+
+                if (scheduleIds.Any())
+                {
+                    events = await _context.Events
+                        .Include(e => e.CourseSchedule)
+                        .Where(e =>
+                            e.CourseSchedule.Any(cs =>
+                                scheduleIds.Contains(cs.Id)))
+                        .ToListAsync();
+                }
+
+
+                // Event نحذفه فقط إذا كانت جميع علاقاته
+                // ضمن CourseSchedules التابعة للكورس الحالي.
+                var orphanEvents = events
+                    .Where(e =>
+                        e.CourseSchedule.All(cs =>
+                            scheduleIds.Contains(cs.Id)))
+                    .ToList();
+
+
+                // =====================================================
+                // 5. Uploads
+                // =====================================================
+
+                var uploads = await _context.Uploads
+                    .Include(u => u.Courses)
+                    .Where(u => u.Courses.Any(c => c.Id == id))
+                    .ToListAsync();
+
+
+                // Upload نحذفه فقط إذا لم يكن مرتبطاً
+                // بأي كورس آخر.
+                var orphanUploads = uploads
+                    .Where(u =>
+                        u.Courses.All(c => c.Id == id))
+                    .ToList();
+
+
+                // =====================================================
+                // 6. StudentAttendance الخاصة بالكورس
+                // =====================================================
+
+                var studentAttendances =
+                    await _context.StudentAttendances
+                        .Where(a => a.CourseID == id)
+                        .ToListAsync();
+
+                if (studentAttendances.Any())
+                {
+                    _context.StudentAttendances
+                        .RemoveRange(studentAttendances);
+                }
+
+
+                // =====================================================
+                // 7. TeacherAttendance الخاصة بالكورس
+                // =====================================================
+
+                var teacherAttendances =
+                    await _context.TeacherAttendances
+                        .Where(a => a.CourseID == id)
+                        .ToListAsync();
+
+                if (teacherAttendances.Any())
+                {
+                    _context.TeacherAttendances
+                        .RemoveRange(teacherAttendances);
+                }
+
+
+                // =====================================================
+                // 8. CourseAttendance
+                // ضروري حذفه قبل Course بسبب DeleteBehavior.Restrict
+                // =====================================================
+
+                var courseAttendances =
+                    await _context.CoursesAttendances
+                        .Where(a => a.CourseId == id)
+                        .ToListAsync();
+
+                if (courseAttendances.Any())
+                {
+                    _context.CoursesAttendances
+                        .RemoveRange(courseAttendances);
+                }
+
+
+                // =====================================================
+                // 9. TeacherCourse
+                // نفك العلاقة فقط
+                // لا نحذف الأستاذ أو User أو Role
+                // =====================================================
+
+                course.Teacher.Clear();
+
+
+                // =====================================================
+                // 10. UploadCourse
+                // نفك علاقة الكورس بالـ Upload
+                // =====================================================
+
+                foreach (var upload in uploads)
+                {
+                    var currentCourse = upload.Courses
+                        .FirstOrDefault(c => c.Id == id);
+
+                    if (currentCourse != null)
+                    {
+                        upload.Courses.Remove(currentCourse);
+                    }
+                }
+
+
+                // =====================================================
+                // 11. CourseEvent
+                // نفك علاقة Events مع Schedules التي سنحذفها
+                // =====================================================
+
+                foreach (var eventEntity in events)
+                {
+                    var scheduleLinks = eventEntity.CourseSchedule
+                        .Where(cs => scheduleIds.Contains(cs.Id))
+                        .ToList();
+
+                    foreach (var schedule in scheduleLinks)
+                    {
+                        eventEntity.CourseSchedule.Remove(schedule);
+                    }
+                }
+
+
+                // =====================================================
+                // مهم:
+                // نحفظ الآن:
+                // Student.CourseID = null
+                // حذف Attendances
+                // حذف TeacherCourse
+                // حذف UploadCourse
+                // حذف CourseEvent
+                // =====================================================
+
+                await _context.SaveChangesAsync();
+
+
+                // =====================================================
+                // 12. حذف CourseSchedules
+                // =====================================================
+
+                if (schedules.Any())
+                {
+                    _context.CourseSchedules.RemoveRange(schedules);
+                }
+
+
+                // =====================================================
+                // 13. حذف Events التي أصبحت Orphan
+                // =====================================================
+
+                if (orphanEvents.Any())
+                {
+                    _context.Events.RemoveRange(orphanEvents);
+                }
+
+
+                // =====================================================
+                // 14. حذف Uploads التي أصبحت Orphan
+                // =====================================================
+
+                if (orphanUploads.Any())
+                {
+                    _context.Uploads.RemoveRange(orphanUploads);
+                }
+
+
+                await _context.SaveChangesAsync();
+
+
+                // =====================================================
+                // 15. أخيراً حذف Course نفسه
+                // =====================================================
+
+                _context.Courses.Remove(course);
+
+                await _context.SaveChangesAsync();
+
+
+                // =====================================================
+                // 16. Commit
+                // =====================================================
+
+                await transaction.CommitAsync();
+
+
+                return Ok(new
+                {
+                    message = "Erfolgreich gelöscht",
+                    courseId = id,
+
+                    detachedStudents = students.Count,
+
+                    deletedStudentAttendances =
+                        studentAttendances.Count,
+
+                    deletedTeacherAttendances =
+                        teacherAttendances.Count,
+
+                    deletedCourseAttendances =
+                        courseAttendances.Count,
+
+                    deletedSchedules =
+                        schedules.Count,
+
+                    deletedEvents =
+                        orphanEvents.Count,
+
+                    deletedUploads =
+                        orphanUploads.Count
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
+                await transaction.RollbackAsync();
+
+                _logger.LogError(
+                    HandleLogFile.handleErrLogFile(
+                        User,
+                        "CoursesController",
+                        ex.Message
+                    )
+                );
+
                 return BadRequest(ex.Message);
             }
         }
-
         [Authorize(Policy = "ManageStudentsToCourses")]
         [HttpPost("AssignStudentsToCourse")]
         public async Task<IActionResult> AssignStudentsToCourse(int courseID, [FromBody] List<int> studentIds)

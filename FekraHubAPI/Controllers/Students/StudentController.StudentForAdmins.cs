@@ -920,6 +920,7 @@ namespace FekraHubAPI.Controllers.Students
                 student.ActiveStudent = false;
                 student.ParentApproved = false;
                 student.AdminApproved = false;
+                student.CourseID = null;
                 await _studentRepo.Update(student);
 
                 return Ok();

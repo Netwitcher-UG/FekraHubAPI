@@ -366,7 +366,18 @@ namespace FekraHubAPI.Controllers
             try
             {
                 var ParentId = _reportRepo.GetUserIDFromToken(User);
-                var student = await _studentRepo.GetById(studentId);
+                var student = await _studentRepo.GetRelationSingle(
+                        where: x =>
+                            x.Id == studentId &&
+                            x.ParentID == ParentId &&
+                            x.ActiveStudent == true &&
+                            x.AdminApproved == true &&
+                            x.ParentApproved == true,
+
+                        selector: x => x,
+                        returnType: QueryReturnType.SingleOrDefault,
+                        asNoTracking: true
+                    );
                 if (student == null)
                 {
                     return BadRequest("Schüler nicht gefunden");//Student not found
@@ -460,6 +471,13 @@ namespace FekraHubAPI.Controllers
                 }
                 var ParentId = _reportRepo.GetUserIDFromToken(User);
                 var student = await _studentRepo.GetById(report.Student.Id);
+                if (student.ParentID != ParentId ||
+                    student.ActiveStudent == false ||
+                    student.AdminApproved == false ||
+                    student.ParentApproved == false)
+                {
+                    return BadRequest("Schüler nicht gefunden");
+                }
                 if (student == null)
                 {
                     return BadRequest("Schüler nicht gefunden");//Student not found

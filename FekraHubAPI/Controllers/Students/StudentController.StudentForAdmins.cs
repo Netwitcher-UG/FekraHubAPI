@@ -560,7 +560,9 @@ namespace FekraHubAPI.Controllers.Students
         public async Task<IActionResult> PendingStudents()
         {
             var students = await _studentRepo.GetRelationList(
-                where: x => x.ActiveStudent == false&& (x.AdminApproved == true || x.ParentApproved == true),
+                        where: x => x.ActiveStudent == false &&
+            x.ParentApproved == true &&
+            x.AdminApproved == false,
                 selector: x => new
                 {
                     x.Id,
@@ -648,6 +650,10 @@ namespace FekraHubAPI.Controllers.Students
                     return BadRequest("pdf not found");
                 }
                 student.AdminApproved = true;
+                if (student.ParentApproved == true)
+                {
+                    student.ActiveStudent = true;
+                }
                 await _studentRepo.Update(student);
 
 

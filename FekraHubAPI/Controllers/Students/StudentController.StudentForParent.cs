@@ -203,8 +203,12 @@ namespace FekraHubAPI.Controllers.Students
                 }
 
                 var students = await _studentRepo.GetRelationSingle(
-                    where:x => x.ParentID == parentId && x.Id == id && x.ActiveStudent == true
-                    && x.AdminApproved ==true,
+                    where: x =>
+                        x.ParentID == parentId &&
+                        x.Id == id &&
+                        x.ActiveStudent == true &&
+                        x.AdminApproved == true &&
+                        x.ParentApproved == true,
                     returnType:QueryReturnType.SingleOrDefault,
                     include:x=>x.Include(r=>r.Report).Include(c=>c.Course).ThenInclude(u=>u.Upload).Include(i=>i.Invoices)
                     .Include(z=>z.Course.Room).ThenInclude(z=>z.Location).Include(z => z.Course.Teacher),

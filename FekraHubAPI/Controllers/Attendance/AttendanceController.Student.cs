@@ -22,7 +22,7 @@ namespace FekraHubAPI.Controllers.Attendance
             try
             {
                 var student = await _studentRepo.GetRelationSingle(
-           where: x => x.Id == Id&& x.ActiveStudent,
+           where: x => x.Id == Id && x.ActiveStudent == true && x.AdminApproved == true && x.ParentApproved == true,
            selector: x => new { x.Id, x.ParentID },
            returnType: QueryReturnType.SingleOrDefault,
            asNoTracking: true);

@@ -122,7 +122,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 else if (isParent)
                 {
                     var CourseId = await _studentRepository.GetRelationList(
-                    where: x => x.ParentID == userId,
+                    where: x =>
+                        x.ParentID == userId &&
+                        x.ActiveStudent == true&&
+                        x.AdminApproved == true&&
+                        x.ParentApproved == true,
                     selector: x => x.CourseID,
                     asNoTracking: true
                     );
@@ -169,7 +173,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 var userId = _courseRepository.GetUserIDFromToken(User);
                 var CourseId = await _studentRepository.GetRelationList(
-                    where:x=> x.ParentID == userId,
+                     where: x =>
+                        x.ParentID == userId &&
+                        x.ActiveStudent == true &&
+                        x.AdminApproved == true &&
+                        x.ParentApproved == true,
                     selector:x=>x.CourseID,
                     asNoTracking:true
                     );
@@ -427,7 +435,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
                 else if (isParent)
                 {
                     var stu = await _studentRepository.GetRelationList(
-                        where:x=>x.ParentID == userId,
+                        where: x =>
+                            x.ParentID == userId &&
+                            x.ActiveStudent == true &&
+                            x.AdminApproved == true &&
+                            x.ParentApproved == true,
                         selector:x=>x.CourseID,
                         asNoTracking:true
                         );
@@ -680,7 +692,11 @@ namespace FekraHubAPI.Controllers.CoursesControllers
             {
                 var ParentId = _courseScheduleRepository.GetUserIDFromToken(User);
                 var cousesParent = await _studentRepository.GetRelationList(
-                    where: x=> x.ParentID == ParentId ,
+                    where: x =>
+                        x.ParentID == ParentId &&
+                        x.ActiveStudent == true &&
+                        x.AdminApproved == true &&
+                        x.ParentApproved == true,
                     selector:x=> x.CourseID,
                     asNoTracking:true
                     );

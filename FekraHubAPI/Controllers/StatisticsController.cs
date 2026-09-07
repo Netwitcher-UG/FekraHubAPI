@@ -13,7 +13,7 @@ namespace FekraHubAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "GetStatistics")]
     public class StatisticsController : ControllerBase
     {
         private const string AdminRoleId = "1";

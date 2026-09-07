@@ -63,7 +63,8 @@ namespace FekraHubAPI.Constract
             UpdateCourseStu,
             MessageSender,
             StudentAdmissions,
-            ManageStudents
+            ManageStudents,
+            GetStatistics
 
 
         }

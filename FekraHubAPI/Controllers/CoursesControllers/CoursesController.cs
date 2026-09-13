@@ -1207,128 +1207,483 @@ namespace FekraHubAPI.Controllers.CoursesControllers
         {
             try
             {
-                var Teacher = new List<ApplicationUser>();
-                if (courseData.TeacherId != null)
-                {
-                    Teacher = await _teacherRepository.GetRelationList(
-                    where: n => courseData.TeacherId.Contains(n.Id),
-                    selector: x => x
-                    );
-                }
-
-
+                // =========================================================
+                // 1. Validation
+                // =========================================================
 
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
+
+                if (courseData == null ||
+                    courseData.course == null ||
+                    courseData.courseSchedule == null)
+                {
+                    return BadRequest("Ungültige Kursdaten.");
+                }
+
                 if (courseData.course.StartDate.Date >= courseData.course.EndDate.Date)
                 {
-                    return BadRequest("Ungültiges Datum: Das Startdatum ist größer als das Enddatum.");//Invalid date: Start date is greater than end date
+                    return BadRequest(
+                        "Ungültiges Datum: Das Startdatum ist größer als das Enddatum."
+                    );
                 }
+
+
+                // =========================================================
+                // 2. Validate schedules
+                // =========================================================
+
                 foreach (var schedule in courseData.courseSchedule)
                 {
-                    if (TimeSpan.Parse(schedule.StartTime) >= TimeSpan.Parse(schedule.EndTime))
+                    if (!TimeSpan.TryParse(schedule.StartTime, out var startTime) ||
+                        !TimeSpan.TryParse(schedule.EndTime, out var endTime))
                     {
-                        return BadRequest("Die Startzeit muss vor der Endzeit liegen.");//Start time must be before end time.
+                        return BadRequest(
+                            "Die Start- oder Endzeit ist ungültig."
+                        );
+                    }
+
+                    if (startTime >= endTime)
+                    {
+                        return BadRequest(
+                            "Die Startzeit muss vor der Endzeit liegen."
+                        );
+                    }
+
+                    if (!Enum.TryParse<DayOfWeek>(
+                            schedule.DayOfWeek,
+                            true,
+                            out _))
+                    {
+                        return BadRequest(
+                            $"Ungültiger Wochentag: {schedule.DayOfWeek}"
+                        );
                     }
                 }
+
+
+                // =========================================================
+                // 3. Check overlapping schedules inside the same course
+                // =========================================================
+
                 for (int i = 0; i < courseData.courseSchedule.Count; i++)
                 {
                     var schedule1 = courseData.courseSchedule[i];
+
                     for (int j = i + 1; j < courseData.courseSchedule.Count; j++)
                     {
                         var schedule2 = courseData.courseSchedule[j];
 
-                        if (schedule1.DayOfWeek == schedule2.DayOfWeek)
+                        if (string.Equals(
+                            schedule1.DayOfWeek,
+                            schedule2.DayOfWeek,
+                            StringComparison.OrdinalIgnoreCase))
                         {
                             var start1 = TimeSpan.Parse(schedule1.StartTime);
                             var end1 = TimeSpan.Parse(schedule1.EndTime);
+
                             var start2 = TimeSpan.Parse(schedule2.StartTime);
                             var end2 = TimeSpan.Parse(schedule2.EndTime);
 
                             if (start1 < end2 && start2 < end1)
                             {
-                                return BadRequest($"Die Zeitpläne für den gleichen Tag ({schedule1.DayOfWeek}) überschneiden sich.");//Schedules for the same day ({schedule1.DayOfWeek}) are overlapping.
+                                return BadRequest(
+                                    $"Die Zeitpläne für den gleichen Tag ({schedule1.DayOfWeek}) überschneiden sich."
+                                );
                             }
                         }
                     }
                 }
+
+
+                // =========================================================
+                // 4. Requested Room
+                //
+                // مهم جداً:
+                // نحفظ RoomId المطلوب قبل AutoMapper
+                // =========================================================
+
+                var requestedRoomId = courseData.course.RoomId;
+
+
+                // =========================================================
+                // 5. Check Room exists
+                // =========================================================
+
                 var room = await _roomRepo.GetRelationSingle(
-                    where: x => x.Id == courseData.course.RoomId,
+                    where: x => x.Id == requestedRoomId,
                     include: x => x.Include(l => l.Location),
-                    selector: x => new { x.Id, x.Name, Location = new { x.Location.Id, x.Location.Name } },
+                    selector: x => new
+                    {
+                        x.Id,
+                        x.Name,
+                        Location = new
+                        {
+                            x.Location.Id,
+                            x.Location.Name
+                        }
+                    },
                     returnType: QueryReturnType.SingleOrDefault,
-                    asNoTracking: true);
+                    asNoTracking: true
+                );
 
                 if (room == null)
                 {
-                    return BadRequest("Raum nicht gefunden");//Room not found
+                    return BadRequest("Raum nicht gefunden");
                 }
+
+
+                // =========================================================
+                // 6. Get current Course
+                // =========================================================
+
                 var courseEntity = await _courseRepository.GetRelationSingle(
                     where: n => n.Id == id,
                     include: x => x.Include(e => e.Teacher),
                     selector: x => x,
-                    returnType: QueryReturnType.FirstOrDefault);
+                    returnType: QueryReturnType.FirstOrDefault
+                );
 
                 if (courseEntity == null)
                 {
-                    return BadRequest("Kurs nicht gefunden.");//Course not found
-                }
-                courseEntity.Teacher.Clear();
-                courseEntity.Teacher = Teacher;
-                _mapper.Map(courseData.course, courseEntity);
-                await _courseRepository.Update(courseEntity);
-
-
-                await _courseScheduleRepository.DeleteRange(n => n.CourseID == courseEntity.Id);
-                List<CourseSchedule> courseSchedules = new List<CourseSchedule>();
-                foreach (var courseSched in courseData.courseSchedule)
-                {
-                    var courseSchedule = new CourseSchedule
-                    {
-                        DayOfWeek = courseSched.DayOfWeek,
-                        StartTime = TimeSpan.Parse(courseSched.StartTime),
-                        EndTime = TimeSpan.Parse(courseSched.EndTime),
-                        CourseID = courseEntity.Id
-                    };
-                    courseSchedules.Add(courseSchedule);
+                    return BadRequest("Kurs nicht gefunden.");
                 }
 
-                await _courseScheduleRepository.ManyAdd(courseSchedules);
 
-                return Ok(new
+                // =========================================================
+                // 7. Save OLD RoomId before AutoMapper
+                //
+                // هذا هو الجزء الأساسي في الحل
+                // =========================================================
+
+                var oldRoomId = courseEntity.RoomId;
+
+                bool roomChanged = oldRoomId != requestedRoomId;
+
+
+                // =========================================================
+                // 8. If Room changed:
+                //    make sure destination Room is not occupied
+                //    by another Course at the same date/day/time
+                // =========================================================
+
+                if (roomChanged)
                 {
-                    id = courseEntity.Id,
-                    name = courseEntity.Name,
-                    price = courseEntity.Price,
-                    lessons = courseEntity.Lessons,
-                    capacity = courseEntity.Capacity,
-                    startDate = courseEntity.StartDate,
-                    endDate = courseEntity.EndDate,
-                    Room = new { room.Id, room.Name },
-                    Location = new { room.Location.Id, room.Location.Name },
-                    Teacher = courseEntity.Teacher == null ? null : courseEntity.Teacher.Select(z => new
+                    var newCourseStartDate = courseData.course.StartDate.Date;
+                    var newCourseEndDate = courseData.course.EndDate.Date;
+
+                    var coursesInNewRoom = await _context.Courses
+                        .Where(c =>
+                            c.Id != id &&
+                            c.RoomId == requestedRoomId &&
+                            c.StartDate.Date <= newCourseEndDate &&
+                            c.EndDate.Date >= newCourseStartDate
+                        )
+                        .SelectMany(c => c.CourseSchedule.Select(s => new
+                        {
+                            CourseId = c.Id,
+                            CourseName = c.Name,
+
+                            CourseStartDate = c.StartDate,
+                            CourseEndDate = c.EndDate,
+
+                            s.DayOfWeek,
+                            s.StartTime,
+                            s.EndTime
+                        }))
+                        .AsNoTracking()
+                        .ToListAsync();
+
+
+                    foreach (var requestedSchedule in courseData.courseSchedule)
                     {
-                        z.Id,
-                        z.FirstName,
-                        z.LastName
-                    }),
-                    courseSchedule = courseSchedules.Select(x => new
+                        var requestedStart =
+                            TimeSpan.Parse(requestedSchedule.StartTime);
+
+                        var requestedEnd =
+                            TimeSpan.Parse(requestedSchedule.EndTime);
+
+                        if (!Enum.TryParse<DayOfWeek>(
+                                requestedSchedule.DayOfWeek,
+                                true,
+                                out var requestedDay))
+                        {
+                            return BadRequest(
+                                $"Ungültiger Wochentag: {requestedSchedule.DayOfWeek}"
+                            );
+                        }
+
+
+                        var possibleConflicts = coursesInNewRoom
+                            .Where(x =>
+                                string.Equals(
+                                    x.DayOfWeek,
+                                    requestedSchedule.DayOfWeek,
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            .ToList();
+
+
+                        foreach (var existing in possibleConflicts)
+                        {
+                            // ---------------------------------------------
+                            // Intersection between the two course periods
+                            // ---------------------------------------------
+
+                            var intersectionStart =
+                                newCourseStartDate > existing.CourseStartDate.Date
+                                    ? newCourseStartDate
+                                    : existing.CourseStartDate.Date;
+
+                            var intersectionEnd =
+                                newCourseEndDate < existing.CourseEndDate.Date
+                                    ? newCourseEndDate
+                                    : existing.CourseEndDate.Date;
+
+
+                            if (intersectionStart > intersectionEnd)
+                            {
+                                continue;
+                            }
+
+
+                            // ---------------------------------------------
+                            // Is this weekday actually present inside
+                            // the intersecting date period?
+                            // ---------------------------------------------
+
+                            int daysUntilRequestedDay =
+                                ((int)requestedDay -
+                                 (int)intersectionStart.DayOfWeek + 7) % 7;
+
+                            var firstMatchingDate =
+                                intersectionStart.AddDays(daysUntilRequestedDay);
+
+
+                            if (firstMatchingDate > intersectionEnd)
+                            {
+                                continue;
+                            }
+
+
+                            // ---------------------------------------------
+                            // Time overlap
+                            // ---------------------------------------------
+
+                            bool timeOverlap =
+                                requestedStart < existing.EndTime &&
+                                existing.StartTime < requestedEnd;
+
+
+                            if (timeOverlap)
+                            {
+                                return BadRequest(
+                                    $"Der Raum '{room.Name}' ist am " +
+                                    $"{requestedSchedule.DayOfWeek} " +
+                                    $"von {requestedSchedule.StartTime} bis " +
+                                    $"{requestedSchedule.EndTime} bereits durch " +
+                                    $"den Kurs '{existing.CourseName}' belegt."
+                                );
+                            }
+                        }
+                    }
+                }
+
+
+                // =========================================================
+                // 9. Get Teachers
+                // =========================================================
+
+                var Teacher = new List<ApplicationUser>();
+
+                if (courseData.TeacherId != null)
+                {
+                    Teacher = await _teacherRepository.GetRelationList(
+                        where: n => courseData.TeacherId.Contains(n.Id),
+                        selector: x => x
+                    );
+                }
+
+
+                // =========================================================
+                // 10. Transaction
+                //
+                // Course + Teachers + Schedules + Room
+                // either all succeed or all rollback
+                // =========================================================
+
+                await using var transaction =
+                    await _context.Database.BeginTransactionAsync();
+
+                try
+                {
+                    // =====================================================
+                    // 11. Update Course + Teachers
+                    // =====================================================
+
+                    courseEntity.Teacher.Clear();
+                    courseEntity.Teacher = Teacher;
+
+
+                    // AutoMapper may map RoomId here.
+                    _mapper.Map(courseData.course, courseEntity);
+
+
+                    // =====================================================
+                    // مهم جداً:
+                    //
+                    // حتى لو AutoMapper غيّر RoomId
+                    // نرجع الغرفة القديمة مؤقتاً.
+                    //
+                    // الغرفة الجديدة لن تحفظ الآن.
+                    // =====================================================
+
+                    courseEntity.RoomId = oldRoomId;
+
+
+                    await _courseRepository.Update(courseEntity);
+
+
+                    // =====================================================
+                    // 12. Delete old CourseSchedules
+                    // =====================================================
+
+                    await _courseScheduleRepository.DeleteRange(
+                        n => n.CourseID == courseEntity.Id
+                    );
+
+
+                    // =====================================================
+                    // 13. Create new CourseSchedules
+                    // =====================================================
+
+                    List<CourseSchedule> courseSchedules =
+                        new List<CourseSchedule>();
+
+                    foreach (var courseSched in courseData.courseSchedule)
                     {
-                        x.Id,
-                        x.DayOfWeek,
-                        x.StartTime,
-                        x.EndTime,
-                    })
-                });
+                        var courseSchedule = new CourseSchedule
+                        {
+                            DayOfWeek = courseSched.DayOfWeek,
+
+                            StartTime =
+                                TimeSpan.Parse(courseSched.StartTime),
+
+                            EndTime =
+                                TimeSpan.Parse(courseSched.EndTime),
+
+                            CourseID = courseEntity.Id
+                        };
+
+                        courseSchedules.Add(courseSchedule);
+                    }
+
+
+                    if (courseSchedules.Any())
+                    {
+                        await _courseScheduleRepository.ManyAdd(
+                            courseSchedules
+                        );
+                    }
+
+
+                    // =====================================================
+                    // 14. LAST STEP:
+                    //     Update Room only after everything else succeeded
+                    // =====================================================
+
+                    if (roomChanged)
+                    {
+                        courseEntity.RoomId = requestedRoomId;
+
+                        await _courseRepository.Update(courseEntity);
+                    }
+
+
+                    // =====================================================
+                    // 15. Commit
+                    // =====================================================
+
+                    await transaction.CommitAsync();
+
+
+                    // =====================================================
+                    // 16. Response
+                    // =====================================================
+
+                    return Ok(new
+                    {
+                        id = courseEntity.Id,
+
+                        name = courseEntity.Name,
+
+                        price = courseEntity.Price,
+
+                        lessons = courseEntity.Lessons,
+
+                        capacity = courseEntity.Capacity,
+
+                        startDate = courseEntity.StartDate,
+
+                        endDate = courseEntity.EndDate,
+
+                        Room = new
+                        {
+                            room.Id,
+                            room.Name
+                        },
+
+                        Location = new
+                        {
+                            room.Location.Id,
+                            room.Location.Name
+                        },
+
+                        Teacher = courseEntity.Teacher == null
+                            ? null
+                            : courseEntity.Teacher.Select(z => new
+                            {
+                                z.Id,
+                                z.FirstName,
+                                z.LastName
+                            }),
+
+                        courseSchedule = courseSchedules.Select(x => new
+                        {
+                            x.Id,
+                            x.DayOfWeek,
+                            x.StartTime,
+                            x.EndTime
+                        }),
+
+                        roomChanged,
+
+                        oldRoomId,
+
+                        newRoomId = requestedRoomId
+                    });
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(HandleLogFile.handleErrLogFile(User, "CoursesController", ex.Message));
+                _logger.LogError(
+                    HandleLogFile.handleErrLogFile(
+                        User,
+                        "CoursesController",
+                        ex.Message
+                    )
+                );
+
                 return BadRequest(ex.Message);
             }
-
         }
 
         //[Authorize(Policy = "DeleteCourse")]

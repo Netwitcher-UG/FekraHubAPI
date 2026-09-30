@@ -271,7 +271,7 @@ namespace FekraHubAPI.Controllers.Excel_Migration
                 Note = (worksheet.Cells[row, 11].Text ?? string.Empty).Trim(),
                 ActiveStudent = true,
                 AdminApproved = true,
-                ParentApproved = false,
+                ParentApproved = true,
                 ParentID = parentId
             };
         }

@@ -12,6 +12,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Net;
@@ -935,6 +941,431 @@ namespace FekraHubAPI.Controllers.Students
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        private class StudentExportRow
+        {
+            public string? FirstName { get; set; }
+            public string? LastName { get; set; }
+            public string? Gender { get; set; }
+            public string? Nationality { get; set; }
+            public string? Course { get; set; }
+            public DateTime Birthday { get; set; }
+            public string? City { get; set; }
+            public string? Street { get; set; }
+            public string? StreetNr { get; set; }
+            public string? ZipCode { get; set; }
+            public string? Note { get; set; }
+        }
+
+        [Authorize(Policy = "GetStudentsCourse")]
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportStudents(string? search,int? courseId, [Required] string format)
+        {
+            try
+            {
+                format = format.Trim().ToLower();
+
+                if (format != "excel" && format != "pdf")
+                {
+                    return BadRequest("Invalid export format. Use excel or pdf.");
+                }
+
+                // =========================================================
+                // نفس بداية GetStudents بالضبط
+                // =========================================================
+
+                string userId = _studentContractRepo.GetUserIDFromToken(User);
+
+                bool Teacher =
+                    await _studentContractRepo.IsTeacherIDExists(userId);
+
+                List<int>? corsesHaveTeacher = null;
+
+                if (Teacher)
+                {
+                    if (courseId != null)
+                    {
+                        var course = await _courseRepo.GetById(courseId ?? 0);
+
+                        if (course != null)
+                        {
+                            var teacherIds = course.Teacher.Select(x => x.Id);
+
+                            if (!teacherIds.Contains(userId))
+                            {
+                                return BadRequest("Sie sind nicht in diesem Kurs.");
+                            }
+                        }
+                        else
+                        {
+                            return BadRequest("Kurs nicht gefunden.");
+                        }
+                    }
+                    else
+                    {
+                        corsesHaveTeacher =
+                            await _courseRepo.GetRelationList(
+                                where: x =>
+                                    x.Teacher.Select(z => z.Id).Contains(userId),
+
+                                selector: z => z.Id,
+
+                                asNoTracking: true
+                            );
+                    }
+                }
+
+                // =========================================================
+                // نفس filters + نفس order الموجودين في GetStudents
+                // ولا يوجد Pagination هنا
+                // =========================================================
+
+                var studentsQuery =
+                    await _studentRepo.GetRelationAsQueryable(
+
+                        manyWhere:
+                            new List<Expression<Func<Student, bool>>?>
+                            {
+                        x => x.ActiveStudent == true,
+
+                        search != null
+                            ? (Expression<Func<Student, bool>>)
+                              (x =>
+                                  x.FirstName.Contains(search) ||
+                                  x.LastName.Contains(search))
+                            : null,
+
+                        courseId != null
+                            ? (Expression<Func<Student, bool>>)
+                              (x => x.CourseID == courseId)
+                            : null,
+
+                        corsesHaveTeacher != null
+                            ? (Expression<Func<Student, bool>>)
+                              (x =>
+                                  corsesHaveTeacher.Contains(x.Course.Id))
+                            : null
+
+                            }
+                            .Where(x => x != null)
+                            .Cast<Expression<Func<Student, bool>>>()
+                            .ToList(),
+
+                        include: x =>
+                            x.Include(z => z.User)
+                             .Include(z => z.Course),
+
+                        // نفس ترتيب الـ Grid الحالي
+                        orderBy: x => x.Id,
+
+                        selector: x => new StudentExportRow
+                        {
+                            FirstName = x.FirstName,
+                            LastName = x.LastName,
+                            Gender = x.Gender,
+                            Nationality = x.Nationality,
+
+                            Course = x.Course == null
+                                ? "No Course"
+                                : x.Course.Name,
+
+                            Birthday = x.Birthday,
+
+                            City = x.City ?? "Like parent",
+                            Street = x.Street ?? "Like parent",
+                            StreetNr = x.StreetNr ?? "Like parent",
+                            ZipCode = x.ZipCode ?? "Like parent",
+
+                            Note = x.Note
+                        },
+
+                        asNoTracking: true
+                    );
+
+                // =========================================================
+                // هنا الفرق عن GetStudents:
+                // لا يوجد Pagination
+                // نأخذ جميع نتائج الفلتر
+                // =========================================================
+
+                var students = await studentsQuery.ToListAsync();
+
+                byte[] fileBytes;
+
+                if (format == "excel")
+                {
+                    fileBytes = GenerateStudentsExcel(students);
+                }
+                else
+                {
+                    fileBytes = GenerateStudentsPdf(students);
+                }
+
+                // نفس طريقة المشروع الحالية: Base64
+                var result = Convert.ToBase64String(fileBytes);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    HandleLogFile.handleErrLogFile(
+                        User,
+                        "StudentController",
+                        ex.Message
+                    )
+                );
+
+                return BadRequest(ex.Message);
+            }
+        }
+
+        private byte[] GenerateStudentsExcel(
+    List<StudentExportRow> students)
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using var package = new ExcelPackage();
+
+            var worksheet =
+                package.Workbook.Worksheets.Add("Students");
+
+            // =========================================================
+            // Headers - بنفس ترتيب الـ Frontend
+            // =========================================================
+
+            var headers = new[]
+            {
+        "First Name",
+        "Last Name",
+        "Gender",
+        "Nationality",
+        "Course",
+        "BirthDate",
+        "City",
+        "Street",
+        "Street Num",
+        "Zip Code",
+        "Note"
+    };
+
+            for (int col = 0; col < headers.Length; col++)
+            {
+                worksheet.Cells[1, col + 1].Value = headers[col];
+                worksheet.Cells[1, col + 1].Style.Font.Bold = true;
+            }
+
+            // =========================================================
+            // Data
+            // =========================================================
+
+            int row = 2;
+
+            foreach (var student in students)
+            {
+                worksheet.Cells[row, 1].Value =
+                    student.FirstName ?? "";
+
+                worksheet.Cells[row, 2].Value =
+                    student.LastName ?? "";
+
+                worksheet.Cells[row, 3].Value =
+                    student.Gender ?? "";
+
+                worksheet.Cells[row, 4].Value =
+                    student.Nationality ?? "";
+
+                worksheet.Cells[row, 5].Value =
+                    student.Course ?? "No Course";
+
+                // نخزن التاريخ كتاريخ حقيقي داخل Excel
+                worksheet.Cells[row, 6].Value =
+                    student.Birthday;
+
+                // لكن يظهر بنفس شكل الـ Grid
+                worksheet.Cells[row, 6]
+                    .Style.Numberformat.Format = "dd.MM.yyyy";
+
+                worksheet.Cells[row, 7].Value =
+                    student.City ?? "";
+
+                worksheet.Cells[row, 8].Value =
+                    student.Street ?? "";
+
+                worksheet.Cells[row, 9].Value =
+                    student.StreetNr ?? "";
+
+                worksheet.Cells[row, 10].Value =
+                    student.ZipCode ?? "";
+
+                worksheet.Cells[row, 11].Value =
+                    student.Note ?? "";
+
+                row++;
+            }
+
+            if (worksheet.Dimension != null)
+            {
+                worksheet.Cells[
+                    worksheet.Dimension.Address
+                ].AutoFitColumns();
+            }
+
+            return package.GetAsByteArray();
+        }
+
+        private byte[] GenerateStudentsPdf(
+    List<StudentExportRow> students)
+        {
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4.Landscape());
+
+                    page.Margin(15);
+
+                    page.DefaultTextStyle(
+                        x => x.FontSize(7)
+                    );
+
+                    page.Content().Table(table =>
+                    {
+                        // ==========================================
+                        // Columns
+                        // ==========================================
+
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(1.2f); // First Name
+                            columns.RelativeColumn(1.2f); // Last Name
+                            columns.RelativeColumn(0.8f); // Gender
+                            columns.RelativeColumn(1.1f); // Nationality
+                            columns.RelativeColumn(1.4f); // Course
+                            columns.RelativeColumn(1.0f); // BirthDate
+                            columns.RelativeColumn(1.1f); // City
+                            columns.RelativeColumn(1.2f); // Street
+                            columns.RelativeColumn(0.9f); // Street Num
+                            columns.RelativeColumn(0.9f); // Zip Code
+                            columns.RelativeColumn(1.3f); // Note
+                        });
+
+
+                        // ==========================================
+                        // Header
+                        // ==========================================
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Element(HeaderStyle)
+                                .Text("First Name");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("Last Name");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("Gender");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("Nationality");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("Course");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("BirthDate");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("City");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("Street");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("Street Num");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("Zip Code");
+
+                            header.Cell().Element(HeaderStyle)
+                                .Text("Note");
+                        });
+
+
+                        // ==========================================
+                        // Rows
+                        // ==========================================
+
+                        foreach (var student in students)
+                        {
+                            table.Cell().Element(CellStyle)
+                                .Text(student.FirstName ?? "");
+
+                            table.Cell().Element(CellStyle)
+                                .Text(student.LastName ?? "");
+
+                            table.Cell().Element(CellStyle)
+                                .Text(student.Gender ?? "");
+
+                            table.Cell().Element(CellStyle)
+                                .Text(student.Nationality ?? "");
+
+                            table.Cell().Element(CellStyle)
+                                .Text(student.Course ?? "No Course");
+
+                            table.Cell().Element(CellStyle)
+                                .Text(
+                                    student.Birthday
+                                        .ToString("dd.MM.yyyy")
+                                );
+
+                            table.Cell().Element(CellStyle)
+                                .Text(student.City ?? "");
+
+                            table.Cell().Element(CellStyle)
+                                .Text(student.Street ?? "");
+
+                            table.Cell().Element(CellStyle)
+                                .Text(student.StreetNr ?? "");
+
+                            table.Cell().Element(CellStyle)
+                                .Text(student.ZipCode ?? "");
+
+                            table.Cell().Element(CellStyle)
+                                .Text(student.Note ?? "");
+                        }
+
+
+                        // ==========================================
+                        // Styles
+                        // ==========================================
+
+                        IContainer HeaderStyle(IContainer container)
+                        {
+                            return container
+                                .Border(0.5f)
+                                .Padding(3)
+                                .DefaultTextStyle(x =>
+                                    x.FontSize(7)
+                                     .SemiBold()
+                                );
+                        }
+
+                        IContainer CellStyle(IContainer container)
+                        {
+                            return container
+                                .Border(0.5f)
+                                .Padding(3)
+                                .DefaultTextStyle(x =>
+                                    x.FontSize(7)
+                                );
+                        }
+                    });
+                });
+            });
+
+            return document.GeneratePdf();
         }
 
     }

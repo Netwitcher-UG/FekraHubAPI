@@ -125,7 +125,7 @@ namespace FekraHubAPI.Controllers.Students
                 }
 
                 var students = await _studentRepo.GetRelationList(
-                    where: x => x.ParentID == parentId && x.ActiveStudent == false,
+                    where: x => x.ParentID == parentId && x.ActiveStudent == true && x.AdminApproved == true && x.ParentApproved == false,
                     orderBy: x => x.Id,
                     include: x => x.Include(t => t.Course.Teacher).Include(c => c.Course).ThenInclude(r => r.Room).ThenInclude(l => l.Location),
                     selector: z => new

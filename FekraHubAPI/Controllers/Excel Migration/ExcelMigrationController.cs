@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using FekraHubAPI.Constract;
 using Microsoft.AspNetCore.Authorization;
 using FekraHubAPI.Helpers;
+using System.Globalization;
 
 namespace FekraHubAPI.Controllers.Excel_Migration
 {
@@ -167,8 +168,10 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             if (string.IsNullOrWhiteSpace(T(worksheet, row, 4)))
                 return $"In row ( {row - 2} ) field (student's Birthday) : Birthday is required";
 
-            if (!DateTime.TryParse(T(worksheet, row, 4), out _))
-                return $"In row ( {row - 2} ) field (student's Birthday) : Birthday format is invalid";
+            if (!TryReadExcelDate(worksheet, row, 4, out _))
+            {
+                return $"In row ( {row - 2} ) field (student's Birthday) : Birthday is not a valid date";
+            }
 
             if (string.IsNullOrWhiteSpace(T(worksheet, row, 5)))
                 return $"In row ( {row - 2} ) field (student's Nationality) : Nationality is required";
@@ -197,14 +200,22 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             var user = await _userManager.FindByEmailAsync(email);
             if (user != null)
                 return (user, false, null);
+            DateTime? parentBirthday = null;
 
+            if (!string.IsNullOrWhiteSpace(worksheet.Cells[row, 15].Text))
+            {
+                if (TryReadExcelDate(worksheet, row, 15, out var parsedParentBirthday))
+                {
+                    parentBirthday = parsedParentBirthday.ToUtcSafe();
+                }
+            }
             user = new ApplicationUser
             {
                 UserName = email,
                 FirstName = worksheet.Cells[row, 12].Text,
                 LastName = worksheet.Cells[row, 13].Text,
                 Email = email,
-                Birthday = string.IsNullOrEmpty(worksheet.Cells[row, 15].Text) ? (DateTime?)null : DateTime.Parse(worksheet.Cells[row, 15].Text).ToUtcSafe(),
+                Birthday = parentBirthday,
                 Birthplace = worksheet.Cells[row, 16].Text,
                 Nationality = worksheet.Cells[row, 17].Text,
                 PhoneNumber = worksheet.Cells[row, 18].Text,
@@ -237,8 +248,14 @@ namespace FekraHubAPI.Controllers.Excel_Migration
 
         private Student CreateStudent(ExcelWorksheet worksheet, int row, string parentId)
         {
-            var bdayText = T(worksheet, row, 4);
-            var birthday = DateTime.Parse(bdayText).ToUtcSafe(); 
+            if (!TryReadExcelDate(worksheet, row, 4, out var birthday))
+            {
+                throw new Exception(
+                    $"Invalid student birthday in Excel row {row - 2}"
+                );
+            }
+
+            birthday = birthday.ToUtcSafe();
 
             return new Student
             {
@@ -259,7 +276,125 @@ namespace FekraHubAPI.Controllers.Excel_Migration
             };
         }
 
+        private static bool TryReadExcelDate(
+    ExcelWorksheet worksheet,
+    int row,
+    int column,
+    out DateTime date)
+        {
+            var cell = worksheet.Cells[row, column];
 
+            date = default;
+
+            // 1. Excel may already give us a real DateTime
+            if (cell.Value is DateTime dateTimeValue)
+            {
+                date = dateTimeValue.Date;
+                return true;
+            }
+
+            // 2. Excel may store the date as an OLE Automation number
+            if (cell.Value is double doubleValue)
+            {
+                try
+                {
+                    date = DateTime.FromOADate(doubleValue).Date;
+                    return true;
+                }
+                catch
+                {
+                    // Continue and try parsing the text
+                }
+            }
+
+            var text = cell.Text?.Trim();
+
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            // Common formats we want to accept explicitly.
+            var formats = new[]
+            {
+        "dd.MM.yyyy",
+        "d.M.yyyy",
+
+        "dd-MM-yyyy",
+        "d-M-yyyy",
+
+        "dd/MM/yyyy",
+        "d/M/yyyy",
+
+        "yyyy-MM-dd",
+        "yyyy-M-d",
+
+        "yyyy/MM/dd",
+        "yyyy/M/d",
+
+        "MM/dd/yyyy",
+        "M/d/yyyy",
+
+        "MM-dd-yyyy",
+        "M-d-yyyy",
+
+        "dd.MM.yy",
+        "d.M.yy",
+
+        "dd-MM-yy",
+        "d-M-yy",
+
+        "dd/MM/yy",
+        "d/M/yy",
+
+        "yyyyMMdd"
+    };
+
+            // Explicit formats first
+            if (DateTime.TryParseExact(
+                text,
+                formats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AllowWhiteSpaces,
+                out var exactDate))
+            {
+                date = exactDate.Date;
+                return true;
+            }
+
+            // German / European parsing first
+            if (DateTime.TryParse(
+                text,
+                CultureInfo.GetCultureInfo("de-DE"),
+                DateTimeStyles.AllowWhiteSpaces,
+                out var germanDate))
+            {
+                date = germanDate.Date;
+                return true;
+            }
+
+            // Generic parsing
+            if (DateTime.TryParse(
+                text,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AllowWhiteSpaces,
+                out var invariantDate))
+            {
+                date = invariantDate.Date;
+                return true;
+            }
+
+            // Last fallback for US formatted dates
+            if (DateTime.TryParse(
+                text,
+                CultureInfo.GetCultureInfo("en-US"),
+                DateTimeStyles.AllowWhiteSpaces,
+                out var usDate))
+            {
+                date = usDate.Date;
+                return true;
+            }
+
+            return false;
+        }
 
 
 

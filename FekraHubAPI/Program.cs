@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Infrastructure;
 using Serilog;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
@@ -55,7 +56,7 @@ if (!File.Exists(libPath))
     throw new FileNotFoundException("Library not found.", libPath);
 }
 NativeLibrary.Load(libPath);
-
+QuestPDF.Settings.License = LicenseType.Community;
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<BrowserOnlyFilter>();

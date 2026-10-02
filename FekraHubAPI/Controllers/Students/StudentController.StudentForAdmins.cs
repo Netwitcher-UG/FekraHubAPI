@@ -1215,152 +1215,126 @@ namespace FekraHubAPI.Controllers.Students
             return package.GetAsByteArray();
         }
 
-        private byte[] GenerateStudentsPdf(
-    List<StudentExportRow> students)
+        private byte[] GenerateStudentsPdf( List<StudentExportRow> students)
         {
+            var exportDate = DateTime.Now.ToString("dd.MM.yyyy");
+
             var document = Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4.Landscape());
-
                     page.Margin(15);
 
                     page.DefaultTextStyle(
                         x => x.FontSize(7)
                     );
 
-                    page.Content().Table(table =>
+                    page.Content().Column(column =>
                     {
                         // ==========================================
-                        // Columns
+                        // Title
                         // ==========================================
 
-                        table.ColumnsDefinition(columns =>
+                        column.Item()
+                            .PaddingBottom(12)
+                            .Text($"Export Students {exportDate}")
+                            .FontSize(16)
+                            .SemiBold();
+
+
+                        // ==========================================
+                        // Table
+                        // ==========================================
+
+                        column.Item().Table(table =>
                         {
-                            columns.RelativeColumn(1.2f); // First Name
-                            columns.RelativeColumn(1.2f); // Last Name
-                            columns.RelativeColumn(0.8f); // Gender
-                            columns.RelativeColumn(1.1f); // Nationality
-                            columns.RelativeColumn(1.4f); // Course
-                            columns.RelativeColumn(1.0f); // BirthDate
-                            columns.RelativeColumn(1.1f); // City
-                            columns.RelativeColumn(1.2f); // Street
-                            columns.RelativeColumn(0.9f); // Street Num
-                            columns.RelativeColumn(0.9f); // Zip Code
-                            columns.RelativeColumn(1.3f); // Note
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(1.2f); // First Name
+                                columns.RelativeColumn(1.2f); // Last Name
+                                columns.RelativeColumn(0.8f); // Gender
+                                columns.RelativeColumn(1.1f); // Nationality
+                                columns.RelativeColumn(1.4f); // Course
+                                columns.RelativeColumn(1.0f); // BirthDate
+                                columns.RelativeColumn(1.1f); // City
+                                columns.RelativeColumn(1.2f); // Street
+                                columns.RelativeColumn(0.9f); // Street Num
+                                columns.RelativeColumn(0.9f); // Zip Code
+                                columns.RelativeColumn(1.3f); // Note
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Element(HeaderStyle).Text("First Name");
+                                header.Cell().Element(HeaderStyle).Text("Last Name");
+                                header.Cell().Element(HeaderStyle).Text("Gender");
+                                header.Cell().Element(HeaderStyle).Text("Nationality");
+                                header.Cell().Element(HeaderStyle).Text("Course");
+                                header.Cell().Element(HeaderStyle).Text("BirthDate");
+                                header.Cell().Element(HeaderStyle).Text("City");
+                                header.Cell().Element(HeaderStyle).Text("Street");
+                                header.Cell().Element(HeaderStyle).Text("Street Num");
+                                header.Cell().Element(HeaderStyle).Text("Zip Code");
+                                header.Cell().Element(HeaderStyle).Text("Note");
+                            });
+
+                            foreach (var student in students)
+                            {
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.FirstName ?? "");
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.LastName ?? "");
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.Gender ?? "");
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.Nationality ?? "");
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.Course ?? "No Course");
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.Birthday.ToString("dd.MM.yyyy"));
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.City ?? "");
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.Street ?? "");
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.StreetNr ?? "");
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.ZipCode ?? "");
+
+                                table.Cell().Element(CellStyle)
+                                    .Text(student.Note ?? "");
+                            }
+
+                            IContainer HeaderStyle(IContainer container)
+                            {
+                                return container
+                                    .Border(0.5f)
+                                    .Padding(3)
+                                    .DefaultTextStyle(x =>
+                                        x.FontSize(7).SemiBold()
+                                    );
+                            }
+
+                            IContainer CellStyle(IContainer container)
+                            {
+                                return container
+                                    .Border(0.5f)
+                                    .Padding(3)
+                                    .DefaultTextStyle(x =>
+                                        x.FontSize(7)
+                                    );
+                            }
                         });
-
-
-                        // ==========================================
-                        // Header
-                        // ==========================================
-
-                        table.Header(header =>
-                        {
-                            header.Cell().Element(HeaderStyle)
-                                .Text("First Name");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("Last Name");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("Gender");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("Nationality");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("Course");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("BirthDate");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("City");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("Street");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("Street Num");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("Zip Code");
-
-                            header.Cell().Element(HeaderStyle)
-                                .Text("Note");
-                        });
-
-
-                        // ==========================================
-                        // Rows
-                        // ==========================================
-
-                        foreach (var student in students)
-                        {
-                            table.Cell().Element(CellStyle)
-                                .Text(student.FirstName ?? "");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(student.LastName ?? "");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(student.Gender ?? "");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(student.Nationality ?? "");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(student.Course ?? "No Course");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(
-                                    student.Birthday
-                                        .ToString("dd.MM.yyyy")
-                                );
-
-                            table.Cell().Element(CellStyle)
-                                .Text(student.City ?? "");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(student.Street ?? "");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(student.StreetNr ?? "");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(student.ZipCode ?? "");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(student.Note ?? "");
-                        }
-
-
-                        // ==========================================
-                        // Styles
-                        // ==========================================
-
-                        IContainer HeaderStyle(IContainer container)
-                        {
-                            return container
-                                .Border(0.5f)
-                                .Padding(3)
-                                .DefaultTextStyle(x =>
-                                    x.FontSize(7)
-                                     .SemiBold()
-                                );
-                        }
-
-                        IContainer CellStyle(IContainer container)
-                        {
-                            return container
-                                .Border(0.5f)
-                                .Padding(3)
-                                .DefaultTextStyle(x =>
-                                    x.FontSize(7)
-                                );
-                        }
                     });
                 });
             });

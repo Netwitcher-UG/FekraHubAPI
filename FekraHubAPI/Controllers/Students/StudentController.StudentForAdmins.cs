@@ -1091,21 +1091,26 @@ namespace FekraHubAPI.Controllers.Students
 
                 var students = await studentsQuery.ToListAsync();
 
-                byte[] fileBytes;
+                var exportDate = DateTime.Now.ToString("dd.MM.yyyy");
 
                 if (format == "excel")
                 {
-                    fileBytes = GenerateStudentsExcel(students);
-                }
-                else
-                {
-                    fileBytes = GenerateStudentsPdf(students);
+                    var fileBytes = GenerateStudentsExcel(students);
+
+                    return File(
+                        fileBytes,
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        $"Export Students {exportDate}.xlsx"
+                    );
                 }
 
-                // نفس طريقة المشروع الحالية: Base64
-                var result = Convert.ToBase64String(fileBytes);
+                var pdfBytes = GenerateStudentsPdf(students);
 
-                return Ok(result);
+                return File(
+                    pdfBytes,
+                    "application/pdf",
+                    $"Export Students {exportDate}.pdf"
+                );
             }
             catch (Exception ex)
             {

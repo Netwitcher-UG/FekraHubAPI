@@ -842,7 +842,7 @@ namespace FekraHubAPI.Controllers.Students
         }
         [Authorize(Policy = "ManageStudents")]
         [HttpPut("student-info/{Id}")]
-        public async Task<IActionResult> UpdateStudentInfo(int Id ,[FromBody] Map_Student_Update studentInfo)
+        public async Task<IActionResult> UpdateStudentInfo(int Id, [FromBody] Map_Student_Update studentInfo)
         {
             try
             {
@@ -1249,20 +1249,43 @@ namespace FekraHubAPI.Controllers.Students
                 row++;
             }
 
-            // Parent block: soft blue values and a dark blue header.
-            // Color the whole area even when the export contains no students.
+            // Coordinated palettes: students (teal blue), parents (deep blue).
+            // Color both the header and data columns, even if the export has no rows.
             int lastRow = Math.Max(1, row - 1);
+
+            var studentArea = worksheet.Cells[1, 1, lastRow, 11];
+            studentArea.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            studentArea.Style.Fill.BackgroundColor.SetColor(
+                System.Drawing.Color.FromArgb(232, 244, 250)); // #E8F4FA
+            studentArea.Style.Font.Color.SetColor(
+                System.Drawing.Color.FromArgb(36, 74, 97)); // #244A61
+
+            var studentHeader = worksheet.Cells[1, 1, 1, 11];
+            studentHeader.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            studentHeader.Style.Fill.BackgroundColor.SetColor(
+                System.Drawing.Color.FromArgb(50, 127, 166)); // #327FA6
+            studentHeader.Style.Font.Color.SetColor(System.Drawing.Color.White);
+            studentHeader.Style.Font.Bold = true;
+
             var parentArea = worksheet.Cells[1, 12, lastRow, 19];
             parentArea.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
             parentArea.Style.Fill.BackgroundColor.SetColor(
-                System.Drawing.Color.FromArgb(235, 244, 255));
+                System.Drawing.Color.FromArgb(235, 241, 250)); // #EBF1FA
+            parentArea.Style.Font.Color.SetColor(
+                System.Drawing.Color.FromArgb(37, 63, 98)); // #253F62
 
             var parentHeader = worksheet.Cells[1, 12, 1, 19];
             parentHeader.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
             parentHeader.Style.Fill.BackgroundColor.SetColor(
-                System.Drawing.Color.FromArgb(37, 83, 139));
+                System.Drawing.Color.FromArgb(37, 83, 139)); // #25538B
             parentHeader.Style.Font.Color.SetColor(System.Drawing.Color.White);
             parentHeader.Style.Font.Bold = true;
+
+            // Clear grouping without an overly heavy grid of cell borders.
+            worksheet.View.ShowGridLines = false;
+            worksheet.View.FreezePanes(2, 1);
+            worksheet.Cells[1, 1, 1, 19].Style.WrapText = true;
+            worksheet.Row(1).Height = 30;
 
             if (worksheet.Dimension != null)
             {
@@ -1416,12 +1439,12 @@ namespace FekraHubAPI.Controllers.Students
                                     .Text(student.ParentPhoneNumber ?? "");
                             }
 
-                            // All parent headers are dark blue; parent data cells are pale blue.
+                            // Distinct but harmonious colors for both sections.
                             IContainer ParentHeaderStyle(IContainer container)
                             {
                                 return container
                                     .Border(0.5f)
-                                    .BorderColor("#D1DEEF")
+                                    .BorderColor("#D7E0E8")
                                     .Background("#25538B")
                                     .Padding(3)
                                     .DefaultTextStyle(x =>
@@ -1433,19 +1456,21 @@ namespace FekraHubAPI.Controllers.Students
                             {
                                 return container
                                     .Border(0.5f)
-                                    .BorderColor("#B9CCE5")
-                                    .Background("#EBF4FF")
+                                    .BorderColor("#D7E0E8")
+                                    .Background("#EBF1FA")
                                     .Padding(3)
-                                    .DefaultTextStyle(x => x.FontSize(7));
+                                    .DefaultTextStyle(x => x.FontSize(7).FontColor("#253F62"));
                             }
 
                             IContainer HeaderStyle(IContainer container)
                             {
                                 return container
                                     .Border(0.5f)
+                                    .BorderColor("#D7E0E8")
+                                    .Background("#327FA6")
                                     .Padding(3)
                                     .DefaultTextStyle(x =>
-                                        x.FontSize(7).SemiBold()
+                                        x.FontSize(7).SemiBold().FontColor("#FFFFFF")
                                     );
                             }
 
@@ -1453,9 +1478,11 @@ namespace FekraHubAPI.Controllers.Students
                             {
                                 return container
                                     .Border(0.5f)
+                                    .BorderColor("#D7E0E8")
+                                    .Background("#E8F4FA")
                                     .Padding(3)
                                     .DefaultTextStyle(x =>
-                                        x.FontSize(7)
+                                        x.FontSize(7).FontColor("#244A61")
                                     );
                             }
                         });

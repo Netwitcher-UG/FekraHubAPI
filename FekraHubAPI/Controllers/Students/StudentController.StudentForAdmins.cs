@@ -76,7 +76,7 @@ namespace FekraHubAPI.Controllers.Students
             _notificationsRepo = notificationsRepo;
             _notificationUserRepo = notificationUserRepo;
         }
-        
+
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet("GetStudent/{id}")]
         public async Task<IActionResult> GetStudent(int id)////////////////////// Profile for admin
@@ -104,7 +104,7 @@ namespace FekraHubAPI.Controllers.Students
                             returnType: QueryReturnType.SingleOrDefault,
                             asNoTracking: true
                         );
-                if( student == null )
+                if (student == null)
                 {
                     return BadRequest();//////////////////////
                 }
@@ -132,7 +132,7 @@ namespace FekraHubAPI.Controllers.Students
                             })
                             .AsNoTracking()
                             .SingleOrDefaultAsync();
-                if(parent == null)
+                if (parent == null)
                 {
                     return BadRequest();///////////////////////////
                 }
@@ -157,9 +157,9 @@ namespace FekraHubAPI.Controllers.Students
                                 returnType: QueryReturnType.SingleOrDefault,
                                 asNoTracking: true
                             );
-                var room = course == null ? null :await _courseRepo.GetRelationSingle(
+                var room = course == null ? null : await _courseRepo.GetRelationSingle(
                                 where: r => r.Id == course.Id,
-                                include: r => r.Include(x => x.Room).ThenInclude(x=>x.Location),
+                                include: r => r.Include(x => x.Room).ThenInclude(x => x.Location),
                                 selector: r => new
                                 {
                                     room = new
@@ -190,7 +190,7 @@ namespace FekraHubAPI.Controllers.Students
                                         TeacherId = r.UserId,
                                         TeacherFirstName = r.User.FirstName,
                                         TeacherLastName = r.User.LastName
-                                    },asNoTracking:true
+                                    }, asNoTracking: true
                                     );
                 var uploads = course == null ? null : await _uploadRepo.GetRelationList(
                                     where: u => u.Courses.Any(c => c.Id == course.Id) && u.Date >= DateTime.UtcNow.AddDays(-30),
@@ -215,61 +215,61 @@ namespace FekraHubAPI.Controllers.Students
                                 );
 
 
-               var students =  new
+                var students = new
+                {
+                    student.Id,
+                    student.FirstName,
+                    student.LastName,
+                    student.Birthday,
+                    student.Nationality,
+                    student.Note,
+                    student.Gender,
+                    student.ActiveStudent,
+                    city = student.City ?? "Like parent",
+                    Street = student.Street ?? "Like parent",
+                    StreetNr = student.StreetNr ?? "Like parent",
+                    ZipCode = student.ZipCode ?? "Like parent",
+                    Parent = new
                     {
-                        student.Id,
-                        student.FirstName,
-                        student.LastName,
-                        student.Birthday,
-                        student.Nationality,
-                        student.Note,
-                        student.Gender,
-                        student.ActiveStudent,
-                        city = student.City ?? "Like parent",
-                        Street = student.Street ?? "Like parent",
-                        StreetNr = student.StreetNr ?? "Like parent",
-                        ZipCode = student.ZipCode ?? "Like parent",
-                        Parent = new
-                        {
-                            parent.Id,
-                            parent.FirstName,
-                            parent.LastName,
-                            parent.Email,
-                            parent.PhoneNumber,
-                            parent.EmergencyPhoneNumber,
-                            parent.Street,
-                            parent.StreetNr,
-                            parent.ZipCode,
-                            parent.City,
-                            parent.Nationality,
-                            parent.Birthplace,
-                            parent.Birthday,
-                            parent.Gender,
-                            parent.Job,
-                            parent.Graduation
-                        },
-                        course = course == null ? null : new
-                        {
-                            course.Id,
-                            course.Name,
-                            course.Capacity,
-                            startDate = course.StartDate.Date,
-                            EndDate = course.EndDate.Date,
-                            course.Price,
-                            Teacher = course.Teacher
-                        },
-                        Room = room == null ? null : room.room,
-                        Location = room == null ? null : room.Location,
-                        News = new
-                        {
-                            Report = reports == null ? null : reports,
-                            WorkSheet = uploads == null ? null : uploads
-                                ,
-                            Invoice = invoices == null ? null : invoices
-                        }
+                        parent.Id,
+                        parent.FirstName,
+                        parent.LastName,
+                        parent.Email,
+                        parent.PhoneNumber,
+                        parent.EmergencyPhoneNumber,
+                        parent.Street,
+                        parent.StreetNr,
+                        parent.ZipCode,
+                        parent.City,
+                        parent.Nationality,
+                        parent.Birthplace,
+                        parent.Birthday,
+                        parent.Gender,
+                        parent.Job,
+                        parent.Graduation
+                    },
+                    course = course == null ? null : new
+                    {
+                        course.Id,
+                        course.Name,
+                        course.Capacity,
+                        startDate = course.StartDate.Date,
+                        EndDate = course.EndDate.Date,
+                        course.Price,
+                        Teacher = course.Teacher
+                    },
+                    Room = room == null ? null : room.room,
+                    Location = room == null ? null : room.Location,
+                    News = new
+                    {
+                        Report = reports == null ? null : reports,
+                        WorkSheet = uploads == null ? null : uploads
+                                 ,
+                        Invoice = invoices == null ? null : invoices
+                    }
 
 
-                    };
+                };
                 if (students == null)
                 {
                     return BadRequest("Dieser Schüler wurde nicht gefunden.");//This student is not found
@@ -453,7 +453,7 @@ namespace FekraHubAPI.Controllers.Students
                 var students = await _studentRepo.GetRelationList(
                     manyWhere: new List<Expression<Func<Student, bool>>?>
                         {
-                        
+
                         x => x.CourseID == courseId,
                         x => x.ActiveStudent == true,
                         search != null ? (Expression<Func<Student, bool>>)(x => x.FirstName.Contains(search) || x.LastName.Contains(search)) : null
@@ -503,13 +503,13 @@ namespace FekraHubAPI.Controllers.Students
 
         }
 
-        
+
 
 
 
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpPatch("ActiveStudent")]
-        public async Task<IActionResult> ActiveStudent([Required]int id,[Required]bool active)
+        public async Task<IActionResult> ActiveStudent([Required] int id, [Required] bool active)
         {
             var student = await _studentRepo.GetById(id);
             student.ActiveStudent = active;
@@ -528,7 +528,7 @@ namespace FekraHubAPI.Controllers.Students
             try
             {
                 var student = await _studentRepo.GetById(studentId);
-                if(student == null)
+                if (student == null)
                 {
                     return BadRequest("Dieser Schüler wurde nicht gefunden.");
                 }
@@ -616,7 +616,7 @@ namespace FekraHubAPI.Controllers.Students
 
 
         }
-        [Authorize(Policy = "StudentAdmissions")] 
+        [Authorize(Policy = "StudentAdmissions")]
         [HttpPost("accept-student")]
         public async Task<IActionResult> AcceptPendingStudent([FromBody] AcceptStudent data)
         {
@@ -681,9 +681,10 @@ namespace FekraHubAPI.Controllers.Students
 
                 await _notificationUserRepo.ManyAdd(notificationUsers);
                 return Ok();
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
-                return BadRequest(ex.Message);  
+                return BadRequest(ex.Message);
             }
         }
         public class RejectData
@@ -723,7 +724,7 @@ namespace FekraHubAPI.Controllers.Students
                 await _notificationUserRepo.Add(notificationUser);
                 return Ok();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -797,7 +798,7 @@ namespace FekraHubAPI.Controllers.Students
                     student.ParentApproved = true;
                     //return BadRequest("Bereits genehmigt."); // already_approved
                 }
-                
+
                 if (student.AdminApproved == true)
                 {
                     student.ActiveStudent = true;
@@ -816,7 +817,8 @@ namespace FekraHubAPI.Controllers.Students
                 };
                 await _notificationUserRepo.Add(notificationUser);
                 return Ok("Erfolgreich genehmigt.");
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -835,11 +837,11 @@ namespace FekraHubAPI.Controllers.Students
             public string? StreetNr { get; set; }
             public string? ZipCode { get; set; }
             public string? City { get; set; }
-            
+
 
         }
         [Authorize(Policy = "ManageStudents")]
-        [HttpPut("student-info/{Id}")]   
+        [HttpPut("student-info/{Id}")]
         public async Task<IActionResult> UpdateStudentInfo(int Id ,[FromBody] Map_Student_Update studentInfo)
         {
             try
@@ -911,8 +913,8 @@ namespace FekraHubAPI.Controllers.Students
                     student.City,
                     student.ZipCode
                 });
-            } 
-            catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -956,11 +958,21 @@ namespace FekraHubAPI.Controllers.Students
             public string? StreetNr { get; set; }
             public string? ZipCode { get; set; }
             public string? Note { get; set; }
+
+            // Parent details (from Student.User / AspNetUsers)
+            public string? ParentFirstName { get; set; }
+            public string? ParentLastName { get; set; }
+            public string? ParentCity { get; set; }
+            public string? ParentStreet { get; set; }
+            public string? ParentStreetNr { get; set; }
+            public string? ParentZipCode { get; set; }
+            public string? ParentEmail { get; set; }
+            public string? ParentPhoneNumber { get; set; }
         }
 
         [Authorize(Policy = "GetStudentsCourse")]
         [HttpGet("export")]
-        public async Task<IActionResult> ExportStudents(string? search,int? courseId, [Required] string format)
+        public async Task<IActionResult> ExportStudents(string? search, int? courseId, [Required] string format)
         {
             try
             {
@@ -1077,7 +1089,16 @@ namespace FekraHubAPI.Controllers.Students
                             StreetNr = x.StreetNr ?? "Like parent",
                             ZipCode = x.ZipCode ?? "Like parent",
 
-                            Note = x.Note
+                            Note = x.Note,
+
+                            ParentFirstName = x.User == null ? null : x.User.FirstName,
+                            ParentLastName = x.User == null ? null : x.User.LastName,
+                            ParentCity = x.User == null ? null : x.User.City,
+                            ParentStreet = x.User == null ? null : x.User.Street,
+                            ParentStreetNr = x.User == null ? null : x.User.StreetNr,
+                            ParentZipCode = x.User == null ? null : x.User.ZipCode,
+                            ParentEmail = x.User == null ? null : x.User.Email,
+                            ParentPhoneNumber = x.User == null ? null : x.User.PhoneNumber
                         },
 
                         asNoTracking: true
@@ -1152,7 +1173,15 @@ namespace FekraHubAPI.Controllers.Students
         "Street",
         "Street Num",
         "Zip Code",
-        "Note"
+        "Note",
+        "First Name (Parent)",
+        "Last Name (Parent)",
+        "City (Parent)",
+        "Street (Parent)",
+        "Street Num (Parent)",
+        "Zip Code (Parent)",
+        "Email (Parent)",
+        "Phone Number (Parent)"
     };
 
             for (int col = 0; col < headers.Length; col++)
@@ -1207,8 +1236,33 @@ namespace FekraHubAPI.Controllers.Students
                 worksheet.Cells[row, 11].Value =
                     student.Note ?? "";
 
+                // Parent columns: preserve student columns as-is.
+                worksheet.Cells[row, 12].Value = student.ParentFirstName ?? "";
+                worksheet.Cells[row, 13].Value = student.ParentLastName ?? "";
+                worksheet.Cells[row, 14].Value = student.ParentCity ?? "";
+                worksheet.Cells[row, 15].Value = student.ParentStreet ?? "";
+                worksheet.Cells[row, 16].Value = student.ParentStreetNr ?? "";
+                worksheet.Cells[row, 17].Value = student.ParentZipCode ?? "";
+                worksheet.Cells[row, 18].Value = student.ParentEmail ?? "";
+                worksheet.Cells[row, 19].Value = student.ParentPhoneNumber ?? "";
+
                 row++;
             }
+
+            // Parent block: soft blue values and a dark blue header.
+            // Color the whole area even when the export contains no students.
+            int lastRow = Math.Max(1, row - 1);
+            var parentArea = worksheet.Cells[1, 12, lastRow, 19];
+            parentArea.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            parentArea.Style.Fill.BackgroundColor.SetColor(
+                System.Drawing.Color.FromArgb(235, 244, 255));
+
+            var parentHeader = worksheet.Cells[1, 12, 1, 19];
+            parentHeader.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            parentHeader.Style.Fill.BackgroundColor.SetColor(
+                System.Drawing.Color.FromArgb(37, 83, 139));
+            parentHeader.Style.Font.Color.SetColor(System.Drawing.Color.White);
+            parentHeader.Style.Font.Bold = true;
 
             if (worksheet.Dimension != null)
             {
@@ -1220,7 +1274,7 @@ namespace FekraHubAPI.Controllers.Students
             return package.GetAsByteArray();
         }
 
-        private byte[] GenerateStudentsPdf( List<StudentExportRow> students)
+        private byte[] GenerateStudentsPdf(List<StudentExportRow> students)
         {
             var exportDate = DateTime.Now.ToString("dd.MM.yyyy");
 
@@ -1228,7 +1282,8 @@ namespace FekraHubAPI.Controllers.Students
             {
                 container.Page(page =>
                 {
-                    page.Size(PageSizes.A4.Landscape());
+                    // A3 landscape keeps all 19 columns readable.
+                    page.Size(PageSizes.A3.Landscape());
                     page.Margin(15);
 
                     page.DefaultTextStyle(
@@ -1267,6 +1322,15 @@ namespace FekraHubAPI.Controllers.Students
                                 columns.RelativeColumn(0.9f); // Street Num
                                 columns.RelativeColumn(0.9f); // Zip Code
                                 columns.RelativeColumn(1.3f); // Note
+
+                                columns.RelativeColumn(1.2f); // First Name (Parent)
+                                columns.RelativeColumn(1.2f); // Last Name (Parent)
+                                columns.RelativeColumn(1.0f); // City (Parent)
+                                columns.RelativeColumn(1.2f); // Street (Parent)
+                                columns.RelativeColumn(0.9f); // Street Num (Parent)
+                                columns.RelativeColumn(0.9f); // Zip Code (Parent)
+                                columns.RelativeColumn(1.9f); // Email (Parent)
+                                columns.RelativeColumn(1.4f); // Phone Number (Parent)
                             });
 
                             table.Header(header =>
@@ -1282,6 +1346,14 @@ namespace FekraHubAPI.Controllers.Students
                                 header.Cell().Element(HeaderStyle).Text("Street Num");
                                 header.Cell().Element(HeaderStyle).Text("Zip Code");
                                 header.Cell().Element(HeaderStyle).Text("Note");
+                                header.Cell().Element(ParentHeaderStyle).Text("First Name (Parent)");
+                                header.Cell().Element(ParentHeaderStyle).Text("Last Name (Parent)");
+                                header.Cell().Element(ParentHeaderStyle).Text("City (Parent)");
+                                header.Cell().Element(ParentHeaderStyle).Text("Street (Parent)");
+                                header.Cell().Element(ParentHeaderStyle).Text("Street Num (Parent)");
+                                header.Cell().Element(ParentHeaderStyle).Text("Zip Code (Parent)");
+                                header.Cell().Element(ParentHeaderStyle).Text("Email (Parent)");
+                                header.Cell().Element(ParentHeaderStyle).Text("Phone Number (Parent)");
                             });
 
                             foreach (var student in students)
@@ -1318,6 +1390,53 @@ namespace FekraHubAPI.Controllers.Students
 
                                 table.Cell().Element(CellStyle)
                                     .Text(student.Note ?? "");
+
+                                table.Cell().Element(ParentCellStyle)
+                                    .Text(student.ParentFirstName ?? "");
+
+                                table.Cell().Element(ParentCellStyle)
+                                    .Text(student.ParentLastName ?? "");
+
+                                table.Cell().Element(ParentCellStyle)
+                                    .Text(student.ParentCity ?? "");
+
+                                table.Cell().Element(ParentCellStyle)
+                                    .Text(student.ParentStreet ?? "");
+
+                                table.Cell().Element(ParentCellStyle)
+                                    .Text(student.ParentStreetNr ?? "");
+
+                                table.Cell().Element(ParentCellStyle)
+                                    .Text(student.ParentZipCode ?? "");
+
+                                table.Cell().Element(ParentCellStyle)
+                                    .Text(student.ParentEmail ?? "");
+
+                                table.Cell().Element(ParentCellStyle)
+                                    .Text(student.ParentPhoneNumber ?? "");
+                            }
+
+                            // All parent headers are dark blue; parent data cells are pale blue.
+                            IContainer ParentHeaderStyle(IContainer container)
+                            {
+                                return container
+                                    .Border(0.5f)
+                                    .BorderColor("#D1DEEF")
+                                    .Background("#25538B")
+                                    .Padding(3)
+                                    .DefaultTextStyle(x =>
+                                        x.FontSize(7).SemiBold().FontColor("#FFFFFF")
+                                    );
+                            }
+
+                            IContainer ParentCellStyle(IContainer container)
+                            {
+                                return container
+                                    .Border(0.5f)
+                                    .BorderColor("#B9CCE5")
+                                    .Background("#EBF4FF")
+                                    .Padding(3)
+                                    .DefaultTextStyle(x => x.FontSize(7));
                             }
 
                             IContainer HeaderStyle(IContainer container)

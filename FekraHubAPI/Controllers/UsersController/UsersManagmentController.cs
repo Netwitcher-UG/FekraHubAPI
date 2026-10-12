@@ -836,7 +836,7 @@ namespace FekraHubAPI.Controllers.UsersController
                 account.Birthplace = accountUpdate.Birthplace;
                 account.Nationality = accountUpdate.Nationality;
                 account.Street = accountUpdate.Street;
-                account.StreetNr = accountUpdate.Street;
+                account.StreetNr = accountUpdate.StreetNr;
                 account.ZipCode = accountUpdate.ZipCode;
                 account.City = accountUpdate.City;
                 account.Job = accountUpdate.Job;

@@ -124,8 +124,8 @@ namespace FekraHubAPI.Controllers
                         x.Id,
                         x.data,
                         x.CreationDate,
-                        x.CreationDate.Year,
-                        x.CreationDate.Month,
+                        Year = x.ReportYear,
+                        Month = x.ReportMonth,
                         TeacherId = x.UserId,
                         TeacherFirstName = x.User.FirstName,
                         TeacherLastName = x.User.LastName,
@@ -190,6 +190,8 @@ namespace FekraHubAPI.Controllers
                 {
                     x.Id,
                     x.CreationDate,
+                    Year = x.ReportYear,
+                    Month = x.ReportMonth,
                     x.data,
                     x.Improved,
                     Student = new
@@ -222,8 +224,8 @@ namespace FekraHubAPI.Controllers
                         x.Id,
                         x.data,
                         x.CreationDate,
-                        x.CreationDate.Year,
-                        x.CreationDate.Month,
+                        Year = x.ReportYear,
+                        Month = x.ReportMonth,
                         TeacherId = x.UserId,
                         TeacherFirstName = x.User.FirstName,
                         TeacherLastName = x.User.LastName,
@@ -300,8 +302,8 @@ namespace FekraHubAPI.Controllers
                 reportId.HasValue ? (Expression<Func<Report, bool>>)(x => x.Id == reportId) : null,
                 startUtc.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate >= startUtc.Value) : null,
                 endUtc.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate <= endUtc.Value) : null,
-                year.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate.Year == year.Value) : null,
-                month.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.CreationDate.Month == month.Value) : null,
+                year.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.ReportYear == year.Value) : null,
+                month.HasValue ? (Expression<Func<Report, bool>>)(ta => ta.ReportMonth == month.Value) : null,
                 dateOnlyUtc.HasValue ? (Expression<Func<Report, bool>>)(sa => sa.CreationDate.Date == dateOnlyUtc.Value) : null,
                 !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "null" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == null) : null,
                 !string.IsNullOrEmpty(Improved) && Improved.ToLower() == "true" ? (Expression<Func<Report, bool>>)(sa => sa.Improved == true) : null,
@@ -314,8 +316,8 @@ namespace FekraHubAPI.Controllers
                     x.Id,
                     x.data,
                     x.CreationDate,
-                    x.CreationDate.Year,
-                    x.CreationDate.Month,
+                    Year = x.ReportYear,
+                    Month = x.ReportMonth,
                     TeacherId = x.UserId,
                     TeacherFirstName = x.User.FirstName,
                     TeacherLastName = x.User.LastName,
@@ -395,8 +397,8 @@ namespace FekraHubAPI.Controllers
                         x.Id,
                         x.data,
                         x.CreationDate,
-                        x.CreationDate.Year,
-                        x.CreationDate.Month,
+                        Year = x.ReportYear,
+                        Month = x.ReportMonth,
                         TeacherId = x.UserId,
                         TeacherFirstName = x.User.FirstName,
                         TeacherLastName = x.User.LastName,
@@ -445,8 +447,8 @@ namespace FekraHubAPI.Controllers
                         x.Id,
                         x.data,
                         x.CreationDate,
-                        x.CreationDate.Year,
-                        x.CreationDate.Month,
+                        Year = x.ReportYear,
+                        Month = x.ReportMonth,
                         TeacherId = x.UserId,
                         TeacherFirstName = x.User.FirstName,
                         TeacherLastName = x.User.LastName,
@@ -499,7 +501,7 @@ namespace FekraHubAPI.Controllers
 
         //[Authorize(Policy = "InsertUpdateStudentsReports")]
         [HttpPost]
-        public async Task<IActionResult> CreateReports(List<Map_Report_Post> map_Report)
+        public async Task<IActionResult> CreateReports([FromQuery] int month, [FromQuery] int year, List<Map_Report_Post> map_Report)
         {
             try
             {
@@ -507,21 +509,53 @@ namespace FekraHubAPI.Controllers
                 {
                     return BadRequest(ModelState);
                 }
+                if (month < 1 || month > 12 || year < 1 || year > 9999)
+                {
+                    return BadRequest("Ungültiger Monat oder ungültiges Jahr.");
+                }
+
+                if (map_Report == null || !map_Report.Any())
+                {
+                    return BadRequest("Es wurden keine Berichte übermittelt.");
+                }
+
+                if (map_Report.Any(x => x.StudentId <= 0))
+                {
+                    return BadRequest("Ungültige Schüler-ID.");
+                }
+
+                var duplicateStudentIds = map_Report
+                    .GroupBy(x => x.StudentId)
+                    .Where(g => g.Count() > 1)
+                    .Select(g => g.Key)
+                    .ToList();
+
+                if (duplicateStudentIds.Any())
+                {
+                    return BadRequest(new
+                    {
+                        Message = "Ein Schüler wurde mehrfach ausgewählt.",
+                        StudentIds = duplicateStudentIds
+                    });
+                }
                 var DateNow = DateTime.UtcNow;
                 var studentIds = new HashSet<int>(map_Report.Select(x => x.StudentId));
 
-                var firstDayOfMonth = new DateTime(DateNow.Year, DateNow.Month, 1).ToUtcSafe();
-                var firstDayOfNextMonth = firstDayOfMonth.AddMonths(1).ToUtcSafe();
-
                 var reports = await _reportRepo.DataExist(
-                                  report => report.CreationDate >= firstDayOfMonth &&
-                                     report.CreationDate < firstDayOfNextMonth &&
-                                     studentIds.Contains(report.StudentId ?? 0)
-                                   );
+                    report =>
+                        report.ReportMonth == month &&
+                        report.ReportYear == year &&
+                        studentIds.Contains(report.StudentId ?? 0)
+                );
 
                 if (reports)
                 {
-                    return BadRequest($"Es gibt diesen Monat einen Bericht für einen Schüler.");//There is a report for a student on this month
+                    return Conflict(new
+                    {
+                        Message = $"Für {month:D2}/{year} existiert bereits ein Bericht für mindestens einen Schüler.",
+                        Month = month,
+                        Year = year
+                    });
                 }
                 var userId = _reportRepo.GetUserIDFromToken(User);
 
@@ -532,6 +566,8 @@ namespace FekraHubAPI.Controllers
                 List<Report> AllReports = map_Report.Select(map => new Report
                 {
                     CreationDate = DateNow,
+                    ReportMonth = month,
+                    ReportYear = year,
                     StudentId = map.StudentId,
                     data = map.data,
                     Improved = null,
@@ -544,20 +580,33 @@ namespace FekraHubAPI.Controllers
                     x.Id,
                     x.data,
                     x.CreationDate,
-                    x.CreationDate.Year,
-                    x.CreationDate.Month,
+                    Year = x.ReportYear,
+                    Month = x.ReportMonth,
                     x.Improved,
                     x.UserId,
                     x.StudentId
                 }).ToList());
             }
+            catch (DbUpdateException ex) when (
+                ex.InnerException is Npgsql.PostgresException pg &&
+                pg.SqlState == Npgsql.PostgresErrorCodes.UniqueViolation &&
+                pg.ConstraintName == "UX_Reports_Student_Period")
+            {
+                return Conflict(new
+                {
+                    Message = "Für diesen Schüler existiert bereits ein Bericht für diesen Monat und dieses Jahr."
+                });
+            }
             catch (Exception ex)
             {
-                _logger.LogError(HandleLogFile.handleErrLogFile(User, "ReportsController", ex.Message));
+                _logger.LogError(
+                    HandleLogFile.handleErrLogFile(
+                        User, "ReportsController", ex.Message));
+
                 return BadRequest(ex.Message);
             }
-            
-            
+
+
         }
         [Authorize(Policy = "ApproveReports")]
 
@@ -582,8 +631,8 @@ namespace FekraHubAPI.Controllers
                 return Ok(new { 
                     report.Id,
                     report.CreationDate,
-                    report.CreationDate.Year,
-                    report.CreationDate.Month,
+                    Year = report.ReportYear,
+                    Month = report.ReportMonth,
                     report.data,
                     report.StudentId,
                     report.UserId,
@@ -613,8 +662,8 @@ namespace FekraHubAPI.Controllers
                 return Ok(new {
                     report.Id,
                     report.CreationDate,
-                    report.CreationDate.Year,
-                    report.CreationDate.Month,
+                    Year = report.ReportYear,
+                    Month = report.ReportMonth,
                     report.data,
                     report.StudentId,
                     report.UserId,
@@ -659,8 +708,8 @@ namespace FekraHubAPI.Controllers
                 return Ok(reports.Select(x => new {
                     x.Id,
                     x.CreationDate,
-                    x.CreationDate.Year,
-                    x.CreationDate.Month,
+                    Year = x.ReportYear,
+                    Month = x.ReportMonth,
                     x.data,
                     x.StudentId,
                     x.UserId,
@@ -696,8 +745,8 @@ namespace FekraHubAPI.Controllers
                 return Ok(new {
                     report.Id,
                     report.CreationDate,
-                    report.CreationDate.Year,
-                    report.CreationDate.Month,
+                    Year = report.ReportYear,
+                    Month = report.ReportMonth,
                     report.data,
                     report.StudentId,
                     report.UserId,

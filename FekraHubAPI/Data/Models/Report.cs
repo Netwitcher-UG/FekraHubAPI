@@ -14,6 +14,8 @@ namespace FekraHubAPI.Data.Models
         public bool? Improved { get; set; }
 
         public DateTime CreationDate { get; set; }
+        public int ReportMonth { get; set; }
+        public int ReportYear { get; set; }
 
         [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; }

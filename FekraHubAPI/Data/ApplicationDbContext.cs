@@ -27,7 +27,15 @@ namespace FekraHubAPI.Data
 
             //SeedRoles(builder);
             //SeedAdminUser(builder);
-
+            builder.Entity<Report>()
+                .HasIndex(x => new
+                {
+                    x.StudentId,
+                    x.ReportYear,
+                    x.ReportMonth
+                })
+                .IsUnique()
+                .HasDatabaseName("UX_Reports_Student_Period");
             builder.Entity<Upload>()
          .HasMany(u => u.Courses)
          .WithMany(c => c.Upload)

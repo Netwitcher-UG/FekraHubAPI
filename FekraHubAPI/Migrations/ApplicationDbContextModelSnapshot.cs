@@ -467,6 +467,12 @@ namespace FekraHubAPI.Migrations
                     b.Property<bool?>("Improved")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("ReportMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReportYear")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("StudentId")
                         .HasColumnType("integer");
 
@@ -479,9 +485,11 @@ namespace FekraHubAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("StudentId", "ReportYear", "ReportMonth")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Reports_Student_Period");
 
                     b.ToTable("Reports");
                 });

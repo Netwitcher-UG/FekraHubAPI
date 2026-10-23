@@ -45,7 +45,7 @@ namespace FekraHubAPI.Migrations
                 unique: true);
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc />   
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(

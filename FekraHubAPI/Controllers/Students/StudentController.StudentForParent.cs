@@ -264,8 +264,8 @@ namespace FekraHubAPI.Controllers.Students
                                                 z.Id,
                                                 z.data,
                                                 z.CreationDate,
-                                                z.CreationDate.Year,
-                                                z.CreationDate.Month,
+                                                Year = z.ReportYear,
+                                                Month = z.ReportMonth,
                                                 TeacherId = z.UserId,
                                                 TeacherFirstName = z.User == null ? null : z.User.FirstName,
                                                 TeacherLastName = z.User == null ? null : z.User.LastName

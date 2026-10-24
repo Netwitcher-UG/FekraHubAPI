@@ -187,6 +187,8 @@ namespace FekraHubAPI.Controllers.Students
                                         r.Id,
                                         r.data,
                                         r.CreationDate,
+                                        Year = r.ReportYear,
+                                        Month = r.ReportMonth,
                                         TeacherId = r.UserId,
                                         TeacherFirstName = r.User.FirstName,
                                         TeacherLastName = r.User.LastName

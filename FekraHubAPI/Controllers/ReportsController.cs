@@ -550,7 +550,7 @@ namespace FekraHubAPI.Controllers
 
                 if (reports)
                 {
-                    return Conflict(new
+                    return BadRequest(new
                     {
                         Message = $"Für {month:D2}/{year} existiert bereits ein Bericht für mindestens einen Schüler.",
                         Month = month,
@@ -592,7 +592,7 @@ namespace FekraHubAPI.Controllers
                 pg.SqlState == Npgsql.PostgresErrorCodes.UniqueViolation &&
                 pg.ConstraintName == "UX_Reports_Student_Period")
             {
-                return Conflict(new
+                return BadRequest(new
                 {
                     Message = "Für diesen Schüler existiert bereits ein Bericht für diesen Monat und dieses Jahr."
                 });
